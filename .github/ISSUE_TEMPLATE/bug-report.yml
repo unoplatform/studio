@@ -54,7 +54,7 @@ body:
         - iOS
         - macOS (Catalyst)
 
-  - type: textarea
+  - type: input
     id: uno-sdk-version
     attributes:
       label: Uno.Sdk version

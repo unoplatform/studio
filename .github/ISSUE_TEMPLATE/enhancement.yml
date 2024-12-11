@@ -1,38 +1,48 @@
 name: Enhancement Request
-description: Suggest an enhancement to Uno Platform
+description: Suggest an enhancement to Uno Platform Studio.
 labels: [kind/enhancement, triage/untriaged, difficulty/tbd]
 body:
   - type: textarea
     id: enhancement-description
     attributes:
-      label: What would you like to be added
-      description: Describe in detail what is the feature or functionality you are missing
+      label: What feature or functionality would you like to see added?
+      description: Describe in detail what feature or functionality you feel is missing from Uno Platform Studio.
 
   - type: textarea
     id: enhancement-use-case
     attributes:
-      label: Why is this needed
-      description: Describe the use case of this enhancement
+      label: Why is this enhancement needed?
+      description: Explain the use case or problem this enhancement would address and how it would improve your workflow.
+
+  - type: dropdown
+    id: enhancement-tools
+    attributes:
+      label: Which tool(s) does this enhancement relate to?
+      multiple: true
+      options:
+        - Hot Design
+        - Hot Reload
+        - Design-to-Code
 
   - type: dropdown
     id: enhancement-platforms
     attributes:
-      label: For which platform
+      label: For which platform(s)?
+      description: |
+        **Note for Hot Design:**
+        At the current stage of the Hot Design™ beta, only the Desktop platform is supported. Other platforms are undergoing stabilization for Hot Design support and will be available in future updates.  
+        For now, you can use the Desktop platform to create your UI with the runtime visual designer. Once you’re satisfied with your design, you can test the app on other platforms by launching it as you would normally.
       multiple: true
       options:
+        - Desktop (Skia)
+        - Windows
         - WebAssembly
         - Android
         - iOS
-        - macOS (AppKit)
-        - Mac Catalyst
-        - Skia (WPF)
-        - Skia (GTK on Linux/macOS/Windows)
-        - Skia (Linux Framebuffer)
-        - Windows
-        - Build tasks
+        - macOS (Catalyst)
 
   - type: textarea
     id: enhancement-additional-info
     attributes:
-      label: Anything else we need to know?
-      description: Notes for contributors, further explanations, or any other information
+      label: Is there anything else we need to know?
+      description: Include any notes, further explanations, or references that might help contributors understand your request.

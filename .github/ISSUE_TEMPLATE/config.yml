@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Questions
-    url: https://github.com/unoplatform/uno/discussions
-    about: 'For general questions about Uno, visit GitHub discussions'
+    url: https://github.com/unoplatform/studio/discussions
+    about: 'For general questions about Uno Platform Studio, visit the GitHub Discussions tab.'
+  - name: Support
+    url: https://platform.uno/uno-discord
+    about: 'For additional support, visit our Discord Server – where our engineering team and community will be happy to assist you.'

@@ -29,7 +29,7 @@ body:
     attributes:
       label: For which platform(s)?
       description: |
-        **Note for Hot Design:**
+        **Note for Hot Design™:**
 
         At the current stage of the Hot Design™ beta, only the **Desktop** platform is supported. Other platforms are undergoing stabilization for Hot Design support and will be available in future updates.
 

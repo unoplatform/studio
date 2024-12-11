@@ -30,7 +30,8 @@ body:
       label: For which platform(s)?
       description: |
         **Note for Hot Design:**
-        At the current stage of the Hot Design™ beta, only the **Desktop** platform is supported. Other platforms are undergoing stabilization for Hot Design support and will be available in future updates.  
+        At the current stage of the Hot Design™ beta, only the **Desktop** platform is supported. Other platforms are undergoing stabilization for Hot Design support and will be available in future updates.
+
         For now, you can use the **Desktop** platform to create your UI with the runtime visual designer. Once you’re satisfied with your design, you can test the app on other platforms by launching it as you would normally.
       multiple: true
       options:

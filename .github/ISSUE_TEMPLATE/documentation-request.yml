@@ -1,0 +1,52 @@
+name: Documentation Request
+description: Request an enhancement or clarification for the Uno Platform Studio documentation.
+labels: [kind/consumer-experience, kind/documentation, triage/untriaged, difficulty/tbd]
+body:
+  - type: textarea
+    id: documentation-request
+    attributes:
+      label: What do you need clarification or enhancement on?
+      description: Describe in detail the documentation topic or section that needs improvement or clarification.
+
+  - type: dropdown
+    id: documentation-concern
+    attributes:
+      label: What is your concern?
+      description: Select the topic related to your request.
+      multiple: true
+      options:
+        - Getting started with Uno Platform Studio
+        - Using Hot Design™
+        - Using Hot Reload
+        - Using Design-to-Code
+        - Supported platforms or tools
+        - Best practices or workflows
+        - Other (please specify)
+
+  - type: textarea
+    id: other-concern
+    attributes:
+      label: If "Other," please specify
+      description: Provide additional details if you selected "Other (please specify)" above.
+
+  - type: dropdown
+    id: documentation-platforms
+    attributes:
+      label: For which platform(s)?
+      description: |
+        **Note for Hot Design™:**
+        At the current stage of the Hot Design™ beta, only the **Desktop** platform is supported. Other platforms are undergoing stabilization for Hot Design support and will be available in future updates.
+      multiple: true
+      options:
+        - Desktop (Skia)
+        - Windows
+        - WebAssembly
+        - Android
+        - iOS
+        - macOS (Catalyst)
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Is there anything else we need to know?
+      description: Include any notes, further explanations, or references that might help contributors understand your request.

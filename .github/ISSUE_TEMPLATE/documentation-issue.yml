@@ -1,0 +1,21 @@
+name: Documentation Issue
+description: Report an issue with the Uno Platform Studio documentation.
+labels: [kind/consumer-experience, kind/documentation, triage/untriaged, difficulty/tbd]
+body:
+  - type: input
+    id: documentation-page
+    attributes:
+      label: On which page?
+      description: Provide the URL or title of the documentation page where you found the issue.
+
+  - type: textarea
+    id: documentation-problem
+    attributes:
+      label: What's wrong?
+      description: Describe the problem or issue with the documentation in detail.
+
+  - type: textarea
+    id: additional-feedback
+    attributes:
+      label: Any feedback?
+      description: Provide additional feedback, suggestions, or anything else we need to know.

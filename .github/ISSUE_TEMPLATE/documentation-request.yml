@@ -9,12 +9,21 @@ body:
       description: Describe in detail the documentation topic or section that needs improvement or clarification.
 
   - type: dropdown
+    id: tools
+    attributes:
+      label: Which tool(s) are affected?
+      multiple: true
+      options:
+        - Hot Design™
+        - Hot Reload
+        - Design-to-Code
+
+  - type: textarea
     id: documentation-concern
     attributes:
       label: What is your concern?
-      description: Select the topic related to your request.
-      multiple: true
-      options:
+      description: |
+        Please describe your concern in detail. Examples of topics you could include:
         - Getting started with Uno Platform Studio
         - Using Hot Design™
         - Using Hot Reload
@@ -22,12 +31,7 @@ body:
         - Supported platforms or tools
         - Best practices or workflows
         - Other (please specify)
-
-  - type: textarea
-    id: other-concern
-    attributes:
-      label: If "Other," please specify
-      description: Provide additional details if you selected "Other (please specify)" above.
+      render: dynamic
 
   - type: dropdown
     id: documentation-platforms

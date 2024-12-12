@@ -15,12 +15,12 @@ body:
       description: Explain the use case or problem this enhancement would address and how it would improve your workflow.
 
   - type: dropdown
-    id: enhancement-tools
+    id: tools
     attributes:
-      label: Which tool(s) does this enhancement relate to?
+      label: Which tool(s) are affected?
       multiple: true
       options:
-        - Hot Design
+        - Hot Design™
         - Hot Reload
         - Design-to-Code
 

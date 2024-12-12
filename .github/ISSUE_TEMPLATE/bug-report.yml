@@ -17,7 +17,8 @@ body:
   - type: dropdown
     id: tools
     attributes:
-      label: Which tool(s) are affected? ([Hot Design™](https://aka.platform.uno/hot-design), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
+      label: Which tool(s) are affected? 
+      description: ([Hot Design™](https://aka.platform.uno/hot-design), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
       multiple: true
       options:
         - Hot Design™

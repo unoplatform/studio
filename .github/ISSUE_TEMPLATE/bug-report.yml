@@ -34,17 +34,6 @@ body:
         - Include any code snippets, screenshots, videos, or additional context that can help us understand and replicate the problem.
 
   - type: textarea
-    id: how-to-reproduce
-    attributes:
-      label: How to reproduce it (as minimally and precisely as possible)
-      description: |
-        Please provide the **STEPS TO REPRODUCE** and any necessary details about the issue:
-
-        - Which tool were you using? (Hot Design™, Hot Reload, or Design-to-Code)
-        - Steps to reproduce the issue.
-        - Provide any code snippets, screenshots, videos, or additional context that would help us understand how to reproduce the issue.
-
-  - type: textarea
     id: workaround
     attributes:
       label: Workaround

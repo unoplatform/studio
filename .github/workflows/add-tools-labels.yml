@@ -1,0 +1,37 @@
+name: Add Labels Based on Selected Tools
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  add_labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check and add tool-specific labels
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const toolsField = context.payload.issue.body.match(/### Which tool\(s\) are affected\?:\n\n(.*?)(\n\n|$)/s);
+            const tools = toolsField ? toolsField[1].split("\n").map(tool => tool.trim()) : [];
+            
+            const labelsToAdd = [];
+            
+            if (tools.includes("Hot Design™")) {
+              labelsToAdd.push("tool/Hot Design™");
+            }
+            if (tools.includes("Hot Reload")) {
+              labelsToAdd.push("tool/Hot Reload");
+            }
+            if (tools.includes("Design-to-Code")) {
+              labelsToAdd.push("tool/Design-to-Code");
+            }
+            
+            if (labelsToAdd.length > 0) {
+              await github.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.issue.number,
+                labels: labelsToAdd
+              });
+            }

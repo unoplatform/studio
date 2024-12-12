@@ -16,9 +16,9 @@ jobs:
             const issueBody = context.payload.issue.body;
             console.log("Issue Body:", issueBody);
 
-            // Regex to find the tools section in the issue body
-            const toolsField = issueBody.match(/### Which tool\(s\) are affected\?:\n\n([\s\S]*?)\n\n/);
-            const tools = toolsField ? toolsField[1].split("\n").map(tool => tool.replace(/^- /, "").trim()) : [];
+            // Refined regex to capture selected tools
+            const toolsField = issueBody.match(/### Which tool\(s\) are affected\?\n([\s\S]*?)\n###/);
+            const tools = toolsField ? toolsField[1].split("\n").map(tool => tool.trim()).filter(tool => tool !== "_No response_") : [];
             console.log("Parsed Tools:", tools);
 
             // Define labels to add based on the selected tools

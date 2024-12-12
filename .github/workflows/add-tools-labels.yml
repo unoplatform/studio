@@ -12,11 +12,17 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const toolsField = context.payload.issue.body.match(/### Which tool\(s\) are affected\?:\n\n(.*?)(\n\n|$)/s);
-            const tools = toolsField ? toolsField[1].split("\n").map(tool => tool.trim()) : [];
-            
+            // Log the issue body for debugging
+            const issueBody = context.payload.issue.body;
+            console.log("Issue Body:", issueBody);
+
+            // Regex to find the tools section in the issue body
+            const toolsField = issueBody.match(/### Which tool\(s\) are affected\?:\n\n([\s\S]*?)\n\n/);
+            const tools = toolsField ? toolsField[1].split("\n").map(tool => tool.replace(/^- /, "").trim()) : [];
+            console.log("Parsed Tools:", tools);
+
+            // Define labels to add based on the selected tools
             const labelsToAdd = [];
-            
             if (tools.includes("Hot Design™")) {
               labelsToAdd.push("tool/Hot Design™");
             }
@@ -26,12 +32,16 @@ jobs:
             if (tools.includes("Design-to-Code")) {
               labelsToAdd.push("tool/Design-to-Code");
             }
-            
+
+            // Add the labels to the issue if any were matched
             if (labelsToAdd.length > 0) {
+              console.log("Adding Labels:", labelsToAdd);
               await github.issues.addLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.issue.number,
-                labels: labelsToAdd
+                labels: labelsToAdd,
               });
+            } else {
+              console.log("No matching labels to add.");
             }

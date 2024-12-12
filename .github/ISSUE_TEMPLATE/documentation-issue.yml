@@ -8,6 +8,16 @@ body:
       label: On which page?
       description: Provide the URL or title of the documentation page where you found the issue.
 
+  - type: dropdown
+    id: tools
+    attributes:
+      label: Which tool(s) are affected?
+      multiple: true
+      options:
+        - Hot Design™
+        - Hot Reload
+        - Design-to-Code
+
   - type: textarea
     id: documentation-problem
     attributes:

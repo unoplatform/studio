@@ -20,7 +20,11 @@ jobs:
 
             // Refined regex to capture selected tools
             const toolsField = issueBody.match(/### Which tool\(s\) are affected\?\n([\s\S]*?)\n###/);
-            const tools = toolsField ? toolsField[1].split("\n").map(tool => tool.trim()).filter(tool => tool !== "_No response_") : [];
+            const toolsRaw = toolsField ? toolsField[1] : '';
+            console.log("Raw Tools Field:", toolsRaw);
+
+            // Split tools by ',' and clean up whitespace
+            const tools = toolsRaw.split(',').map(tool => tool.trim()).filter(tool => tool !== "_No response_");
             console.log("Parsed Tools:", tools);
 
             // Define labels to add based on the selected tools

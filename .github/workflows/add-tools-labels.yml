@@ -29,7 +29,7 @@ jobs:
 
             // Define labels to add based on the selected tools
             const labelsToAdd = [];
-            if (tools.includes("Hot Design™")) {
+            if (tools.includes("Hot Design™") || tools.includes("Hot Design")) {
               labelsToAdd.push("tool/Hot Design™");
             }
             if (tools.includes("Hot Reload")) {

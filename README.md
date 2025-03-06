@@ -8,7 +8,7 @@ Uno Platform Studio empowers developers to stay in their flow, enabling seamless
 
 This space is dedicated to collecting feedback, suggestions, and bug reports for the **Uno Platform Studio** and its tools:
 
-- [**Hot Design™**](https://aka.platform.uno/hot-design): The industry-first runtime Visual Designer for cross-platform .NET Applications. Transform your running app into a Designer from any IDE on any OS and create polished interfaces with ease.
+- [**Hot Design®**](https://aka.platform.uno/hot-design): The industry-first runtime Visual Designer for cross-platform .NET Applications. Transform your running app into a Designer from any IDE on any OS and create polished interfaces with ease.
 - [**Hot Reload**](https://aka.platform.uno/hot-reload): Reliably update any code in your app and get instant confirmation your changes were applied, with a new App Indicator to monitor changes while you develop.
 - [**Design-to-Code**](https://aka.platform.uno/Design-to-Code): Generate ready-to-use, well-structured XAML or C# Markup directly from your Figma designs with one click, completely eliminating manual design handoff.
 

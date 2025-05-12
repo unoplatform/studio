@@ -53,8 +53,8 @@ body:
     attributes:
       label: Affected platforms
       description: |
-        **Important Note for Hot Design™:** 
-        - To start using **Hot Design®**, ensure you are signed in with your Uno Platform account. Follow [these instructions](https://aka.platform.uno/account-access) to register and sign in.  
+        **Important Notes for Hot Design®:** 
+        - To start using **Hot Design**, ensure you are signed in with your Uno Platform account. Follow [these instructions](https://aka.platform.uno/account-access) to register and sign in.  
         - Hot Design is available on all platforms. See the list of [known issues](https://github.com/unoplatform/studio/issues/66).  
         - Hot Design **does not support C# Markup** and is **only available with XAML and .NET 9**.  
         - Hot Design is **not available for the WinAppSDK target framework (`netX.0-windowsX.X.X`)** at this time.  

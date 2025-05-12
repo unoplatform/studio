@@ -40,24 +40,38 @@ body:
       label: Workaround
       description: Please provide steps to workaround this problem if possible.
 
+  - type: checkboxes
+    id: renderer
+    attributes:
+      label: Renderer
+      options:
+        - label: Skia
+        - label: Native
+
   - type: dropdown
     id: platforms
     attributes:
       label: Affected platforms
-      description: |
-        **Note for Hot Design™:**
-
-        At the current stage of the Hot Design™ beta, only the **Desktop** platform is supported. Other platforms are undergoing stabilization for Hot Design support and will be available in future updates.
-
-        For now, you can use the **Desktop** platform to create your UI with the runtime visual designer. Once you’re satisfied with your design, you can test the app on other platforms by launching it as you would normally.
+      description: >
+        **Important Note for Hot Design™:**  
+        
+        > To start using **Hot Design®**, ensure you are signed in with your Uno Platform account.  
+        > Follow [these instructions](https://aka.platform.uno/account-access) to register and sign in.  
+        >  
+        > * Hot Design is available on all platforms. See the list of [known issues](https://github.com/unoplatform/studio/issues/66).  
+        > * Hot Design **does not support C# Markup** and is **only available with XAML and .NET 9**.  
+        > * Hot Design is **not available for the WinAppSDK target framework (`netX.0-windowsX.X.X`)** at this time.  
+        > * Hot Design relies on **[Hot Reload](https://aka.platform.uno/hot-reload)** for updates, so be sure to check the [current support for your OS, IDE, and target platforms](https://aka.platform.uno/hot-reload#supported-features-per-os) before testing.
       multiple: true
       options:
-        - Desktop (Skia)
-        - Windows
+        - Desktop (on Windows OS)
+        - Desktop (on macOS)
+        - Desktop (on X11)
+        - Desktop (on Linux Framebuffer)
         - WebAssembly
         - Android
         - iOS
-        - macOS (Catalyst)
+        - Windows App SDK (WinAppSDK)
 
   - type: input
     id: uno-sdk-version

@@ -52,7 +52,7 @@ body:
     id: platforms
     attributes:
       label: Affected platforms
-      description: >
+      description: |
         **Important Note for Hot Design™:** 
         To start using **Hot Design®**, ensure you are signed in with your Uno Platform account.  
         Follow [these instructions](https://aka.platform.uno/account-access) to register and sign in.  

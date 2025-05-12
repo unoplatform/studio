@@ -44,7 +44,8 @@ body:
     id: renderer
     attributes:
       label: Renderer
-      description: [More info](https://aka.platform.uno/how-uno-works#rendering-the-ui)
+      description: |
+        [More info](https://aka.platform.uno/how-uno-works#rendering-the-ui)
       options:
         - label: Skia
         - label: Native

@@ -17,11 +17,11 @@ body:
   - type: dropdown
     id: tools
     attributes:
-      label: Which tool(s) are affected? 
-      description: ([Hot Design™](https://aka.platform.uno/hot-design), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
+      label: Which tool(s) are affected?
+      description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
       multiple: true
       options:
-        - Hot Design™
+        - Hot Design®
         - Hot Reload
         - Design-to-Code
 
@@ -44,6 +44,7 @@ body:
     id: renderer
     attributes:
       label: Renderer
+      description: [More info](https://aka.platform.uno/how-uno-works#rendering-the-ui)
       options:
         - label: Skia
         - label: Native
@@ -61,14 +62,14 @@ body:
         - Hot Design relies on **[Hot Reload](https://aka.platform.uno/hot-reload)** for updates, so be sure to check the [current support for your OS, IDE, and target platforms](https://aka.platform.uno/hot-reload#supported-features-per-os) before testing.
       multiple: true
       options:
-        - Desktop (on Windows OS)
-        - Desktop (on macOS)
-        - Desktop (on X11)
-        - Desktop (on Linux Framebuffer)
-        - WebAssembly
-        - Android
-        - iOS
-        - Windows App SDK (WinAppSDK)
+        - Desktop - `net9.0-desktop` (on Windows)
+        - Desktop - `net9.0-desktop` (on macOS)
+        - Desktop - `net9.0-desktop` (on X11)
+        - Desktop - `net9.0-desktop` (on Linux Framebuffer)
+        - WebAssembly - `net9.0-browserwasm`
+        - Android - `net9.0-android`
+        - iOS - `net9.0-ios`
+        - Windows App SDK (WinAppSDK) - `net9.0-windows10.0.X`
 
   - type: input
     id: uno-sdk-version

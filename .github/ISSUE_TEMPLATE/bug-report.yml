@@ -63,14 +63,14 @@ body:
         - Hot Design relies on **[Hot Reload](https://aka.platform.uno/hot-reload)** for updates, so be sure to check the [current support for your OS, IDE, and target platforms](https://aka.platform.uno/hot-reload#supported-features-per-os) before testing.
       multiple: true
       options:
-        - Desktop - `net9.0-desktop` (on Windows)
-        - Desktop - `net9.0-desktop` (on macOS)
-        - Desktop - `net9.0-desktop` (on X11)
-        - Desktop - `net9.0-desktop` (on Linux Framebuffer)
-        - WebAssembly - `net9.0-browserwasm`
-        - Android - `net9.0-android`
-        - iOS - `net9.0-ios`
-        - Windows App SDK (WinAppSDK) - `net9.0-windows10.0.X`
+        - Desktop - net9.0-desktop (on Windows)
+        - Desktop - net9.0-desktop (on macOS)
+        - Desktop - net9.0-desktop (on X11)
+        - Desktop - net9.0-desktop (on Linux Framebuffer)
+        - WebAssembly - net9.0-browserwasm
+        - Android - net9.0-android
+        - iOS - net9.0-ios
+        - Windows App SDK (WinAppSDK) - net9.0-windows10.0.X
 
   - type: input
     id: uno-sdk-version

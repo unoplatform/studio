@@ -12,10 +12,12 @@ body:
     id: tools
     attributes:
       label: Which tool(s) are affected?
-      description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
+     description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Design® Agent](https://aka.platform.uno/hot-design-agent), [AI MCPs](https://aka.platform.uno/using-uno-mcps), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
       multiple: true
       options:
         - Hot Design®
+        - Hot Design® Agent
+        - AI MCPs
         - Hot Reload
         - Design-to-Code
 

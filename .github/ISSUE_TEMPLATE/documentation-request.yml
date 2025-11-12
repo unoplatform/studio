@@ -12,10 +12,12 @@ body:
     id: tools
     attributes:
       label: Which tool(s) are affected?
-      description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
+       description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Design® Agent](https://aka.platform.uno/hot-design-agent), [Uno MCPs](https://aka.platform.uno/using-uno-mcps), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
       multiple: true
       options:
         - Hot Design®
+        - Hot Design® Agent
+        - Uno MCPs
         - Hot Reload
         - Design-to-Code
 
@@ -27,6 +29,8 @@ body:
         Please describe your concern in detail. Examples of topics you could include:
         - Getting started with Uno Platform Studio
         - Using Hot Design®
+        - Using Hot Design® Agent
+        - Using Uno MCPs
         - Using Hot Reload
         - Using Design-to-Code
         - Supported platforms or tools
@@ -57,14 +61,14 @@ body:
         - Hot Design relies on **[Hot Reload](https://aka.platform.uno/hot-reload)** for updates, so be sure to check the [current support for your OS, IDE, and target platforms](https://aka.platform.uno/hot-reload#supported-features-per-os) before testing.
       multiple: true
       options:
-        - Desktop - net9.0-desktop (on Windows)
-        - Desktop - net9.0-desktop (on macOS)
-        - Desktop - net9.0-desktop (on X11)
-        - Desktop - net9.0-desktop (on Linux Framebuffer)
-        - WebAssembly - net9.0-browserwasm
-        - Android - net9.0-android
-        - iOS - net9.0-ios
-        - Windows App SDK (WinAppSDK) - net9.0-windows10.0.X
+        - Desktop - netx.0-desktop (on Windows)
+        - Desktop - netx.0-desktop (on macOS)
+        - Desktop - netx.0-desktop (on X11)
+        - Desktop - netx.0-desktop (on Linux Framebuffer)
+        - WebAssembly - netx.0-browserwasm
+        - Android - netx.0-android
+        - iOS - netx.0-ios
+        - Windows App SDK (WinAppSDK) - netx.0-windows10.0.X
 
   - type: textarea
     id: additional-info

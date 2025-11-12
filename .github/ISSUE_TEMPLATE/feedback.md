@@ -10,7 +10,7 @@ Here are some ideas to guide your feedback:
 
 ### General Feedback
 - Which version of Uno Platform (Uno.Sdk) are you using, on which platforms, and with which IDE?
-- What do you love about Uno Platform Studio and its related tools (Hot Design™, Hot Design™ Agent, Uno MCPS, Hot Reload, Design-to-Code)?
+- What do you love about Uno Platform Studio and its related tools (Hot Design™, Hot Design™ Agent, Uno MCPs, Hot Reload, Design-to-Code)?
 - What features or tools do you feel are missing or could be improved?
 - How has Uno Platform Studio impacted your development workflow?
 

@@ -18,10 +18,12 @@ body:
     id: tools
     attributes:
       label: Which tool(s) are affected?
-      description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
+      description: ([Hot Design®](https://aka.platform.uno/hot-design), ([Hot Design® Agent](https://aka.platform.uno/hot-design-agent), ([AI MCPs] (https://aka.platform.uno/using-uno-mcps), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
       multiple: true
       options:
         - Hot Design®
+        - Hot Design® Agent
+        - AI MCPs
         - Hot Reload
         - Design-to-Code
 
@@ -34,6 +36,14 @@ body:
         - Outline the steps required to reproduce the issue.
         - Include any code snippets, screenshots, videos, or additional context that can help us understand and replicate the problem.
 
+        For Hot Design® Agent, if you are reporting issues with the generated XAML, please include:
+        - The original page XAML
+        - The generated XAML (hint: if you right-click on the thumbnail in the chat, it will copy the generated XAML to clipboard)
+        - Optional (but useful) information:
+            - Screenshot of what the page looks like after the generated XAML has been applied
+            - Stop the app and manually apply the generated XAML (from step above)
+            - Screenshot the app with the XAML applied manually.
+        
   - type: textarea
     id: workaround
     attributes:

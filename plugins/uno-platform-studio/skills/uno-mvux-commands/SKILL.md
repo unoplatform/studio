@@ -59,6 +59,7 @@ If the user needs manual control over commands, the reference page has an "Expli
 - **Feed parameter injection works for any feed type** (`IFeed<T>`, `IListFeed<T>`, `IState<T>`, `IListState<T>`) — the matching parameter receives a *snapshot* of the current value.
 - **But you can only mutate writable types from inside a command body.** `IState<T>` and `IListState<T>` expose `UpdateAsync` / `AddAsync` / `RemoveAsync`. `IFeed<T>` and `IListFeed<T>` are **read-only** — calling `.Update(...)`, `.UpdateAsync(...)`, `.AddAsync(...)`, or `.RemoveAsync(...)` on an injected `IListFeed`/`IFeed` is a compile error.
 - If a command needs to mutate a collection, the property on the Model must be `IListState<T>` (not `IListFeed<T>`); convert with `ListState.FromFeed(this, sourceFeed)` if needed.
+- **When mutating via `UpdateAsync`, the updater must be pure** — derive the new value solely from the `current` value, with no captured external state or side effects. See [[uno-mvux-state-basics]] and [[uno-mvux-liststate]] for details.
 
 ## Key Principles (Stable)
 

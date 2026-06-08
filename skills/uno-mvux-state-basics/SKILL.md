@@ -62,6 +62,16 @@ See also the `uno-mvux-commands` skill.
 - **The mutation method is `UpdateAsync`** — `public static ValueTask UpdateAsync<T>(this IState<T> state, Func<T?, T?> updater, CancellationToken ct = default)`.
 - **There is no `Update` method on `IState<T>`** — calling `state.Update(x => ...)` is a compile error. The baseline model frequently emits this wrong name; the skill must keep the correct name front-and-centre.
 - `UpdateAsync` returns `ValueTask` — `await` it from inside an `async` method (typically a command body).
+- **The updater must be pure** — derive the new value *solely* from the `current` parameter it receives. Do not capture or read external/mutable variables, and do not perform side effects inside it. MVUX is stateless and lockless: the updater is applied against the state's current cached value, so a function that depends on anything other than `current` is not guaranteed to produce a stable result. The official docs model this by declaring the updater as a `static` local function, which the compiler prevents from capturing enclosing state:
+
+  ```csharp
+  // Correct: a pure projection of the value you were given
+  static int increment(int current) => current + 1;
+  await Counter.UpdateAsync(increment);
+
+  // Wrong: result is not derived from `current`, it captures external state
+  await Counter.UpdateAsync(_ => _someExternalField);
+  ```
 
 ## Key Principles (Stable)
 

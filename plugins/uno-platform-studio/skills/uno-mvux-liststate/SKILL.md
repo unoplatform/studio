@@ -120,6 +120,18 @@ public partial record MyItem(Guid Id, string Name);
 - `KeyEquals` returns `true` when two instances represent the same entity, even if other properties differ
 - `UpdateAsync` uses key equality to find the existing item to replace — without it, the update silently fails or replaces the wrong item
 
+## Updater Purity (Critical)
+
+The function passed to `UpdateAsync` (and to the item-level updaters) **must be pure**: derive the new value *solely* from the `current` value it receives, with no capture of external/mutable variables and no side effects. MVUX is stateless and lockless and applies the updater against the current cached value, so an updater that depends on anything other than its input is not guaranteed to produce a stable result. Project the value you were given onto a new immutable value (use `with` expressions on records); never reach outside the lambda for state.
+
+```csharp
+// Correct: pure projection of the current item
+await Items.UpdateAsync(item => item with { IsDone = true });
+
+// Wrong: result captures external mutable state
+await Items.UpdateAsync(_ => _externalItem);
+```
+
 ## Related Skills
 
 - [[uno-mvux-listfeed]] — Read-only reactive collections

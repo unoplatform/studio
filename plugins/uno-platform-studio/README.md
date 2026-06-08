@@ -54,6 +54,10 @@ If you don't have the Uno tooling:
 - **claude.ai / Claude Code**: install it from the [connector catalog](https://claude.ai/connectors).
 - **Other agents**: register it manually in your agent's MCP configuration. It is a remote server requiring no authentication: `https://mcp.platform.uno/v1` (HTTP transport).
 
+## UI Testing Requirement
+
+The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additionally require the **Uno App MCP**, which drives a running app for visual-tree inspection, interaction, and screenshots (the `uno_app_*` tools). Like the documentation MCP, it is provided by the **Uno tooling** (integrated into the Uno Platform Dev Server), not bundled in this plugin. Agents that have only the documentation MCP cannot run these two skills; their `compatibility:` frontmatter notes the same requirement.
+
 ## Manifests
 
 | File | Consumer |

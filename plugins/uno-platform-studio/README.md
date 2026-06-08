@@ -56,7 +56,7 @@ If you don't have the Uno tooling:
 
 ## UI Testing Requirement
 
-The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additionally require the **Uno App MCP**, which drives a running app for visual-tree inspection, interaction, and screenshots (the `uno_app_*` tools). Like the documentation MCP, it is provided by the **Uno tooling** (integrated into the Uno Platform Dev Server), not bundled in this plugin. Agents that have only the documentation MCP cannot run these two skills; their `compatibility:` frontmatter notes the same requirement.
+The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additionally require the **Uno App MCP**, which drives a running app for visual-tree inspection, interaction, and screenshots (the `uno_app_*` tools). Like the documentation MCP, it is provided by the **Uno tooling**, not bundled in this plugin. Agents that have only the documentation MCP cannot run these two skills; their `compatibility:` frontmatter notes the same requirement.
 
 ## Manifests
 

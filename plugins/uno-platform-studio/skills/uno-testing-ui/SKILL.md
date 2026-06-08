@@ -11,7 +11,7 @@ metadata:
 
 # Uno Platform UI Testing Agent Skill
 
-> **Prerequisite:** This skill requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling / Uno Platform Dev Server. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, stop and tell the user to enable the Uno tooling rather than attempting to test without them.
+> **Prerequisite:** This skill requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, stop and tell the user to enable the Uno tooling rather than attempting to test without them.
 
 This skill enables automated UI testing of Uno Platform applications using the Uno App MCP server tools. It provides comprehensive guidance for launching apps, inspecting UI elements, simulating user interactions, and validating visual output.
 

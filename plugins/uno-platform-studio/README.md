@@ -38,7 +38,7 @@ Add `unoplatform/studio` to the `chat.plugins.marketplaces` setting, then instal
 
 ```text
 codex plugin marketplace add unoplatform/studio
-codex plugin install uno-platform-studio@uno-platform
+codex plugin add uno-platform-studio@uno-platform
 ```
 
 ### Agents without plugin support

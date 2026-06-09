@@ -8,16 +8,14 @@
   "metadata": {
     "version": "1.0.0",
     "description": "Uno Platform skills for AI coding agents, cross-platform .NET app authoring with WinUI/Uno XAML, MVUX, Material Design, navigation, and more.",
-    "homepage": "	https://aka.platform.uno/studio-feedback-repository",
-    "license": "https://aka.platform.uno/hot-design-terms-of-use"
+    "homepage": "https://platform.uno/studio/"
   },
   "plugins": [
     {
       "name": "uno-platform-studio",
       "description": "Skills covering MVUX, navigation, toolkit, themes (Material, Simple, shared semantic), and testing workflows for Uno Platform. The Uno documentation MCP is provided by the Uno tooling, not bundled in the plugin.",
       "source": "./plugins/uno-platform-studio",
-      "version": "1.0.0",
-      "license": "https://aka.platform.uno/hot-design-terms-of-use"
+      "version": "1.0.0"
     }
   ]
 }

@@ -6,8 +6,7 @@
     "name": "Uno Platform",
     "url": "https://platform.uno"
   },
-  "license": "https://aka.platform.uno/hot-design-terms-of-use",
-  "homepage": "https://aka.platform.uno/studio-feedback-repository",
-  "repository": "https://aka.platform.uno/studio-feedback-repository",
+  "homepage": "https://platform.uno/studio/",
+  "repository": "https://github.com/unoplatform/studio",
   "skills": "./skills"
 }

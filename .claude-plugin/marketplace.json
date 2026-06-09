@@ -8,7 +8,7 @@
   "metadata": {
     "version": "1.0.0",
     "description": "Uno Platform skills for AI coding agents, cross-platform .NET app authoring with WinUI/Uno XAML, MVUX, Material Design, navigation, and more.",
-    "homepage": "	https://aka.platform.uno/studio-feedback-repository",
+    "homepage": "https://aka.platform.uno/studio-feedback-repository",
     "license": "https://aka.platform.uno/hot-design-terms-of-use"
   },
   "plugins": [

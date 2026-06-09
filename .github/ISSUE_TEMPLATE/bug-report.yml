@@ -18,9 +18,12 @@ body:
     id: tools
     attributes:
       label: Which tool(s) are affected?
-      description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Design® Agent](https://aka.platform.uno/hot-design-agent), [Uno MCPs](https://aka.platform.uno/using-uno-mcps), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
+      description: ([Uno Platform Studio App](https://aka.platform.uno/studio), [Uno Platform Studio Agent](https://aka.platform.uno/studio-agent), [Uno Platform Skills](https://aka.platform.uno/studio-skills), [Hot Design®](https://aka.platform.uno/hot-design), [Hot Design® Agent](https://aka.platform.uno/hot-design-agent), [Uno MCPs](https://aka.platform.uno/using-uno-mcps), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
       multiple: true
       options:
+        - Uno Platform Studio App
+        - Uno Platform Studio Agent
+        - Uno Platform Skills
         - Hot Design®
         - Hot Design® Agent
         - Uno MCPs
@@ -68,7 +71,7 @@ body:
         **Important Notes for Hot Design®:** 
         - To start using **Hot Design**, ensure you are signed in with your Uno Platform account. Follow [these instructions](https://aka.platform.uno/account-access) to register and sign in.  
         - Hot Design is available on all platforms. See the list of [known issues](https://github.com/unoplatform/studio/issues/66).  
-        - Hot Design **does not support C# Markup** and is **only available with XAML and .NET 9**.  
+        - Hot Design **does not support C# Markup** and is **only available with XAML and .NET 9+**.  
         - Hot Design is **not available for the WinAppSDK target framework (`netX.0-windowsX.X.X`)** at this time.  
         - Hot Design relies on **[Hot Reload](https://aka.platform.uno/hot-reload)** for updates, so be sure to check the [current support for your OS, IDE, and target platforms](https://aka.platform.uno/hot-reload#supported-features-per-os) before testing.
       multiple: true

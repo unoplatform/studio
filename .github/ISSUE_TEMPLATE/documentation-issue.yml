@@ -12,9 +12,12 @@ body:
     id: tools
     attributes:
       label: Which tool(s) are affected?
-      description: ([Hot Design®](https://aka.platform.uno/hot-design), [Hot Design® Agent](https://aka.platform.uno/hot-design-agent), [Uno MCPs](https://aka.platform.uno/using-uno-mcps), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
+      description: ([Uno Platform Studio App](https://aka.platform.uno/studio), [Uno Platform Studio Agent](https://aka.platform.uno/studio-agent), [Uno Platform Skills](https://aka.platform.uno/studio-skills), [Hot Design®](https://aka.platform.uno/hot-design), [Hot Design® Agent](https://aka.platform.uno/hot-design-agent), [Uno MCPs](https://aka.platform.uno/using-uno-mcps), [Hot Reload](https://aka.platform.uno/hot-reload), or [Design-to-Code](https://aka.platform.uno/Design-to-Code))
       multiple: true
       options:
+        - Uno Platform Studio App
+        - Uno Platform Studio Agent
+        - Uno Platform Skills
         - Hot Design®
         - Hot Design® Agent
         - Uno MCPs

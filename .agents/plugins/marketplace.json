@@ -1,0 +1,19 @@
+{
+  "name": "uno-platform",
+  "interface": {
+    "displayName": "Uno Platform"
+  },
+  "plugins": [
+    {
+      "name": "uno-platform-studio",
+      "source": {
+        "source": "local",
+        "path": "./plugins/uno-platform-studio"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "Development"
+    }
+  ]
+}

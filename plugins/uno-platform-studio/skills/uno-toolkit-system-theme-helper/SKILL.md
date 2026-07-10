@@ -4,7 +4,7 @@ description: "Use SystemThemeHelper to detect system theme (light/dark), check i
 when_to_use: "Use when reading or programmatically switching dark / light mode from C# (not the XAML `ThemeResource` lookup path) — detecting the current system theme, setting the application theme at runtime, or toggling between modes."
 metadata:
   author: uno-platform
-  version: "2.4"
+  version: "2.5"
   category: toolkit
 ---
 
@@ -31,12 +31,17 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/SystemTh
 
 ## Key Principles (Stable)
 
-- `SystemThemeHelper.GetCurrentOsTheme()` — returns `ApplicationTheme.Light` or `ApplicationTheme.Dark`
-- `SystemThemeHelper.GetRootTheme(XamlRoot?)` — gets the app theme for a given XamlRoot
-- `SystemThemeHelper.IsRootInDarkMode(XamlRoot?)` — quick check if dark mode is active
-- `SystemThemeHelper.SetRootTheme(XamlRoot?, bool)` — set theme (`true` = dark)
-- `SystemThemeHelper.SetApplicationTheme(XamlRoot?, ElementTheme)` — set theme using ElementTheme enum
-- **No `ThemeChanged` event exists** — there is no event to subscribe to for theme changes
+- **Preferred (hosted-safe): pass the app's own root element or Window.** These overloads behave identically in standalone apps and stay correct when the app's content is hosted under a XamlRoot it doesn't own - e.g. running under Hot Design, where `XamlRoot.Content` is the HOST's root visual and theming it re-themes the host instead of the app:
+  - `SystemThemeHelper.GetRootTheme(FrameworkElement?)` / `GetRootTheme(Window?)`
+  - `SystemThemeHelper.IsRootInDarkMode(FrameworkElement)` / `IsRootInDarkMode(Window)`
+  - `SystemThemeHelper.SetRootTheme(FrameworkElement?, bool)` / `SetRootTheme(Window?, bool)` (`true` = dark)
+  - `SystemThemeHelper.SetApplicationTheme(FrameworkElement?, ElementTheme)` / `SetApplicationTheme(Window?, ElementTheme)`
+- Pass the app's ROOT element (typically `window.Content as FrameworkElement`, captured once at startup right after setting `window.Content`), not an arbitrary page.
+- On Uno.Toolkit versions that don't have these overloads yet, set `appRoot.RequestedTheme = ElementTheme.Dark` directly on the captured root - same effect, hosted-safe.
+- The `XamlRoot`-based overloads (`GetRootTheme(XamlRoot?)`, `IsRootInDarkMode(XamlRoot)`, `SetRootTheme(XamlRoot?, bool)`, `SetApplicationTheme(XamlRoot?, ElementTheme)`) target `XamlRoot.Content`; only use them in code that will never run hosted.
+- `SystemThemeHelper.GetCurrentOsTheme()` - returns `ApplicationTheme.Light` or `ApplicationTheme.Dark`
+- Null root: `Set*` overloads are silent no-ops (a warning is logged); `Get*` overloads fall back to the OS theme
+- **No `ThemeChanged` event exists** - observe `FrameworkElement.ActualThemeChanged` on the app root instead
 - Namespace: `using Uno.Toolkit.UI;`
 
 ## Related Skills

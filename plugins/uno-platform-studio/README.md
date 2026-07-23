@@ -43,17 +43,17 @@ codex plugin add uno-platform-studio@uno-platform
 
 ### Kimi Code CLI
 
-Point Kimi Code at this repository's Kimi marketplace manifest, then install the plugin:
+Point Kimi Code at this repository, then install the plugin:
 
 ```text
-/plugins marketplace https://raw.githubusercontent.com/unoplatform/studio/main/.kimi-plugin/marketplace.json
+/plugins marketplace https://github.com/unoplatform/studio
 /plugins install uno-platform-studio
 ```
 
 Alternatively, set the marketplace once for every session via the environment:
 
 ```bash
-export KIMI_CODE_PLUGIN_MARKETPLACE_URL=https://raw.githubusercontent.com/unoplatform/studio/main/.kimi-plugin/marketplace.json
+export KIMI_CODE_PLUGIN_MARKETPLACE_URL=https://github.com/unoplatform/studio
 ```
 
 Plugin changes take effect after `/reload` or `/new`. Verify with `/plugins` (the **Installed** tab).

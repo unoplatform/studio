@@ -6,7 +6,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 
 | Asset | Purpose |
 |---|---|
-| `skills/` | SKILL.md files covering MVUX (feeds, state, list state, selection, pagination, messaging), navigation (routes, regions, dialogs, tab/navigation shells), Uno Toolkit controls and helpers, theming (Material, Simple, shared semantic), and UI testing. |
+| `skills/` | SKILL.md files covering MVUX (feeds, state, list state, selection, pagination, messaging), navigation (routes, regions, dialogs, tab/navigation shells), Uno Toolkit controls and helpers, theming (Material, Simple, shared semantic), UI testing, and development workflow (stacked pull requests). |
 
 ## Install
 
@@ -76,7 +76,7 @@ codex plugin marketplace remove uno-platform
 
 ## Documentation Grounding
 
-The skills use the Uno documentation MCP (`UnoDocs`) to search and fetch official Uno Platform documentation. It is not bundled in this plugin; it comes with the **Uno tooling**, which most Studio users already have installed.
+Most skills use the Uno documentation MCP (`UnoDocs`) to search and fetch official Uno Platform documentation. It is not bundled in this plugin; it comes with the **Uno tooling**, which most Studio users already have installed.
 
 If you don't have the Uno tooling:
 

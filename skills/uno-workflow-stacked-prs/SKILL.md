@@ -1,8 +1,8 @@
 ---
 name: uno-workflow-stacked-prs
 description: "Splits a large or sequentially dependent change into a stack of small, dependent, independently reviewable GitHub pull requests using the gh-stack CLI extension, with a plain git + gh fallback."
-when_to_use: "Use this skill when a change is too big to review as one PR, when new work must build on a branch that hasn't merged yet, when asked to split an oversized (often AI-generated) PR or branch into reviewable pieces, or when asked to create, restack, rebase, reorder, sync, review, or merge a stack of pull requests. Also covers designing layer boundaries, creating one sub-issue per layer, and how reviewers should navigate a stack."
-compatibility: "Works with any GitHub repository and any language or framework — nothing in this skill is specific to a particular stack. Stacked pull requests are a GitHub feature in public preview. The primary path requires GitHub CLI 2.90.0+ with the github/gh-stack extension; a fallback using plain git and gh works everywhere. Cross-fork and cross-repository stacks are not supported by GitHub."
+when_to_use: "Use this skill when a change is too big to review as one PR, when new work must build on a branch that hasn't merged yet, when asked to split an oversized (often AI-generated) PR or branch into reviewable pieces, or when asked to create, restack, rebase, reorder, sync, review, or merge a stack of pull requests. Also covers designing layer boundaries — including where XAML, MVUX/MVVM models, and DI/navigation registration belong in an Uno Platform stack — creating one sub-issue per layer, and how reviewers should navigate a stack."
+compatibility: "The workflow works with any GitHub repository and any language or framework; one section additionally maps the layer archetype to Uno Platform (XAML + MVUX/MVVM) apps. Stacked pull requests are a GitHub feature in public preview. The primary path requires GitHub CLI 2.90.0+ with the github/gh-stack extension; a fallback using plain git and gh works everywhere. Cross-fork and cross-repository stacks are not supported by GitHub."
 metadata:
   author: uno-platform
   version: "1.0"
@@ -108,6 +108,44 @@ Adapt the archetype to the change; three layers are often enough. What never cha
   `gh stack modify` in the CLI.
 - **Keep the stack short.** Beyond ~5 layers, rebase churn and CI cost outgrow the review
   benefit. If a single layer grows past a few hundred lines, look for a seam in it.
+
+### Example: cutting an Uno Platform (XAML + MVUX/MVVM) app
+
+The archetype maps onto an Uno Platform feature — or any XAML app with an MVUX or MVVM
+presentation layer — like this:
+
+1. **Contracts** — `record` models and DTOs, enums, service interfaces, `[JsonSerializable]`
+   serialization contexts.
+2. **Services** — API clients / data access implementing the layer-1 interfaces, their DI
+   registration, unit tests.
+3. **Presentation logic** — MVUX models (`partial record` exposing `IFeed`/`IState`) or MVVM
+   ViewModels, with headless unit tests. These compile and test without any XAML, so they can
+   land — and be reviewed — before a single view exists.
+4. **Views** — XAML pages and controls, their navigation registration (`ViewMap`/`RouteMap` when
+   using Uno.Extensions Navigation), plus the styles, resources, and localization strings those
+   views use.
+5. **Polish** — UI/runtime automation tests, docs.
+
+Uno/XAML-specific judgment calls:
+
+- **Thin model? Let it ride with its XAML.** A page whose model only exposes a feed or two is one
+  presentation concern — keep model and XAML in the same layer. Split the model into its own
+  lower layer when it carries real logic (feed composition, pagination, selection, messaging) so
+  it gets a focused review and headless tests first. Both cuts respect the one rule: the XAML
+  depends on the model, never the reverse.
+- **`x:Bind` enforces the rule at compile time.** Compiled bindings reference model members, so a
+  view cut below its model doesn't build — the per-layer build check catches a bad boundary
+  immediately, where a loose `Binding` would defer the same mistake to runtime.
+- **`App.xaml.cs` is the stack's conflict magnet.** DI wiring and route registration both live
+  there, so several layers touch it. Register services with the services layer and routes with
+  the views layer, and let `git rerere` (enabled by `gh stack init`) replay the resolution on
+  each cascade.
+- **Each layer must build for every target framework** (desktop, WebAssembly, iOS, Android, …).
+  A layer that introduces platform-conditional code ships all of its platform branches itself.
+  The CI gotcha in section 10 compounds here: cost scales with layers × target frameworks.
+
+For the model and navigation patterns themselves, see the `uno-mvux-*` and `uno-navigation-*`
+skills in this plugin.
 
 ---
 

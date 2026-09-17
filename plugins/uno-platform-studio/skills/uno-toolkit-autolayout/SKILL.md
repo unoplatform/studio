@@ -4,7 +4,7 @@ description: "Use AutoLayout control to arrange children with Figma-like spacing
 when_to_use: "Use when building layouts that mirror Figma Auto-Layout, arranging children in rows or columns with uniform spacing, using space-between distribution, per-child alignment overrides (CounterAlignment), or converting Figma designs to XAML."
 metadata:
   author: uno-platform
-  version: "2.3"
+  version: "2.4"
   category: toolkit
 ---
 
@@ -58,6 +58,9 @@ There is **no** `AutoLayout.Counterpart`, no `AutoLayout.SetCounterAxisAlignment
 
 **XAML namespace:** `xmlns:utu="using:Uno.Toolkit.UI"`
 
+**Not AutoLayout's job:** if the layout is described in CSS terms (`flex-grow` / `flex-shrink` / `flex-basis`, `justify-content`, `align-items`) or the children must **wrap** onto multiple lines — which `AutoLayout` cannot do — use `FlexPanel` instead.
+
 ## Related Skills
 
+- [[uno-toolkit-flexpanel]] — CSS Flexbox layout (wrapping, grow/shrink/basis)
 - [[uno-toolkit-responsive]] — Responsive layout based on screen size

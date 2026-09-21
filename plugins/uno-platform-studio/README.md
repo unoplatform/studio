@@ -1,6 +1,6 @@
 # `uno-platform-studio` Plugin
 
-Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot CLI**, **Copilot in VS Code**, and **OpenAI Codex CLI**.
+Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot CLI**, **Copilot in VS Code**, **OpenAI Codex CLI**, and **Kimi Code CLI**.
 
 ## Contents
 
@@ -41,6 +41,23 @@ codex plugin marketplace add unoplatform/studio
 codex plugin add uno-platform-studio@uno-platform
 ```
 
+### Kimi Code CLI
+
+Point Kimi Code at this repository, then install the plugin:
+
+```text
+/plugins marketplace https://github.com/unoplatform/studio
+/plugins install uno-platform-studio
+```
+
+Alternatively, set the marketplace once for every session via the environment:
+
+```bash
+export KIMI_CODE_PLUGIN_MARKETPLACE_URL=https://github.com/unoplatform/studio
+```
+
+Plugin changes take effect after `/reload` or `/new`. Verify with `/plugins` (the **Installed** tab).
+
 ### Agents without plugin support
 
 If your agent does not support a plugin format (Cursor, Gemini CLI, Windsurf, Cline, and others), the same skills are published as standalone folders in the repository's top-level [`skills/`](https://github.com/unoplatform/studio/tree/main/skills) directory. See its [README](https://github.com/unoplatform/studio/blob/main/skills/README.md) for copy instructions.
@@ -74,6 +91,14 @@ codex plugin remove uno-platform-studio@uno-platform
 codex plugin marketplace remove uno-platform
 ```
 
+### Kimi Code CLI
+
+```text
+/plugins disable uno-platform-studio
+```
+
+Removing a plugin deletes its installation record but leaves the copied files on disk. To also drop the marketplace, unset `KIMI_CODE_PLUGIN_MARKETPLACE_URL` (if you set it).
+
 ## Documentation Grounding
 
 The skills use the Uno documentation MCP (`UnoDocs`) to search and fetch official Uno Platform documentation. It is not bundled in this plugin; it comes with the **Uno tooling**, which most Studio users already have installed.
@@ -94,3 +119,4 @@ The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additiona
 | `.claude-plugin/plugin.json` | Claude Code |
 | `.github/plugin.json` | GitHub Copilot CLI + Copilot in VS Code |
 | `.codex-plugin/plugin.json` | OpenAI Codex CLI |
+| `.kimi-plugin/plugin.json` | Kimi Code CLI |

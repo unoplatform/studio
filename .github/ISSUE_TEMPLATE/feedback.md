@@ -24,7 +24,7 @@ Here are some ideas to guide your feedback:
   - How would you rate the quality and accuracy of the UI and code the agent generates?  
   - Do the turn outcomes and status messages give you enough visibility and control over what changes?  
 - **Uno Platform Skills**:  
-  - Which AI coding agent are you using the `uno-platform-studio` plugin or skills with (Claude Code, GitHub Copilot, OpenAI Codex)?  
+  - Which AI coding agent are you using the `uno-platform-studio` plugin or skills with (Claude Code, GitHub Copilot, OpenAI Codex, Kimi Code)?  
   - How easy was it to install and set up the plugin or individual skills?  
   - Are the skills picking the right capabilities for your prompts, and was the output usable?  
 - **Hot Design®**:  

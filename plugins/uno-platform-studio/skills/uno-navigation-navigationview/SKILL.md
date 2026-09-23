@@ -4,7 +4,7 @@ description: "Implement NavigationView navigation in Uno Platform using region-b
 when_to_use: "Use when more than 5 top-level pages, hierarchical or content-heavy apps, desktop / enterprise apps, prompt mentions \"dashboard\", \"admin\", \"desktop\", \"sidebar\", or \"drawer\", building a sidebar navigation pattern, or implementing a hamburger menu."
 metadata:
   author: uno-platform
-  version: "3.3"
+  version: "3.4"
   category: navigation
 ---
 
@@ -66,7 +66,7 @@ See the `uno-navigation-responsive-shell` skill.
 - The root `Grid` with `uen:Region.Attached="True"` enables region navigation for the entire shell
 - `uen:Region.Attached="True"` MUST also be on the `NavigationView` itself
 - The content area `Grid` inside `NavigationView` needs BOTH `uen:Region.Attached="True"` AND `uen:Region.Navigator="Visibility"`
-- **The content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
+- **In this shell pattern, where each menu item is a registered route, the content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime. (Inline named children are the other documented Visibility-region mode, for panes inside a single page; see [[uno-navigation-panel-visibility]].)
 - The Settings item is NOT a `NavigationViewItem` in `MenuItems` — use `Loaded` event + `Region.SetName` in code-behind
 - Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
 - Page routes are nested under the `"Main"` route so only the content area updates, not the entire page

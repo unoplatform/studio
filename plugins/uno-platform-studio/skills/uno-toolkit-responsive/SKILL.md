@@ -4,7 +4,7 @@ description: "Screen-size-based UI adaptation via the `ResponsiveExtension` mark
 when_to_use: "Use when one layout must adapt to phone, tablet, or desktop, when XAML needs per-breakpoint property values (font size, orientation, padding, margin), or when an entire view subtree differs by screen size. `ResponsiveExtension` swaps property values; `ResponsiveView` swaps entire `DataTemplate`s. Custom breakpoints via `ResponsiveLayout`."
 metadata:
   author: uno-platform
-  version: "2.5"
+  version: "2.6"
   category: toolkit
 ---
 
@@ -50,7 +50,7 @@ Key page:
 ## Critical Rules
 
 - **`ResponsiveExtension` must be used as a markup extension** — `{utu:Responsive Narrow=Red, Wide=Blue}` — never as a XAML element (`<utu:ResponsiveExtension .../>`). The XAML engine parses the breakpoint values as strings and performs type conversion through `MarkupExtension.ProvideValue`, which is only available in markup-extension form.
-- On Windows UWP targets, `ResponsiveExtension` only works with `string` value properties due to a `MarkupExtension.ProvideValue(IXamlServiceProvider)` limitation. For non-string properties on Windows UWP, declare the values as resources and pass them via `{StaticResource ...}` (see Uno Toolkit docs).
+- On **UWP-desktop** targets (legacy UWP; the Toolkit docs title this limitation "Platform limitation (UWP-desktop)"), `ResponsiveExtension` only works with `string` value properties due to a `MarkupExtension.ProvideValue(IXamlServiceProvider)` limitation. For non-string properties there, declare the values as resources and pass them via `{StaticResource ...}` (see Uno Toolkit docs). A WinUI 3 / Windows App SDK head (`netX.0-windows10.*`) is not a UWP-desktop target, so this limitation is not a reason to replace `ResponsiveExtension` with `AdaptiveTrigger` across an app; even on UWP-desktop the `{StaticResource}` form keeps the extension.
 
 ## Key Principles (Stable)
 

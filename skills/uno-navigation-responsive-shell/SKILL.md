@@ -4,7 +4,7 @@ description: "Implement responsive navigation shells that adapt between TabBar a
 when_to_use: "Use when an app must work well on both mobile and desktop, upgrading a single-form-factor shell to responsive, or switching between `TabBar` on mobile and `NavigationView` on desktop via `VisualStateManager` or `ResponsiveExtension`."
 metadata:
   author: uno-platform
-  version: "3.5"
+  version: "3.6"
   category: navigation
 ---
 
@@ -75,7 +75,7 @@ See also the `uno-toolkit-responsive` skill.
 - The `Narrow` state has NO `StateTriggers` — it is the default (smallest) state
 - States are ordered by ascending width: Narrow (default) < Normal (700px) < Wide (1000px)
 - The shared content area with `Region.Navigator="Visibility"` serves both navigation controls
-- **The content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
+- **In this shell pattern, where each page is a registered route, the content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime. (Inline named children are the other documented Visibility-region mode, for panes inside a single page; see [[uno-navigation-panel-visibility]].)
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
 
 ## Related Skills

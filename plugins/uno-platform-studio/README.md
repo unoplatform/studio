@@ -6,10 +6,13 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 
 | Asset | Purpose |
 |---|---|
-| `skills/` | Six domain skills. Each `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+| `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
+| `skills/` | The `uno-build-app` workflow skill and six domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+| `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
 
 | Skill | Covers | References |
 |---|---|---|
+| `uno-build-app` | Workflow for building an app or a feature from a brief: discovery, blueprint, build, verification, report. Loads the domain skills as each step needs them. | 8 |
 | `uno-platform` | Entry point: routes any Uno Platform request to the domain skills and sets project-wide rules (UnoFeatures, WinUI dialect, docs grounding). | — |
 | `uno-mvux` | MVUX state management: feeds, states, list feeds/states, FeedView, commands, selection, pagination, messaging, records. | 11 |
 | `uno-navigation` | Uno.Extensions.Navigation: setup, routes, regions, code and XAML navigation, data passing, dialogs, qualifiers, TabBar/NavigationView/responsive shells, troubleshooting. | 14 topics + 4 shell templates |
@@ -61,6 +64,47 @@ codex plugin add uno-platform-studio@uno-platform
 ### Agents without plugin support
 
 If your agent does not support a plugin format (Cursor, Gemini CLI, Windsurf, Cline, and others), the same skills are published as standalone folders in the repository's top-level [`skills/`](https://github.com/unoplatform/studio/tree/main/skills) directory. See its [README](https://github.com/unoplatform/studio/blob/main/skills/README.md) for copy instructions.
+
+## Versions
+
+Installing from the marketplace tracks the repository's default branch. Studio does not publish release tags yet; once it does, you will be able to pin a release.
+
+## Use the `uno-dev` agent
+
+Start here rather than with individual skills. Select `uno-dev` and describe what you want in plain language: a new app from a brief, a feature for an existing Uno app, or a binding, state or navigation defect. It loads the `uno-build-app` workflow skill, which pulls in the focused skills as each step needs them, builds and exercises the first feature before repeating its pattern, and ends with a report that states which checks ran, which failed and which could not run.
+
+### Claude Code
+
+```text
+claude --agent uno-platform-studio:uno-dev
+```
+
+### GitHub Copilot CLI
+
+```text
+copilot --agent uno-dev
+```
+
+Or pick **uno-dev** with `/agent` inside a session.
+
+### OpenAI Codex CLI
+
+Codex plugins cannot bundle agents yet ([openai/codex#18988](https://github.com/openai/codex/issues/18988)), so install the agent file by hand after installing the plugin. Copy [`codex/uno-dev.toml`](codex/uno-dev.toml) to one of:
+
+- `.codex/agents/uno-dev.toml` in your project, for that project only;
+- `~/.codex/agents/uno-dev.toml`, for every project.
+
+Then name it in your prompt, for example: *Have uno-dev build a reading tracker with a yearly goal setting.* Delete the file to remove the agent.
+
+### Without the agent
+
+The workflow lives in the `uno-build-app` skill, so every client can invoke it directly, the same way it invokes any skill. In Claude Code:
+
+```text
+/uno-platform-studio:uno-build-app Build me a reading tracker with a yearly goal setting.
+```
+
+The workflow uses the Uno documentation MCP when it is available, and the Uno App MCP for runtime checks. Without the App MCP it still builds and tests, and reports runtime checks as not run.
 
 ## Uninstall
 

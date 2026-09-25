@@ -4,7 +4,7 @@ description: "Implement TabBar navigation in Uno Platform using region-based nav
 when_to_use: "Use when 3-5 top-level pages, mobile-first / consumer apps, default choice when prompt does not indicate desktop or enterprise, building bottom navigation (mobile), linking TabBar items to content pages via regions, or using TabBar with Navigation Extensions."
 metadata:
   author: uno-platform
-  version: "3.5"
+  version: "3.6"
   category: navigation
 ---
 
@@ -71,7 +71,7 @@ See the `uno-navigation-responsive-shell` skill.
 
 - The root `Grid` with `uen:Region.Attached="True"` MUST be a direct child of the Page content — it enables region navigation
 - `uen:Region.Navigator="Visibility"` MUST be on the content area Grid — this tells the framework to toggle child visibility
-- **The content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
+- **In this shell pattern, where each tab is a registered route, the content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime. (A TabBar switching panes *inside* one page can instead use inline named children with no routes; see [[uno-navigation-panel-visibility]].)
 - `uen:Region.Attached="True"` MUST also be on the TabBar itself
 - Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
 - Tab page routes are nested under the `"Main"` route so only the content area updates, not the entire page

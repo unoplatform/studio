@@ -36,3 +36,21 @@ jobs:
       - name: Repo checks
         shell: pwsh
         run: ./.github/scripts/Test-Plugin.ps1
+
+  agents:
+    name: Install in Copilot CLI and Codex
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install Copilot CLI and Codex
+        run: npm install -g @github/copilot@1.0.3 @openai/codex@0.154.0
+
+      - name: Install the plugin in each agent
+        shell: pwsh
+        run: ./.github/scripts/Test-AgentInstall.ps1

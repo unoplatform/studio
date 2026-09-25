@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-command-extensions
-description: "Attached properties (`CommandExtensions.Command`, `CommandExtensions.CommandParameter`) that bind controls without a built-in `Command` to MVVM commands. Use when a UI event (Enter in `TextBox`, item click in `ListView`, `ToggleSwitch` toggle, `NavigationViewItem` invocation, any `UIElement` tap) must invoke an MVVM command without code-behind event handlers."
+description: "`CommandExtensions.Command` to invoke MVVM commands from controls without a built-in `Command`. Use when a UI event (Enter in `TextBox`, item click in `ListView`, `ToggleSwitch` toggle, `NavigationViewItem` invocation, any `UIElement` tap) must invoke an MVVM command without code-behind event handlers. The attached properties `CommandExtensions.Command` and `CommandExtensions.CommandParameter` bind these controls to MVVM commands."
 metadata:
   author: uno-platform
   version: "2.5"

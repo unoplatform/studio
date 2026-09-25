@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-navigationview
-description: "Implement NavigationView navigation in Uno Platform using region-based navigation. Provides complete, compilable shell template for sidebar/hamburger navigation. Use for >5 pages, hierarchical content, or desktop/enterprise apps. Use when more than 5 top-level pages, hierarchical or content-heavy apps, desktop / enterprise apps, prompt mentions \"dashboard\", \"admin\", \"desktop\", \"sidebar\", or \"drawer\", building a sidebar navigation pattern, or implementing a hamburger menu."
+description: "NavigationView sidebar/hamburger shell for more than 5 pages, desktop, or enterprise apps. Provides a complete, compilable shell template using region-based navigation in Uno Platform. Use for >5 top-level pages, hierarchical or content-heavy apps, desktop / enterprise apps, when the prompt mentions 'dashboard', 'admin', 'desktop', 'sidebar', or 'drawer', building a sidebar navigation pattern, or implementing a hamburger menu."
 metadata:
   author: uno-platform
   version: "3.3"

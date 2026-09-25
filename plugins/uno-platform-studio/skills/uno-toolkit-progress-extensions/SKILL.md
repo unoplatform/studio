@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-progress-extensions
-description: "Use ProgressExtensions to toggle all ProgressRing and ProgressBar controls under a sub-visual-tree with a single binding. Use when toggling every `ProgressRing` and `ProgressBar` inside a subtree with one boolean binding, instead of binding each control individually."
+description: "ProgressExtensions to toggle every `ProgressRing` and `ProgressBar` in a subtree with one binding. Use when toggling all ProgressRing and ProgressBar controls under a sub-visual-tree with a single boolean binding, instead of binding each control individually."
 metadata:
   author: uno-platform
   version: "2.4"

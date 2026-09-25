@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-zoomcontentcontrol
-description: "Zoomable and pannable container for images, maps, diagrams, or document viewers. Use when zoom and pan are needed for images, maps, diagrams, or document viewers — mouse wheel zoom, middle-click pan, pinch-to-zoom, configurable min/max zoom levels, and programmatic control."
+description: "ZoomContentControl for zoom and pan of images, maps, diagrams, or document viewers. A zoomable and pannable container supporting mouse wheel zoom, middle-click pan, pinch-to-zoom, configurable min/max zoom levels, and programmatic control."
 metadata:
   author: uno-platform
   version: "2.5"

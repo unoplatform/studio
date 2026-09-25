@@ -1,6 +1,6 @@
 ---
 name: uno-testing-assertions
-description: "Provides assertion and validation patterns for UI testing of Uno Platform applications with the Uno App MCP server tools. Use this skill when you need to validate UI state, verify element properties, compare screenshots, or assert on data binding values during automated testing. Complements the ui-testing skill with validation-specific guidance."
+description: "Uno App MCP UI test assertions: validating UI state, element properties, screenshots and bindings. Complements the ui-testing skill with validation-specific guidance. Provides assertion and validation patterns for UI testing of Uno Platform applications with the Uno App MCP server tools. Use this skill when you need to validate UI state, verify element properties, compare screenshots, or assert on data binding values during automated testing."
 compatibility: Requires the Uno App MCP server to be configured. Use alongside the ui-testing skill for complete test coverage.
 metadata:
   author: uno-platform

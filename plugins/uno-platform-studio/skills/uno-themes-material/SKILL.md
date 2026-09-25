@@ -1,6 +1,6 @@
 ---
 name: uno-themes-material
-description: "Comprehensive reference for the Uno Material theme — Material Design 3 styling for Uno Platform apps. Covers installation, the MD3 color palette and brush system, semantic typography, control styles (buttons, FAB, TextBox), control extensions (icons, elevation), lightweight styling, color/font customization, and version migration. Use whenever working with Uno Material theming: setting up MaterialTheme or MaterialToolkitTheme, applying button / FAB / TextBox / typography styles, picking color palette keys, customizing colors or fonts via Theme Builder, applying lightweight styling overrides, adding control extensions (icons, elevation), or migrating between Material versions."
+description: "Uno Material theme (Material Design 3): MaterialTheme setup, MD3 colors, typography, control styles. Use whenever working with Uno Material theming: setting up MaterialTheme or MaterialToolkitTheme, applying button / FAB / TextBox / typography styles, picking color palette keys, customizing colors or fonts via Theme Builder, applying lightweight styling overrides, adding control extensions (icons, elevation), or migrating between Material versions. Comprehensive reference for Material Design 3 styling for Uno Platform apps covering installation, the MD3 color palette and brush system, semantic typography, control styles (buttons, FAB, TextBox), control extensions (icons, elevation), lightweight styling, color/font customization, and version migration."
 metadata:
   author: uno-platform
   version: "1.0"

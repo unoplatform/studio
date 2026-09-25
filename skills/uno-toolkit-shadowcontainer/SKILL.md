@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-shadowcontainer
-description: "Use ShadowContainer to add multiple layered shadows to controls. Supports both drop shadows and inner (inset) shadows. Use when `ThemeShadow` is insufficient — multiple stacked shadows, inset shadows, or precise per-shadow colors. Each shadow exposes offset, blur, spread, color, and opacity."
+description: "ShadowContainer for multiple layered drop or inner (inset) shadows on a control. Use when `ThemeShadow` is insufficient — multiple stacked shadows, inset shadows, or precise per-shadow colors. Each shadow exposes offset, blur, spread, color, and opacity."
 metadata:
   author: uno-platform
   version: "2.4"

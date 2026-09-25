@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-dialogs
-description: "Display dialogs, flyouts, modals, and message prompts using Uno Platform Navigation Extensions. Use when showing a simple alert, confirmation, or message dialog with OK/Cancel options, getting a user response from a dialog via `ShowMessageDialogAsync`, showing a dialog or flyout via navigation, using `ContentDialog` as a navigation modal, understanding the difference between flyout (Page-based) and modal (ContentDialog-based), or getting results from dialog navigation."
+description: "Dialogs, flyouts, modals, message prompts: alerts, OK/Cancel confirms, `ShowMessageDialogAsync`. Use when showing a simple alert, confirmation, or message dialog with OK/Cancel options, getting a user response from a dialog via `ShowMessageDialogAsync`, showing a dialog or flyout via navigation, using `ContentDialog` as a navigation modal, understanding the difference between flyout (Page-based) and modal (ContentDialog-based), or getting results from dialog navigation. Uses Uno Platform Navigation Extensions."
 metadata:
   author: uno-platform
   version: "2.4"

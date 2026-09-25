@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-loadingview
-description: "Use LoadingView to display loading indicators while async operations execute. Binds to ILoadable sources like AsyncCommand. Use when a view must show a spinner or skeleton while an `IAsyncCommand`, `IFeed`, or `IState` is in flight, binding `LoadingView` to any `ILoadable` source, composing multiple in-flight operations via `CompositeLoadableSource`, or toggling the loading visual automatically as commands execute."
+description: "LoadingView for a spinner or skeleton while an `IAsyncCommand`, `IFeed`, or `IState` is in flight. Binds `LoadingView` to any `ILoadable` source such as AsyncCommand, composes multiple in-flight operations via `CompositeLoadableSource`, and toggles the loading visual automatically as commands execute. Use it to display loading indicators while async operations execute."
 metadata:
   author: uno-platform
   version: "2.4"

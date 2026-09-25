@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-panel-visibility
-description: "Implement visibility-based navigation using Panel or Grid controls. Use when implementing lightweight content switching without `Frame` overhead via `Region.Navigator=\"Visibility\"`, when serving as the content area inside `TabBar`, `NavigationView`, or responsive shells, or when all registered views should stay in the visual tree after injection."
+description: "Visibility-based navigation with Panel or Grid: `Region.Navigator='Visibility'` content switching. Use when implementing lightweight content switching without `Frame` overhead via `Region.Navigator='Visibility'`, when serving as the content area inside `TabBar`, `NavigationView`, or responsive shells, or when all registered views should stay in the visual tree after injection."
 metadata:
   author: uno-platform
   version: "3.4"

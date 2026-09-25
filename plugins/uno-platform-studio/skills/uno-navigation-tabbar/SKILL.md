@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-tabbar
-description: "Implement TabBar navigation in Uno Platform using region-based navigation. Provides complete, compilable shell template for bottom tab navigation. Use for 3-5 top-level pages in mobile-first apps. Use when 3-5 top-level pages, mobile-first / consumer apps, default choice when prompt does not indicate desktop or enterprise, building bottom navigation (mobile), linking TabBar items to content pages via regions, or using TabBar with Navigation Extensions."
+description: "TabBar bottom-tab shell for 3-5 top-level pages; default for mobile-first and consumer apps. Default choice when the prompt does not indicate desktop or enterprise. Provides a complete, compilable shell template for bottom tab navigation using region-based navigation in Uno Platform. Use when building bottom navigation (mobile), linking TabBar items to content pages via regions, or using TabBar with Navigation Extensions."
 metadata:
   author: uno-platform
   version: "3.5"

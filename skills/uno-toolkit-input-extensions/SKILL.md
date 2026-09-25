@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-input-extensions
-description: "Use InputExtensions for form input UX improvements including auto-focus next field, auto-dismiss keyboard, and custom return key types. Use when implementing forms that auto-advance focus on Enter, dismiss the keyboard on completion, or set platform-specific return key types (Next, Done, Search) — typically login forms or multi-field input sequences on mobile."
+description: "InputExtensions for forms: auto-focus next field on Enter, dismiss keyboard, set return key types. Form input UX improvements: use when implementing forms that auto-advance focus on Enter, auto-dismiss the keyboard on completion, or set custom platform-specific return key types (Next, Done, Search) — typically login forms or multi-field input sequences on mobile."
 metadata:
   author: uno-platform
   version: "2.4"

@@ -1,6 +1,6 @@
 ---
 name: uno-mvux-selection
-description: "Implement item selection in MVUX lists. Use when tracking the selected item(s) in a `ListView`, `GridView`, or other selector, implementing single-item selection with `IState<T>`, implementing multi-item selection with `IState<IImmutableList<T>>`, reacting to selection changes in the Model, or manual (programmatic) selection of items."
+description: "MVUX list selection: tracking the selected item(s) in a `ListView`, `GridView` or other selector. Covers single-item selection with `IState<T>` and multi-item selection with `IState<IImmutableList<T>>`. Use when reacting to selection changes in the Model or doing manual (programmatic) selection of items. Implement item selection in MVUX lists."
 metadata:
   author: uno-platform
   version: "2.3"

@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-contentcontrol
-description: "Implement ContentControl region navigation for dynamic content areas without back stack. Use when swapping content in a specific area of the layout without maintaining back stack, using ContentControl as a navigation target region, or simple content switching that doesn't need navigation history."
+description: "ContentControl region navigation: swapping content in one layout area with no back stack. Use when swapping content in a specific area of the layout without maintaining back stack, using ContentControl as a navigation target region, or simple content switching that doesn't need navigation history. Suited to dynamic content areas without back stack."
 metadata:
   author: uno-platform
   version: "2.3"

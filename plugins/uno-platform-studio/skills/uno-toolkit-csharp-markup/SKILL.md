@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-csharp-markup
-description: "Use C# Markup with Uno Toolkit controls instead of XAML. Setup, NuGet packages, and fluent API patterns. Use when the project uses C# Markup instead of XAML and needs the Toolkit's fluent extension methods, setting up the `Uno.Toolkit.WinUI.Markup` NuGet package, applying Toolkit styles, extensions, and helpers in C# Markup, or converting existing XAML Toolkit usage to C# Markup."
+description: "C# Markup with Uno Toolkit controls instead of XAML: setup, NuGet packages, fluent API patterns. Use when the project uses C# Markup instead of XAML and needs the Toolkit's fluent extension methods, when setting up the `Uno.Toolkit.WinUI.Markup` NuGet package, applying Toolkit styles, extensions, and helpers in C# Markup, or converting existing XAML Toolkit usage to C# Markup."
 metadata:
   author: uno-platform
   version: "2.4"

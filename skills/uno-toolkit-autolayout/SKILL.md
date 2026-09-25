@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-autolayout
-description: "Use AutoLayout control to arrange children with Figma-like spacing, alignment, and padding. Use when building layouts that mirror Figma Auto-Layout, arranging children in rows or columns with uniform spacing, using space-between distribution, per-child alignment overrides (CounterAlignment), or converting Figma designs to XAML."
+description: "AutoLayout for Figma-like layouts: rows or columns with uniform spacing, alignment, and padding. Use when mirroring Figma Auto-Layout or converting Figma designs to XAML, using space-between distribution, or per-child alignment overrides (CounterAlignment). Arranges children with Figma-like spacing, alignment, and padding."
 metadata:
   author: uno-platform
   version: "2.4"

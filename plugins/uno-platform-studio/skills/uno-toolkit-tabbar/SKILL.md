@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-tabbar
-description: "Use TabBar and TabBarItem for tab navigation with icons, labels, badges, and selection indicators. Supports bottom navigation, top tabs, and vertical tabs. Use when styling a `TabBar`'s visual appearance (icons, labels, badges, selection indicator, bottom / top / vertical orientation). For region wiring inside a navigation shell, use `uno-navigation-tabbar` instead. Always set an explicit `Style` for proper appearance."
+description: "TabBar and TabBarItem styling: icons, labels, badges, selection indicator, bottom/top/vertical tabs. For region wiring inside a navigation shell, use `uno-navigation-tabbar` instead. Always set an explicit `Style` for proper appearance. Use when styling a `TabBar`'s visual appearance for tab navigation with icons, labels, badges, and selection indicators — supports bottom navigation, top tabs, and vertical tabs (bottom / top / vertical orientation)."
 metadata:
   author: uno-platform
   version: "2.5"

@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-lightweight-styling
-description: "Apply lightweight styling to Uno Toolkit controls by overriding resource keys. Change colors, fonts, spacing without custom styles. Use when customising Toolkit control appearance by overriding resource keys (colors, fonts, spacing) rather than rewriting templates. Overrides may live at app, page, or per-control scope; the main task is finding the right resource key in the naming pattern."
+description: "Lightweight styling of Toolkit controls: override resource keys to change colors, fonts, spacing. Use when customising Uno Toolkit control appearance by overriding resource keys rather than rewriting templates or writing custom styles; the main task is finding the right resource key in the naming pattern. Overrides may live at app, page, or per-control scope."
 metadata:
   author: uno-platform
   version: "2.4"

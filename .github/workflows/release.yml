@@ -1,0 +1,35 @@
+name: Release
+
+# The marketplaces pin the plugin to a release tag, so main is staging. A release PR bumps the
+# version in every manifest and points each marketplace's source.ref at the new version; once it
+# lands on main, this tags that commit so the pinned ref resolves, and publishes release notes.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - plugins/uno-platform-studio/.claude-plugin/plugin.json
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Tag and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # gh creates a lightweight tag. Keep it that way: Codex compares `git ls-remote` output
+      # with the checked-out commit, which never matches an annotated tag's object id.
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r .version plugins/uno-platform-studio/.claude-plugin/plugin.json)
+          if gh release view "$version" > /dev/null 2>&1; then
+            echo "Release $version already exists, nothing to do."
+            exit 0
+          fi
+          gh release create "$version" --target "$GITHUB_SHA" --title "$version" --generate-notes

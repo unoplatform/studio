@@ -93,3 +93,17 @@ The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additiona
 |---|---|
 | `.claude-plugin/plugin.json` | Claude Code, GitHub Copilot CLI, Copilot in VS Code |
 | `.codex-plugin/plugin.json` | OpenAI Codex CLI |
+
+## Releasing
+
+`main` is staging. Every marketplace pins the plugin to a release tag through its `source.ref`, so agents only install what has been released.
+
+To release, open a PR that sets the new version in:
+
+- both `plugin.json` files (`.claude-plugin/`, `.codex-plugin/`),
+- `.claude-plugin/marketplace.json` and `.github/plugin/marketplace.json` (`metadata.version`, the plugin entry's `version` and `source.ref`),
+- `.agents/plugins/marketplace.json` (`source.ref`).
+
+CI checks that all of them agree. When the PR merges, the release workflow tags the merge commit with the version and publishes release notes, which is what makes the new `source.ref` resolve.
+
+Run the repo checks locally with `pwsh .github/scripts/Test-Plugin.ps1`.

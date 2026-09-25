@@ -10,7 +10,7 @@
         "source": "git-subdir",
         "url": "https://github.com/unoplatform/studio.git",
         "path": "plugins/uno-platform-studio",
-        "ref": "1.0.0"
+        "ref": "1.1.0"
       },
       "policy": {
         "installation": "AVAILABLE"

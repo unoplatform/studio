@@ -53,30 +53,11 @@ try {
         }
     }
 
-    # --- Skill frontmatter and references
+    # --- Links between skills and to references/ (frontmatter is checked by `agentskills validate`)
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"
         if (-not (Test-Path $skill)) { $errors.Add("$($dir.Name): missing SKILL.md"); continue }
         $text = Get-Content $skill -Raw
-        if ($text -notmatch '(?s)\A---\r?\n(.*?)\r?\n---') { $errors.Add("${skill}: missing YAML frontmatter"); continue }
-
-        # ponytail: top-level single-line scalars only; `claude plugin validate` already checks the YAML parses.
-        $fm = @{}
-        foreach ($line in $Matches[1] -split '\r?\n') {
-            if ($line -match '^([a-z_]+):\s*(.*)$') { $fm[$Matches[1]] = $Matches[2].Trim() -replace '^"(.*)"$', '$1' }
-        }
-        foreach ($key in 'description', 'when_to_use') {
-            if ($fm[$key] -match '^[|>]') { $errors.Add("${skill}: '$key' must be a single-line value") }
-        }
-
-        if ($fm.name -ne $dir.Name) { $errors.Add("${skill}: name '$($fm.name)' must match folder '$($dir.Name)'") }
-        if ($fm.name -notmatch '^[a-z0-9]+(-[a-z0-9]+)*$' -or $fm.name.Length -gt 64) {
-            $errors.Add("${skill}: name '$($fm.name)' must be lowercase-hyphenated, max 64 chars")
-        }
-
-        # Claude Code truncates description + when_to_use at 1,536 chars in the skill listing.
-        $listing = "$($fm.description) $($fm.when_to_use)".Trim().Length
-        if ($listing -gt 1536) { $errors.Add("${skill}: description + when_to_use is $listing chars, max 1536") }
 
         foreach ($ref in [regex]::Matches($text, '`(uno-(?:mvux|navigation|toolkit|themes|testing)-[a-z0-9-]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique) {
             if (-not (Test-Path "$plugin/skills/$ref")) { $errors.Add("${skill}: references unknown skill '$ref'") }

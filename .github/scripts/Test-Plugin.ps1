@@ -53,17 +53,33 @@ try {
         }
     }
 
-    # --- Links between skills and to references/ (frontmatter is checked by `agentskills validate`)
+    # --- Links between skills and to references/ (frontmatter is checked by `agentskills validate`).
+    # Each skill is a hub: SKILL.md must route to every file in its references/, and a
+    # `references/<topic>.md` mention resolves in the hub named earlier on the same line
+    # (for example "the `uno-toolkit` skill (`references/card.md`)"), otherwise in the current skill.
+    $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"
         if (-not (Test-Path $skill)) { $errors.Add("$($dir.Name): missing SKILL.md"); continue }
         $text = Get-Content $skill -Raw
 
-        foreach ($ref in [regex]::Matches($text, '`(uno-(?:mvux|navigation|toolkit|themes|testing)-[a-z0-9-]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique) {
-            if (-not (Test-Path "$plugin/skills/$ref")) { $errors.Add("${skill}: references unknown skill '$ref'") }
+        foreach ($ref in [regex]::Matches($text, '`(uno-[a-z0-9-]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique) {
+            if ($ref -in $hubs) { continue }
+            if ($ref -match '^uno-(mvux|navigation|toolkit|themes|testing)-') { $errors.Add("${skill}: references retired per-topic skill '$ref' (it is now a references/ file inside a hub)") }
         }
-        foreach ($ref in [regex]::Matches($text, 'references/[A-Za-z0-9._-]+\.md') | ForEach-Object Value | Sort-Object -Unique) {
-            if (-not (Test-Path "$plugin/skills/$($dir.Name)/$ref")) { $errors.Add("${skill}: missing file '$ref'") }
+        $files = @($skill) + @(Get-ChildItem "$plugin/skills/$($dir.Name)/references" -Filter *.md -ErrorAction SilentlyContinue | ForEach-Object FullName)
+        foreach ($file in $files) {
+            foreach ($line in Get-Content $file) {
+                foreach ($m in [regex]::Matches($line, 'references/[A-Za-z0-9._-]+\.md')) {
+                    $before = $line.Substring(0, $m.Index)
+                    $named = [regex]::Matches($before, 'uno-[a-z]+') | ForEach-Object Value | Where-Object { $_ -in $hubs } | Select-Object -Last 1
+                    $hub = $named ? $named : $dir.Name
+                    if (-not (Test-Path "$plugin/skills/$hub/$($m.Value)")) { $errors.Add("${file}: '$($m.Value)' does not exist in skill '$hub'") }
+                }
+            }
+        }
+        foreach ($ref in Get-ChildItem "$plugin/skills/$($dir.Name)/references" -Filter *.md -ErrorAction SilentlyContinue) {
+            if ($text -notmatch [regex]::Escape("references/$($ref.Name)")) { $errors.Add("${skill}: does not route to 'references/$($ref.Name)'") }
         }
     }
 }

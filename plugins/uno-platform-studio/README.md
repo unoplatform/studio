@@ -100,11 +100,11 @@ The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additiona
 
 Releases ship from `release/stable/<major>.<minor>` branches, like the other Uno Platform repos:
 
-1. Push a `release/stable/1.2` branch cut from `main`, or push fixes to an existing one for a patch release.
+1. Comment `/unobot prepare-release --commit-message-pattern "ci: Set version to '{0}'"` on a merged PR. The bot cuts `release/stable/<major>.<minor>` from `main`, using the version in `version.json`, and opens a PR bumping `main` to the next `-dev` version. For a patch release, merge fixes into an existing release branch instead, for example with `/unobot backport release/stable/1.2`.
 2. The **Release** workflow validates the branch, then waits for approval on the `plugin-release` environment.
 3. Once approved, it releases the next `1.2.<patch>` (starting at `1.2.0`). It stamps that version into every manifest on the release branch, tags the commit, publishes a GitHub Release, and opens a PR that moves the marketplaces on `main` to the new tag.
 4. Merge that PR. Agents start installing the release once `main` points at it.
 
-Don't edit versions or `source.ref` by hand. The workflow sets them with `.github/scripts/Set-PluginVersion.ps1`, and CI checks that they all agree.
+Don't edit versions or `source.ref` by hand. On `main` they always show the latest release, and `version.json` holds the next one. The workflow sets them with `.github/scripts/Set-PluginVersion.ps1`, and CI checks that they all agree.
 
 Run the repo checks locally with `pwsh .github/scripts/Test-Plugin.ps1`.

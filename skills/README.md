@@ -8,6 +8,8 @@ This folder is for agents that **don't use the plugin system**: Cursor, Gemini C
 
 Each skill is a self-contained folder with a `SKILL.md` (and optional `references/`). All skills are named `uno-<category>-<topic>`, so a `uno-*` glob copies the full catalog.
 
+`main` can contain unreleased changes. For the version the plugin ships, clone the [latest release](https://github.com/unoplatform/studio/releases/latest) tag instead, e.g. `git clone --branch <tag> https://github.com/unoplatform/studio.git`.
+
 Cursor example:
 
 ```bash

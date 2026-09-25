@@ -1,0 +1,36 @@
+name: Validate Plugin
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate plugin and skills
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code@2.1.282
+
+      - name: Validate manifests and skills
+        run: |
+          claude plugin validate . --strict
+          claude plugin validate plugins/uno-platform-studio --strict
+
+      - name: Repo checks
+        shell: pwsh
+        run: ./.github/scripts/Test-Plugin.ps1

@@ -1,35 +1,92 @@
 name: Release
 
-# The marketplaces pin the plugin to a release tag, so main is staging. A release PR bumps the
-# version in every manifest and points each marketplace's source.ref at the new version; once it
-# lands on main, this tags that commit so the pinned ref resolves, and publishes release notes.
+# Releases ship from release/stable/<major>.<minor> branches, like the other Uno Platform repos,
+# and wait for approval on the plugin-release environment. Each approved push releases the next
+# <major>.<minor>.<patch>: the version is stamped into every manifest on the release branch, that
+# commit is tagged and published, and a PR moves the marketplaces on main (the ones agents read)
+# to the new tag.
 on:
   push:
     branches:
-      - main
-    paths:
-      - plugins/uno-platform-studio/.claude-plugin/plugin.json
+      - release/stable/**
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
+  validate:
+    uses: ./.github/workflows/validate-plugin.yml
+
   release:
     name: Tag and publish release
+    needs: validate
     runs-on: ubuntu-latest
+    environment: plugin-release
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Compute version
+        id: version
+        run: |
+          minor="${GITHUB_REF_NAME#release/stable/}"
+          if [[ ! "$minor" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Release branches must be named release/stable/<major>.<minor>, got $GITHUB_REF_NAME"
+            exit 1
+          fi
+          last=$(git tag -l "$minor.*" | grep -E "^${minor//./\\.}\.[0-9]+$" | sort -V | tail -1 || true)
+          if [ -z "$last" ]; then patch=0; else patch=$(( ${last##*.} + 1 )); fi
+          echo "version=$minor.$patch" >> "$GITHUB_OUTPUT"
+          echo "Releasing $minor.$patch" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stamp the version on the release branch
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          pwsh .github/scripts/Set-PluginVersion.ps1 -Version "$VERSION"
+          pwsh .github/scripts/Test-Plugin.ps1
+          if ! git diff --quiet; then
+            git commit -am "chore(release): $VERSION"
+            # Pushes made with GITHUB_TOKEN don't trigger workflows, so this doesn't start another release.
+            git push origin "HEAD:$GITHUB_REF_NAME"
+          fi
 
       # gh creates a lightweight tag. Keep it that way: Codex compares `git ls-remote` output
       # with the checked-out commit, which never matches an annotated tag's object id.
-      - name: Create GitHub release
+      - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "$VERSION" --target "$(git rev-parse HEAD)" --title "$VERSION" --generate-notes
+
+      # main is protected, so the marketplaces agents read move to the new tag through a PR.
+      # A patch release on an older line never moves main backwards.
+      - name: Open a PR pointing main at the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          version=$(jq -r .version plugins/uno-platform-studio/.claude-plugin/plugin.json)
-          if gh release view "$version" > /dev/null 2>&1; then
-            echo "Release $version already exists, nothing to do."
+          current=$(git show origin/main:plugins/uno-platform-studio/.claude-plugin/plugin.json | jq -r .version)
+          if [ "$(printf '%s\n' "$current" "$VERSION" | sort -V | tail -1)" != "$VERSION" ] || [ "$current" = "$VERSION" ]; then
+            echo "main is already at $current, not moving it to $VERSION." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          gh release create "$version" --target "$GITHUB_SHA" --title "$version" --generate-notes
+          branch="chore/release-$VERSION"
+          git switch -c "$branch" origin/main
+          pwsh .github/scripts/Set-PluginVersion.ps1 -Version "$VERSION"
+          git commit -am "chore(release): point the marketplaces at $VERSION"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(release): point the marketplaces at $VERSION" \
+            --body "Release [$VERSION](https://github.com/${GITHUB_REPOSITORY}/releases/tag/$VERSION) is published. Merging this moves every marketplace's \`source.ref\` to it, which is when agents start installing it."

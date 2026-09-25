@@ -98,12 +98,13 @@ The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additiona
 
 `main` is staging. Every marketplace pins the plugin to a release tag through its `source.ref`, so agents only install what has been released.
 
-To release, open a PR that sets the new version in:
+Releases ship from `release/stable/<major>.<minor>` branches, like the other Uno Platform repos:
 
-- both `plugin.json` files (`.claude-plugin/`, `.codex-plugin/`),
-- `.claude-plugin/marketplace.json` and `.github/plugin/marketplace.json` (`metadata.version`, the plugin entry's `version` and `source.ref`),
-- `.agents/plugins/marketplace.json` (`source.ref`).
+1. Push a `release/stable/1.2` branch cut from `main`, or push fixes to an existing one for a patch release.
+2. The **Release** workflow validates the branch, then waits for approval on the `plugin-release` environment.
+3. Once approved, it releases the next `1.2.<patch>` (starting at `1.2.0`). It stamps that version into every manifest on the release branch, tags the commit, publishes a GitHub Release, and opens a PR that moves the marketplaces on `main` to the new tag.
+4. Merge that PR. Agents start installing the release once `main` points at it.
 
-CI checks that all of them agree. When the PR merges, the release workflow tags the merge commit with the version and publishes release notes, which is what makes the new `source.ref` resolve.
+Don't edit versions or `source.ref` by hand. The workflow sets them with `.github/scripts/Set-PluginVersion.ps1`, and CI checks that they all agree.
 
 Run the repo checks locally with `pwsh .github/scripts/Test-Plugin.ps1`.

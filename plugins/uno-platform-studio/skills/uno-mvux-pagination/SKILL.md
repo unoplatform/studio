@@ -1,7 +1,6 @@
 ---
 name: uno-mvux-pagination
-description: "Implement paginated and infinite scrolling lists in MVUX."
-when_to_use: "Use when loading large datasets incrementally (page by page), implementing infinite scroll in `ListView`, `GridView`, or `ItemsRepeater`, working with APIs that use offset/limit or cursor-based pagination, or using `ListFeed.PaginatedAsync(...)`."
+description: "Implement paginated and infinite scrolling lists in MVUX. Use when loading large datasets incrementally (page by page), implementing infinite scroll in `ListView`, `GridView`, or `ItemsRepeater`, working with APIs that use offset/limit or cursor-based pagination, or using `ListFeed.PaginatedAsync(...)`."
 metadata:
   author: uno-platform
   version: "2.3"

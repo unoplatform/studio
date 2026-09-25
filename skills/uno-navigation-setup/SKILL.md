@@ -1,7 +1,6 @@
 ---
 name: uno-navigation-setup
-description: "Set up and configure Uno Platform Navigation Extensions in an application."
-when_to_use: "Use when creating a new Uno Platform project with navigation support, adding navigation to an existing Uno Platform app, configuring `UseNavigation` in App.xaml.cs host builder, setting up route registration, or understanding the relationship between Navigation and Toolkit packages."
+description: "Set up and configure Uno Platform Navigation Extensions in an application. Use when creating a new Uno Platform project with navigation support, adding navigation to an existing Uno Platform app, configuring `UseNavigation` in App.xaml.cs host builder, setting up route registration, or understanding the relationship between Navigation and Toolkit packages."
 metadata:
   author: uno-platform
   version: "2.3"

@@ -1,7 +1,6 @@
 ---
 name: uno-mvux-commands
-description: "Create and use commands in MVUX for user interactions."
-when_to_use: "Use when binding a Button (or other control) to a method on the Model, understanding how methods become commands in the generated ViewModel, passing feed/state values as parameters to commands, controlling which methods generate commands (implicit vs explicit), or disabling command generation for specific methods."
+description: "Create and use commands in MVUX for user interactions. Use when binding a Button (or other control) to a method on the Model, understanding how methods become commands in the generated ViewModel, passing feed/state values as parameters to commands, controlling which methods generate commands (implicit vs explicit), or disabling command generation for specific methods."
 metadata:
   author: uno-platform
   version: "2.4"

@@ -1,7 +1,6 @@
 ---
 name: uno-themes-semantic-colors-brushes
-description: "Comprehensive reference for the Uno Themes Semantic Design Language. Covers semantic control styles, typography, 33 color palette keys, ~288 generated brushes, opacity/state system, color pairing rules, and theme customization."
-when_to_use: "Use when styling apps with Uno Themes, choosing correct semantic style keys, using typography resources, selecting color roles, customizing the color palette, or understanding the relationship between colors, brushes, styles, and interactive states."
+description: "Comprehensive reference for the Uno Themes Semantic Design Language. Covers semantic control styles, typography, 33 color palette keys, ~288 generated brushes, opacity/state system, color pairing rules, and theme customization. Use when styling apps with Uno Themes, choosing correct semantic style keys, using typography resources, selecting color roles, customizing the color palette, or understanding the relationship between colors, brushes, styles, and interactive states."
 metadata:
   author: custom
   version: "2.7"

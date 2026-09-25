@@ -1,7 +1,6 @@
 ---
 name: uno-navigation-qualifiers
-description: "Use navigation qualifiers in Uno Platform to control back stack behavior."
-when_to_use: "Use when clearing the navigation back stack (e.g., after login), removing specific pages from back stack, opening dialogs/flyouts via navigation, navigating to nested regions, or using qualifier prefixes in route strings."
+description: "Use navigation qualifiers in Uno Platform to control back stack behavior. Use when clearing the navigation back stack (e.g., after login), removing specific pages from back stack, opening dialogs/flyouts via navigation, navigating to nested regions, or using qualifier prefixes in route strings."
 metadata:
   author: uno-platform
   version: "2.3"

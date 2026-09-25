@@ -1,7 +1,6 @@
 ---
 name: uno-mvux-feed-basics
-description: "Create and use IFeed<T> for async data in MVUX."
-when_to_use: "Use when loading data from a service or API into MVUX, creating reactive data sources that automatically handle loading/error states, transforming async data with operators like `Select` or `Where`, understanding the difference between feeds and states, or refreshing data using `Signal`."
+description: "Create and use IFeed<T> for async data in MVUX. Use when loading data from a service or API into MVUX, creating reactive data sources that automatically handle loading/error states, transforming async data with operators like `Select` or `Where`, understanding the difference between feeds and states, or refreshing data using `Signal`."
 metadata:
   author: uno-platform
   version: "2.3"

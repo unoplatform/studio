@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-chip
-description: "Use Chip and ChipGroup for selection, filtering, or action triggers. Supports Assist, Input, Filter, and Suggestion chip styles."
-when_to_use: "Use when building filter bars, tag input, multi-select pills, or suggestion chips — the Assist, Input, Filter, and Suggestion chip patterns. `ChipGroup` handles single or multi-selection; chips support leading icons and a remove button."
+description: "Use Chip and ChipGroup for selection, filtering, or action triggers. Supports Assist, Input, Filter, and Suggestion chip styles. Use when building filter bars, tag input, multi-select pills, or suggestion chips — the Assist, Input, Filter, and Suggestion chip patterns. `ChipGroup` handles single or multi-selection; chips support leading icons and a remove button."
 metadata:
   author: uno-platform
   version: "2.5"

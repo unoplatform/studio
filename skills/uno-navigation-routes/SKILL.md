@@ -1,7 +1,6 @@
 ---
 name: uno-navigation-routes
-description: "Define and register navigation routes in Uno Platform applications using ViewMap, DataViewMap, ResultDataViewMap, and RouteMap."
-when_to_use: "Use when registering views and ViewModels for navigation, setting up `ViewMap`, `DataViewMap`, or `ResultDataViewMap`, configuring nested routes and route hierarchies, adding route dependencies or initialization logic, or understanding how routes map to navigation paths."
+description: "Define and register navigation routes in Uno Platform applications using ViewMap, DataViewMap, ResultDataViewMap, and RouteMap. Use when registering views and ViewModels for navigation, setting up `ViewMap`, `DataViewMap`, or `ResultDataViewMap`, configuring nested routes and route hierarchies, adding route dependencies or initialization logic, or understanding how routes map to navigation paths."
 metadata:
   author: uno-platform
   version: "2.3"

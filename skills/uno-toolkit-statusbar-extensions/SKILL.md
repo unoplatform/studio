@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-statusbar-extensions
-description: "Attached properties (`StatusBar.Foreground`, `StatusBar.Background`) for customising the system status bar from XAML on mobile platforms."
-when_to_use: "Use when customising the system status bar on iOS or Android — light vs dark icons, background tint, or visibility — per page from XAML."
+description: "Attached properties (`StatusBar.Foreground`, `StatusBar.Background`) for customising the system status bar from XAML on mobile platforms. Use when customising the system status bar on iOS or Android — light vs dark icons, background tint, or visibility — per page from XAML."
 metadata:
   author: uno-platform
   version: "2.5"

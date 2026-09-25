@@ -1,7 +1,6 @@
 ---
 name: uno-navigation-data
-description: "Pass and receive data during navigation in Uno Platform applications."
-when_to_use: "Use when passing data (objects, IDs, filters) from one page to another, receiving data in a ViewModel via constructor injection, returning results from a page back to the caller, using `NavigateDataAsync`, `NavigateBackWithResultAsync`, or setting up `DataViewMap` or `ResultDataViewMap` for data-based routes."
+description: "Pass and receive data during navigation in Uno Platform applications. Use when passing data (objects, IDs, filters) from one page to another, receiving data in a ViewModel via constructor injection, returning results from a page back to the caller, using `NavigateDataAsync`, `NavigateBackWithResultAsync`, or setting up `DataViewMap` or `ResultDataViewMap` for data-based routes."
 metadata:
   author: uno-platform
   version: "2.3"

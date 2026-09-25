@@ -33,6 +33,15 @@ jobs:
           claude plugin validate . --strict
           claude plugin validate plugins/uno-platform-studio --strict
 
+      # The open skill format that Codex, Copilot, Cursor and other agents read. Stricter than
+      # Claude Code: only spec fields (so no `when_to_use`) and descriptions up to 1,024 chars.
+      - name: Validate skills against the Agent Skills spec
+        run: |
+          pipx install skills-ref==0.1.1
+          for skill in plugins/uno-platform-studio/skills/*/; do
+            agentskills validate "$skill"
+          done
+
       - name: Repo checks
         shell: pwsh
         run: ./.github/scripts/Test-Plugin.ps1

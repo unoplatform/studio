@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-safearea
-description: "Use SafeArea to keep content within visible screen bounds, avoiding notches, status bars, and on-screen keyboards. Essential for mobile forms."
-when_to_use: "Use when laying out forms, footers, or bottom navigation that must clear iOS home-indicator, Android gesture bar, device notches, rounded corners, the status bar, or the on-screen keyboard. CRITICAL for any mobile page with a `TextBox` or `PasswordBox`. Apply via the `<SafeArea>` control or the `SafeArea.Insets` attached property."
+description: "Use SafeArea to keep content within visible screen bounds, avoiding notches, status bars, and on-screen keyboards. Essential for mobile forms. Use when laying out forms, footers, or bottom navigation that must clear iOS home-indicator, Android gesture bar, device notches, rounded corners, the status bar, or the on-screen keyboard. CRITICAL for any mobile page with a `TextBox` or `PasswordBox`. Apply via the `<SafeArea>` control or the `SafeArea.Insets` attached property."
 metadata:
   author: uno-platform
   version: "2.4"

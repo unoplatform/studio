@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-flexpanel
-description: "Use FlexPanel to arrange children with CSS Flexbox semantics — grow/shrink/basis distribution, wrapping, gaps, and per-item alignment."
-when_to_use: "Use when the layout is described in CSS terms — `flex-grow` / `flex-shrink` / `flex-basis` distribution, `justify-content` / `align-items` / `align-self`, `row-gap` / `column-gap`, `flex-wrap` — or when porting a web layout where matching flexbox exactly matters. ALWAYS use this skill when children must WRAP onto multiple lines (`AutoLayout` cannot wrap), when items must share space by ratio, or when a child must be sized by `Basis` rather than `Width`. For reproducing a Figma auto-layout frame — including independent/absolutely-positioned children, reverse Z-index, or negative spacing — use `uno-toolkit-autolayout` instead."
+description: "Use FlexPanel to arrange children with CSS Flexbox semantics — grow/shrink/basis distribution, wrapping, gaps, and per-item alignment. Use when the layout is described in CSS terms — `flex-grow` / `flex-shrink` / `flex-basis` distribution, `justify-content` / `align-items` / `align-self`, `row-gap` / `column-gap`, `flex-wrap` — or when porting a web layout where matching flexbox exactly matters. ALWAYS use this skill when children must WRAP onto multiple lines (`AutoLayout` cannot wrap), when items must share space by ratio, or when a child must be sized by `Basis` rather than `Width`. For reproducing a Figma auto-layout frame — including independent/absolutely-positioned children, reverse Z-index, or negative spacing — use `uno-toolkit-autolayout` instead."
 metadata:
   author: uno-platform
   version: "1.0"

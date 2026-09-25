@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-getting-started
-description: "Install and configure Uno Toolkit library in Uno Platform applications."
-when_to_use: "Use when setting up Uno Toolkit in a new or existing project, adding `<UnoFeatures>Toolkit</UnoFeatures>` to a project, configuring ToolkitResources or MaterialToolkitTheme in App.xaml, or understanding Toolkit NuGet package requirements."
+description: "Install and configure Uno Toolkit library in Uno Platform applications. Use when setting up Uno Toolkit in a new or existing project, adding `<UnoFeatures>Toolkit</UnoFeatures>` to a project, configuring ToolkitResources or MaterialToolkitTheme in App.xaml, or understanding Toolkit NuGet package requirements."
 metadata:
   author: uno-platform
   version: "2.3"

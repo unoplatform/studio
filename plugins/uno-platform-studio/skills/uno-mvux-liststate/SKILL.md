@@ -1,7 +1,6 @@
 ---
 name: uno-mvux-liststate
-description: "Create and use IListState<T> for mutable reactive collections in MVUX."
-when_to_use: "Use when adding, removing, or updating items in a collection, managing item selection in a list, two-way binding with collections, synchronizing list changes with services via messaging, or converting a read-only `IListFeed<T>` into a mutable `IListState<T>`."
+description: "Create and use IListState<T> for mutable reactive collections in MVUX. Use when adding, removing, or updating items in a collection, managing item selection in a list, two-way binding with collections, synchronizing list changes with services via messaging, or converting a read-only `IListFeed<T>` into a mutable `IListState<T>`."
 metadata:
   author: uno-platform
   version: "2.3"

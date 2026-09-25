@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-navigationbar
-description: "Page-level app bar with title, back button, and action items; renders natively on iOS and Android."
-when_to_use: "Use when adding a page-level app bar with title, back button (`MainCommand`), and `AppBarButton` actions in `PrimaryCommands` / `SecondaryCommands`. Renders as XAML on Windows and as the native bar on iOS / Android."
+description: "Page-level app bar with title, back button, and action items; renders natively on iOS and Android. Use when adding a page-level app bar with title, back button (`MainCommand`), and `AppBarButton` actions in `PrimaryCommands` / `SecondaryCommands`. Renders as XAML on Windows and as the native bar on iOS / Android."
 metadata:
   author: uno-platform
   version: "2.5"

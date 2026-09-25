@@ -91,6 +91,5 @@ The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additiona
 
 | File | Consumer |
 |---|---|
-| `.claude-plugin/plugin.json` | Claude Code |
-| `.github/plugin.json` | GitHub Copilot CLI + Copilot in VS Code |
+| `.claude-plugin/plugin.json` | Claude Code, GitHub Copilot CLI, Copilot in VS Code |
 | `.codex-plugin/plugin.json` | OpenAI Codex CLI |

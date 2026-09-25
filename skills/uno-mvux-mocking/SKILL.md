@@ -91,7 +91,6 @@ vm.SetMock(RecipeModelMock.Empty with
   - `MOCK0001` (warning) — the view-model exposes no constructor `Create` can call.
   - `MOCK0002` (information) — the model has feeds, but none is fed by a constructor parameter, so there is nothing to mock. It is hidden at default `dotnet build` verbosity: look in the IDE error list or build with `-v normal`. If a feed does reach a service by a route the analysis cannot see, declare it: `[FeedDependency("Member", OnParameter = "service")]` (namespace `Uno.Extensions.Reactive.Config`).
   - `MOCK0003` (warning) — an `[assembly: ImplicitBindables(...)]` pattern is not a valid regular expression.
-- **Known issue — a mocked `Empty` on a feed of a single record shows the page's error template in a preview**, not its `NoneTemplate`. List feeds are not affected. For that page's empty state, use the fallback below with a service that returns `null` and an empty list; it renders the `NoneTemplate`s.
 - **Fallback when no mock can exist:** construct the real view-model over a hand-written in-memory service — `new RecipeViewModel(new FakeRecipeService())`. This runs the real feeds, derived ones included, so it can show data and empty states but not loading or error.
 
 ## Key Principles (Stable)

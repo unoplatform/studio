@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-responsive-shell
-description: "Implement responsive navigation shells that adapt between TabBar and NavigationView based on screen size. Provides complete, compilable shell template with VisualStateManager breakpoints. Use when an app must work well on both mobile and desktop, upgrading a single-form-factor shell to responsive, or switching between `TabBar` on mobile and `NavigationView` on desktop via `VisualStateManager` or `ResponsiveExtension`."
+description: "Responsive shell switching `TabBar` on mobile to `NavigationView` on desktop by screen size. Provides a complete, compilable shell template with `VisualStateManager` breakpoints. Use when an app must work well on both mobile and desktop, upgrading a single-form-factor shell to responsive, or switching between `TabBar` on mobile and `NavigationView` on desktop via `VisualStateManager` or `ResponsiveExtension`."
 metadata:
   author: uno-platform
   version: "3.5"

@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-resource-extensions
-description: "Use ResourceExtensions to apply ResourceDictionary directly to control styles for lightweight styling. Enables visual variants without page-level resources. Use when applying a `ResourceDictionary` directly to a single control so it picks up a visual variant without declaring resources at page level — typically per-control color or brush overrides, or shared-base-style variants."
+description: "ResourceExtensions to apply a `ResourceDictionary` directly to one control for lightweight styling. Gives a single control a visual variant without declaring resources at page level — typically per-control color or brush overrides, or shared-base-style variants applied to control styles."
 metadata:
   author: uno-platform
   version: "2.4"

@@ -1,6 +1,6 @@
 ---
 name: uno-mvux-messaging
-description: "Use messaging to sync MVUX states with entity changes. Use when CRUD operations that should update all views showing the same data, decoupling services from models — services broadcast changes, models react, keeping multiple views/pages in sync when shared entities change, or using `EntityMessage<T>` with CommunityToolkit.Mvvm messenger."
+description: "MVUX messaging with `EntityMessage<T>`: syncing states across views after CRUD entity changes. Use when CRUD operations should update all views showing the same data, decoupling services from models (services broadcast changes, models react), keeping multiple views/pages in sync when shared entities change, or using `EntityMessage<T>` with CommunityToolkit.Mvvm messenger. Use messaging to sync MVUX states with entity changes."
 metadata:
   author: uno-platform
   version: "2.3"

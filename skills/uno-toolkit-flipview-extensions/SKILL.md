@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-flipview-extensions
-description: "Use FlipViewExtensions to add navigation buttons to FlipView. Auto-shows Previous/Next arrows for desktop. Use when a `FlipView` needs Previous/Next arrow buttons on desktop (the default touch swipe is mouse-hostile). Buttons auto-show on desktop and can be styled via attached properties."
+description: "FlipViewExtensions to add Previous/Next arrow navigation buttons to a `FlipView` on desktop. Use when a `FlipView` needs Previous/Next arrow buttons on desktop (the default touch swipe is mouse-hostile). Buttons auto-show on desktop and can be styled via attached properties."
 metadata:
   author: uno-platform
   version: "2.4"

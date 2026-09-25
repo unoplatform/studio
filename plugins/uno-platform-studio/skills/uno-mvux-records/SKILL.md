@@ -1,6 +1,6 @@
 ---
 name: uno-mvux-records
-description: "Use immutable records effectively with MVUX. Use when designing data models/entities for MVUX, understanding why MVUX requires records (immutability), implementing key equality for proper item matching in lists, using `with` expressions to create modified copies, or understanding `partial record` requirements for Model classes."
+description: "Immutable records for MVUX data models/entities: key equality, `with` copies, `partial record`. Use when designing data models/entities for MVUX, understanding why MVUX requires records (immutability), implementing key equality for proper item matching in lists, using `with` expressions to create modified copies, or understanding `partial record` requirements for Model classes. Use immutable records effectively with MVUX."
 metadata:
   author: uno-platform
   version: "2.4"

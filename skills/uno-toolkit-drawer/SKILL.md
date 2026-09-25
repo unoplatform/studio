@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-drawer
-description: "Use DrawerControl for swipe-gesture navigation drawers and DrawerFlyoutPresenter for bottom/side sheet flyouts. Use when adding swipe-to-open side drawers, bottom sheets, or modal flyout panels. `DrawerControl` for a full drawer layout with main + slide-in content; `DrawerFlyoutPresenter` for gesture-enabled `Flyout` presenters."
+description: "DrawerControl for swipe-to-open side drawers; DrawerFlyoutPresenter for bottom/side sheets. Use when adding swipe-gesture navigation drawers, bottom sheets, or modal flyout panels. `DrawerControl` for a full drawer layout with main + slide-in content; `DrawerFlyoutPresenter` for gesture-enabled `Flyout` presenters (bottom/side sheet flyouts)."
 metadata:
   author: uno-platform
   version: "2.4"

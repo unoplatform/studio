@@ -1,6 +1,6 @@
 ---
 name: uno-mvux-state-basics
-description: "Create and use IState<T> for mutable reactive data in MVUX. Use when implementing two-way data binding (e.g., TextBox, Slider, ToggleSwitch), accepting and storing user input, maintaining editable application state, programmatically updating a value from a command or service call, or understanding the difference between `IFeed<T>` (read-only) and `IState<T>` (read/write)."
+description: "`IState<T>` in MVUX: mutable reactive data for two-way binding (TextBox, Slider, ToggleSwitch). Use when implementing two-way data binding (e.g., TextBox, Slider, ToggleSwitch), accepting and storing user input, maintaining editable application state, programmatically updating a value from a command or service call, or understanding the difference between `IFeed<T>` (read-only) and `IState<T>` (read/write). Create and use IState<T> for mutable reactive data in MVUX."
 metadata:
   author: uno-platform
   version: "2.4"

@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-extendedsplashscreen
-description: "Use ExtendedSplashScreen to display a loading screen that extends the native splash screen appearance. Use when extending the native splash screen during app initialization, showing loading progress during startup, custom startup loading content, or android requires `Init()` call in MainActivity."
+description: "ExtendedSplashScreen to extend the native splash screen with loading content during app startup. Use when extending the native splash screen during app initialization, showing loading progress during startup, or custom startup loading content; displays a loading screen that extends the native splash screen appearance. Android requires an `Init()` call in MainActivity."
 metadata:
   author: uno-platform
   version: "2.3"

@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-ancestor-binding
-description: "Use AncestorBinding and ItemsControlBinding markup extensions for relative binding from within DataTemplates. Access parent DataContext. Use when binding inside a `DataTemplate` needs to reach the outer `DataContext`, the page's ViewModel, or an ancestor `ItemsControl` — the Uno equivalent of WPF's `RelativeSource FindAncestor`. `ItemsControlBinding` exposes the parent ItemsControl's own `DataContext` from within its item template."
+description: "AncestorBinding and ItemsControlBinding for binding from a `DataTemplate` to an outer `DataContext`. The Uno equivalent of WPF's `RelativeSource FindAncestor`: reach the page's ViewModel, the parent DataContext, or an ancestor `ItemsControl` from within DataTemplates. Use these markup extensions for relative binding whenever binding inside a `DataTemplate` needs to reach the outer `DataContext`. `ItemsControlBinding` exposes the parent ItemsControl's own `DataContext` from within its item template."
 metadata:
   author: uno-platform
   version: "2.4"

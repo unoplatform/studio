@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-xaml
-description: "Implement declarative navigation in Uno Platform XAML using Navigation.Request and Navigation.Data attached properties. Use when adding navigation to buttons, list items, or controls directly in XAML, navigation without writing code-behind, using `uen:Navigation.Request` attached property for route-based navigation, passing data via `uen:Navigation.Data` in XAML, navigation from `ItemsRepeater` or `ListView` item clicks/selections, or simple Frame shell: 1-2 pages, navigation is secondary, no TabBar or NavigationView needed."
+description: "Declarative XAML navigation via `uen:Navigation.Request` and `uen:Navigation.Data`, no code-behind. Also the simple Frame shell: 1-2 pages, navigation is secondary, no TabBar or NavigationView needed. Use when adding navigation to buttons, list items, or controls directly in XAML, navigation without writing code-behind, using the `uen:Navigation.Request` attached property for route-based navigation, passing data via `uen:Navigation.Data` in XAML, or navigation from `ItemsRepeater` or `ListView` item clicks/selections, using the Navigation.Request and Navigation.Data attached properties in Uno Platform XAML."
 metadata:
   author: uno-platform
   version: "3.3"

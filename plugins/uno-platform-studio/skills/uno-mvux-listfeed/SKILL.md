@@ -1,6 +1,6 @@
 ---
 name: uno-mvux-listfeed
-description: "Create and use IListFeed<T> for reactive collections in MVUX. Use when loading a list of items from a service or API, displaying collections in `ListView`, `GridView`, or `ItemsRepeater`, filtering list data reactively, or choosing between `IListFeed<T>` (read-only) and `IListState<T>` (mutable)."
+description: "`IListFeed<T>` in MVUX: loading a list of items from a service or API as a reactive collection. Use when displaying collections in `ListView`, `GridView`, or `ItemsRepeater`, filtering list data reactively, or choosing between `IListFeed<T>` (read-only) and `IListState<T>` (mutable). Create and use IListFeed<T> for reactive collections in MVUX."
 metadata:
   author: uno-platform
   version: "2.3"

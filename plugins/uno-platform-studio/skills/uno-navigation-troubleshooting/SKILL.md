@@ -1,6 +1,6 @@
 ---
 name: uno-navigation-troubleshooting
-description: "Troubleshoot common issues with Uno Platform Navigation Extensions. Use when navigation is not working or throwing errors, pages not loading or blank screens, back navigation not working as expected, region-based navigation issues, route registration errors, or shell.xaml / ExtendedSplashScreen initialization issues."
+description: "Navigation Extensions troubleshooting: errors, blank pages, broken back navigation, route errors. Use when navigation is not working or throwing errors, pages not loading or blank screens, back navigation not working as expected, region-based navigation issues, route registration errors, or shell.xaml / ExtendedSplashScreen initialization issues with Uno Platform Navigation Extensions."
 metadata:
   author: uno-platform
   version: "2.3"

@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-material-theme
-description: "Configure Uno Material Toolkit with MaterialToolkitTheme for Material Design 3 styled Toolkit controls. Includes color and font customization. Use when wiring a Material Design 3 styled Uno Toolkit shell. `MaterialToolkitTheme` in App.xaml replaces the separate `MaterialTheme` + `ToolkitResources` pair and accepts color and font customisation in its constructor."
+description: "MaterialToolkitTheme for Material Design 3 styled Uno Toolkit controls and shell setup in App.xaml. `MaterialToolkitTheme` replaces the separate `MaterialTheme` + `ToolkitResources` pair and accepts color and font customisation in its constructor. Use when configuring Uno Material Toolkit or wiring a Material Design 3 styled Uno Toolkit shell."
 metadata:
   author: uno-platform
   version: "2.4"

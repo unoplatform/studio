@@ -1,6 +1,6 @@
 ---
 name: uno-testing-ui
-description: "Automates UI testing for Uno Platform applications using the Uno App MCP server tools. Use this skill when performing automated UI testing, visual validation, interaction testing, or end-to-end testing of Uno Platform cross-platform applications. Covers app lifecycle management, visual tree inspection, element interaction, screenshot capture, and test assertions."
+description: "Automated UI testing of Uno Platform apps with Uno App MCP server tools: interaction, visual, E2E. Use this skill when performing automated UI testing, visual validation, interaction testing, or end-to-end testing of Uno Platform cross-platform applications. Covers app lifecycle management, visual tree inspection, element interaction, screenshot capture, and test assertions."
 compatibility: Requires the Uno App MCP server to be configured and available. Works with Uno Platform applications targeting desktop (Windows, macOS, Linux), WebAssembly, iOS, and Android.
 metadata:
   author: uno-platform

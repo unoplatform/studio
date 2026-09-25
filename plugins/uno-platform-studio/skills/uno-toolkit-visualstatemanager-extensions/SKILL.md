@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-visualstatemanager-extensions
-description: "Use VisualStateManagerExtensions to create data-driven visual states. Bind VisualState directly to view model properties. Use when visual states must be driven by view-model properties rather than `VisualStateManager.GoToState` calls from code-behind — bind the active state name (e.g. an enum) and the framework swaps states automatically."
+description: "VisualStateManagerExtensions for data-driven visual states bound to view-model properties. Use when visual states must be driven by view-model properties rather than `VisualStateManager.GoToState` calls from code-behind — bind VisualState directly to view model properties: bind the active state name (e.g. an enum) and the framework swaps states automatically."
 metadata:
   author: uno-platform
   version: "2.4"

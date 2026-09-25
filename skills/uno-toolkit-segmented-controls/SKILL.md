@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-segmented-controls
-description: "Segmented button groups implemented as a `TabBar` with the segmented style. Use when offering 2–5 mutually exclusive inline options (filter modes, view switchers) — the segmented button pattern."
+description: "Segmented controls for 2–5 mutually exclusive inline options such as filter modes or view switchers. Segmented button groups implemented as a `TabBar` with the segmented style — the segmented button pattern."
 metadata:
   author: uno-platform
   version: "2.6"

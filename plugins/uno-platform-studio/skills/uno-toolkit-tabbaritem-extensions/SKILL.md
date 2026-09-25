@@ -1,6 +1,6 @@
 ---
 name: uno-toolkit-tabbaritem-extensions
-description: "Use TabBarItemExtensions to configure TabBarItem on-click navigation behavior. Use when a `TabBarItem` must trigger navigation directly on click — the attached properties wire the tap into a navigation request without a code-behind handler."
+description: "TabBarItemExtensions to make a `TabBarItem` trigger navigation directly on click. The attached properties configure TabBarItem on-click navigation behavior, wiring the tap into a navigation request without a code-behind handler."
 metadata:
   author: uno-platform
   version: "2.4"

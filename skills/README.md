@@ -1,12 +1,12 @@
 # Uno Platform Agent Skills
 
-Standalone copies of the Uno Platform skills for AI coding agents, covering MVUX, navigation, Uno Toolkit, theming (Material, Simple, semantic colors), and UI testing.
+Standalone copies of the Uno Platform skills for AI coding agents: seven domain hubs (`uno-platform`, `uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-testing`) whose `references/` folders hold one short guide per topic.
 
 This folder is for agents that **don't use the plugin system**: Cursor, Gemini CLI, Windsurf, Cline, and others. If your agent supports plugins (Claude Code, GitHub Copilot CLI, Copilot in VS Code, OpenAI Codex CLI), prefer installing the [`uno-platform-studio` plugin](../plugins/uno-platform-studio) instead, which bundles these same skills with proper metadata.
 
 ## Install all skills
 
-Each skill is a self-contained folder with a `SKILL.md` (and optional `references/`). All skills are named `uno-<category>-<topic>`, so a `uno-*` glob copies the full catalog.
+Each skill is a self-contained folder with a `SKILL.md` and a `references/` folder that the `SKILL.md` routes to, so copy the whole folder, never `SKILL.md` alone. All skills are named `uno-<domain>`, so a `uno-*` glob copies the full catalog.
 
 `main` can contain unreleased changes. For the version the plugin ships, clone the [latest release](https://github.com/unoplatform/studio/releases/latest) tag instead, e.g. `git clone --branch <tag> https://github.com/unoplatform/studio.git`.
 
@@ -28,11 +28,13 @@ For other agents, use the same commands with your agent's skills directory as th
 
 ## Install individual skills
 
-Copy just the folder(s) you need:
+Copy just the domain folder(s) you need:
 
 ```bash
-cp -r studio/skills/uno-mvux-feed-basics ~/.cursor/skills/
+cp -r studio/skills/uno-mvux ~/.cursor/skills/
 ```
+
+Per-topic skills from earlier versions (for example `uno-mvux-feed-basics` or `uno-toolkit-card`) now live inside their hub as `uno-mvux/references/feed-basics.md` and `uno-toolkit/references/card.md`. Install the hub folder instead of the old per-topic folder.
 
 Skills can also be installed per project instead of per user. For example, an agent that reads project-level skills from a `skills/` convention folder:
 
@@ -40,8 +42,9 @@ Skills can also be installed per project instead of per user. For example, an ag
 your-project/
 └── <agent-folder>/
     └── skills/
-        └── uno-mvux-feed-basics/
-            └── SKILL.md
+        └── uno-mvux/
+            ├── SKILL.md
+            └── references/
 ```
 
 ## Maintenance note

@@ -1,6 +1,6 @@
 {
   "name": "uno-platform-studio",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "Uno Platform development skills for cross-platform .NET app authoring: MVUX, navigation, Uno Toolkit, theming, and UI testing.",
   "author": {
     "name": "Uno Platform",

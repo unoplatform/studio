@@ -6,7 +6,24 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 
 | Asset | Purpose |
 |---|---|
-| `skills/` | SKILL.md files covering MVUX (feeds, state, list state, selection, pagination, messaging), navigation (routes, regions, dialogs, tab/navigation shells), Uno Toolkit controls and helpers, theming (Material, Simple, shared semantic), and UI testing. |
+| `skills/` | Seven domain skills. Each `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+
+| Skill | Covers | References |
+|---|---|---|
+| `uno-platform` | Entry point: routes any Uno Platform request to the domain skills and sets project-wide rules (UnoFeatures, WinUI dialect, docs grounding). | — |
+| `uno-mvux` | MVUX state management: feeds, states, list feeds/states, FeedView, commands, selection, pagination, messaging, records. | 11 |
+| `uno-navigation` | Uno.Extensions.Navigation: setup, routes, regions, code and XAML navigation, data passing, dialogs, qualifiers, TabBar/NavigationView/responsive shells, troubleshooting. | 14 topics + 4 shell templates |
+| `uno-toolkit` | Uno Toolkit controls (TabBar, NavigationBar, CardContentControl, Chip, Drawer, SafeArea, AutoLayout, FlexPanel, LoadingView, ShadowContainer, …) and attached-property extensions, plus setup, theming, lightweight styling, and C# Markup. | 32 |
+| `uno-themes` | Uno Material (MD3), Simple theme, and the shared semantic colors, brushes, and typography. | 3 |
+| `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions. | 4 |
+
+### Why hubs instead of one skill per topic
+
+Agents decide whether to load a skill from its `name` and `description` alone, and every host caps how much of that listing it will show. Claude Code budgets about 1% of the context window for the whole skill list and drops descriptions (leaving bare names) once it is exceeded; Codex caps the list at 8,000 characters; the [Agent Skills spec](https://agentskills.io/specification) limits each description to 1,024 characters. Sixty-two separate skills produced roughly 27,000 characters of listing text, so most of them were shown to the model as bare names and never triggered. Seven hubs fit inside every budget, and the per-topic detail is still one `Read` away through the topic map.
+
+### Writing a skill description
+
+The `description` is the only field every host reads when choosing a skill (`when_to_use` is honored by Claude Code alone). Put both what the skill does and when to use it there: lead with the domain and the API or control names, then list the ways a user phrases the task without naming the technology. Keep it under 1,024 characters. Do not add a `when_to_use` field. To add a topic, add a `references/<topic>.md` under the matching hub and a row in its topic map rather than a new skill; every new skill costs listing budget in every host.
 
 ## Install
 
@@ -85,7 +102,11 @@ If you don't have the Uno tooling:
 
 ## UI Testing Requirement
 
-The two UI-testing skills (`uno-testing-ui`, `uno-testing-assertions`) additionally require the **Uno App MCP**, which drives a running app for visual-tree inspection, interaction, and screenshots (the `uno_app_*` tools). Like the documentation MCP, it is provided by the **Uno tooling**, not bundled in this plugin. Agents that have only the documentation MCP cannot run these two skills; their `compatibility:` frontmatter notes the same requirement.
+The `uno-testing` skill additionally requires the **Uno App MCP**, which drives a running app for visual-tree inspection, interaction, and screenshots (the `uno_app_*` tools). Like the documentation MCP, it is provided by the **Uno tooling**, not bundled in this plugin. Agents that have only the documentation MCP cannot run this skill; its `compatibility:` frontmatter notes the same requirement.
+
+## Migrating from the per-topic skills
+
+Versions before 2.0 shipped one skill per topic (`uno-mvux-feed-basics`, `uno-toolkit-card`, and so on). Every one of them still exists as a reference file inside its hub, at `skills/uno-<domain>/references/<topic>.md`; only the `uno-<domain>-` prefix was dropped. For example `uno-toolkit-card` is now `skills/uno-toolkit/references/card.md`, `uno-navigation-tabbar` is `skills/uno-navigation/references/tabbar.md`, and `uno-mvux-overview` is `skills/uno-mvux/references/overview.md`. The two testing skills became `uno-testing/references/ui.md` and `uno-testing/references/assertions.md`. If you copied individual skill folders into an agent that does not use plugins, replace them with the hub folder.
 
 ## Manifests
 

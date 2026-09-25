@@ -6,7 +6,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 
 | Asset | Purpose |
 |---|---|
-| `skills/` | SKILL.md files covering MVUX (feeds, state, list state, selection, pagination, messaging), navigation (routes, regions, dialogs, tab/navigation shells), Uno Toolkit controls and helpers, theming (Material, Simple, shared semantic), and UI testing. |
+| `skills/` | SKILL.md files covering MVUX (feeds, state, list state, selection, pagination, messaging, mocking), navigation (routes, regions, dialogs, tab/navigation shells), Uno Toolkit controls and helpers, theming (Material, Simple, shared semantic), previews, and UI testing. |
 
 ## Install
 

@@ -1,6 +1,6 @@
 ---
 name: uno-mvux
-description: "MVUX (Model-View-Update-eXtended) reactive state management for Uno Platform apps: IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, FeedView, commands, selection, pagination, entity messaging, and immutable partial record Models with generated ViewModels. Use whenever an Uno Platform app loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model/ViewModel layer. Also use when the user says MVVM, ViewModel, state management, or data binding in an Uno project, or when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records. Read this skill before writing any Model, feed, state, or command code, even if the user never says MVUX."
+description: "MVUX state management for Uno Platform apps: feeds, states, FeedView, commands, Models. Covers IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, selection, pagination, entity messaging, and immutable partial record Models with generated ViewModels (Model-View-Update-eXtended). Use whenever an Uno Platform app loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model/ViewModel layer. Also use when the user says MVVM, ViewModel, state management, or data binding in an Uno project, or when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records. Read this skill before writing any Model, feed, state, or command code, even if the user never says MVUX."
 metadata:
   author: uno-platform
   version: "3.0"

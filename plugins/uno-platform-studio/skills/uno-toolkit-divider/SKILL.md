@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-divider
-description: "Use Divider control to create visual separators between content sections. A thin line with optional subheader text."
-when_to_use: "Use when separating list, form, or settings sections with a thin rule, with or without a subheader label. Supports horizontal and vertical orientations and lightweight styling via resource keys."
+description: "Use Divider control to create visual separators between content sections. A thin line with optional subheader text. Use when separating list, form, or settings sections with a thin rule, with or without a subheader label. Supports horizontal and vertical orientations and lightweight styling via resource keys."
 metadata:
   author: uno-platform
   version: "2.4"

@@ -1,7 +1,6 @@
 ---
 name: uno-mvux-feedview
-description: "Display async feed data with FeedView control."
-when_to_use: "Use when displaying data from an `IFeed<T>` or `IState<T>` in XAML, showing loading spinners, error messages, or empty-state UI automatically, customizing templates for different data states (value, progress, error, none), or binding feed data inside a `DataTemplate`."
+description: "Display async feed data with FeedView control. Use when displaying data from an `IFeed<T>` or `IState<T>` in XAML, showing loading spinners, error messages, or empty-state UI automatically, customizing templates for different data states (value, progress, error, none), or binding feed data inside a `DataTemplate`."
 metadata:
   author: uno-platform
   version: "2.3"

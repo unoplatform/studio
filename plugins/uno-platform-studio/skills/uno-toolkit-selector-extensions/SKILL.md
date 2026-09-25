@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-selector-extensions
-description: "Use SelectorExtensions to sync a Selector control (FlipView, ListView) with a PipsPager. The PipsPager attached property auto-syncs NumberOfPages and SelectedIndex."
-when_to_use: "Use when synchronising a `PipsPager` indicator with a `FlipView` or `ListView` selection — carousel and slideshow UIs. The attached property auto-syncs `NumberOfPages` and `SelectedIndex` between the two controls."
+description: "Use SelectorExtensions to sync a Selector control (FlipView, ListView) with a PipsPager. The PipsPager attached property auto-syncs NumberOfPages and SelectedIndex. Use when synchronising a `PipsPager` indicator with a `FlipView` or `ListView` selection — carousel and slideshow UIs. The attached property auto-syncs `NumberOfPages` and `SelectedIndex` between the two controls."
 metadata:
   author: uno-platform
   version: "2.4"

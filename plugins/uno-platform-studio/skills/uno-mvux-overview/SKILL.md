@@ -1,7 +1,6 @@
 ---
 name: uno-mvux-overview
-description: "Understand MVUX (Model-View-Update-eXtended) architecture in Uno Platform."
-when_to_use: "Use when learning the MVUX architecture, comparing MVUX to MVVM or other patterns, setting up a new Uno Platform project with MVUX, or understanding immutable data flow with feeds and states."
+description: "Understand MVUX (Model-View-Update-eXtended) architecture in Uno Platform. Use when learning the MVUX architecture, comparing MVUX to MVVM or other patterns, setting up a new Uno Platform project with MVUX, or understanding immutable data flow with feeds and states."
 metadata:
   author: uno-platform
   version: "2.5"

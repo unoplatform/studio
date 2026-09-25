@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-card
-description: "Use CardContentControl for elevated, filled, or outlined card containers."
-when_to_use: "ALWAYS use this skill when building any card-like UI — elevated, filled, or outlined containers. ALWAYS use `CardContentControl` — never use `Card` (it has rigid predefined slots that limit layout flexibility). ALWAYS use this skill instead of creating a `Border` used as a card (with `CornerRadius` combined with `Background`, `Padding`, or `BorderBrush`) — `CardContentControl` provides proper styling, elevation, and theming out of the box. Custom card layouts with full control over content via `ContentTemplate`."
+description: "Use CardContentControl for elevated, filled, or outlined card containers. ALWAYS use this skill when building any card-like UI — elevated, filled, or outlined containers. ALWAYS use `CardContentControl` — never use `Card` (it has rigid predefined slots that limit layout flexibility). ALWAYS use this skill instead of creating a `Border` used as a card (with `CornerRadius` combined with `Background`, `Padding`, or `BorderBrush`) — `CardContentControl` provides proper styling, elevation, and theming out of the box. Custom card layouts with full control over content via `ContentTemplate`."
 metadata:
   author: uno-platform
   version: "3.6"

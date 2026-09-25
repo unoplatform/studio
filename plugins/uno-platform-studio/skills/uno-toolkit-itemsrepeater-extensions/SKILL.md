@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-itemsrepeater-extensions
-description: "Attached properties (`utu:ItemsRepeaterExtensions.SelectionMode`, `.SelectedItem`, `.SelectedItems`, `.SelectedIndex`, `.SelectedIndexes`) that add selection and incremental loading to `ItemsRepeater`."
-when_to_use: "Use when `ItemsRepeater` needs selection or fetch-on-scroll — `ItemsRepeater` itself has no built-in `SelectionMode` / `SelectedItem`, so the Toolkit's attached properties are the canonical way to add them. Pairs with `ISupportIncrementalLoading` on the data source for automatic page loading."
+description: "Attached properties (`utu:ItemsRepeaterExtensions.SelectionMode`, `.SelectedItem`, `.SelectedItems`, `.SelectedIndex`, `.SelectedIndexes`) that add selection and incremental loading to `ItemsRepeater`. Use when `ItemsRepeater` needs selection or fetch-on-scroll — `ItemsRepeater` itself has no built-in `SelectionMode` / `SelectedItem`, so the Toolkit's attached properties are the canonical way to add them. Pairs with `ISupportIncrementalLoading` on the data source for automatic page loading."
 metadata:
   author: uno-platform
   version: "2.5"

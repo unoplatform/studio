@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-system-theme-helper
-description: "Use SystemThemeHelper to detect system theme (light/dark), check if dark mode is active, and set application theme. Provides static methods for theme retrieval and management."
-when_to_use: "Use when reading or programmatically switching dark / light mode from C# (not the XAML `ThemeResource` lookup path) — detecting the current system theme, setting the application theme at runtime, or toggling between modes."
+description: "Use SystemThemeHelper to detect system theme (light/dark), check if dark mode is active, and set application theme. Provides static methods for theme retrieval and management. Use when reading or programmatically switching dark / light mode from C# (not the XAML `ThemeResource` lookup path) — detecting the current system theme, setting the application theme at runtime, or toggling between modes."
 metadata:
   author: uno-platform
   version: "2.4"

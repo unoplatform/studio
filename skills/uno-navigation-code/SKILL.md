@@ -1,7 +1,6 @@
 ---
 name: uno-navigation-code
-description: "Programmatic navigation via `INavigator` extension methods (`NavigateRouteAsync`, `NavigateViewModelAsync`, `NavigateBackAsync`, and the `*ForResultAsync` overloads)."
-when_to_use: "Use when navigating from a ViewModel, code-behind, or a service, including back-navigation (`NavigateBackAsync`), result-returning navigation (`NavigateViewModelForResultAsync<TViewModel, TResult>`, `NavigateBackWithResultAsync`), or choosing the right `Navigate*Async` overload for the scenario."
+description: "Programmatic navigation via `INavigator` extension methods (`NavigateRouteAsync`, `NavigateViewModelAsync`, `NavigateBackAsync`, and the `*ForResultAsync` overloads). Use when navigating from a ViewModel, code-behind, or a service, including back-navigation (`NavigateBackAsync`), result-returning navigation (`NavigateViewModelForResultAsync<TViewModel, TResult>`, `NavigateBackWithResultAsync`), or choosing the right `Navigate*Async` overload for the scenario."
 metadata:
   author: uno-platform
   version: "2.4"

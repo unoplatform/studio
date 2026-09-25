@@ -1,7 +1,6 @@
 ---
 name: uno-navigation-regions
-description: "Implement region-based navigation in Uno Platform using Region.Attached, Region.Name, and Region.Navigator properties."
-when_to_use: "Use when defining navigation regions within a page, linking a TabBar, NavigationView, or other control to a content area, visibility-based content switching within regions, building navigation hierarchies with nested regions, or using `Region.Attached`, `Region.Name`, and `Region.Navigator`."
+description: "Implement region-based navigation in Uno Platform using Region.Attached, Region.Name, and Region.Navigator properties. Use when defining navigation regions within a page, linking a TabBar, NavigationView, or other control to a content area, visibility-based content switching within regions, building navigation hierarchies with nested regions, or using `Region.Attached`, `Region.Name`, and `Region.Navigator`."
 metadata:
   author: uno-platform
   version: "2.3"

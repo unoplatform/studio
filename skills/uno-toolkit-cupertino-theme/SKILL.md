@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-cupertino-theme
-description: "Configure Uno Cupertino Toolkit with CupertinoToolkitTheme for iOS-style Toolkit controls."
-when_to_use: "Use when targeting iOS-styled UI and replacing `MaterialToolkitTheme` with `CupertinoToolkitTheme` in App.xaml, implementing Apple Human Interface Guidelines styling, or applying the Cupertino design system to Toolkit controls."
+description: "Configure Uno Cupertino Toolkit with CupertinoToolkitTheme for iOS-style Toolkit controls. Use when targeting iOS-styled UI and replacing `MaterialToolkitTheme` with `CupertinoToolkitTheme` in App.xaml, implementing Apple Human Interface Guidelines styling, or applying the Cupertino design system to Toolkit controls."
 metadata:
   author: uno-platform
   version: "2.4"

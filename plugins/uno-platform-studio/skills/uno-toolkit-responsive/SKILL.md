@@ -1,7 +1,6 @@
 ---
 name: uno-toolkit-responsive
-description: "Screen-size-based UI adaptation via the `ResponsiveExtension` markup extension and `ResponsiveView` control."
-when_to_use: "Use when one layout must adapt to phone, tablet, or desktop, when XAML needs per-breakpoint property values (font size, orientation, padding, margin), or when an entire view subtree differs by screen size. `ResponsiveExtension` swaps property values; `ResponsiveView` swaps entire `DataTemplate`s. Custom breakpoints via `ResponsiveLayout`."
+description: "Screen-size-based UI adaptation via the `ResponsiveExtension` markup extension and `ResponsiveView` control. Use when one layout must adapt to phone, tablet, or desktop, when XAML needs per-breakpoint property values (font size, orientation, padding, margin), or when an entire view subtree differs by screen size. `ResponsiveExtension` swaps property values; `ResponsiveView` swaps entire `DataTemplate`s. Custom breakpoints via `ResponsiveLayout`."
 metadata:
   author: uno-platform
   version: "2.5"

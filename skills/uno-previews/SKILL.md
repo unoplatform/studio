@@ -197,6 +197,7 @@ Keep `PreviewName` short and state-descriptive (`"Loading"`, not `"Weather page 
 - **The code-behind must be `partial` and call `InitializeComponent()`**, and its class must match `x:Class`.
 - **Build in Debug to check a preview.** Release builds exclude the previews folder, so an error in a preview never shows there.
 - **A preview that renders blank usually means its data was never created.** If `LoadDataContext()`, or the static member a group child binds to, throws, the preview shows the page with no `DataContext` and nothing reports the error. For a mocked MVUX page, check the model against the method-group rule in `uno-mvux-mocking`; a single blank area is usually a derived member left out of the mock. An *empty* state is different: a `FeedView` with no `NoneTemplate` renders nothing for it, by design.
+- **An error template in a preview that doesn't mock an error means a mock was not applied.** The real feed ran against the null-injected service and failed. To find which member, call `uno_app_get_element_datacontext` on the error text and search the result for `<StackTrace>`: it names the model's lambda. The usual causes are a derived member left out of the mock and a feed written as a method group (see `uno-mvux-mocking`).
 
 ## Checking a Preview in a Running App (Optional)
 
@@ -206,7 +207,8 @@ An agent with the Uno app MCP can check the same way through `uno_execute_tool`,
 
 1. Call `app_hotdesign_set_mode` with `in_app`. The designer takes a moment to start and answers "not ready" until it has — retry every few seconds.
 2. Call `app_hotdesign_set_app_mode` with `previews`, then `app_read_resource` on `hotdesign://previews` for the catalogue.
-3. To look at a preview, open it with `app_hotdesign_select_preview` and take a window screenshot. The first time the designer opens in an app, an introduction dialog covers the canvas — make sure it is dismissed before judging what the preview shows. Don't rely on `app_hotdesign_screenshot_preview` for this: it renders off-screen without the `LoadDataContext()` data, so a mocked page looks empty there even when the preview is correct.
+3. Screenshot **one preview per page: its data state**. It shows the most, and a mock that was not applied shows there as an error; an Error preview hides one, because the real feed fails too. The other states go through the same mock, so don't screenshot each of them: the catalogue from step 2 already shows they exist.
+4. Open the preview with `app_hotdesign_select_preview`, wait 2–3 seconds for it to render, then take a window screenshot. An earlier one can show a half-rendered page. The first time the designer opens in an app, an introduction dialog covers the canvas — make sure it is dismissed before judging what the preview shows. Don't rely on `app_hotdesign_screenshot_preview` for this: it renders off-screen without the `LoadDataContext()` data, so a mocked page looks empty there even when the preview is correct.
 
 ## Related Skills
 

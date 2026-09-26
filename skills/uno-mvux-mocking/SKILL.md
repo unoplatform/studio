@@ -35,7 +35,10 @@ The mock types exist only after a build. Names follow the model:
 | --- | --- | --- | --- |
 | `RecipeModel` | `RecipeViewModel` | `RecipeModelMock` | `RecipeViewModelMock` |
 
-They are emitted in the model's namespace. Let the compiler tell you the required members rather than guessing them.
+They are emitted in the model's namespace. Let the build list the members rather than guessing them:
+
+- **Required members:** create each mock with an empty initializer (`new RecipeModelMock { }`) and build. Each CS9035 error names one. Remove the probe afterwards.
+- **Optional (derived) members:** build with `-p:EmitCompilerGeneratedFiles=true` and read the model's `*.Mock.g.cs` under `obj/<configuration>/<tfm>/generated/Uno.HotTesting.Reactive.Generator/`. The members not marked `required` are the derived ones.
 
 `{Name}ViewModel` is the default view-model naming. An app that sets `[assembly: BindableGenerationTool(1)]` gets the older `Bindable{Model}` names instead, which the generated mocks do not match.
 

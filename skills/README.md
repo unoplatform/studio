@@ -1,6 +1,6 @@
 # Uno Platform Agent Skills
 
-Standalone copies of the Uno Platform skills for AI coding agents, covering MVUX, navigation, Uno Toolkit, theming (Material, Simple, semantic colors), and UI testing.
+Standalone copies of the Uno Platform skills for AI coding agents, covering MVUX, navigation, Uno Toolkit, theming (Material, Simple, semantic colors), previews, and UI testing.
 
 This folder is for agents that **don't use the plugin system**: Cursor, Gemini CLI, Windsurf, Cline, and others. If your agent supports plugins (Claude Code, GitHub Copilot CLI, Copilot in VS Code, OpenAI Codex CLI), prefer installing the [`uno-platform-studio` plugin](../plugins/uno-platform-studio) instead, which bundles these same skills with proper metadata.
 

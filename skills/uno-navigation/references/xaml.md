@@ -59,18 +59,18 @@ See the `references/qualifiers.md`.
 
 - **Navigate forward**: `uen:Navigation.Request="PageName"` — pushes page onto the frame stack
 - **Navigate and clear back stack**: `uen:Navigation.Request="-/PageName"` — replaces the current page
-- **Navigate back**: `uen:Navigation.Request="!back"` — pops the current page
+- **Navigate back**: `uen:Navigation.Request="-"` — pops the current page. Do not write `!back`: `!` is the dialog qualifier, so it opens a route named `back` as a dialog
 - **Navigate to nested region**: `uen:Navigation.Request="./RegionName"` — for visibility-based regions
 
 ## Critical Rules
 
 - `uen:Navigation.Request` is an attached property — it works on any UI element that supports `Click` or `Tapped`
 - Navigation happens via XAML only — no code-behind `INavigator` calls needed for simple transitions
-- The `!back` request navigates back in the frame stack
+- The `-` request navigates back in the frame stack
 - The `-/` prefix clears the back stack (use for login-to-home transitions)
 - Route names in `RouteMap` MUST match the `uen:Navigation.Request` values used in XAML
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
-- On secondary pages, always include a back button with `uen:Navigation.Request="!back"`
+- On secondary pages, always include a back button with `uen:Navigation.Request="-"`
 
 ## Related Skills
 

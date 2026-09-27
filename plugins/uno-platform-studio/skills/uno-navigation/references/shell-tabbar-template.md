@@ -36,7 +36,7 @@ The content area Grid with `Region.Navigator="Visibility"` must be **empty** —
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
       xmlns:utu="using:Uno.Toolkit.UI"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid>
         <Grid uen:Region.Attached="True">
@@ -90,7 +90,7 @@ Create one `.xaml` + `.xaml.cs` pair per page in the appropriate project folder.
 <Page x:Class="PAGE_CLASS"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid>
         <TextBlock Text="PAGE_NAME"

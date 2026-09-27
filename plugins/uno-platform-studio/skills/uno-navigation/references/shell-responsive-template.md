@@ -34,7 +34,7 @@ The content area Grid with `Region.Navigator="Visibility"` must be **empty** —
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
       xmlns:utu="using:Uno.Toolkit.UI"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid uen:Region.Attached="True">
         <VisualStateManager.VisualStateGroups>

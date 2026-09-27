@@ -34,7 +34,7 @@ Use this variant when the plan does NOT include a Settings page. The content are
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid uen:Region.Attached="True">
         <NavigationView x:Name="NavView"
@@ -80,7 +80,7 @@ Use this variant when the plan includes a Settings page. The NavigationView Sett
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid uen:Region.Attached="True">
         <NavigationView x:Name="NavView"
@@ -143,7 +143,7 @@ Create one `.xaml` + `.xaml.cs` pair per page in the appropriate project folder.
 <Page x:Class="PAGE_CLASS"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid>
         <TextBlock Text="PAGE_NAME"

@@ -30,7 +30,7 @@ Uno.Extensions.Navigation is route-based: pages and ViewModels are registered on
 |------|------|----------|
 | Add navigation to a project, configure the host, understand Shell.xaml | `references/setup.md` | `<UnoFeatures>Navigation;Toolkit</UnoFeatures>`, `.UseNavigation()`, `RegisterRoutes` |
 | Register pages and ViewModels, nest routes | `references/routes.md` | `ViewMap`, `DataViewMap`, `ResultDataViewMap`, `RouteMap` |
-| Navigate from a Button, list item, or any control without code-behind | `references/xaml.md` (+ `references/shell-frame-template.md`) | `uen:Navigation.Request`, `!back`, `-/Route`, `./Region` |
+| Navigate from a Button, list item, or any control without code-behind | `references/xaml.md` (+ `references/shell-frame-template.md`) | `uen:Navigation.Request`, `-` (back), `-/Route`, `./Region` |
 | Navigate from a ViewModel, code-behind, or service | `references/code.md` | `INavigator`, `NavigateViewModelAsync`, `NavigateRouteAsync`, `NavigateBackAsync`, `*ForResultAsync` |
 | Pass an entity or ID to a details page, return a result | `references/data.md` | `DataViewMap`, `NavigateDataAsync`, `uen:Navigation.Data`, `NavigateBackWithResultAsync` |
 | Alert, confirmation, modal, or flyout | `references/dialogs.md` | `ShowMessageDialogAsync`, `!/` or `Qualifiers.Dialog`, `ContentDialog` vs `Page` |
@@ -50,7 +50,7 @@ Uno.Extensions.Navigation is route-based: pages and ViewModels are registered on
 - **Never put `Region.Attached="True"` in `Shell.xaml` or ExtendedSplashScreen content.** The navigation host is not ready there. Regions belong in the shell *page* (`SHELL_PAGE_NAME.xaml`) that the host navigates to.
 - **The content area is an empty `Grid`** with both `uen:Region.Attached="True"` and `uen:Region.Navigator="Visibility"`. Do not pre-populate it with collapsed pages; the framework injects registered views at runtime and toggles their visibility.
 - **The navigation control and the content area share a parent that has `Region.Attached="True"`, and the control itself also has `Region.Attached="True"`.** TabBar and NavigationView both need it, and in a responsive shell both use identical `Region.Name` values because they drive the same content area.
-- **Prefer `uen:Navigation.Request` in XAML** over code-behind for simple transitions; it works on any element with `Click` or `Tapped`. Secondary pages get a back button with `uen:Navigation.Request="!back"`.
+- **Prefer `uen:Navigation.Request` in XAML** over code-behind for simple transitions; it works on any element with `Click` or `Tapped`. Secondary pages get a back button with `uen:Navigation.Request="-"`.
 - **Navigation methods are extension methods on `INavigator`.** Get one via constructor injection or `this.GetNavigator()`, then `await navigator.NavigateViewModelAsync<T>(this)`. Calling `NavigateRouteAsync` on a string or a view is a compile error (CS1929). Always `await`.
 - **Pick the result overload when a value comes back.** `NavigateViewModelForResultAsync<TViewModel, TResult>` plus `NavigateBackWithResultAsync(data)` on the destination; the plain overload silently discards the result. Register the pair with `ResultDataViewMap`.
 - **Data arrives through the ViewModel constructor.** Register a `DataViewMap<TView, TViewModel, TData>` and pass the entity with `NavigateDataAsync` or `uen:Navigation.Data="{Binding Item}"`; the framework resolves the destination from the data type.

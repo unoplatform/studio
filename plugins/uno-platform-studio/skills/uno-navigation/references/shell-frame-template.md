@@ -9,7 +9,7 @@ Ready-to-use templates for a simple Frame-based navigation shell. Copy, substitu
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid>
         <!-- REPLACE: Build your main page content here -->
@@ -33,7 +33,7 @@ Ready-to-use templates for a simple Frame-based navigation shell. Copy, substitu
 
 - **Navigate forward**: `uen:Navigation.Request="PageName"` — pushes page onto the frame stack
 - **Navigate and clear back stack**: `uen:Navigation.Request="-/PageName"` — replaces the current page
-- **Navigate back**: `uen:Navigation.Request="!back"` — pops the current page
+- **Navigate back**: `uen:Navigation.Request="-"` — pops the current page. Do not write `!back`: `!` is the dialog qualifier, so it opens a route named `back` as a dialog
 - **Navigate to nested region**: `uen:Navigation.Request="./RegionName"` — for visibility-based regions
 
 ## Page Template (PageName.xaml)
@@ -45,7 +45,7 @@ Create one `.xaml` + `.xaml.cs` pair per page in the appropriate project folder.
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource BackgroundBrush}">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -55,7 +55,7 @@ Create one `.xaml` + `.xaml.cs` pair per page in the appropriate project folder.
 
         <!-- Top bar with back button -->
         <Button Content="Back"
-                uen:Navigation.Request="!back"
+                uen:Navigation.Request="-"
                 Margin="8" />
 
         <!-- REPLACE: Page content goes here -->
@@ -125,4 +125,4 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 6. Replace `PAGE2_NAME` with the route name of the secondary page (e.g., `Detail`)
 7. Replace `PAGE2_LABEL` with the display label (e.g., `"View Details"`)
 8. Add more `Button` + `Navigation.Request` pairs for additional pages
-9. On secondary pages, always include a back button with `uen:Navigation.Request="!back"`
+9. On secondary pages, always include a back button with `uen:Navigation.Request="-"`

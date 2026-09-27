@@ -41,4 +41,4 @@ Worked examples:
 
 ## New app scaffolding
 
-For a new project, the typical stack this plugin supports is MVUX + Navigation + Toolkit + Material. If the user asks for MVVM, use `Mvvm` instead of `MVUX` and skip `uno-mvux`. Read `uno-navigation` (`references/setup.md` and one shell template), `uno-mvux` (`references/overview.md`), and `uno-toolkit` (`references/getting-started.md`) in that order, then build the shell before individual pages.
+For a new project, the typical stack this plugin supports is MVUX + Navigation + Toolkit with the Simple theme, which is what `dotnet new unoapp -preset recommended` generates; use Material when the brief asks for Material Design. If the user asks for MVVM, use `Mvvm` instead of `MVUX` and skip `uno-mvux`. Read `uno-navigation` (`references/setup.md` and one shell template), `uno-mvux` (`references/overview.md`), and `uno-toolkit` (`references/getting-started.md`) in that order, then build the shell before individual pages.

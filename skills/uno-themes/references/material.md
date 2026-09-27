@@ -144,7 +144,7 @@ Material ships attached properties for icon, elevation, and toggle-content patte
 
 Three escalating scopes:
 
-1. **Palette override (full cascade)** — override `*Color` keys via `ColorOverrideSource` / `ColorOverrideDictionary` on `MaterialTheme`. All ~288 brushes and controls update automatically. Generate the palette XAML via **Material Theme Builder** (DSP format).
+1. **Palette override (full cascade)** — override `*Color` keys through `MaterialTheme.Colors`: `<MaterialTheme.Colors><ut:ThemeColors xmlns:ut="using:Uno.Themes" OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" /></MaterialTheme.Colors>` (or `OverrideDictionary`). `ColorOverrideSource` / `ColorOverrideDictionary` on the theme are obsolete in Uno.Themes 7. All ~288 brushes and controls update automatically. Generate the palette XAML via **Material Theme Builder** (DSP format).
 2. **Specific brush override (targeted)** — drop a `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` into App.xaml or scoped resources.
 3. **Per-instance override (scoped)** — wrap the override in the control's `Resources` block.
 
@@ -171,5 +171,5 @@ Key checks: renamed resource keys, removed converters, NuGet package renames, `U
 ## Related Skills
 
 - `references/semantic-colors-brushes.md` — Shared semantic design language (style keys + typography + colors that work across Material AND Simple themes). Read this first if styling needs to be portable between themes.
-- `references/simple.md` — Simple theme specifics. Use when targeting Simple (designer/wireframe look) or its theme-specific styles (danger buttons, size variants, utility brushes, PersonPicture, etc.).
+- `references/simple.md` — Simple theme specifics. Use when targeting Simple (the template default) or its theme-specific styles (danger buttons, size variants, utility brushes, PersonPicture, etc.).
 - the `uno-toolkit` skill (`references/material-theme.md`) — `MaterialToolkitTheme` setup for Toolkit + Material.

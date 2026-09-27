@@ -1,6 +1,6 @@
 # Uno Simple Theme
 
-The Simple theme is Uno's designer/wireframe-style theme. It shares the semantic surface (style keys, typography keys, color keys, brush keys) with Material via the **Semantic Design Language** — see `references/semantic-colors-brushes.md` for the shared layer. This reference covers the **Simple-only** style keys, brushes, and `SimpleTheme` configuration that are not portable to other themes.
+The Simple theme is a lightweight design system with minimal, essential styling, and the theme `dotnet new unoapp -preset recommended` selects. It shares the semantic surface (style keys, typography keys, color keys, brush keys) with Material via the **Semantic Design Language** — see `references/semantic-colors-brushes.md` for the shared layer. This reference covers the **Simple-only** style keys, brushes, and `SimpleTheme` configuration that are not portable to other themes.
 
 ## Workflow
 
@@ -13,7 +13,7 @@ The Simple theme is Uno's designer/wireframe-style theme. It shares the semantic
 | Installation / `SimpleTheme` setup | `uno_platform_docs_search("Uno Simple theme installation SimpleTheme UnoFeatures")` |
 | Simple style keys (buttons, inputs, etc.) | `uno_platform_docs_search("Uno Simple controls styles danger size variants")` |
 | `DefaultSize` (Small / Medium) | `uno_platform_docs_search("Uno Simple DefaultSize SimpleControlSize button height")` |
-| Color override / palette | `uno_platform_docs_search("Uno Simple ColorOverrideSource palette grayscale")` |
+| Color override / palette | `uno_platform_docs_search("Uno Themes ThemeColors OverrideSource palette")` |
 | Font override | `uno_platform_docs_search("Uno Simple FontOverrideSource Inter font family")` |
 | Utility brushes (overlays, scrims) | `uno_platform_docs_search("Uno Simple utility brushes overlay scrim measurement")` |
 
@@ -40,17 +40,20 @@ uno_platform_docs_fetch(sourcePath="external/uno.themes/doc/lightweight-styling.
 
 | Property | Type | Default | Purpose |
 |---|---|---|---|
-| `ColorOverrideSource` | `string` (URI) | — | Path to a XAML ResourceDictionary overriding `*Color` keys |
-| `ColorOverrideDictionary` | `ResourceDictionary` | — | Inline ResourceDictionary overriding `*Color` keys |
+| `Colors` | `ThemeColors` (`using:Uno.Themes`) | — | Palette overrides: `OverrideSource` (URI of a XAML ResourceDictionary overriding `*Color` keys) or `OverrideDictionary` (inline). Replaces the obsolete `ColorOverrideSource` / `ColorOverrideDictionary` |
 | `FontOverrideSource` | `string` (URI) | — | Path to a XAML ResourceDictionary overriding font resources |
 | `FontOverrideDictionary` | `ResourceDictionary` | — | Inline ResourceDictionary overriding font resources |
 | `DefaultSize` | `SimpleControlSize` | `Small` | Default size variant for buttons / icon buttons / toggle buttons |
 
 ```xml
 <SimpleTheme xmlns="using:Uno.Simple"
-             ColorOverrideSource="ms-appx:///Styles/Application/ColorOverride.xaml"
              FontOverrideSource="ms-appx:///Styles/Application/FontOverride.xaml"
-             DefaultSize="Medium" />
+             DefaultSize="Medium">
+    <SimpleTheme.Colors>
+        <ut:ThemeColors xmlns:ut="using:Uno.Themes"
+                        OverrideSource="ms-appx:///Styles/Application/ColorOverride.xaml" />
+    </SimpleTheme.Colors>
+</SimpleTheme>
 ```
 
 When overriding the palette, **always provide both `Light` and `Default` (Dark) theme values**.
@@ -122,7 +125,7 @@ These reference a Simple-specific **pink primitive scale**: `SimplePink200Color`
 
 Simple supports five escalating overrides (ordered by scope):
 
-1. **Override color palette (full cascade)** — `ColorOverrideSource` / `ColorOverrideDictionary` on `SimpleTheme`. All brushes cascade.
+1. **Override color palette (full cascade)** — `ThemeColors.OverrideSource` / `OverrideDictionary` in `SimpleTheme.Colors`. All brushes cascade.
 2. **Switch default size variant** — `DefaultSize="Medium"` on `SimpleTheme`. Affects implicit button / icon-button / toggle-button styles only; size-named variants are unaffected.
 3. **Override specific brushes (targeted)** — `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` in App.xaml.
 4. **Override per-control instance (scoped)** — wrap the brush override inside the control's `Resources` block.

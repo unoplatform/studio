@@ -44,7 +44,7 @@ Uno Toolkit is the control and helper library that ships with Uno Platform proje
 | Task / need | Read | Key API |
 |-------------|------|---------|
 | Install Toolkit, pick a theme, CLI scaffold | `references/getting-started.md` | `<UnoFeatures>Toolkit</UnoFeatures>`, `dotnet new unoapp -toolkit` |
-| Material Design 3 look for Toolkit controls | `references/material-theme.md` | `MaterialToolkitTheme`, `ColorOverrideSource` |
+| Material Design 3 look for Toolkit controls | `references/material-theme.md` | `MaterialToolkitTheme`, `Colors` (`ThemeColors`) |
 | iOS look for Toolkit controls | `references/cupertino-theme.md` | `CupertinoToolkitTheme` |
 | Fluent C# instead of XAML | `references/csharp-markup.md` | `Uno.Toolkit.WinUI.Markup` |
 | Recolor or respace a control without rewriting its template | `references/lightweight-styling.md` | `{ControlName}{State}{Property}` resource keys |

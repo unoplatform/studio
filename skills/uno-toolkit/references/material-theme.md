@@ -31,7 +31,7 @@ uno_platform_docs_search("MaterialToolkitTheme color font override customize pal
 
 - `MaterialToolkitTheme` is the unified approach — replaces separate `MaterialTheme` + `ToolkitResources`
 - Place in App.xaml `<Application.Resources>` section
-- Supports `ColorOverrideSource` and `FontOverrideSource` for customization
+- Customize colors through `MaterialToolkitTheme.Colors` (`<ut:ThemeColors xmlns:ut="using:Uno.Themes" OverrideSource="..." />`; `ColorOverrideSource` is obsolete in Uno.Themes 7) and fonts through `FontOverrideSource`
 - Requires `Toolkit` in `<UnoFeatures>`
 
 ## Related Skills

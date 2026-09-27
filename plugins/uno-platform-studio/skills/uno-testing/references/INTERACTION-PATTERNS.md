@@ -10,22 +10,27 @@ The most reliable way to click a button:
 
 1. Get the visual tree:
    ```
-   uno_app_visualtree_snapshot(justMyCode: true, includeBounds: false, includeHidden: false)
+   uno_app_visualtree_snapshot(detail: "normal")
    ```
 
-2. Parse the XML to find the button element. Example output:
-   ```xml
-   <Button x:Name="SubmitButton" handle="btn_001" Content="Submit" />
+2. Find the button line. Example output:
+   ```
+   Button ^5k #SubmitButton :41:10 [i]  "Submit"
    ```
 
 3. Invoke the default action:
    ```
-   uno_app_element_peer_default_action(elementRef: "btn_001")
+   uno_app_element_peer_default_action(elementRef: "5k")
+   ```
+
+The handle is the bare token after `^`; pass `"5k"`, never `"^5k"`.
+
+   ```
    ```
 
 ### Double-Click Scenarios
 
-For elements requiring double-click, use pointer click:
+For elements requiring double-click, use pointer click at the centre of the element's `@@x,y,w,h` bounds from a `detail: "full"` snapshot:
 
 ```
 uno_app_pointer_click(x: 250, y: 100, button: "left", clickCount: 2, delayBetweenPresseAndReleaseInMs: 50)
@@ -35,18 +40,24 @@ uno_app_pointer_click(x: 250, y: 100, button: "left", clickCount: 2, delayBetwee
 
 ### Entering Text in a TextBox
 
-1. Find the TextBox in the visual tree
-2. Focus the element:
+Preferred: set the value through the automation peer. A `TextBox` line shows `[v]`, so it accepts `setValue`, which needs no keyboard focus and works on a disconnected desktop:
    ```
-   uno_app_element_peer_default_action(elementRef: "textbox_handle")
+   uno_app_element_peer_action(elementRef: "5o", action: "setValue", actionParameters: ["Hello World"])
    ```
-3. Type the text:
+
+Keyboard alternative, when the app reacts to key events:
+1. Focus the element:
+   ```
+   uno_app_element_peer_default_action(elementRef: "5o")
+   ```
+2. Type the text:
    ```
    uno_app_type_text(text: "Hello World", intervalInMs: 50)
    ```
 
 ### Clearing a TextBox
 
+`setValue` with an empty string clears it. With the keyboard:
 1. Focus the TextBox
 2. Select all text:
    ```
@@ -100,7 +111,7 @@ uno_app_key_press(virtualKey: "Escape")
 1. Get the visual tree to find list items
 2. Use default action on the item:
    ```
-   uno_app_element_peer_default_action(elementRef: "listitem_handle")
+   uno_app_element_peer_default_action(elementRef: "<item handle>")
    ```
 
 ### Multi-Select with Ctrl+Click
@@ -126,7 +137,7 @@ uno_app_key_press(virtualKey: "Up")
 ### Opening a ComboBox
 
 ```
-uno_app_element_peer_default_action(elementRef: "combobox_handle")
+uno_app_element_peer_default_action(elementRef: "<combobox handle>")
 ```
 
 ### Selecting an Item
@@ -146,14 +157,21 @@ After opening:
 ### Toggling a Checkbox
 
 ```
-uno_app_element_peer_default_action(elementRef: "checkbox_handle")
+uno_app_element_peer_default_action(elementRef: "<checkbox handle>")
 ```
 
 ### Verifying State
 
-After toggling, get a new visual tree snapshot and check the element's state properties.
+After toggling, read `IsChecked` from the element's DataContext; the snapshot shows the binding path, not the value.
 
 ## Slider Interactions
+
+### Using the Automation Peer
+
+A `Slider` or `NumberBox` shows `[r]`:
+```
+uno_app_element_peer_action(elementRef: "<slider handle>", action: "setRangeValue", actionParameters: ["42"])
+```
 
 ### Using Keyboard
 
@@ -205,7 +223,7 @@ uno_app_key_press(virtualKey: "End")       // Scroll to bottom
 
 If an element is off-screen, focusing it may scroll it into view:
 ```
-uno_app_element_peer_default_action(elementRef: "offscreen_element_handle")
+uno_app_element_peer_default_action(elementRef: "<offscreen element handle>")
 ```
 
 ## Context Menu Interactions
@@ -232,6 +250,10 @@ Drag operations typically require:
 This pattern is complex and may require coordinate-based interaction with careful timing. Consider testing drag-and-drop logic through unit tests where possible.
 
 ## Timing and Synchronization
+
+### Keyboard Needs a Desktop Session
+
+`uno_app_key_press` and `uno_app_type_text` inject input into the focused window. On a locked or disconnected remote desktop they succeed but nothing arrives. Prefer peer actions (`setValue`, `toggle`, `invoke`) for anything a test must not skip.
 
 ### Waiting for UI Updates
 

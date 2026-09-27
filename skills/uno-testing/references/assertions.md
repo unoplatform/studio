@@ -1,6 +1,6 @@
 # Uno Platform Test Assertions Skill
 
-> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, stop and tell the user to enable the Uno tooling rather than attempting to test without them.
+> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, stop and tell the user to sign in to Uno Platform and enable the Uno tooling rather than attempting to test without them.
 
 This reference provides patterns for validating UI state and asserting test conditions when testing Uno Platform applications with the Uno App MCP tools.
 
@@ -11,8 +11,10 @@ This reference provides patterns for validating UI state and asserting test cond
 Use `uno_app_get_screenshot` to capture visual state:
 
 ```
-uno_app_get_screenshot(fileType: "png", quality: 100, path: "/path/to/screenshot.png")
+uno_app_get_screenshot(fileType: "png", quality: 100)
 ```
+
+Omit `path` to receive the image in the result. A `path` must be inside the App MCP workspace (the solution folder) and in a folder that already exists.
 
 **Validation approaches:**
 1. **Visual comparison**: Compare with baseline images
@@ -25,7 +27,7 @@ Use `uno_app_visualtree_snapshot` to verify UI structure:
 
 **Assert element exists:**
 - Get visual tree snapshot
-- Search for element by name, AutomationId, or type
+- Search for the element by `#Name`, text, or type
 - Fail if element not found
 
 **Assert element not visible:**
@@ -38,7 +40,7 @@ Use `uno_app_visualtree_snapshot` to verify UI structure:
 
 ### Property Assertions
 
-From visual tree, check element properties:
+The snapshot shows binding paths (`IsEnabled={CanSave}`), not current values. Read the value from the element's DataContext, or from a screenshot for visual state:
 
 | Property | What to Check |
 |----------|---------------|
@@ -54,7 +56,7 @@ From visual tree, check element properties:
 Use `uno_app_get_element_datacontext` to validate bound data:
 
 ```
-uno_app_get_element_datacontext(elementRef: "element_handle")
+uno_app_get_element_datacontext(elementRef: "5k")
 ```
 
 Verify:
@@ -68,7 +70,7 @@ Verify:
 ### Assert Page Loaded
 
 ```
-1. uno_app_visualtree_snapshot(justMyCode: true)
+1. uno_app_visualtree_snapshot(detail: "normal")
 2. Search for expected page/view element
 3. Verify page-specific elements exist
 4. Optionally capture screenshot for visual confirmation
@@ -77,34 +79,34 @@ Verify:
 ### Assert Button State
 
 ```
-1. uno_app_visualtree_snapshot(justMyCode: true)
-2. Find button by name or AutomationId
-3. Check IsEnabled property
-4. Verify Content matches expected text
+1. uno_app_visualtree_snapshot(detail: "normal")
+2. Find the button by `#Name` or its quoted text
+3. Read `IsEnabled` from the DataContext (or confirm the disabled look in a screenshot)
+4. Verify the quoted text matches
 ```
 
 ### Assert Text Content
 
 ```
-1. uno_app_visualtree_snapshot(justMyCode: true)
-2. Find TextBlock/TextBox element
-3. Verify Text property matches expected value
+1. uno_app_visualtree_snapshot(detail: "normal")
+2. Find the TextBlock/TextBox element
+3. Verify its quoted text matches the expected value (a TextBox shows its bound value through the DataContext)
 ```
 
 ### Assert List Items
 
 ```
-1. uno_app_visualtree_snapshot(justMyCode: true)
+1. uno_app_visualtree_snapshot(detail: "normal")
 2. Find ListView/ItemsRepeater element
-3. Count child items
-4. Verify expected count
+3. Count the item lines directly under it (each carries `dc:ItemType`)
+4. Verify the expected count, or read the collection count from the DataContext
 5. Check item content if needed
 ```
 
 ### Assert Dialog Displayed
 
 ```
-1. uno_app_visualtree_snapshot(justMyCode: true)
+1. uno_app_visualtree_snapshot(detail: "normal")
 2. Search for ContentDialog or Popup element
 3. Verify dialog-specific content exists
 4. Capture screenshot for visual confirmation
@@ -115,7 +117,7 @@ Verify:
 ```
 1. Enter invalid data in form
 2. Attempt to submit
-3. uno_app_visualtree_snapshot(justMyCode: true)
+3. uno_app_visualtree_snapshot(detail: "normal")
 4. Look for validation error TextBlocks
 5. Verify error messages match expected text
 ```
@@ -124,7 +126,7 @@ Verify:
 
 ```
 1. Trigger navigation action
-2. uno_app_visualtree_snapshot(justMyCode: true)
+2. uno_app_visualtree_snapshot(detail: "normal")
 3. Verify previous page elements are gone
 4. Verify new page elements are present
 ```
@@ -137,9 +139,11 @@ Verify:
 uno_app_get_screenshot(
   fileType: "png",
   quality: 100,
-  path: "/tests/screenshots/test_case_name.png"
+  path: "<solution folder>/tests/screenshots/test_case_name.png"
 )
 ```
+
+Create the folder first; the tool does not.
 
 ### Assertion Strategies
 
@@ -172,7 +176,7 @@ When screenshots contain dynamic data:
 
 ```
 1. Get element handle from visual tree
-2. uno_app_get_element_datacontext(elementRef: "handle")
+2. uno_app_get_element_datacontext(elementRef: "<handle>")
 3. Parse returned XML
 4. Assert property values match expected state
 ```
@@ -212,7 +216,7 @@ Fail if condition not met after all attempts
 
 ```
 Retry up to 10 times:
-  1. uno_app_visualtree_snapshot(justMyCode: true)
+  1. uno_app_visualtree_snapshot(detail: "normal")
   2. Search for expected element
   3. If found, return success
   4. Wait 500ms
@@ -224,7 +228,7 @@ Fail with "Element not found" if all retries exhausted
 
 ```
 Retry until no loading indicators:
-  1. uno_app_visualtree_snapshot(justMyCode: true)
+  1. uno_app_visualtree_snapshot(detail: "normal")
   2. Search for ProgressRing, ProgressBar, loading text
   3. If none found, loading complete
   4. Wait 500ms
@@ -237,7 +241,7 @@ Retry until no loading indicators:
 
 On assertion failure:
 1. Capture screenshot for visual debugging
-2. Get full visual tree (justMyCode: false)
+2. Get the full visual tree (detail: "full")
 3. Log expected vs actual values
 4. Save DataContext if relevant
 
@@ -271,7 +275,7 @@ On assertion failure:
 ## Best Practices
 
 1. **Be specific**: Assert on exact values, not just existence
-2. **Use proper identifiers**: Rely on AutomationId over generated names
+2. **Use proper identifiers**: rely on `x:Name` or `AutomationProperties.Name` over text and position
 3. **Handle timing**: Always account for async operations
 4. **Capture evidence**: Screenshots on both pass and fail
 5. **Test independence**: Each test should set up its own state

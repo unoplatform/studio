@@ -57,7 +57,7 @@ Key page:
 - `Source` property binds to the feed/state: `Source="{Binding MyFeed}"`
 - Inside templates, access the data via `{Binding Data}` (e.g., `{Binding Data.Name}`)
 - The default `<DataTemplate>` content child acts as the `ValueTemplate`
-- FeedView automatically provides a `Refresh` command — no need to create one manually
+- FeedView automatically provides a `Refresh` command — no need to create one manually. In the value template, bind `Command="{Binding Refresh}"`. `ErrorTemplate` and `ProgressTemplate` get the exception and the progress flag as their DataContext, not the `FeedViewState`, so `{Binding Refresh}` there binds to nothing and the button does nothing: name the `FeedView` and bind `Command="{Binding Refresh, ElementName=MyFeedView}"`
 - FeedView handles all state transitions (loading → value → error) without code-behind
 
 ## Related Skills

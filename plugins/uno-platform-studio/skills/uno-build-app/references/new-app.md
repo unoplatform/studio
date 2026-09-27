@@ -30,6 +30,7 @@ dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests un
 - Pass `-theme` explicitly even though Simple is the preset default, so a change to the preset cannot change the app.
 - `-tests unit` adds an NUnit test project. The recommended preset does not add one by default.
 - Do not pass `-platforms`. The preset's target list is the default above.
+- Then, in the generated `App.xaml.cs`, change `MainWindow.UseStudio();` to `MainWindow.UseStudio(launchHotDesignOnStart: false);`, keeping the `#if DEBUG`. Without the argument, Hot Design opens over the app on its first launch and covers it during runtime checks. The `uno-testing` skill explains why.
 
 Verified with Uno.Templates 6.7.30 (Uno.Sdk 6.7.30, .NET SDK 10.0.400): the command produces one app project targeting `net10.0-android`, `net10.0-ios`, `net10.0-browserwasm`, `net10.0-desktop` and plain `net10.0`, with the features `SimpleTheme`, `Hosting`, `Toolkit`, `Logging`, `MVUX`, `Configuration`, `HttpKiota`, `Serialization`, `Localization`, `Navigation`, `ThemeService` and `SkiaRenderer`, plus a test project using NUnit and FluentAssertions. The plain `net10.0` target is not a platform: `-tests unit` adds it so the test project can reference the app. Keep it. It builds for `net10.0-desktop` with no warnings and its sample test passes. On other template versions, check what was generated rather than assuming this list.
 

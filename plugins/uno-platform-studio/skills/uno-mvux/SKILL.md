@@ -1,6 +1,6 @@
 ---
 name: uno-mvux
-description: "MVUX state management for Uno Platform apps: feeds, states, FeedView, commands, Models. Covers IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, selection, pagination, entity messaging, and immutable partial record Models with generated ViewModels (Model-View-Update-eXtended). Use whenever an Uno Platform app loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model/ViewModel layer. Also use when the user says MVVM, ViewModel, state management, or data binding in an Uno project, or when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records. Read this skill before writing any Model, feed, state, or command code, even if the user never says MVUX."
+description: "MVUX state management for Uno Platform apps: feeds, states, FeedView, commands, Models. Covers IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, selection, pagination, entity messaging, and immutable partial record Models with generated ViewModels (Model-View-Update-eXtended). Use whenever an Uno Platform app that uses MVUX, or a new app with no pattern chosen yet, loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model layer. Also use when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records, or the user asks how MVUX compares with MVVM. Not for apps built on MVVM (<UnoFeatures>Mvvm</UnoFeatures>, CommunityToolkit.Mvvm, ObservableObject ViewModels): keep their pattern. Read this skill before writing any MVUX Model, feed, state, or command code."
 metadata:
   author: uno-platform
   version: "3.0"
@@ -10,6 +10,14 @@ metadata:
 # Uno MVUX
 
 MVUX is the state-management pattern Uno Platform projects use instead of hand-written MVVM. A `partial record` Model exposes feeds and states; a source generator produces the bindable ViewModel. Generic agents get MVUX wrong in a handful of predictable ways (inventing an `Update` method, mutating a read-only feed, skipping key equality, using a class instead of a record). This skill exists to stop those mistakes and to route you to the detailed reference for the task at hand.
+
+## Check the project's pattern first
+
+Look at `<UnoFeatures>` in the app's project file before writing any presentation code.
+
+- **`MVUX` is listed, or the project has `*Model` records:** use this skill.
+- **`Mvvm` is listed, or ViewModels derive from `ObservableObject` or use `[ObservableProperty]`/`[RelayCommand]` (CommunityToolkit.Mvvm):** the app is MVVM. Keep writing CommunityToolkit.Mvvm ViewModels; do not add `MVUX`, convert ViewModels to Models, or mix the two in one app unless the user asks for a migration. The rest of this skill does not apply.
+- **A new app with no pattern chosen:** MVUX is the default unless the user asks for MVVM.
 
 ## Workflow
 

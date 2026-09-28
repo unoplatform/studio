@@ -6,21 +6,22 @@
 
 ### Step 1: Fetch the ListState Documentation
 
-There is no dedicated ListState reference page — it shares documentation with ListFeed and State. Search for:
-
 ```
 uno_platform_docs_search("MVUX ListState mutable collection add remove update selection")
 ```
 
-Key documentation pages:
-- **ListFeed Reference** (includes ListState): `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
-- **State Reference** (includes list state creation): `external/uno.extensions/doc/Reference/Reactive/state.md`
-- **Usage in Apps** (ListState patterns): `external/uno.extensions/doc/Reference/Reactive/in-apps.md`
+Primary documentation page:
+- **ListStates**: `external/uno.extensions/doc/Learn/Mvux/ListStates.md` (creation, `Add`/`Insert`/`Update`/`Remove`/`ForEach` operators, `TrySelectAsync`/`ClearSelection`)
 
-Fetch the in-apps reference for practical patterns:
+Supporting pages:
+- **ListFeed Reference**: `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
+- **State Reference**: `external/uno.extensions/doc/Reference/Reactive/state.md`
+- **Usage in Apps**: `external/uno.extensions/doc/Reference/Reactive/in-apps.md`
+
+Fetch the ListStates page:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reactive/in-apps.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/ListStates.md")
 ```
 
 ### Step 2: For ListState Creation
@@ -60,7 +61,7 @@ See the `references/messaging.md` for full details.
 
 ## Key Equality Requirement (Critical)
 
-**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. The `UpdateAsync(T item)` and `UpdateItemAsync(oldItem, updater)` overloads and selection tracking rely on key equality to identify which item to target (`RemoveAllAsync` and `UpdateAllAsync` take a predicate instead). Without it, MVUX cannot match an updated instance to its original, causing broken updates, lost selection state, and full list re-renders.
+**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. The `UpdateAsync(T item)` and `UpdateItemAsync(oldItem, updater)` overloads and selection tracking rely on key equality to identify which item to target (`RemoveAllAsync` and `UpdateAllAsync` take a predicate instead). Without it, those overloads do not compile (CS0311, constrained `where T : IKeyEquatable<T>`), and an edited item is diffed as a remove plus an add, which loses selection state.
 
 ### Automatic generation (recommended)
 
@@ -105,10 +106,10 @@ public partial record MyItem(Guid Id, string Name);
 ### Rules
 
 - The item type **must** be a `partial record` (or manually implement `IKeyEquatable<T>`)
-- At least one key property is required — without it, mutations and selection cannot identify items
+- At least one key property is required — without it, the key-based mutation overloads do not compile and edited items lose selection
 - Key properties define **identity** (same entity); non-key properties define **state** (changed data)
 - `KeyEquals` returns `true` when two instances represent the same entity, even if other properties differ
-- `UpdateAsync(T item)` and `UpdateItemAsync` use key equality to find the existing item to replace — without it, the update silently fails or replaces the wrong item
+- `UpdateAsync(T item)` and `UpdateItemAsync` are constrained `where T : IKeyEquatable<T>` — without key equality they do not compile (CS0311); `UpdateItemAsync` replaces every key-equal item
 
 ## Updater Purity (Critical)
 

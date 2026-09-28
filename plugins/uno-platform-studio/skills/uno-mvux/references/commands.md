@@ -46,7 +46,8 @@ If the user needs manual control over commands, the reference page has an "Expli
 
 ## Critical Rules
 
-- **Feed parameter injection** — a parameter whose name and type match an `IFeed<T>`/`IState<T>` property receives a *snapshot* of the current value. The docs show single-value feeds; for `IListFeed<T>`/`IListState<T>` the parameter would be `IImmutableList<T>` (not documented, verify before relying on it).
+- **Feed parameter injection** — a parameter receives a *snapshot* of a feed when its name matches an `IFeed<T>`/`IState<T>` property case-insensitively and its type is exactly `T`; for `IListFeed<T>`/`IListState<T>` the type must be exactly `IImmutableList<T>`. A name match with any other type is not an error: the parameter silently becomes the `CommandParameter`.
+- **Eligibility** — a public method becomes a command only with 0 or 1 non-feed parameters and 0 or 1 `CancellationToken`.
 - **But you can only mutate writable types from inside a command body.** `IState<T>` exposes `UpdateAsync`/`SetAsync`; `IListState<T>` exposes `AddAsync` / `InsertAsync` / `RemoveAllAsync(predicate)` / `UpdateAllAsync` / `UpdateItemAsync` (there is no `RemoveAsync`). `IFeed<T>` and `IListFeed<T>` are **read-only** — calling `.UpdateAsync(...)`, `.AddAsync(...)`, or `.RemoveAllAsync(...)` on an injected `IListFeed`/`IFeed` is a compile error.
 - If a command needs to mutate a collection, the property on the Model must be `IListState<T>` (not `IListFeed<T>`); convert with `ListState.FromFeed(this, sourceFeed)` if needed.
 - **When mutating via `UpdateAsync`, the updater must be pure** — derive the new value solely from the `current` value, with no captured external state or side effects. See `references/state-basics.md` and `references/liststate.md` for details.
@@ -55,7 +56,7 @@ If the user needs manual control over commands, the reference page has an "Expli
 
 - Any public method on a `*Model` partial record generates a command in the ViewModel
 - Commands are automatically `IAsyncCommand` — they handle async properly
-- Feed parameter injection: a method parameter whose name/type matches a Feed property gets the current feed value injected
+- Feed parameter injection: a method parameter whose name (case-insensitive) and exact type match a Feed property gets the current feed value injected
 - Use `[ImplicitCommands(false)]` on a Model to disable automatic generation
 - Commands are bound in XAML via `Command="{Binding MethodName}"`
 - The method name becomes the command name (e.g., `Save()` → `Save` command)

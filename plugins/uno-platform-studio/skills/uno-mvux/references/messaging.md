@@ -41,7 +41,7 @@ From the fetched docs, the messaging pattern involves:
 
 ### Step 4: For Manual Message Handling
 
-If the user needs custom logic when messages arrive, the reference page covers the `Update` extension methods that allow manual application of `EntityMessage<T>` to states.
+If the user needs custom logic when messages arrive, the reference page covers the `Update` extension methods that allow manual application of `EntityMessage<T>` to states. This messaging API is genuinely named `Update(state, EntityMessage<T>, keySelector, ct)` (namespace `Uno.Extensions.Reactive.Messaging`); it is not the deprecated `IState<T>.Update` alias, so the "always `UpdateAsync`" rule does not apply here.
 
 ## Key Principles (Stable)
 

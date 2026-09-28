@@ -34,8 +34,8 @@ uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/mvux/Pagination.md")
 ### Step 3: Understand Pagination Types
 
 From the fetched docs:
-- **Index-based**: Uses page size and start index (`PageRequest.DesiredSize`, `PageRequest.CurrentCount`)
-- **Cursor/keyset-based**: Uses a cursor token for the next page
+- **Index-based**: `ListFeed.PaginatedAsync(async request => ...)`. `PageRequest` has `uint Index`, `uint CurrentCount`, and `uint? DesiredSize` (null on the first page, so fall back to a default). Slice with `Skip((int)request.CurrentCount).Take((int)(request.DesiredSize ?? DefaultPageSize))`, not `Index * DesiredSize`.
+- **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`
 
 ### Step 4: For ItemsRepeater Integration
 
@@ -51,7 +51,7 @@ Key page:
 ## Key Principles (Stable)
 
 - Use `ListFeed.PaginatedAsync(...)` to create a paginated list feed
-- The callback receives a `PageRequest` with `DesiredSize` and `CurrentCount`
+- The callback receives a `PageRequest`; skip `CurrentCount` items and take `DesiredSize` (nullable on the first page)
 - `ListView` supports incremental loading automatically when bound to a paginated feed
 - For `ItemsRepeater`, use the Toolkit's `ItemsRepeaterExtensions` for incremental loading support
 - Pagination works with both index-based and cursor-based APIs

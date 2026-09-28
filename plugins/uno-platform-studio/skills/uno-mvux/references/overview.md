@@ -50,11 +50,11 @@ If the user wants a comparison, the overview page contains a detailed MVVM vs MV
 uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Overview.md")
 ```
 
-Focus on the sections: "What is MVUX?", "eXtended", "MVVM vs MVUX Data Flow", and "Weather App Example".
+Focus on the sections: "Why MVUX?" (the MVVM and MVUX "Weather App Example" tabs), "What is MVUX?", and "eXtended" (with "MVVM vs MVUX Data Flow").
 
 ## Key Principles (Stable)
 
-- Models MUST be `partial record` types with a `Model` suffix (e.g., `MainModel`)
+- Models are `partial` types with a `Model` suffix (e.g., `MainModel`); `partial record` is the convention, and a `partial class` also generates
 - All data entities should be C# records (immutable)
 - MVUX requires `<UnoFeatures>MVUX</UnoFeatures>` in the project file
 - The generated ViewModel is what gets set as the `DataContext`, not the Model itself

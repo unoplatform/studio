@@ -26,8 +26,8 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reacti
 
 From the fetched docs, the key factory methods on the `Feed` static class are:
 - `Feed.Async(...)` — from an `AsyncFunc<T>` (`ValueTask<T>(CancellationToken)`); a `ValueTask<T>` method group passes directly, a `Task<T>` method needs `async ct => await ...`
-- `Feed.AsyncEnumerable(...)` — from an `IAsyncEnumerable<T>`
-- `Feed.Create(...)` — from a custom async function
+- `Feed.AsyncEnumerable(...)` — from a factory `Func<CancellationToken, IAsyncEnumerable<T>>`, not an enumerable instance
+- `Feed.Create(...)` — from a factory returning an `IAsyncEnumerable<Message<T>>` stream (low level; rarely needed)
 
 ### Step 3: For Feed Operators (Select, Where)
 
@@ -47,7 +47,7 @@ If the user needs to trigger a feed refresh:
 uno_platform_docs_search("MVUX feed refresh Signal trigger reload")
 ```
 
-The feed reference page has a section on `Signal` for manual refresh triggers.
+The feed reference page has no `Signal` section. Refresh from the view with the `FeedView`'s `Refresh` command, documented in `external/uno.extensions/doc/Reference/Reactive/in-apps.md` (anchor `refreshing-a-data`). To refresh from the Model, pass a `Signal` as the `refresh:` parameter of `Feed.Async`, `ListFeed.Async`, or `State.Async` and call `signal.Raise()`.
 
 ### Step 5: For How-To Walkthroughs
 

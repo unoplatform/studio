@@ -38,7 +38,7 @@ This covers single selection, multi selection, checking selection from commands,
 From the fetched docs:
 - **Single selection**: `.Selection(selectedState)` where `selectedState` is `IState<T?>`
 - **Multi-selection**: `.Selection(selectedStates)` where `selectedStates` is `IState<IImmutableList<T>>`
-- **Manual selection**: Use `IListState<T>` instead of `IListFeed<T>` for programmatic item selection
+- **Manual selection**: Use `IListState<T>` instead of `IListFeed<T>` for programmatic item selection: `TrySelectAsync(item)`, `TryDeselectAsync(item)`, `ClearSelectionAsync()`, documented in `external/uno.extensions/doc/Learn/Mvux/ListStates.md` ("Selection operators")
 
 ### Step 4: For Selection with Commands
 

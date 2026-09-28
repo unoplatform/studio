@@ -26,12 +26,12 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reacti
 
 From the fetched docs, the key factory methods on the `ListFeed` static class:
 - `ListFeed.Async(...)` — from an `AsyncFunc<IImmutableList<T>>`, i.e. a `ValueTask<IImmutableList<T>>(CancellationToken)` method group; wrap a `Task`-returning method in a lambda
-- `ListFeed.AsyncEnumerable(...)` — from an `IAsyncEnumerable<IImmutableList<T>>`
+- `ListFeed.AsyncEnumerable(...)` — from a factory `Func<CancellationToken, IAsyncEnumerable<IImmutableList<T>>>`, not an enumerable instance
 - `ListFeed.PaginatedAsync(...)` — for paginated/infinite scroll (see `references/pagination.md`)
 
 ### Step 3: For ListFeed Operators
 
-The reference page covers operators like `Where`, `AsFeed`, `AsListFeed`, and `Selection`. `Where` filters individual items. There is no `Select` on `IListFeed<T>`; to project, use `.AsFeed().Select(...)`.
+The reference page covers `PaginatedAsync`, `Where`, `AsFeed`, and `AsListFeed`. `Where` filters individual items. There is no `Select` on `IListFeed<T>`; to project, use `.AsFeed().Select(...)`. `Selection` is documented in `external/uno.extensions/doc/Reference/Reactive/in-apps.md` (anchor `selection`) and `external/uno.extensions/doc/Learn/Mvux/Advanced/Selection.md`.
 
 ### Step 4: For How-To Walkthroughs
 
@@ -58,7 +58,7 @@ The how-to page shows how to bind `IListFeed<T>` to `ListView` via `FeedView` an
 
 ## Key Equality Requirement (Critical)
 
-**All item types used in `IListFeed<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. Without key equality, MVUX cannot distinguish between a modified entity and a completely different one, causing full list re-renders instead of granular item updates (flickering, lost scroll position, broken animations).
+**All item types used in `IListFeed<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. Without key equality, MVUX cannot distinguish between a modified entity and a completely different one: unchanged items still match by value equality, but every edited item is diffed as a remove plus an add instead of an in-place update (lost selection, broken animations).
 
 ### Automatic generation (recommended)
 
@@ -103,7 +103,7 @@ public partial record MyItem(Guid Id, string Name);
 ### Rules
 
 - The item type **must** be a `partial record` (or manually implement `IKeyEquatable<T>`)
-- At least one key property is required — without it, every update replaces the entire list in the UI
+- At least one key property is required — without it, every edited item is removed and re-added in the UI
 - Key properties define **identity** (same entity); non-key properties define **state** (changed data)
 - `KeyEquals` returns `true` when two instances represent the same entity, even if other properties differ
 

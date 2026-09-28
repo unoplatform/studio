@@ -24,7 +24,7 @@ AI coding tools can generate code quickly, but for enterprises, generating code 
 
 **Uno Platform Studio** revolutionizes how developers design, build, and iterate on their applications by leveraging purpose-built tools that streamline your workflow:
 
-- **[Uno Platform Studio App](ref:Uno.PlatformStudio.GetStarted)**
+- **[Uno Platform Studio App](xref:Uno.PlatformStudio.GetStarted)**
   Describe what you want and generate a working, well-structured, cross-platform .NET app in the browser, then continue building in your IDE.
 
 - **[Hot Design<sup>®</sup>](https://aka.platform.uno/hot-design)**

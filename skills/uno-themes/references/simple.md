@@ -37,7 +37,7 @@ The inline tables below are a fast lookup; `simple-controls-styles.md` wins when
 ## Critical Rules
 
 - **Simple uses a flat grayscale palette** for all roles except Error (which uses red). Primary, Secondary, Tertiary, Surface, and Outline are achromatic grays. To introduce brand colors, set seeds or override the palette through `SimpleTheme.Colors` (`<ut:ThemeColors PrimarySeed="..." />` or `OverrideSource`); `ColorOverrideSource` / `ColorOverrideDictionary` are obsolete.
-- **Simple defaults to Inter** for all typography; `CharacterSpacing` is 0 where the M3 scale defines it (Display, Body, Label, Caption); font weights are `Bold` / `SemiBold` / `Normal` (no `Medium`). `SimpleFontFamily` no longer exists; override fonts through `FontOverrideSource` (see Customization).
+- **Simple defaults to Inter** for all typography; `CharacterSpacing` is 0 where the M3 scale defines it (Display, Body, Label, Caption); the type scales use `Bold` / `SemiBold` / `Normal` (no `Medium`), but `SimpleButtonFontWeight` and `SimpleToggleButtonFontWeight` are `Medium`. `SimpleFontFamily` no longer exists; swap the font with `DefaultFontFamily` on the theme (see Customization).
 - **Typography style keys are NEVER theme-prefixed.** Write `DisplayLarge`, `BodyMedium`, `LabelSmall` — NOT `SimpleDisplayLarge`. `SimpleBodyMedium` exists but does not resolve under Material; use the `Simple*` prefix only for the Simple-only control styles listed below.
 - **Sizes come from design tokens, not size-named styles.** `DefaultDensity` (`Compact` / `Regular` / `Comfy`, spacing ×0.75 / ×1 / ×1.25) and `DefaultSpacing` scale the `Space*` tokens, `DefaultCornerRadius` scales the `Radius*` tokens (`RadiusFull` stays 9999), and `ControlHeight*`, `IconSize*`, and `TouchTargetMinSize` are fixed. There is no `DefaultSize` and no `SimpleSmall*` / `SimpleMedium*` style family in Uno.Themes 8.0; the one size variant is `SimpleTextBoxSmallStyle`.
 
@@ -48,7 +48,8 @@ The inline tables below are a fast lookup; `simple-controls-styles.md` wins when
 | Property | Type | Default | Purpose |
 |---|---|---|---|
 | `Colors` | `ThemeColors` (`using:Uno.Themes`) | — | Palette overrides: `OverrideSource` (URI of a XAML ResourceDictionary overriding `*Color` keys) or `OverrideDictionary` (inline). Replaces the obsolete `ColorOverrideSource` / `ColorOverrideDictionary` |
-| `FontOverrideSource` | `string` (URI) | — | Path to a XAML ResourceDictionary overriding font resources |
+| `DefaultFontFamily` | `FontFamily` | — (Inter) | App-wide font swap: generates the `DefaultFontFamily` token and every type-scale `*FontFamily` key from one value. Use a variable font or one with a font manifest so the `*FontWeight` tokens render |
+| `FontOverrideSource` | `string` (URI) | — | Path to a XAML ResourceDictionary overriding individual font resources |
 | `FontOverrideDictionary` | `ResourceDictionary` | — | Inline ResourceDictionary overriding font resources |
 | `DefaultDensity` | `Density` | `Regular` | `Compact` / `Regular` / `Comfy`: scales the `Space*` tokens ×0.75 / ×1 / ×1.25 |
 | `DefaultCornerRadius` | `double` | `4` | Base value the `Radius*` tokens derive from |
@@ -133,7 +134,7 @@ Simple supports five escalating overrides (ordered by scope):
 2. **Density, spacing, corner radius** — `DefaultDensity="Compact|Regular|Comfy"`, `DefaultCornerRadius`, `DefaultSpacing` on `SimpleTheme`; every control follows through the `Space*` / `Radius*` tokens (`ControlHeight*` is fixed).
 3. **Override specific brushes (targeted)** — `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` in App.xaml.
 4. **Override per-control instance (scoped)** — wrap the brush override inside the control's `Resources` block.
-5. **Override font family** — `FontOverrideSource` / `FontOverrideDictionary` on `SimpleTheme` with a dictionary that redefines `DefaultFontFamily`. `SimpleFontFamily`, the per-weight `Simple*FontFamily` keys, and the 7.1.1 `TypefacePlain` / `TypefaceBrand` pair no longer exist; an override that still defines them is silently ignored (`material-migration.md`). The docs site may still show `TypefacePlain`. Default is **Inter**.
+5. **Override font family** — set `DefaultFontFamily` on the theme (`<SimpleTheme DefaultFontFamily="ms-appx:///Fonts/MyFont.ttf#MyFont" />`, a variable font or one with a font manifest); use `FontOverrideSource` / `FontOverrideDictionary` only to override individual font keys. `SimpleFontFamily`, the per-weight `Simple*FontFamily` keys, and the 7.1.1 `TypefacePlain` / `TypefaceBrand` pair no longer exist; an override that still defines them is silently ignored (Uno.Themes 8.0 migration guide). The docs site still serves the 7.x migration page, which recommends `TypefacePlain`; ignore that on 8.0. Default is **Inter**.
 
 Customization precedence (highest → lowest): per-instance `Control.Resources` → `Page.Resources` → app-level overrides → `SimpleTheme` defaults → `SharedColorPalette` / `SharedColors` / `SharedTypography` foundation.
 

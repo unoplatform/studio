@@ -148,7 +148,7 @@ Three escalating scopes:
 2. **Specific brush override (targeted)** — drop a `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` into App.xaml or scoped resources.
 3. **Per-instance override (scoped)** — wrap the override in the control's `Resources` block.
 
-Font override: set `FontOverrideSource` / `FontOverrideDictionary` on `MaterialTheme` with a dictionary that redefines `DefaultFontFamily`, the root token every type-scale style reads. The `MaterialRegularFontFamily` / `MaterialMediumFontFamily` / `MaterialLightFontFamily` keys still exist but are legacy.
+Font override: set `FontOverrideSource` / `FontOverrideDictionary` on `MaterialTheme` with a dictionary that redefines `DefaultFontFamily`, the root token every type-scale style reads. The `MaterialRegularFontFamily` / `MaterialMediumFontFamily` / `MaterialLightFontFamily` keys still exist but are legacy, and the 7.1.1 `TypefacePlain` / `TypefaceBrand` pair the docs site may still show is removed in 8.0 (an override that defines them is silently ignored).
 
 ## C# Markup
 

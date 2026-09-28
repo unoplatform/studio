@@ -39,7 +39,7 @@ The inline tables below are a fast lookup; `simple-controls-styles.md` wins when
 - **Simple uses a flat grayscale palette** for all roles except Error (which uses red). Primary, Secondary, Tertiary, Surface, and Outline are achromatic grays. To introduce brand colors, set seeds or override the palette through `SimpleTheme.Colors` (`<ut:ThemeColors PrimarySeed="..." />` or `OverrideSource`); `ColorOverrideSource` / `ColorOverrideDictionary` are obsolete.
 - **Simple defaults to Inter** for all typography; `CharacterSpacing` is 0 where the M3 scale defines it (Display, Body, Label, Caption); font weights are `Bold` / `SemiBold` / `Normal` (no `Medium`). `SimpleFontFamily` no longer exists; override fonts through `FontOverrideSource` (see Customization).
 - **Typography style keys are NEVER theme-prefixed.** Write `DisplayLarge`, `BodyMedium`, `LabelSmall` — NOT `SimpleDisplayLarge`. `SimpleBodyMedium` exists but does not resolve under Material; use the `Simple*` prefix only for the Simple-only control styles listed below.
-- **Sizes come from design tokens, not size-named styles.** `DefaultDensity` (`Compact` / `Regular` / `Comfy`, spacing ×0.75 / ×1 / ×1.25) and `DefaultSpacing` scale the `Space*` tokens, `DefaultCornerRadius` scales the `Radius*` tokens (`RadiusFull` stays 9999), and `ControlHeight*`, `IconSize*`, and `TouchTargetMinSize` are fixed. There is no `DefaultSize` and no `SimpleSmall*` / `SimpleMedium*` style family in Uno.Themes 8.0.
+- **Sizes come from design tokens, not size-named styles.** `DefaultDensity` (`Compact` / `Regular` / `Comfy`, spacing ×0.75 / ×1 / ×1.25) and `DefaultSpacing` scale the `Space*` tokens, `DefaultCornerRadius` scales the `Radius*` tokens (`RadiusFull` stays 9999), and `ControlHeight*`, `IconSize*`, and `TouchTargetMinSize` are fixed. There is no `DefaultSize` and no `SimpleSmall*` / `SimpleMedium*` style family in Uno.Themes 8.0; the one size variant is `SimpleTextBoxSmallStyle`.
 
 ## SimpleTheme Configuration
 
@@ -133,7 +133,7 @@ Simple supports five escalating overrides (ordered by scope):
 2. **Density, spacing, corner radius** — `DefaultDensity="Compact|Regular|Comfy"`, `DefaultCornerRadius`, `DefaultSpacing` on `SimpleTheme`; every control follows through the `Space*` / `Radius*` tokens (`ControlHeight*` is fixed).
 3. **Override specific brushes (targeted)** — `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` in App.xaml.
 4. **Override per-control instance (scoped)** — wrap the brush override inside the control's `Resources` block.
-5. **Override font family** — `FontOverrideSource` / `FontOverrideDictionary` on `SimpleTheme` with a dictionary that redefines `DefaultFontFamily`. `SimpleFontFamily` and the per-weight `Simple*FontFamily` keys no longer exist. Default is **Inter**.
+5. **Override font family** — `FontOverrideSource` / `FontOverrideDictionary` on `SimpleTheme` with a dictionary that redefines `DefaultFontFamily`. `SimpleFontFamily`, the per-weight `Simple*FontFamily` keys, and the 7.1.1 `TypefacePlain` / `TypefaceBrand` pair no longer exist; an override that still defines them is silently ignored (`material-migration.md`). The docs site may still show `TypefacePlain`. Default is **Inter**.
 
 Customization precedence (highest → lowest): per-instance `Control.Resources` → `Page.Resources` → app-level overrides → `SimpleTheme` defaults → `SharedColorPalette` / `SharedColors` / `SharedTypography` foundation.
 

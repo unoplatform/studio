@@ -3,7 +3,6 @@ name: uno-themes
 description: "Uno Themes for Uno Platform apps: Material Design 3 via Uno.Material (MaterialTheme), the Simple theme (SimpleTheme, the default of the recommended template preset), and the shared semantic design language they both implement, covering the 33-key color palette and 280 generated brushes (PrimaryBrush, OnSurfaceBrush, ErrorContainerBrush), semantic typography styles (DisplayLarge, BodyMedium, LabelSmall), semantic control style keys (FilledButtonStyle, OutlinedTextBoxStyle, FabStyle), lightweight styling, light/dark mode, ThemeColors palette rebranding and seed colors, DefaultDensity, font overrides, and version migration. Use whenever an Uno app needs colors, brushes, fonts, typography, dark mode, elevation, {ThemeResource} keys, a Button/TextBox/FAB style, 'make it look like Material', 'match our brand colors', the Simple look, or any XAML that hard-codes a Color, FontFamily, or FontSize (it should use semantic brushes and styles instead). Read this before restyling any Uno control."
 metadata:
   author: uno-platform
-  version: "3.0"
   category: themes
 ---
 

@@ -26,7 +26,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation
 
 - Set `uen:Region.Navigator="Visibility"` on the content container Grid
 - Set `uen:Region.Attached="True"` on the same Grid
-- **The Grid marked with `uen:Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
+- **The Grid marked with `uen:Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route; the navigator looks for an existing child by name before creating one. Never add unnamed `Collapsed` pages.
 - After injection, children are toggled via Visibility — all remain in the visual tree
 - Good for small numbers of views where you want instant switching
 - Switching between routes is a visibility toggle, not a push. A route whose view is a `Page` is wrapped in a `FrameView`, so `-` still pops within that tab
@@ -47,7 +47,7 @@ The framework creates view instances from registered `RouteMap` entries and plac
 ## Critical Rules
 
 - The Grid MUST have both `uen:Region.Attached="True"` AND `uen:Region.Navigator="Visibility"`
-- The Grid MUST be empty — do NOT pre-populate with collapsed child elements
+- Keep the Grid empty, or name every pre-placed child with `uen:Region.Name`; never add unnamed collapsed children
 - Route names in `RouteMap` determine which views get injected
 - The parent navigation control (TabBar, NavigationView) drives which child becomes visible
 

@@ -56,7 +56,7 @@ See the `references/responsive-shell.md`.
 - The root `Grid` with `uen:Region.Attached="True"` enables region navigation for the entire shell
 - `uen:Region.Attached="True"` MUST also be on the `NavigationView` itself
 - The content area `Grid` inside `NavigationView` needs BOTH `uen:Region.Attached="True"` AND `uen:Region.Navigator="Visibility"`
-- **The content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
+- **The content area Grid with `Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route. Never add unnamed `Collapsed` pages.
 - Do NOT use the built-in Settings item. `NavigationViewNavigator` only enumerates `MenuItems` and `FooterMenuItems`, so `Region.SetName` on `SettingsItem` (the pattern in the docs) navigates but never syncs selection. Set `IsSettingsVisible="False"` and add a `NavigationViewItem` with `uen:Region.Name="Settings"` to `FooterMenuItems`
 - Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
 - Page routes are nested under the `"Main"` route so only the content area updates, not the entire page

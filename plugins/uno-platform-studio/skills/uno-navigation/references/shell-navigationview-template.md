@@ -27,7 +27,7 @@ xmlns:uen="using:Uno.Extensions.Navigation.UI"
 
 ## SHELL_PAGE_NAME.xaml (Without Settings)
 
-Use this variant when the plan does NOT include a Settings page. The content area Grid with `Region.Navigator="Visibility"` must be **empty** — the navigation framework injects views at runtime from registered routes.
+Use this variant when the plan does NOT include a Settings page. The content area Grid with `Region.Navigator="Visibility"` stays empty here; the navigation framework injects views at runtime from registered routes (pre-placed children are allowed only with a matching `uen:Region.Name`).
 
 ```xml
 <Page x:Class="SHELL_PAGE_CLASS"
@@ -203,7 +203,9 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 7. Replace `PAGE1_ICON_GLYPH`, etc. with glyphs from the Icon Lookup Table above (e.g., `&#xE80F;`)
 8. Add or remove `NavigationViewItem` entries to match the number of pages in the plan
 9. Choose the "With Settings" or "Without Settings" variant based on whether the plan includes a Settings page
-10. If using Settings, include `new RouteMap("Settings", View: views.FindByView<SettingsPage>())` in the nested routes
+10. If using Settings, add `new ViewMap<SettingsPage>()` to `views.Register(...)` and `new RouteMap("Settings", View: views.FindByView<SettingsPage>())` to the nested routes; `FindByView` throws at startup for an unregistered view
+11. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does
+12. `BackgroundBrush` is an Uno.Themes key; on Fluent (`-preset blank`) use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`
 
 ## Route Registration Rules
 

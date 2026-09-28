@@ -77,10 +77,11 @@ The second Critical Rule above (extension methods on `INavigator`) is the most-s
 
 ```csharp
 // WRONG: CS1929 (or CS1061 when Uno.Extensions.Navigation is not imported): string has no NavigateRouteAsync
-await "/details".NavigateRouteAsync(...);
+await "Details".NavigateRouteAsync(...);
 
 // CORRECT: get an INavigator first (nullable on a view)
-await this.Navigator()!.NavigateRouteAsync(this, "/details");
+// A leading "/" would be the Root qualifier and resolve from the root region.
+await this.Navigator()!.NavigateRouteAsync(this, "Details");
 ```
 
 In XAML, prefer the `uen:Navigation.Request` attached property instead of code-behind navigation:

@@ -26,7 +26,7 @@ xmlns:utu="using:Uno.Toolkit.UI"
 
 ## SHELL_PAGE_NAME.xaml (Responsive Shell)
 
-The content area Grid with `Region.Navigator="Visibility"` must be **empty** — the navigation framework injects views at runtime from registered routes.
+The content area Grid with `Region.Navigator="Visibility"` stays empty here; the navigation framework injects views at runtime from registered routes (pre-placed children are allowed only with a matching `uen:Region.Name`).
 
 ```xml
 <Page x:Class="SHELL_PAGE_CLASS"
@@ -209,3 +209,5 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 5. Replace `PAGE1_ICON_GLYPH`, etc. with glyphs from the Icon Lookup Table
 6. Add or remove `NavigationViewItem` + `TabBarItem` pairs as needed
 7. Both `NavigationViewItem` and `TabBarItem` for the same page MUST use the same `uen:Region.Name`
+8. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does
+9. `BackgroundBrush` is an Uno.Themes key; on Fluent (`-preset blank`) use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`

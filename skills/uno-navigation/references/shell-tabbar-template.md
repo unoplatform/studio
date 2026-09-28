@@ -28,7 +28,7 @@ xmlns:utu="using:Uno.Toolkit.UI"
 
 ## SHELL_PAGE_NAME.xaml (Shell)
 
-The content area Grid with `Region.Navigator="Visibility"` must be **empty** — the navigation framework injects views at runtime from registered routes.
+The content area Grid with `Region.Navigator="Visibility"` stays empty here; the navigation framework injects views at runtime from registered routes (pre-placed children are allowed only with a matching `uen:Region.Name`).
 
 ```xml
 <Page x:Class="SHELL_PAGE_CLASS"
@@ -158,6 +158,8 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 7. Replace `PAGE1_ICON_GLYPH`, etc. with glyphs from the Icon Lookup Table above (e.g., `&#xE80F;`)
 8. Add or remove `TabBarItem` entries to match the number of Tab pages in the plan
 9. The `BottomTabBarStyle` goes on the `TabBar` container; `BottomTabBarItemStyle` goes on each `TabBarItem`. Both alias keys exist only in the Material and Simple toolkit themes (`MaterialBottomTabBarItemStyle` is the Material-only alias and fails under Simple). On Fluent (`-preset blank`) drop both `Style` attributes; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`
+10. `BackgroundBrush` is an Uno.Themes key; on Fluent use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`
+11. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does
 
 ## Route Registration Rules
 

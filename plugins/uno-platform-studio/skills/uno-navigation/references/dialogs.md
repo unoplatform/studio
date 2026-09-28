@@ -32,6 +32,8 @@ var choice = await navigator.ShowMessageDialogAsync<string>(this,
 if (choice == "delete") { ... }
 ```
 
+The result is the chosen `DialogAction.Id`, or its `Label` when `Id` is null.
+
 ### Step 3: For Flyout vs Modal
 
 - **Flyout**: navigation target is a `Page` → displayed as flyout (needs the `!` qualifier)
@@ -46,7 +48,7 @@ See the `references/data.md` for `NavigateBackWithResultAsync`.
 ## Key Principles (Stable)
 
 - Message dialogs are the simplest dialog type — title, message, and buttons via `navigator.ShowMessageDialogAsync<TResult>(this, ...)`, no route registration required; only the generic overload returns the choice
-- Use the `!` qualifier prefix (`uen:Navigation.Request="!Filter"`, the documented form; `!/Filter` also parses) or `Qualifiers.Dialog` from code to open a `Page`-based dialog via navigation
+- Use the `!` qualifier prefix (`uen:Navigation.Request="!Filter"`) or `Qualifiers.Dialog` from code to open a `Page`-based dialog via navigation
 - If the target is a `Page`, it displays as a flyout; `!` is what turns a `Page` into a flyout
 - If the target is a `ContentDialog`, it displays as a modal, with or without `!`
 - Dialog results can be returned via `NavigateBackWithResultAsync(this, data: value)` (or directly from `ShowMessageDialogAsync<TResult>` for the simple case)

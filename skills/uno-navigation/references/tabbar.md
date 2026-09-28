@@ -54,7 +54,7 @@ See the `references/responsive-shell.md`.
 - TabBar uses region-based navigation similarly to NavigationView
 - Each `TabBarItem` gets `uen:Region.Name="RouteName"`
 - Parent container and content area need `Region.Attached="True"`
-- Apply `BottomTabBarStyle` to the `TabBar` and `BottomTabBarItemStyle` to each `TabBarItem`; these alias keys are defined only by the Material and Simple toolkit themes. On Fluent (the `-preset blank` default) omit the `Style` attributes or the page throws `XamlParseException: Cannot find a Resource with the Name/Key BottomTabBarStyle`; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`. `MaterialBottomTabBarItemStyle` is the Material-only alias and throws under Simple; see the `uno-toolkit` skill (`references/tabbar.md`, `references/material-theme.md`)
+- Apply `BottomTabBarStyle` to the `TabBar` and `BottomTabBarItemStyle` to each `TabBarItem`; these alias keys are defined only by the Material and Simple toolkit themes. On Fluent (the `-preset blank` default) omit the `Style` attributes or the page throws `XamlParseException: Cannot find a Resource with the Name/Key BottomTabBarStyle`; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`. Likewise replace the page `Background="{ThemeResource BackgroundBrush}"` with `ApplicationPageBackgroundThemeBrush` on Fluent or `CupertinoSystemBackgroundBrush` on Cupertino. `MaterialBottomTabBarItemStyle` is the Material-only alias and throws under Simple; see the `uno-toolkit` skill (`references/tabbar.md`, `references/material-theme.md`)
 - Requires `Toolkit` in `<UnoFeatures>` along with `Navigation`
 - XAML namespaces: `xmlns:uen="using:Uno.Extensions.Navigation.UI"` and `xmlns:utu="using:Uno.Toolkit.UI"`
 
@@ -62,7 +62,7 @@ See the `references/responsive-shell.md`.
 
 - The root `Grid` with `uen:Region.Attached="True"` is the Page content (the template shows it as the direct child of `Page`); it enables region navigation
 - `uen:Region.Navigator="Visibility"` MUST be on the content area Grid — this tells the framework to toggle child visibility
-- **The content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
+- **The content area Grid with `Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route. Never add unnamed `Collapsed` pages.
 - `uen:Region.Attached="True"` MUST also be on the TabBar itself
 - Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
 - Tab page routes are nested under the `"Main"` route so only the content area updates, not the entire page

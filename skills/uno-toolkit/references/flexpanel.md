@@ -1,6 +1,6 @@
 # Uno Toolkit FlexPanel
 
-> **Availability:** `FlexPanel` is not in Uno.Toolkit 10.0 (uno.toolkit.ui PR #1639 is still open, checked 2026-09-28) and is absent from every published package. Before using it, confirm `utu:FlexPanel` resolves in the installed Toolkit version (search the Toolkit assembly or try the type in XAML). If it does not, use `AutoLayout`, `Grid`, or `WrapPanel` instead.
+> **Availability:** `FlexPanel` is not in Uno.Toolkit 10.0 (uno.toolkit.ui PR #1639 is still open, checked 2026-09-28) and is absent from every published package. Before using it, confirm `utu:FlexPanel` resolves in the installed Toolkit version (search the Toolkit assembly or try the type in XAML). If it does not, use `AutoLayout` or `Grid` instead (there is no `WrapPanel` in the Toolkit or WinUI; the CommunityToolkit ships one).
 
 ## Workflow
 

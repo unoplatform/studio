@@ -30,7 +30,7 @@ See the `uno-navigation` skill (`references/setup.md`).
 ## Key Principles (Stable)
 
 - Derives from `LoadingView` — replicates the platform's native splash look and shows your `LoadingContent` over it while `Source` is busy
-- Requires `Init()` call on Android in `MainActivity.OnCreate`
+- Requires `Uno.Toolkit.UI.ExtendedSplashScreen.Init(this);` on Android in `MainActivity.OnCreate` (the signature is `Init(Activity activity)`)
 - For navigation regions and splash content, see the `uno-navigation` skill (`references/setup.md`)
 - Does not require a native splash screen; `Platforms` (flags: `Android,iOS,Windows,WebAssembly,Skia`, default `All`) picks where it shows
 - Loading screen visuals (splash image, background color) are primarily controlled by **Resizetizer** configuration

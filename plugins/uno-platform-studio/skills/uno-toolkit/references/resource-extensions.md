@@ -11,11 +11,13 @@ uno_platform_docs_search("Uno Toolkit ResourceExtensions ResourceDictionary styl
 ```
 
 Primary documentation pages:
-- **ResourceExtensions (Chefs)**: `external/uno.chefs/doc/toolkit/ResourceExtensions.md`
+- **ResourceExtensions (official helper page)**: `external/uno.toolkit.ui/doc/helpers/resource-extensions.md`
+- **ResourceExtensions (Chefs recipe)**: `external/uno.chefs/doc/toolkit/ResourceExtensions.md`
 
-Fetch the Chefs page:
+Fetch the official page first, then the Chefs recipe:
 
 ```
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/resource-extensions.md")
 uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/toolkit/ResourceExtensions.md")
 ```
 

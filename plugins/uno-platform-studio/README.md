@@ -13,7 +13,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `uno-platform` | Entry point: routes any Uno Platform request to the domain skills and sets project-wide rules (UnoFeatures, WinUI dialect, docs grounding). | — |
 | `uno-mvux` | MVUX state management: feeds, states, list feeds/states, FeedView, commands, selection, pagination, messaging, records. | 11 |
 | `uno-navigation` | Uno.Extensions.Navigation: setup, routes, regions, code and XAML navigation, data passing, dialogs, qualifiers, TabBar/NavigationView/responsive shells, troubleshooting. | 14 topics + 4 shell templates |
-| `uno-toolkit` | Uno Toolkit controls (TabBar, NavigationBar, CardContentControl, Chip, Drawer, SafeArea, AutoLayout, FlexPanel, LoadingView, ShadowContainer, …) and attached-property extensions, plus setup, theming, lightweight styling, and C# Markup. | 32 |
+| `uno-toolkit` | Uno Toolkit controls (TabBar, NavigationBar, CardContentControl, Chip, Drawer, SafeArea, AutoLayout, LoadingView, ShadowContainer, …) and attached-property extensions, plus setup, theming, lightweight styling, and C# Markup. | 32 |
 | `uno-themes` | Uno Material (MD3), Simple theme, and the shared semantic colors, brushes, and typography. | 3 |
 | `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions. | 4 |
 

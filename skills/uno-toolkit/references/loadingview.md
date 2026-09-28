@@ -30,7 +30,7 @@ uno_platform_docs_search("LoadingView howto walkthrough loading")
 - `Source` property binds to an `ILoadable` (`Uno.Toolkit.ILoadable`, in the `Uno.Toolkit` package): `bool IsExecuting` plus an `IsExecutingChanged` event
 - The Toolkit ships no `AsyncCommand` type; the docs' `AsyncCommand` is sample code. Implement `ILoadable` on your own command, or wrap any `ILoadable` in `LoadableSource`
 - Loading content is displayed when the source is busy
-- `CompositeLoadableSource` combines multiple `LoadableSource`s
+- `CompositeLoadableSource` combines multiple `ILoadable`s through its `Sources` collection (any `ILoadable`, not only `LoadableSource`)
 - `LoadingContent` — content shown during loading. It defaults to null, so put `<ProgressRing IsActive="True" />` (or a skeleton) in it or nothing appears
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 

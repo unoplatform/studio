@@ -27,7 +27,7 @@ uno_platform_docs_search("ShadowContainer howto walkthrough shadow example")
 
 ## Key Principles (Stable)
 
-- Shadow properties work like CSS `box-shadow` — the API is a 1-to-1 mapping
+- Shadow properties follow CSS `box-shadow` (`IsInner` is `inset`), with `Opacity` as a separate multiplier on `Color`
 - `Shadows` property (a `ShadowCollection`) holds the `Shadow` items; `ShadowContainer` and `Shadow` ship in the `Uno.Toolkit.Skia.WinUI` package
 - Each `Shadow` has: `OffsetX`, `OffsetY`, `BlurRadius`, `Spread`, `Color`, `Opacity`
 - `IsInner="True"` creates an inset shadow

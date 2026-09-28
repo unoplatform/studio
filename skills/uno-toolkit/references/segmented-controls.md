@@ -10,14 +10,16 @@
 uno_platform_docs_search("Uno Toolkit segmented control TabBar button group exclusive")
 ```
 
-Primary documentation pages:
-- **TabBar & TabBarItem** (segmented section): `external/uno.toolkit.ui/doc/controls/TabBarAndTabBarItem.md`
+Primary documentation page:
+- **Segmented Controls**: `external/uno.toolkit.ui/doc/controls/SegmentedControls.md`
 
-Fetch the TabBar page and look for segmented control styles:
+Fetch it:
 
 ```
 uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/SegmentedControls.md")
 ```
+
+Do not take the segmented snippet from the TabBar page; it uses `SegmentedStyle` / `SlidingSegmentedStyle`, and those keys exist nowhere.
 
 ## Critical Rules
 

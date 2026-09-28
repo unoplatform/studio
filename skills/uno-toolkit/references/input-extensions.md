@@ -29,7 +29,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/walkthro
 ## Key Principles (Stable)
 
 - `utu:InputExtensions.AutoFocusNext="True"` — moves focus to the next field on Enter (`AutoFocusNextElement` names an explicit target)
-- `utu:InputExtensions.AutoDismiss="True"` — dismisses keyboard on last field Enter
+- `utu:InputExtensions.AutoDismiss="True"` — dismisses the keyboard on Enter for whichever `TextBox`/`PasswordBox` carries it (typically the last field); a `CommandExtensions.Command` on the field dismisses it too
 - `utu:InputExtensions.ReturnType="Default|Next|Done|Search|Send|Go"` — mobile keyboard button
 - Essential for login forms and any multi-field input
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`

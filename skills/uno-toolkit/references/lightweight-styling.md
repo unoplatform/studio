@@ -30,7 +30,7 @@ uno_platform_docs_search("Uno Toolkit [ControlName] lightweight styling resource
 ## Key Principles (Stable)
 
 - Override resource keys at App, Page, or Control level
-- Resource keys follow the pattern `{ControlName}{Property}{State}` (e.g. `ChipForegroundPointerOver`, `FilledCardContentBorderBrushPressed`)
+- Resource keys follow roughly `{StyleVariant}{ShortControlName}{Property}{State}` (e.g. `ChipForegroundPointerOver`, `FilledCardContentBorderBrushPressed`, `DividerSubHeaderForeground`). The control name is often shortened, so copy the exact key from the control's doc table instead of composing it
 - Control-level overrides use `<Control.Resources>` or `ResourceExtensions`
 - No need to redefine entire styles/templates
 - Each control's doc page lists available resource keys

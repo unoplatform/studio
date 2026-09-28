@@ -13,6 +13,7 @@ uno_platform_docs_search("Uno Toolkit getting started install UnoFeatures Toolki
 Primary documentation pages:
 - **Getting Started (base Toolkit)**: `external/uno.toolkit.ui/doc/getting-started.md`
 - **Material Toolkit Getting Started**: `external/uno.toolkit.ui/doc/material-getting-started.md`
+- **Simple Toolkit Getting Started**: `external/uno.toolkit.ui/doc/simple-getting-started.md`
 
 Fetch the getting started page:
 
@@ -38,9 +39,10 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls-styles.
 
 ## Key Principles (Stable)
 
-- Add `Toolkit` to `<UnoFeatures>` in the project file
+- Add `Toolkit` to `<UnoFeatures>` in the project file, plus the theme feature (`Material`, `SimpleTheme`, or `Cupertino`)
 - For Material styling, use `MaterialToolkitTheme` in App.xaml (replaces separate MaterialTheme + ToolkitResources)
-- For Cupertino styling, merge `CupertinoToolkitResources` (Uno.Toolkit.WinUI.Cupertino)
+- For Simple styling (the recommended template preset), use `<utus:SimpleToolkitTheme xmlns:utus="using:Uno.Toolkit.UI.Simple" />` (replaces SimpleTheme + ToolkitResources)
+- For Cupertino styling, merge the `Uno.Cupertino` dictionaries, then `ToolkitResources` and `CupertinoToolkitResources` (see `references/cupertino-theme.md`)
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 - CLI: `dotnet new unoapp -o MyApp -toolkit` to create a new project with Toolkit
 
@@ -48,4 +50,5 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls-styles.
 
 - `references/material-theme.md` — MaterialToolkitTheme configuration
 - `references/cupertino-theme.md` — CupertinoToolkitResources configuration
+- the `uno-themes` skill (`references/simple.md`) — SimpleToolkitTheme properties
 - the `uno-themes` skill (`references/material.md`) — Material theme installation

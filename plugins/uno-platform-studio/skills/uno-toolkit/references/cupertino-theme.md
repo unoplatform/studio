@@ -21,10 +21,12 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/cupertino-gettin
 
 ## Key Principles (Stable)
 
-- `CupertinoToolkitResources` (`xmlns="using:Uno.Toolkit.UI.Cupertino"`) is the resource dictionary for Cupertino-styled Toolkit controls; merge it alongside the Uno.Cupertino theme. There is no `CupertinoToolkitTheme` type.
-- Place in App.xaml `<Application.Resources>`
-- Requires `Toolkit` in `<UnoFeatures>`
-- Pick one design language per app: `MaterialToolkitTheme` for Material, `CupertinoToolkitResources` for Cupertino
+- `CupertinoToolkitResources` (`xmlns="using:Uno.Toolkit.UI.Cupertino"`) merges only its own Toolkit styles. There is no `CupertinoToolkitTheme` type that pulls in the rest, so the full setup is:
+  1. `<UnoFeatures>Toolkit;Cupertino</UnoFeatures>`
+  2. In App.xaml `MergedDictionaries`: `<CupertinoColors xmlns="using:Uno.Cupertino" />`, `<CupertinoFonts xmlns="using:Uno.Cupertino" />`, `<CupertinoResources xmlns="using:Uno.Cupertino" />`
+  3. Then `<ToolkitResources xmlns="using:Uno.Toolkit.UI" />` and `<CupertinoToolkitResources xmlns="using:Uno.Toolkit.UI.Cupertino" />`
+- Cupertino ships only 6 Toolkit style keys: `CupertinoBottomTabBarStyle`, `CupertinoBottomTabBarItemStyle`, `CupertinoSegmentedStyle`, `CupertinoSegmentedItemStyle`, `CupertinoSlidingSegmentedStyle`, `CupertinoSlidingSegmentedItemStyle`. Card, Chip, and the unprefixed TabBar keys do not resolve under Cupertino.
+- Pick one design language per app: `MaterialToolkitTheme` for Material, `SimpleToolkitTheme` for Simple, the dictionaries above for Cupertino
 
 ## Related Skills
 

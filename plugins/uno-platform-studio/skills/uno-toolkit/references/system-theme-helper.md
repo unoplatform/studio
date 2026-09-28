@@ -23,9 +23,10 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/SystemTh
 
 - `SystemThemeHelper.GetCurrentOsTheme()` — returns `ApplicationTheme.Light` or `ApplicationTheme.Dark`
 - `SystemThemeHelper.GetRootTheme(XamlRoot?)` — gets the app theme for a given XamlRoot
-- `SystemThemeHelper.IsRootInDarkMode(XamlRoot?)` — quick check if dark mode is active
+- `SystemThemeHelper.IsRootInDarkMode(XamlRoot)` — quick check if dark mode is active; non-nullable, with `FrameworkElement` and `Window` overloads
 - `SystemThemeHelper.SetRootTheme(XamlRoot?, bool)` — set theme (`true` = dark)
 - `SystemThemeHelper.SetApplicationTheme(XamlRoot?, ElementTheme)` — set theme using ElementTheme enum
+- Obsolete, do not use: `GetApplicationTheme()`, `IsAppInDarkMode()`, `SetApplicationTheme(bool)`, `ToggleApplicationTheme()`
 - **No `ThemeChanged` event exists** — there is no event to subscribe to for theme changes
 - Namespace: `using Uno.Toolkit.UI;`
 

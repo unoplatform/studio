@@ -20,8 +20,8 @@ Look for FlipViewExtensions in the helpers section.
 
 ## Key Principles (Stable)
 
-- Shows Previous/Next navigation arrows on FlipView
-- Customizable button templates via default chevron styles
+- Two attached properties for your own `Button`s: `utu:FlipViewExtensions.Next="{Binding ElementName=flipView}"` and `utu:FlipViewExtensions.Previous="{Binding ElementName=flipView}"`; clicking the button moves the `FlipView`
+- No arrow or chevron styles ship with the helper; the only related style is `NoArrowsFlipViewStyle`, which hides the built-in desktop arrows
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills

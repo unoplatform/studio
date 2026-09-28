@@ -40,7 +40,6 @@ Key page:
 ## Critical Rules
 
 - **`ResponsiveExtension` must be used as a markup extension** — `{utu:Responsive Narrow=Red, Wide=Blue}` — never as a XAML element (`<utu:ResponsiveExtension .../>`). The XAML engine parses the breakpoint values as strings and performs type conversion through `MarkupExtension.ProvideValue`, which is only available in markup-extension form.
-- On Windows UWP targets, `ResponsiveExtension` only works with `string` value properties due to a `MarkupExtension.ProvideValue(IXamlServiceProvider)` limitation. For non-string properties on Windows UWP, declare the values as resources and pass them via `{StaticResource ...}` (see Uno Toolkit docs).
 
 ## Key Principles (Stable)
 

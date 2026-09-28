@@ -24,7 +24,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/DrawerC
 If the user needs gesture-enabled flyouts:
 
 ```
-uno_platform_docs_search("Uno Toolkit DrawerFlyoutPresenter flyout bottom sheet gesture")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/DrawerFlyoutPresenter.md")
 ```
 
 ## Key Principles (Stable)

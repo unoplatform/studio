@@ -21,7 +21,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/Selector
 
 ## Key Principles (Stable)
 
-- Two attached properties: `utu:SelectorExtensions.PipsPager` and `utu:SelectorExtensions.SelectionOffset`
+- One user-facing attached property: `utu:SelectorExtensions.PipsPager`. `SelectionOffset` also exists but is an output written by `TabBar` internals; do not set it
 - The property must be set on the **Selector control** (FlipView, ListView), **NOT** on the PipsPager
 - Automatically syncs `NumberOfPages` and `SelectedIndex` bidirectionally
 - Swiping the Selector updates the pip; clicking a pip navigates the Selector

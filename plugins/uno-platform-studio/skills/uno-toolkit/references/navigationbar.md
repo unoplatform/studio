@@ -27,11 +27,12 @@ uno_platform_docs_search("NavigationBar Chefs app example navigation back")
 
 ## Critical Rules
 
-- **`MainCommand` is an `AppBarButton`** — there is no dedicated `NavigationBarMainCommand` type. Use `<utu:NavigationBar.MainCommand><AppBarButton Icon="Back" Command="{Binding GoBackCommand}"/></utu:NavigationBar.MainCommand>` (or equivalent attribute form). `PrimaryCommands` and `SecondaryCommands` take `ICommandBarElement`s (`AppBarButton`, `AppBarToggleButton`, `AppBarSeparator`).
+- **`MainCommand` is an `AppBarButton`** — there is no dedicated `NavigationBarMainCommand` type. `PrimaryCommands` and `SecondaryCommands` take `ICommandBarElement`s (`AppBarButton`, `AppBarToggleButton`, `AppBarSeparator`).
+- **Omit `MainCommand` for plain back navigation.** Under the default `MainCommandMode="Back"` the bar already calls `Frame.GoBack()` on click, so `<AppBarButton Command="{Binding GoBackCommand}"/>` navigates back twice. Set a custom `MainCommand` with a `Command` only together with `MainCommandMode="Action"` (burger menu, confirm-before-leave); set `MainCommand` without a `Command` only to swap the icon.
 
 ## Key Principles (Stable)
 
-- `MainCommand` — the back-button slot; an `AppBarButton` instance
+- `MainCommand` — the back-button slot; an `AppBarButton` instance. `MainCommandMode` is `Back` (default, the bar navigates back itself) or `Action` (your `Command` runs instead)
 - `PrimaryCommands` — action `ICommandBarElement`s displayed on the right
 - `SecondaryCommands` — overflow `ICommandBarElement`s in the overflow menu
 - Two rendering modes: `Windows` (XAML drawn) and `Native` (platform AppBar on iOS/Android)

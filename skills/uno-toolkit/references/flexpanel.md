@@ -1,6 +1,6 @@
 # Uno Toolkit FlexPanel
 
-> **Availability:** `FlexPanel` is unreleased as of 2026-09. It lives in uno.toolkit.ui PR #1639 and is absent from Toolkit 10.0.0-dev.3 and 11.0.0-dev.94. Before using it, confirm `utu:FlexPanel` resolves in the installed Toolkit version (search the Toolkit assembly or try the type in XAML). If it does not, use `AutoLayout`, `Grid`, or `WrapPanel` instead.
+> **Availability:** `FlexPanel` is not in Uno.Toolkit 10.0 (uno.toolkit.ui PR #1639 is still open, checked 2026-09-28) and is absent from every published package. Before using it, confirm `utu:FlexPanel` resolves in the installed Toolkit version (search the Toolkit assembly or try the type in XAML). If it does not, use `AutoLayout`, `Grid`, or `WrapPanel` instead.
 
 ## Workflow
 
@@ -12,7 +12,7 @@
 uno_platform_docs_search("Uno Toolkit FlexPanel flexbox grow shrink basis wrap gap")
 ```
 
-The `FlexPanel.md` and `FlexPanel.howto.md` doc pages will exist once PR #1639 ships; until then the search returns nothing and the notes below are the reference.
+A `FlexPanel` doc page will exist once PR #1639 ships; until then the search returns nothing and the notes below are the reference.
 
 ## Key Principles (Stable)
 
@@ -140,8 +140,6 @@ Two capability differences worth knowing before choosing:
 
 - `FlexPanel` wraps onto multiple lines; `AutoLayout` does not.
 - `AutoLayout` supports negative `Spacing` (for deliberately overlapping items such as stacked avatars). `FlexPanel` cannot — the engine clamps a negative gap to `0`. Use a negative child `Margin` instead.
-
-They also differ on overflow: with every child at `Shrink="0"`, `FlexPanel` **overflows** rather than fitting the content to the panel, where `AutoLayout` would fit them.
 
 ## Related Skills
 

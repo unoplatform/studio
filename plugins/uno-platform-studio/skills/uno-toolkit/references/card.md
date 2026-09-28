@@ -3,9 +3,9 @@
 ## Critical Rules
 
 - **NEVER use `Card`** — always use `CardContentControl`. The `Card` control has rigid predefined slots (HeaderContent, SubHeaderContent, AvatarContent, etc.) that constrain layout. `CardContentControl` gives full layout freedom via `ContentTemplate`.
-- **NEVER use `Border` with `CornerRadius` to wrap content.** This is the most common Border anti-pattern in generated XAML; Uno Studio's output grader reports it as `GRD1102`. Always use `CardContentControl` instead — it provides correct elevation, corner radius, theming, and accessibility automatically.
+- **NEVER use `Border` with `CornerRadius` to wrap content.** This is the most common Border anti-pattern in generated XAML. Always use `CardContentControl` instead — it provides correct elevation, corner radius, theming, and accessibility automatically.
 
-### Anti-pattern detection (matches `GRD1102`)
+### Anti-pattern detection
 
 If you find yourself writing a `<Border>` that meets **all** of the following, stop and rewrite it as `utu:CardContentControl`:
 
@@ -16,7 +16,7 @@ If you find yourself writing a `<Border>` that meets **all** of the following, s
 That's a card. `<Border CornerRadius="8" Background="..." Padding="16">…</Border>` is a card written the wrong way.
 
 ```xml
-<!-- WRONG: Border-as-card (Studio's grader reports GRD1102) -->
+<!-- WRONG: Border-as-card -->
 <Border CornerRadius="8"
         Background="{ThemeResource SurfaceBrush}"
         Padding="16">
@@ -41,7 +41,7 @@ That's a card. `<Border CornerRadius="8" Background="..." Padding="16">…</Bord
 
 ### When `Border` is still correct
 
-`Border` is the right choice for: dividers (`<Border Height="1" Background="..."/>`), thin separators, simple background fills with no rounded corners, image/content clipping with `CornerRadius` alone (no `Background`/`Padding`/`BorderBrush+BorderThickness`), and layout primitives **inside** a `ControlTemplate`. The grader specifically targets the *card-shaped* combination above; plain layout borders are unaffected.
+`Border` is the right choice for: simple background fills with no rounded corners, image/content clipping with `CornerRadius` alone (no `Background`/`Padding`/`BorderBrush+BorderThickness`), and layout primitives **inside** a `ControlTemplate`. Separator lines are `utu:Divider` (see `references/divider.md`), not `<Border Height="1"/>`. The rule targets the *card-shaped* combination above; plain layout borders are unaffected.
 
 ## Workflow
 
@@ -76,7 +76,7 @@ Key page:
 - **`CardContentControl`** — fully custom layout via `ContentTemplate`. This is the only card control you should use.
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 - Do NOT use `Card` — it has predefined slots that limit layout flexibility
-- Do NOT use `Border` as a card (`CornerRadius` + `Background`/`Padding`/`BorderBrush`) — Studio's grader reports this as `GRD1102`; use `CardContentControl` instead
+- Do NOT use `Border` as a card (`CornerRadius` + `Background`/`Padding`/`BorderBrush`); use `CardContentControl` instead
 
 ## Critical: Content Binding in DataTemplates
 
@@ -149,7 +149,7 @@ Setting `Width`/`Height` on the inner content of the `ContentTemplate` will not 
 
 ## Style Variants
 
-`CardContentControl` exposes three semantic style keys. Each design-theme provides its own concrete look; the key names are shared across themes.
+`CardContentControl` exposes three semantic style keys. Material and Simple each provide their own concrete look under the same key names. Cupertino ships no Card styles, so these keys do not resolve there.
 
 | Style | When to use |
 |-------|-------------|

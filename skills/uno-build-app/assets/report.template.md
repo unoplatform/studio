@@ -44,9 +44,9 @@
 Checkpoint: <path, or "none">
 
 <!-- Keep exactly ONE of the following three lines, verbatim, and delete the other two.
-     Use the first only if every required check on every declared target ran and passed.
-     Use the second when implementation is done and any required check failed to run, was not run, or is pending.
-     Use the third when any requested journey or integration is not implemented. -->
+     Use the first only if every required check on every task-relevant target passed or was explicitly waived; keep waivers visible above, never count them as passes.
+     Use the second when no implementation gap is known but a required check failed without establishing an implementation defect, was not run, or is pending. Include pre-existing failures here when they prevent verification.
+     Use the third when any requested journey or integration is missing, simulated instead of implemented, or has an unresolved defect demonstrated by a failed check. This takes precedence over the second line. -->
 
 **Implementation complete; verification complete.**
 **Implementation complete; verification incomplete.** Missing: <checks, targets and reasons>.

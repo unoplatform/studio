@@ -49,11 +49,11 @@ Apply these to every page the change touches, in each theme the app supports.
 
 | Check | How | Pass |
 |---|---|---|
-| Text contrast | Measure foreground against its actual background, from the rendered screenshot or the resolved colour values, in light and in dark, for every changed state (normal, disabled, selected, error) | 4.5:1 for body text, 3:1 for large text (18pt, or 14pt bold) and for icons that carry meaning |
-| Screenshot pairs | One screenshot per changed page in light and dark, at a narrow (phone-width) and a wide (desktop) window size | Nothing clipped, truncated or overflowing; every action visible and reachable |
+| Text contrast | Measure foreground against its actual background, from the rendered screenshot or the resolved colour values, in each supported theme, for changed active states (normal, selected, error) | 4.5:1 for body text, 3:1 for large text (18pt, or 14pt bold) and meaningful icons. Inactive controls are exempt from these WCAG thresholds; review their legibility separately |
+| Screenshot pairs | One screenshot per changed page in each supported theme, at applicable narrow and wide window sizes | Nothing clipped, truncated or overflowing; every action visible and reachable |
 | No colour literals | Search the changed page XAML for `#` colour values | None, except in the theme's override dictionary |
 
-Record how each measurement was taken. A contrast calculation on a solid surface is a check; it is not an accessibility certification, and gradients or photos need a human look.
+Record how each measurement was taken. The thresholds and inactive-control exceptions follow WCAG [text contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) and [non-text contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html). A contrast calculation on a solid surface is a check; it is not an accessibility certification, and gradients or photos need a human look.
 
 **Advisory: reviewer judgement, reported but not blocking**
 
@@ -61,4 +61,4 @@ Record how each measurement was taken. A contrast calculation on a solid surface
 - Spacing and alignment consistent with the rest of the app.
 - Fidelity to the supplied design, with departures explained.
 
-Screenshots need the Uno App MCP (the `uno-testing` skill). Without it, the blocking checks are reported as not run, never as passed.
+Capture screenshots with the Uno App MCP (the `uno-testing` skill) or other available UI automation. Without screenshot tooling, report the screenshot checks as not run; source colour-literal searches and contrast calculations from resolved colours can still run. Report their evidence separately.

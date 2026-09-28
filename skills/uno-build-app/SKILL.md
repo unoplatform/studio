@@ -1,7 +1,7 @@
 ---
 name: uno-build-app
 description: "End-to-end workflow for building Uno Platform apps and features: discovery, a short blueprint, one complete feature built and exercised before its pattern is repeated, and an honest completion report. Use when creating a new Uno Platform app from a brief, adding a feature to an existing Uno app, repairing a broken Uno page or feature, or diagnosing an Uno binding, state or navigation defect. Not for WPF, WinUI-only or .NET MAUI projects. For a single control or API question, load the matching domain skill (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-testing) instead."
-compatibility: Works with any agent that can read files and run the .NET CLI. Runtime checks use the Uno App MCP (uno_app_* tools) when it is available; without it the workflow still runs and reports runtime checks as not run.
+compatibility: Works with any agent that can read files and run the .NET CLI. Runtime checks use the Uno App MCP (uno_app_* tools), available UI automation, or existing runtime tests; checks that cannot run are reported as not run.
 metadata:
   author: uno-platform
   version: "1.0"
@@ -56,7 +56,7 @@ Agent guidance, not a state machine. Scale each phase to the request.
 
 ## Completion report
 
-Fill in [assets/report.template.md](assets/report.template.md). It separates what ran, what failed, what could not run and what was waived, per target, and lists implementation gaps separately from verification gaps. Its closing line is exactly one of the three the template gives. When implementation is done and a required check could not run, the only permitted line is **"Implementation complete; verification incomplete."**, followed by the missing checks, targets and reasons. Never write "complete" or "all platforms verified" in that case.
+Fill in [assets/report.template.md](assets/report.template.md). It separates what ran, what failed, what could not run and what was waived, per target, and lists implementation gaps separately from verification gaps. Its closing line is exactly one of the three the template gives. A failed check demonstrating a defect in the requested behaviour means **"Implementation incomplete."** When no implementation gap is known but required verification failed, could not run or is pending, use **"Implementation complete; verification incomplete."**, followed by the checks, targets and reasons. Do not claim verification is complete in that case.
 
 Trivial edit and Diagnostic modes skip the template: say in one or two sentences what changed or what you found, and what you ran to check it. The honesty rules still apply; name any check you could not run.
 

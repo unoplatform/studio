@@ -28,21 +28,21 @@ Use the target framework monikers the project actually declares; the table shows
 
 1. **Build** proves the code compiles and the XAML parses for that target. Nothing more.
 2. **Unit and service tests** prove rules, ordering, identity and failure handling without the UI. Run them with `dotnet test`.
-3. **Runtime checks** prove that the rendered controls invoke and update the intended state. They need the app running and something that can drive it: the Uno App MCP through the `uno-testing` skill (`references/ui.md` and `references/assertions.md`), or runtime tests the project already has.
+3. **Runtime checks** prove that the rendered controls invoke and update the intended state. They need the app running and something that can drive it: the Uno App MCP through the `uno-testing` skill (`references/ui.md` and `references/assertions.md`), other available UI automation, or runtime tests the project already has. Confirm each needed tool is callable; an attached App MCP does not guarantee every interaction or assertion tool is licensed.
 
 A screenshot proves rendering, not behaviour. A persistence check changes the value, closes the app, relaunches it, and asserts the value came back. Recreating a model over the same in-memory data is not a persistence check.
 
 ## Without the Uno App MCP
 
-Do not launch the app just to "have a look". A window you cannot screenshot or click verifies nothing. Instead:
+Use available browser or desktop automation, or the project's runtime tests, when they can drive the real UI and capture evidence. For Skia-rendered WebAssembly, DOM access alone does not expose the rendered controls; use screenshots and supported interactions. Do not launch an app solely for inspection when no available tool can observe or drive it. For checks that remain unavailable:
 
-1. Move decisions into plain methods and cover them with unit tests.
+1. Cover UI-independent decisions with unit and service tests in the existing architecture; do not refactor unrelated code just because runtime tooling is missing.
 2. Use runtime tests if the project already has them.
 3. Report every behaviour that was never seen on screen as a runtime check **not run**. "Tests pass" and "it works" are different claims.
 
 ## Making tests trustworthy
 
-- **See it fail first.** Before trusting a new test, break the behaviour it guards (comment out the fix, or return the wrong value), run the test, watch it fail, then restore. A test never seen to fail has not been shown to test anything.
+- **Demonstrate regression sensitivity.** For a bug fix, run the new test before the fix when practical. Otherwise, a focused mutation in an isolated copy can show that the assertion detects the defect. Never overwrite concurrent work or leave intentional breakage in the working tree. Record when this check was not performed.
 - **Await conditions, not time.** Fixed delays are not evidence. MVUX generated wrappers can take several dispatcher turns to reflect a feed change, so poll the property with a bounded timeout instead of reading it once.
 - **Isolate data.** Tests use their own storage location and never touch the developer's real settings or a production service.
 

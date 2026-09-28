@@ -67,7 +67,9 @@ If your agent does not support a plugin format (Cursor, Gemini CLI, Windsurf, Cl
 
 ## Versions
 
-Installing from the marketplace tracks the repository's default branch. Studio does not publish release tags yet; once it does, you will be able to pin a release.
+Marketplace installs use the release tag pinned by `source.ref`, not the latest code on `main`. The agent and `uno-build-app` workflow described below are available from this checkout until a release containing them is published. See [Releasing](#releasing).
+
+To try this checkout before that release, use `claude --plugin-dir ./plugins/uno-platform-studio --agent uno-platform-studio:uno-dev`, or `copilot plugin install ./plugins/uno-platform-studio`. For Codex, copy all seven folders under `skills/` into your project's `.agents/skills/`, then install the custom agent below. Avoid enabling an older plugin copy of the same skills in that session.
 
 ## Use the `uno-dev` agent
 
@@ -89,7 +91,7 @@ Or pick **uno-dev** with `/agent` inside a session.
 
 ### OpenAI Codex CLI
 
-Codex plugins cannot bundle agents yet ([openai/codex#18988](https://github.com/openai/codex/issues/18988)), so install the agent file by hand after installing the plugin. Copy [`codex/uno-dev.toml`](codex/uno-dev.toml) to one of:
+Codex plugins cannot bundle agents yet ([openai/codex#18988](https://github.com/openai/codex/issues/18988)), so install the [custom agent](https://developers.openai.com/codex/subagents) by hand after installing the matching skills. Copy [`codex/uno-dev.toml`](codex/uno-dev.toml) to one of:
 
 - `.codex/agents/uno-dev.toml` in your project, for that project only;
 - `~/.codex/agents/uno-dev.toml`, for every project.
@@ -104,7 +106,7 @@ The workflow lives in the `uno-build-app` skill, so every client can invoke it d
 /uno-platform-studio:uno-build-app Build me a reading tracker with a yearly goal setting.
 ```
 
-The workflow uses the Uno documentation MCP when it is available, and the Uno App MCP for runtime checks. Without the App MCP it still builds and tests, and reports runtime checks as not run.
+The workflow uses the Uno documentation MCP when it is available, and the Uno App MCP or other available UI automation for runtime checks. It reports any runtime checks it cannot perform as not run.
 
 ## Uninstall
 

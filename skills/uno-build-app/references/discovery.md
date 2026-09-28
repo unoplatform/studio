@@ -13,10 +13,10 @@ Read representative files, not the whole tree. For each dimension below, record 
 
 | Dimension | Declared | Resolved | Notes |
 |---|---|---|---|
-| Uno SDK | `global.json` → `msbuild-sdks` → `Uno.Sdk` | The version restore actually used (`obj/project.assets.json`, or the build output) | Use the resolved version when reading docs or choosing APIs |
+| Uno SDK | `global.json` → `msbuild-sdks` → `Uno.Sdk`, or a version on the project's SDK declaration | Evaluated `UnoSdkVersion` or the SDK import path in diagnostic build output | `obj/project.assets.json` records library packages, not the MSBuild SDK resolution |
 | .NET SDK | `global.json` → `sdk` | `dotnet --version` in the project directory | |
 | Targets | `<TargetFrameworks>` in the app `.csproj` | Which of those can build *and run* on this machine | Declared is not runnable. Never narrow the declared list to match the machine |
-| Features | `<UnoFeatures>` in the app `.csproj` | Package versions pinned by the SDK | A feature not listed is not available; adding one is a dependency change |
+| Features | `<UnoFeatures>` in the app `.csproj` and imported props | Evaluated features and resolved package references in `obj/project.assets.json` | Packages may also be referenced explicitly or supplied by another feature; inspect resolution before deciding an API is unavailable. Adding a feature is a dependency change |
 | Presentation | `MVUX` or `MVVM` in `UnoFeatures`, models under `Presentation/` | How each page in scope actually binds | A project flag is not proof every page follows it. Mixed is a valid answer |
 | Navigation | `Navigation` feature, `RegisterRoutes` in `App.xaml.cs` | How the pages in scope actually navigate | Some apps mix Uno.Extensions Navigation with `Frame` or code-behind. Follow the local pattern |
 | Theme | Theme element in `App.xaml` or its merged dictionaries | Which theme family, which customisation mechanism | Preserve legacy setups. See [design.md](design.md) |
@@ -29,8 +29,11 @@ Useful commands:
 ```bash
 dotnet --version
 dotnet msbuild <App>.csproj -getProperty:TargetFrameworks
+dotnet msbuild <App>.csproj -p:TargetFramework=<declared-tfm> -getProperty:UnoSdkVersion,UnoFeatures
 dotnet list <App>.csproj package
 ```
+
+Ground unfamiliar or version-sensitive APIs in official documentation and the resolved package's source or metadata. When the Uno docs MCP is available, search first, then fetch using the result's `sourcePath` and optional `anchor`; otherwise use official web documentation or source. Current docs may describe a newer release than the app uses.
 
 ## Capabilities: four different states
 

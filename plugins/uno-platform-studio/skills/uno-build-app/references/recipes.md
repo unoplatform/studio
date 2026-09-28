@@ -2,7 +2,7 @@
 
 A recipe is a small complete implementation of one user-visible behaviour: view, presentation state, service, registration, navigation, failure handling and tests. Recipes exist because the defects that hurt real apps are in the wiring a snippet leaves out: a setting that never saves, a button with no command, a detail page bound to a stale copy of its data.
 
-**Status.** The reference implementations are being built as features of the [Uno Chefs](https://github.com/unoplatform/uno.chefs) sample app and are not published yet. Until they are, use the contracts below as the acceptance checks for a matching feature: they tell you what "working" means, whatever code you write.
+**Status.** This file supplies acceptance contracts, not runnable reference implementations. Use the contracts below for a matching feature. If consulting a sample such as [Uno Chefs](https://github.com/unoplatform/uno.chefs), verify its current source and tests before treating it as a recipe implementation.
 
 ## Catalogue
 
@@ -34,7 +34,7 @@ Accept when: activating the card navigates once, to the right item; the secondar
 
 The app keeps its brand while rendering readable, consistent controls in each supported theme and window size. Theme switching goes through the existing theme service.
 
-Accept when: body, action and secondary text are readable on their actual surfaces in light; switching to dark updates without a restart; the system theme is followed where supported; an explicit choice survives a relaunch; nothing clips at narrow or wide sizes; custom cards and overlays pair foreground and background deliberately; a legacy theme keeps its initialisation; the XAML uses only semantic keys, so swapping Material and Simple still resolves every key. See [design.md](design.md).
+Accept when: text is readable on its actual surfaces in each supported theme; existing or requested theme switching updates without a restart; system-theme following and persisted explicit choices work when in scope; nothing clips at applicable narrow or wide sizes; custom cards and overlays pair foreground and background deliberately; a legacy theme keeps its initialisation. New shared styles use semantic keys supported by the selected theme and resolved version. Do not add a theme selector or migrate an existing theme to satisfy this recipe. See [design.md](design.md).
 
 ### `dialog-result`
 

@@ -19,10 +19,15 @@ $errors = [System.Collections.Generic.List[string]]::new()
 $savedHomes = @{ COPILOT_HOME = $env:COPILOT_HOME; CODEX_HOME = $env:CODEX_HOME }
 
 function Invoke-Agent([string]$label) {
-    # Splat so npm's .ps1 shims (codex on Windows) get separate arguments. Merge stderr so failures are reported.
+    # Splat so npm's .ps1 shims (codex on Windows) get separate arguments.
+    # Keep stderr out of stdout: callers may parse stdout as JSON.
     $command, $arguments = $args
-    $out = & $command @arguments 2>&1 | Out-String
-    if ($LASTEXITCODE) { $errors.Add("${label}: exit $LASTEXITCODE`n$out") }
+    $stderrFile = Join-Path $work 'agent-stderr.txt'
+    $out = & $command @arguments 2> $stderrFile | Out-String
+    $exitCode = $LASTEXITCODE
+    $stderr = Get-Content -LiteralPath $stderrFile -Raw
+    if ($exitCode) { $errors.Add("${label}: exit $exitCode`n$out`n$stderr") }
+    elseif ($stderr) { Write-Host "${label}:`n$stderr" }
     $out
 }
 
@@ -35,6 +40,10 @@ try {
     $env:COPILOT_HOME = New-Home 'copilot'
     $out = Invoke-Agent 'Copilot CLI: install from checkout' copilot plugin install $plugin
     if ($out -notmatch "Installed $expected skills") { $errors.Add("Copilot CLI: expected 'Installed $expected skills'`n$out") }
+    # Copilot's install summary counts skills only; inspect the installed agent payload separately.
+    $agentHash = (Get-FileHash "$plugin/agents/uno-dev.agent.md").Hash
+    $installedAgents = @(Get-ChildItem $env:COPILOT_HOME -Recurse -File -Filter uno-dev.agent.md | Where-Object { (Get-FileHash $_.FullName).Hash -eq $agentHash })
+    if (-not $installedAgents.Count) { $errors.Add('Copilot CLI: the installed plugin is missing the uno-dev agent payload') }
 
     $env:COPILOT_HOME = New-Home 'copilot-marketplace'
     Invoke-Agent 'Copilot CLI: add marketplace' copilot plugin marketplace add $root | Out-Null
@@ -52,9 +61,12 @@ try {
     $env:CODEX_HOME = New-Home 'codex'
     Invoke-Agent 'Codex: add staged marketplace' codex plugin marketplace add $marketplace | Out-Null
     Invoke-Agent 'Codex: install from checkout' codex plugin add uno-platform-studio@pr-check | Out-Null
+    # Exercise the documented manual installation; plugins do not register Codex custom agents.
+    New-Item -ItemType Directory -Force "$env:CODEX_HOME/agents" | Out-Null
+    Copy-Item "$plugin/codex/uno-dev.toml" "$env:CODEX_HOME/agents/uno-dev.toml"
     # Codex lists every skill with only the first N characters of its description: N shrinks as the catalog
     # grows, within 2% of the model's context window (5,440 tokens for a 272k model). Report what survives.
-    $prompt = codex debug prompt-input -c skills.max_context_tokens=5440 2>$null | Out-String | ConvertFrom-Json
+    $prompt = Invoke-Agent 'Codex: load skills and custom agent' codex debug prompt-input -c skills.max_context_tokens=5440 | ConvertFrom-Json
     $lines = ($prompt.content.text -join "`n") -split "`n" | Where-Object { $_ -match '^- uno-platform-studio:' }
     if ($lines.Count -ne $expected) { $errors.Add("Codex: expected $expected skills in the model's skill list, found $($lines.Count)") }
     $visible = $lines | ForEach-Object { ($_ -replace ' \(file: .*$' -replace '^- [^:]+:[^:]+: ?').Length } | Sort-Object
@@ -70,7 +82,12 @@ try {
 }
 finally {
     $savedHomes.GetEnumerator() | ForEach-Object { Set-Item "Env:$($_.Key)" $_.Value }
-    Remove-Item $work -Recurse -Force -ErrorAction SilentlyContinue
+    $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    $cleanupPath = [IO.Path]::GetFullPath($work)
+    if (-not $cleanupPath.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -or [IO.Path]::GetFileName($cleanupPath) -notmatch '^agent-install-[a-f0-9]{32}$') {
+        throw "Refusing to remove unexpected temporary path: $cleanupPath"
+    }
+    Remove-Item -LiteralPath $cleanupPath -Recurse -Force -ErrorAction SilentlyContinue
 }
 
 $prefix = $env:GITHUB_ACTIONS ? '::error::' : 'ERROR: '

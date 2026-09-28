@@ -76,6 +76,37 @@ try {
             $line
         }
     }
+
+    # --- Workflow templates and relative Markdown links (including assets/ and ../ links).
+    $pluginFiles = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+    Get-ChildItem $plugin -Recurse -File | ForEach-Object { $pluginFiles.Add($_.FullName) | Out-Null }
+    foreach ($file in Get-ChildItem $plugin -Recurse -File -Filter *.md) {
+        foreach ($line in Get-ProseLines $file.FullName) {
+            foreach ($m in [regex]::Matches($line, '\[[^\]]*\]\(([^\s)]+)\)')) {
+                $target = ($m.Groups[1].Value -split '#', 2)[0]
+                if (-not $target -or $target -match '^[a-zA-Z][a-zA-Z0-9+.-]*:') { continue }
+                $resolved = [IO.Path]::GetFullPath((Join-Path $file.DirectoryName $target))
+                if (-not $pluginFiles.Contains($resolved)) {
+                    $errors.Add("$($file.FullName): relative link '$target' does not resolve to a plugin file with matching case")
+                }
+            }
+        }
+    }
+
+    # --- The manually installed Codex agent must carry the same instructions as the plugin agent.
+    $agentMarkdown = (Get-Content "$plugin/agents/uno-dev.agent.md" -Raw) -replace "`r`n", "`n"
+    $agentToml = (Get-Content "$plugin/codex/uno-dev.toml" -Raw) -replace "`r`n", "`n"
+    $markdownBody = [regex]::Match($agentMarkdown, '(?s)\A---\n.*?\n---\n(.*)\z')
+    $tomlBody = [regex]::Match($agentToml, '(?s)developer_instructions\s*=\s*"""\n(.*?)\n"""')
+    if (-not $markdownBody.Success -or -not $tomlBody.Success -or $markdownBody.Groups[1].Value.Trim() -cne $tomlBody.Groups[1].Value.Trim()) {
+        $errors.Add('uno-dev: Markdown and Codex agent instructions differ or cannot be read')
+    }
+    foreach ($field in 'name', 'description') {
+        $markdownValue = [regex]::Match($agentMarkdown, "(?m)^${field}: *([^\n]+)").Groups[1].Value.Trim().Trim('"')
+        $tomlValue = [regex]::Match($agentToml, "(?m)^${field} *= *([^\n]+)").Groups[1].Value.Trim().Trim('"')
+        if (-not $markdownValue -or $markdownValue -cne $tomlValue) { $errors.Add("uno-dev: Markdown and Codex agent $field differ or are missing") }
+    }
+
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"

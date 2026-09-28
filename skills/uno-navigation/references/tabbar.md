@@ -23,13 +23,14 @@ uno_platform_docs_search("Uno Navigation TabBar bottom tab region navigation")
 ```
 
 Primary documentation pages:
-- **TabBar Navigation (Chefs)**: `external/uno.chefs/doc/toolkit/NavigateTabBar.md`
+- **Use TabBar (walkthrough)**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md`
 - **Define Regions**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md`
+- **TabBar Navigation (Chefs recipe, thinner)**: `external/uno.chefs/doc/toolkit/NavigateTabBar.md`
 
-Fetch the Chefs TabBar page:
+Fetch the TabBar walkthrough:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/toolkit/NavigateTabBar.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md")
 ```
 
 ### Step 2: For TabBar Control Reference
@@ -53,7 +54,7 @@ See the `references/responsive-shell.md`.
 - TabBar uses region-based navigation similarly to NavigationView
 - Each `TabBarItem` gets `uen:Region.Name="RouteName"`
 - Parent container and content area need `Region.Attached="True"`
-- Apply `BottomTabBarStyle` to the `TabBar` and `BottomTabBarItemStyle` to each `TabBarItem`; both keys resolve under the Material and Simple toolkit themes. `MaterialBottomTabBarItemStyle` is the Material-only alias and throws under Simple; see the `uno-toolkit` skill (`references/tabbar.md`, `references/material-theme.md`)
+- Apply `BottomTabBarStyle` to the `TabBar` and `BottomTabBarItemStyle` to each `TabBarItem`; these alias keys are defined only by the Material and Simple toolkit themes. On Fluent (the `-preset blank` default) omit the `Style` attributes or the page throws `XamlParseException: Cannot find a Resource with the Name/Key BottomTabBarStyle`; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`. `MaterialBottomTabBarItemStyle` is the Material-only alias and throws under Simple; see the `uno-toolkit` skill (`references/tabbar.md`, `references/material-theme.md`)
 - Requires `Toolkit` in `<UnoFeatures>` along with `Navigation`
 - XAML namespaces: `xmlns:uen="using:Uno.Extensions.Navigation.UI"` and `xmlns:utu="using:Uno.Toolkit.UI"`
 

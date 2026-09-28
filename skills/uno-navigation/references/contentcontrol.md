@@ -29,7 +29,7 @@ See the `references/panel-visibility.md`.
 ## Key Principles (Stable)
 
 - ContentControl can be a navigation target region
-- No back stack — content simply replaced
+- Content is replaced, not pushed. A route whose view is a `Page` is wrapped in a `FrameView`, so `-` still pops within that pane
 - Use `uen:Region.Attached="True"` on the ContentControl
 - Good for sidebar detail panes, settings containers, or single-area content swaps
 

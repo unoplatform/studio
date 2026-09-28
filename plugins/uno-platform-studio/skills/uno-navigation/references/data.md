@@ -47,7 +47,7 @@ uno_platform_docs_search("Uno Navigation XAML Navigation.Data binding pass")
 - Data is received via constructor dependency injection in the target ViewModel
 - `DataViewMap` associates a data type with a View/ViewModel for data-based navigation
 - `ResultDataViewMap` additionally specifies a result type for round-trip navigation
-- `NavigateBackWithResultAsync(data)` returns data to the calling page
+- `NavigateBackWithResultAsync(this, data: value)` returns data to the calling page (`sender` comes first)
 - Routes must be configured in `RegisterRoutes` to support data types
 - `Navigation.Data` attached property enables data passing in XAML
 

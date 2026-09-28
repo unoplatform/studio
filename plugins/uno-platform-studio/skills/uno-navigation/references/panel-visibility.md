@@ -29,7 +29,8 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation
 - **The Grid marked with `uen:Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
 - After injection, children are toggled via Visibility — all remain in the visual tree
 - Good for small numbers of views where you want instant switching
-- No back stack — just visibility toggles
+- Switching between routes is a visibility toggle, not a push. A route whose view is a `Page` is wrapped in a `FrameView`, so `-` still pops within that tab
+- The region control must be a `Grid`; any other panel is silently ignored
 
 ## Typical Usage Pattern
 

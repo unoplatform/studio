@@ -61,7 +61,7 @@ See the `references/qualifiers.md`.
 - **Navigate and clear back stack**: `uen:Navigation.Request="-/PageName"` — navigates and clears the whole back stack (`Qualifiers.ClearBackStack`)
 - **Navigate and drop the current page**: `uen:Navigation.Request="-PageName"` — navigates and removes only the current page from the back stack
 - **Navigate back**: `uen:Navigation.Request="-"` — pops the current page. Do not write `!back`: `!` is the dialog qualifier, so it opens a route named `back` as a dialog
-- **Navigate to nested region**: `uen:Navigation.Request="./RegionName"` — for visibility-based regions
+- **Navigate to nested region**: `uen:Navigation.Request="./RegionName"` — sends the request to a child region of the current one (any region type)
 
 ## Critical Rules
 

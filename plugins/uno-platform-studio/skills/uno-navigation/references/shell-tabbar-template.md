@@ -157,7 +157,7 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 6. Replace `PAGE1_LABEL`, `PAGE2_LABEL`, `PAGE3_LABEL` with display labels (or use `x:Uid` for localization)
 7. Replace `PAGE1_ICON_GLYPH`, etc. with glyphs from the Icon Lookup Table above (e.g., `&#xE80F;`)
 8. Add or remove `TabBarItem` entries to match the number of Tab pages in the plan
-9. The `BottomTabBarStyle` goes on the `TabBar` container; `BottomTabBarItemStyle` goes on each `TabBarItem`. Both keys exist in the Material and Simple toolkit themes (`MaterialBottomTabBarItemStyle` is the Material-only alias and fails under Simple)
+9. The `BottomTabBarStyle` goes on the `TabBar` container; `BottomTabBarItemStyle` goes on each `TabBarItem`. Both alias keys exist only in the Material and Simple toolkit themes (`MaterialBottomTabBarItemStyle` is the Material-only alias and fails under Simple). On Fluent (`-preset blank`) drop both `Style` attributes; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`
 
 ## Route Registration Rules
 

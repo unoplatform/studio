@@ -73,7 +73,7 @@ Use this variant when the plan does NOT include a Settings page. The content are
 
 ## SHELL_PAGE_NAME.xaml (With Settings)
 
-Use this variant when the plan includes a Settings page. The NavigationView Settings item requires code-behind to set its region name.
+Use this variant when the plan includes a Settings page. Do not use the built-in Settings item: `NavigationViewNavigator` only enumerates `MenuItems` and `FooterMenuItems`, so a `Region.SetName` on `SettingsItem` navigates but never syncs selection. Hide it and add a footer item instead.
 
 ```xml
 <Page x:Class="SHELL_PAGE_CLASS"
@@ -85,9 +85,8 @@ Use this variant when the plan includes a Settings page. The NavigationView Sett
     <Grid uen:Region.Attached="True">
         <NavigationView x:Name="NavView"
                         uen:Region.Attached="True"
-                        IsSettingsVisible="True"
-                        IsBackButtonVisible="Collapsed"
-                        Loaded="NavView_Loaded">
+                        IsSettingsVisible="False"
+                        IsBackButtonVisible="Collapsed">
             <NavigationView.MenuItems>
                 <!-- REPLACE: One NavigationViewItem per non-Settings page -->
                 <NavigationViewItem uen:Region.Name="PAGE1_NAME"
@@ -104,6 +103,16 @@ Use this variant when the plan includes a Settings page. The NavigationView Sett
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
+            <!-- Settings as a regular footer item; the built-in SettingsItem never syncs selection -->
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem uen:Region.Name="Settings"
+                                    Content="Settings">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE713;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+
             <!-- Content area: visibility-based region switching (empty — framework injects views) -->
             <Grid uen:Region.Attached="True"
                   uen:Region.Navigator="Visibility" />
@@ -112,31 +121,9 @@ Use this variant when the plan includes a Settings page. The NavigationView Sett
 </Page>
 ```
 
-## SHELL_PAGE_NAME.xaml.cs (With Settings — code-behind for Region.SetName)
+## SHELL_PAGE_NAME.xaml.cs (With Settings)
 
-```csharp
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-
-namespace PAGE_NAMESPACE;
-
-public sealed partial class SHELL_PAGE_NAME : Page
-{
-    public SHELL_PAGE_NAME()
-    {
-        this.InitializeComponent();
-    }
-
-    private void NavView_Loaded(object sender, RoutedEventArgs e)
-    {
-        // The built-in Settings item is not in MenuItems, so we set its Region.Name in code
-        if (NavView.SettingsItem is NavigationViewItem settingsItem)
-        {
-            Uno.Extensions.Navigation.UI.Region.SetName(settingsItem, "Settings");
-        }
-    }
-}
-```
+No Settings wiring is needed. The code-behind is the same as the Without Settings variant: `InitializeComponent()` only.
 
 ## Page Template (PageName.xaml)
 

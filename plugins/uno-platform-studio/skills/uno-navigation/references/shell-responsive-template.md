@@ -71,7 +71,8 @@ The content area Grid with `Region.Navigator="Visibility"` must be **empty** —
                         <Setter Target="BottomTabs.Visibility" Value="Collapsed" />
                         <Setter Target="NavView.IsPaneToggleButtonVisible" Value="True" />
                         <Setter Target="NavView.IsPaneVisible" Value="True" />
-                        <Setter Target="NavView.PaneDisplayMode" Value="Auto" />
+                        <!-- Left, not Auto: Auto only expands at ExpandedModeThresholdWidth (1008px) -->
+                        <Setter Target="NavView.PaneDisplayMode" Value="Left" />
                     </VisualState.Setters>
                 </VisualState>
             </VisualStateGroup>

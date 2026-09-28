@@ -35,7 +35,7 @@ Ready-to-use templates for a simple Frame-based navigation shell. Copy, substitu
 - **Navigate and clear back stack**: `uen:Navigation.Request="-/PageName"` — navigates and clears the whole back stack (`Qualifiers.ClearBackStack`)
 - **Navigate and drop the current page**: `uen:Navigation.Request="-PageName"` — navigates and removes only the current page from the back stack
 - **Navigate back**: `uen:Navigation.Request="-"` — pops the current page. Do not write `!back`: `!` is the dialog qualifier, so it opens a route named `back` as a dialog
-- **Navigate to nested region**: `uen:Navigation.Request="./RegionName"` — for visibility-based regions
+- **Navigate to nested region**: `uen:Navigation.Request="./RegionName"` — sends the request to a child region of the current one (any region type)
 
 ## Page Template (PageName.xaml)
 
@@ -102,14 +102,9 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
         new RouteMap("", View: views.FindByViewModel<ShellModel>(),
             Nested:
             [
-                new RouteMap("Main", View: views.FindByView<SHELL_PAGE_NAME>(),
-                    IsDefault: true,
-                    Nested:
-                    [
-                        // REPLACE: One RouteMap per secondary page
-                        new RouteMap("PAGE2_NAME", View: views.FindByView<PAGE2_NAMEPage>())
-                    ]
-                )
+                new RouteMap("Main", View: views.FindByView<SHELL_PAGE_NAME>(), IsDefault: true),
+                // REPLACE: One RouteMap per secondary page, as a sibling of Main (same as the generated template)
+                new RouteMap("PAGE2_NAME", View: views.FindByView<PAGE2_NAMEPage>())
             ]
         )
     );

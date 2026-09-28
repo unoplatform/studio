@@ -36,7 +36,7 @@ This covers single selection, multi selection, checking selection from commands,
 ### Step 3: Understand Selection Patterns
 
 From the fetched docs:
-- **Single selection**: `.Selection(selectedState)` where `selectedState` is `IState<T?>`
+- **Single selection**: `.Selection(selectedState)` where `selectedState` is `IState<T>` (the docs declare `IState<Person>`; a `T?` annotation compiles but only adds nullable warnings)
 - **Multi-selection**: `.Selection(selectedStates)` where `selectedStates` is `IState<IImmutableList<T>>`
 - **Manual selection**: Use `IListState<T>` instead of `IListFeed<T>` for programmatic item selection: `TrySelectAsync(item)`, `TryDeselectAsync(item)`, `ClearSelectionAsync()`, documented in `external/uno.extensions/doc/Learn/Mvux/ListStates.md` ("Selection operators")
 
@@ -51,7 +51,7 @@ uno_platform_docs_search("MVUX selection command check current selected item but
 ## Key Principles (Stable)
 
 - Use `.Selection(state)` operator on `IListFeed<T>` or `IListState<T>` to enable selection tracking
-- Single selection: `IState<T?>` holds the selected item
+- Single selection: `IState<T>` holds the selected item
 - Multi-selection: `IState<IImmutableList<T>>` holds selected items
 - The `ListView` SelectionMode must be set appropriately (Single or Multiple)
 - Selection sync happens automatically between the UI control and the state

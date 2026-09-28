@@ -3,7 +3,6 @@ name: uno-platform
 description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-testing) and sets the project-wide rules that apply before any of them."
 metadata:
   author: uno-platform
-  version: "3.0"
   category: overview
 ---
 
@@ -33,7 +32,7 @@ Worked examples:
 
 - **Feature switches live in `<UnoFeatures>`** in the project file (for example `<UnoFeatures>Material;Navigation;Toolkit;MVUX</UnoFeatures>`). Add the feature there instead of adding raw NuGet package references; the Uno SDK resolves versions.
 - **Keep the app's presentation pattern.** An app with `Mvvm` in `<UnoFeatures>` or CommunityToolkit.Mvvm ViewModels (`ObservableObject`, `[RelayCommand]`) stays MVVM: write ViewModels with CommunityToolkit.Mvvm, load only the UI hubs (`uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-testing`), and do not load `uno-mvux` or introduce MVUX unless the user asks for a migration. MVUX is the default only for new apps.
-- **The XAML dialect is WinUI 3.** Use `Microsoft.UI.Xaml` types and `x:Bind`/`Binding` as in WinUI, except on MVUX pages: bind the Model surface with `{Binding}`, not `x:Bind`. The templates, the docs, and Chefs all use `{Binding}`; `x:Bind` needs a typed property on the page for the generated ViewModel, and the generated `Bindable<T>` properties have no public setter, so a TwoWay `x:Bind` fails at build. Do not use WPF, UWP-only, or Xamarin.Forms/MAUI syntax.
+- **The XAML dialect is WinUI 3.** Use `Microsoft.UI.Xaml` types and `x:Bind`/`Binding` as in WinUI, except on MVUX pages: bind the Model surface with `{Binding}`, not `x:Bind`. The templates, the docs, and Chefs all use `{Binding}`; `x:Bind` needs a typed property on the page for the generated ViewModel, and record-typed states are exposed as `Bindable<T>` with a private setter (simple-typed states as plain properties), so a TwoWay `x:Bind` to a record state fails at build. Do not use WPF, UWP-only, or Xamarin.Forms/MAUI syntax.
 - **Toolkit and Extensions namespaces** are `xmlns:utu="using:Uno.Toolkit.UI"`, `xmlns:uen="using:Uno.Extensions.Navigation.UI"`, and `xmlns:mvux="using:Uno.Extensions.Reactive.UI"`.
 - **Prefer platform controls over hand-built approximations.** A rounded `Border` with a background is a card, so use `CardContentControl`; a row of buttons that switches views is a `TabBar`; a list with add/remove is an `IListState<T>`. The domain skills spell these out.
 - **Ground API details in the docs, not memory.** Call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result. Never pass a URL, `.html` link, or hand-built path. Uno APIs change between releases and the docs MCP is version-correct.

@@ -34,7 +34,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/mvux/Pagination.md")
 ### Step 3: Understand Pagination Types
 
 From the fetched docs:
-- **Index-based**: `ListFeed.PaginatedAsync(async request => ...)`. `PageRequest` has `uint Index`, `uint CurrentCount`, and `uint? DesiredSize` (null on the first page, so fall back to a default). Slice with `Skip((int)request.CurrentCount).Take((int)(request.DesiredSize ?? DefaultPageSize))`, not `Index * DesiredSize`.
+- **Index-based**: `ListFeed.PaginatedAsync(async (request, ct) => ...)`; the delegate is `AsyncFunc<PageRequest, IImmutableList<T>>`, so it takes the request and a `CancellationToken`, and a one-parameter lambda does not compile. `PageRequest` has `uint Index`, `uint CurrentCount`, and `uint? DesiredSize` (null on the first page, so fall back to a default). Slice with `Skip((int)request.CurrentCount).Take((int)(request.DesiredSize ?? DefaultPageSize))`, not `Index * DesiredSize`.
 - **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`
 
 ### Step 4: For ItemsRepeater Integration

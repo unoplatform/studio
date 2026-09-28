@@ -23,11 +23,11 @@ The most reliable way to click a button:
    uno_app_element_peer_default_action(elementRef: "5k")
    ```
 
-The handle is the bare token after `^`; pass `"5k"`, never `"^5k"`.
+The handle is the bare token after `^`; pass `"5k"`, not `"^5k"` (a leading `^` is stripped with a warning). The default action is `invoke`, so it works only on `[i]` elements.
 
 ### Double-Click Scenarios
 
-For elements requiring double-click, use pointer click at the centre of the element's `@@x,y,w,h` bounds from a `detail: "full"` snapshot:
+For elements requiring double-click, use pointer click at the centre of the element's `@@x,y,w,h` bounds from an unscoped `detail: "full"` snapshot:
 
 ```
 uno_app_pointer_click(x: 250, y: 100, button: "left", clickCount: 2, delayBetweenPresseAndReleaseInMs: 50)
@@ -43,9 +43,9 @@ Preferred: set the value through the automation peer. A `TextBox` line shows `[v
    ```
 
 Keyboard alternative, when the app reacts to key events or the peer action tool is not licensed:
-1. Focus the element:
+1. Focus the element. The default action is `invoke`, which a `TextBox` does not support, so click its bounds from an unscoped `detail: "full"` snapshot, or Tab to it:
    ```
-   uno_app_element_peer_default_action(elementRef: "5o")
+   uno_app_pointer_click(x: 250, y: 100, button: "left")
    ```
 2. Type the text:
    ```
@@ -55,7 +55,7 @@ Keyboard alternative, when the app reacts to key events or the peer action tool 
 ### Clearing a TextBox
 
 `setValue` with an empty string clears it. With the keyboard:
-1. Focus the TextBox
+1. Focus the TextBox (click its bounds or Tab to it)
 2. Select all text:
    ```
    uno_app_key_press(virtualKey: "A", virtualKeyModifiers: "control")
@@ -105,21 +105,18 @@ uno_app_key_press(virtualKey: "Escape")
 
 ### Selecting an Item in a ListView
 
-1. Get the visual tree to find list items
-2. Use default action on the item:
-   ```
-   uno_app_element_peer_default_action(elementRef: "<item handle>")
-   ```
+`ListViewItem` exposes no automation pattern on Uno, so peer actions fail on it. Use the pointer or the keyboard:
 
-### Multi-Select with Ctrl+Click
-
-For lists that support multi-selection:
-
-1. Click first item normally
-2. For additional items:
+1. Take an unscoped `detail: "full"` snapshot to find the item and its `@@x,y,w,h` bounds
+2. Click its centre:
    ```
    uno_app_pointer_click(x: 150, y: 200, button: "left")
    ```
+   Or focus the list and move with `Down`/`Up`; the focused item becomes selected in the default selection mode.
+
+### Multi-Select
+
+`uno_app_pointer_click` has no modifier parameter, so Ctrl+Click is not possible. Use the app's own affordance (selection check boxes), or click one item and extend the selection with `uno_app_key_press(virtualKey: "Down", virtualKeyModifiers: "shift")`.
 
 ### Keyboard List Navigation
 
@@ -133,9 +130,11 @@ uno_app_key_press(virtualKey: "Up")
 
 ### Opening a ComboBox
 
+A `ComboBox` shows `[x]`, so use `expand` (the default action fails on it):
 ```
-uno_app_element_peer_default_action(elementRef: "<combobox handle>")
+uno_app_element_peer_action(elementRef: "<combobox handle>", action: "expand")
 ```
+Without that tool, click its bounds.
 
 ### Selecting an Item
 
@@ -153,9 +152,11 @@ After opening:
 
 ### Toggling a Checkbox
 
+A `CheckBox` or `ToggleSwitch` shows `[t]`, so use `toggle` (the default action fails on it):
 ```
-uno_app_element_peer_default_action(elementRef: "<checkbox handle>")
+uno_app_element_peer_action(elementRef: "<checkbox handle>", action: "toggle")
 ```
+Without that tool, click its bounds, or focus it and press `Space`.
 
 ### Verifying State
 
@@ -172,7 +173,7 @@ uno_app_element_peer_action(elementRef: "<slider handle>", action: "setRangeValu
 
 ### Using Keyboard
 
-1. Focus the slider
+1. Focus the slider (click its bounds or Tab to it)
 2. Use arrow keys:
    ```
    uno_app_key_press(virtualKey: "Right")  // Increase
@@ -218,10 +219,7 @@ uno_app_key_press(virtualKey: "End")       // Scroll to bottom
 
 ### Scrolling to Element
 
-If an element is off-screen, focusing it may scroll it into view:
-```
-uno_app_element_peer_default_action(elementRef: "<offscreen element handle>")
-```
+If an element is off-screen (`!offscreen` in a `full` snapshot), Tab to it or scroll with the keys above; focus brings it into view. There is no tool that focuses an element directly.
 
 ## Context Menu Interactions
 
@@ -233,7 +231,7 @@ uno_app_pointer_click(x: 200, y: 150, button: "right", clickCount: 1)
 
 ### Selecting Menu Item
 
-After opening, get the visual tree to find menu items and use default action.
+After opening, get the visual tree to find menu items and use the default action (`MenuFlyoutItem` shows `[i]`).
 
 ## Drag and Drop
 
@@ -250,7 +248,7 @@ This pattern is complex and may require coordinate-based interaction with carefu
 
 ### Keyboard Needs a Focused Element
 
-`uno_app_key_press` and `uno_app_type_text` raise key events in-process on the element that holds XAML focus. They return `false` when nothing is focused, so invoke the field's default action first. Prefer peer actions (`setValue`, `toggle`, `invoke`) when they are licensed.
+`uno_app_key_press` and `uno_app_type_text` raise key events in-process on the element that holds XAML focus. They return `false` when nothing is focused, and no tool focuses an element directly, so click the field's bounds or Tab to it first. Prefer peer actions (`setValue`, `toggle`, `invoke`) when they are licensed.
 
 ### Waiting for UI Updates
 

@@ -25,9 +25,9 @@ The Uno App MCP server exposes tools that let an agent:
 1. **Build once** → `dotnet build <app>.csproj -f net10.0-desktop`, so compile errors surface as build output
 2. **Start the app** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`
 3. **Verify it is connected** → `uno_app_get_runtime_info` (poll it; never call `uno_app_start` again to "retry")
-4. **Capture the initial screenshot** → `uno_app_get_screenshot`
+4. **Capture the initial screenshot** → `uno_app_get_screenshot(fileType: "png")`
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
-6. **Interact with elements** → `uno_app_element_peer_default_action` or the input tools
+6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
 7. **Validate results** → screenshots, the visual tree, and DataContext
 8. **Close the app** → `uno_app_close`, always before the next build
 
@@ -55,13 +55,13 @@ The Uno App MCP server exposes tools that let an agent:
 
 | Tool | Description |
 |------|-------------|
-| `uno_app_element_peer_default_action` | Invokes the default automation action on an element |
+| `uno_app_element_peer_default_action` | Runs `invoke` on an element; works only on `[i]` elements |
 | `uno_app_element_peer_action` | Pro or Business licence. Invokes a specific automation pattern action (`toggle`, `setValue`, ...) |
 | `uno_app_pointer_click` | Clicks at physical coordinates |
 | `uno_app_key_press` | Presses one key on the focused element |
 | `uno_app_type_text` | Types text into the focused element |
 
-**Community fallback.** When `uno_discover_tools` does not list the Pro or Business tools: fill a field with its default action (focus) followed by `uno_app_type_text`, read state from screenshots and the tree's text, and report every DataContext assertion as not run.
+**Community fallback.** When `uno_discover_tools` does not list the Pro or Business tools: take an unscoped `detail: "full"` snapshot, `uno_app_pointer_click` the centre of the field's `@@x,y,w,h` bounds to focus it, then `uno_app_type_text(text, intervalInMs: 50)`; select list items the same way. Read state from screenshots and the tree's text, and report every DataContext assertion as not run.
 
 Some clients expose these only through a proxy: `uno_discover_tools` lists them and `uno_execute_tool(toolName, arguments)` runs one. The parameters below are the same either way.
 
@@ -108,21 +108,21 @@ The result is a text outline, one element per line:
     Button ^5 #Save :9 [i]  "Save" IsEnabled={CanSave}
 ```
 
-The handle is the bare token after `^` (`"5"` for `Button ^5`); `#Name` is the `x:Name` or `AutomationProperties.Name`; `[i]` lists the supported automation patterns; `Prop={Path}` shows a binding path, not its value. `references/VISUAL-TREE-GUIDE.md` explains every token.
+The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is stripped with a warning); `#Name` is the `x:Name` or `AutomationProperties.Name`; `[i]` lists the supported automation patterns; `Prop={Path}` shows a binding path, not its value. `references/VISUAL-TREE-GUIDE.md` explains every token.
 
-**Tip:** use `detail: "normal"` when you will act on elements, and `elementRef` to keep a large page's tree small.
+**Tip:** use `detail: "normal"` when you will act on elements, and `elementRef` to keep a large page's tree small. Do not scope a snapshot you take for click coordinates: `@@` bounds are relative to the snapshot root, and clicks are relative to the window.
 
 ### Interacting with Elements
 
 **Preferred approach:** automation peers, using a handle from the latest snapshot.
 
-1. **Default action** (most common):
+1. **Default action** (buttons):
    ```
    Tool: uno_app_element_peer_default_action
    Parameters:
      - elementRef: Bare handle from the snapshot ("5", not "^5")
    ```
-   Invokes the natural action: click for buttons, toggle for check boxes, select for list items.
+   Always runs `invoke`, so it works only on `[i]` elements (`Button`, `HyperlinkButton`). On a `CheckBox`, `TextBox`, `ComboBox`, or list item it returns an unsupported-action failure; use the specific action below.
 
 2. **Specific action**:
    ```
@@ -132,7 +132,7 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`); `#Name` is the `
      - action: invoke (default), toggle, expand, collapse, select, addToSelection, removeFromSelection, setValue, setRangeValue
      - actionParameters: Optional array; for setValue/setRangeValue the first entry is the value
    ```
-   The line's pattern letters say which actions the element supports: `[v]` accepts `setValue`, `[r]` accepts `setRangeValue`, `[t]` accepts `toggle`. `setValue` fills a `TextBox` without needing keyboard focus. This tool needs a Pro or Business licence; on Community, use the default action to focus the field, then `uno_app_type_text`.
+   The line's pattern letters say which actions the element supports: `[t]` `toggle`, `[x]` `expand`/`collapse`, `[s]` `select`, `[v]` `setValue`, `[r]` `setRangeValue`. `setValue` fills a `TextBox` without needing keyboard focus. `ListViewItem` shows no letters on Uno, so select it by pointer or keyboard. This tool needs a Pro or Business licence; on Community, click the field's bounds to focus it, then `uno_app_type_text`.
 
 **Fallback approach:** coordinates and keyboard, when no pattern applies.
 
@@ -146,7 +146,7 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`); `#Name` is the `
      - clickCount: Number of clicks (default: 1)
      - delayBetweenPresseAndReleaseInMs: Delay in milliseconds (default: 10)
    ```
-   Take the coordinates from a `detail: "full"` snapshot: the centre of the element's `@@x,y,w,h` bounds.
+   Take the coordinates from a `detail: "full"` snapshot without `elementRef`: the centre of the element's `@@x,y,w,h` bounds. A scoped snapshot reports bounds relative to the scoped element, which do not match the click space.
 
 4. **Key press**:
    ```
@@ -162,9 +162,9 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`); `#Name` is the `
    Tool: uno_app_type_text
    Parameters:
      - text: String of text to type
-     - intervalInMs: Delay between key presses
+     - intervalInMs: Delay between key presses (required; 50 is fine)
    ```
-   Both tools raise key events in-process on the element that holds XAML focus and return `false` when nothing is focused, so focus the field first (its default action). Prefer `setValue` for form fields when it is available.
+   Both tools raise key events in-process on the element that holds XAML focus and return `false` when nothing is focused, so focus the field first: click its bounds, or Tab to it. Prefer `setValue` for form fields when it is available.
 
 ### Capturing Screenshots
 
@@ -209,7 +209,7 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 1. Start the app
 2. Navigate to the form (if needed)
 3. Snapshot to find the input fields
-4. For each field, `uno_app_element_peer_action(elementRef, "setValue", ["value"])`; or focus it with the default action and `uno_app_type_text`
+4. For each field, `uno_app_element_peer_action(elementRef, "setValue", ["value"])`; or click its bounds to focus it and `uno_app_type_text(text, intervalInMs: 50)`
 5. Submit the form
 6. Validate through screenshot or DataContext
 
@@ -225,7 +225,7 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 
 1. Start the app
 2. Navigate to the target state
-3. Capture a screenshot with `uno_app_get_screenshot`
+3. Capture a screenshot with `uno_app_get_screenshot(fileType: "png")`
 4. Compare with the baseline image
 5. Report differences
 
@@ -275,7 +275,7 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 ### Interaction not working
 - Verify the handle comes from the latest snapshot
 - Check the pattern letters: the element may not support the action you chose
-- Keyboard tools need an active desktop session; use `setValue` or peers instead
+- Keyboard tools need a focused element; click or Tab to it first, or use `setValue`
 - Try coordinate-based input as a last resort
 
 ### Screenshots are blank or incorrect

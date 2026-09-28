@@ -19,7 +19,7 @@ The snapshot is the hierarchical structure of every UI element currently rendere
 
 - `"compact"`: structure, names, text, and source positions. Fast; enough to find an element and click it.
 - `"normal"`: adds the automation patterns (`[i t x s v r c]`), classic `{Binding}` hints, locally set DataContext types, and state flags. Use it whenever you will act on elements or check state.
-- `"full"`: adds framework-internal nodes, `@@x,y,w,h` bounds, and `!offscreen` flags. Large; use it for coordinate clicks and failure diagnosis.
+- `"full"`: adds framework-internal nodes, `@@x,y,w,h` bounds, and `!offscreen` flags. Large; use it for coordinate clicks (without `elementRef`, so the bounds match the click space) and failure diagnosis.
 
 ### includeHidden (default: false)
 
@@ -45,7 +45,7 @@ Scopes the snapshot to one element's subtree. Pass the bare handle of a containe
 | Token | Meaning |
 |-------|---------|
 | `@ File ^N (Kind, dc:VM)` | Opens a source-file scope; `:line` values below are relative to that file |
-| `Type ^N` | Element type and handle. The handle is the bare token after `^`: for `Button ^5`, pass `"5"`, never `"^5"` |
+| `Type ^N` | Element type and handle. The handle is the bare token after `^`: for `Button ^5`, pass `"5"`, not `"^5"` (a leading `^` is stripped with a warning) |
 | `lib:Type` and `!lib` | Library or framework element; not editable and usually not what you test |
 | `#Name` | `x:Name` or `AutomationProperties.Name` |
 | `:L` / `:L:C` | Source line and column |
@@ -54,7 +54,7 @@ Scopes the snapshot to one element's subtree. Pass the bare handle of a containe
 | `Prop={Path}` | A classic `{Binding}`; `{Path,2way}` shows a non-default mode, `{Path\|conv}` a converter. Compiled `x:Bind` is not shown |
 | `dc:Type` | The element owns a locally set DataContext of that type |
 | `o:.5` | Opacity (omitted when 1); `xf` marks a RenderTransform |
-| `@@x,y,w,h` | Arranged bounds relative to the snapshot root (`full` only) |
+| `@@x,y,w,h` | Arranged bounds relative to the snapshot root (`full` only); `uno_app_pointer_click` takes window coordinates, so take the snapshot without `elementRef` |
 | `!hidden` / `!offscreen` / `!code` | Collapsed (with `includeHidden`), outside the window (`full`), or created in code |
 
 The tree shows binding paths, not values. To read `IsEnabled`, `IsChecked`, or a bound `Text` at this moment, use `uno_app_get_element_datacontext` on the element or a nearby container, or check a screenshot.
@@ -78,14 +78,17 @@ The centre point for `uno_app_pointer_click` is `x + w/2, y + h/2`: here `175, 2
 
 ### Input Elements
 
-- `Button` - Clickable button (`[i]`, use default action)
-- `TextBox` - Text input (`[v]`: `setValue`, or focus then type)
+- `Button`, `HyperlinkButton` - Clickable button (`[i]`, use default action)
+- `TextBox` - Text input (`[v]`: `setValue`, or click its bounds then type)
 - `PasswordBox` - Secure text input
-- `ComboBox` - Dropdown selection (`[x]`)
-- `CheckBox` - Boolean toggle (`[t]`)
-- `RadioButton` - Exclusive selection (`[st]`)
+- `ComboBox` - Dropdown selection (`[x]`: `expand`)
+- `CheckBox` - Boolean toggle (`[t]`: `toggle`)
+- `RadioButton` - Exclusive selection (`[st]`: `select` or `toggle`)
 - `Slider`, `NumberBox` - Range value (`[r]`: `setRangeValue`)
-- `ToggleSwitch` - On/off toggle (`[t]`)
+- `ToggleSwitch` - On/off toggle (`[t]`: `toggle`)
+- `ListViewItem` - No pattern letters on Uno; select by pointer click or arrow keys
+
+The default action is `invoke` and only `[i]` elements accept it.
 
 ### Display Elements
 

@@ -18,7 +18,7 @@ The Uno App MCP server exposes tools that let an agent:
 
 1. The Uno App MCP server is configured, its host is connected, a solution is selected, and its app tools are licensed (`uno_health` reports a non-zero `toolCount`; a zero with `HostUnreachable`, `NoSolutionFound`, or `WorkspaceAmbiguous` in `issues` is a connection or workspace problem, not a licence problem). A Community licence also reports a non-zero `toolCount` but lacks the tools marked Pro or Business below; `uno_discover_tools` shows which ones this machine has
 2. The target application is an Uno Platform project (Uno.Sdk 6.x) under the App MCP's workspace folder
-3. The project has a target framework the tools can launch: `netX.0-desktop` for desktop, `netX.0-browserwasm` for WebAssembly. Read the exact monikers from `<TargetFrameworks>` in the `.csproj`; Uno.Sdk 6.7 projects use `net10.0-*`
+3. The project has a target framework the tools can launch: `netX.0-desktop` for desktop, `netX.0-browserwasm` for WebAssembly. Read the exact monikers from `<TargetFrameworks>` in the `.csproj`
 
 ## Quick Start Workflow
 
@@ -57,7 +57,7 @@ The Uno App MCP server exposes tools that let an agent:
 |------|-------------|
 | `uno_app_element_peer_default_action` | Runs `invoke` on an element; works only on `[i]` elements |
 | `uno_app_element_peer_action` | Pro or Business licence. Invokes a specific automation pattern action (`toggle`, `setValue`, ...) |
-| `uno_app_pointer_click` | Clicks at physical coordinates |
+| `uno_app_pointer_click` | Clicks at window coordinates, in the same units as the snapshot's `@@` bounds |
 | `uno_app_key_press` | Presses one key on the focused element |
 | `uno_app_type_text` | Types text into the focused element |
 
@@ -77,6 +77,7 @@ Parameters:
   - connectionTimeoutSeconds: Wait up to this long for the app to connect (1-300; use 120). Omit to return as soon as the build succeeds
   - args: Optional command-line arguments (array)
   - stdoutFile: Optional file the app's stdout is written to
+  - display: Optional X11 display for Linux (e.g., ":0"); ignored on other platforms
 ```
 
 Each call terminates any app the tool already started. After it returns, confirm with `uno_app_get_runtime_info`.
@@ -140,8 +141,8 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is 
    ```
    Tool: uno_app_pointer_click
    Parameters:
-     - x: Absolute physical X coordinate
-     - y: Absolute physical Y coordinate
+     - x: X coordinate in the same units as the snapshot's `@@` bounds (logical, relative to the window; do not scale for DPI)
+     - y: Y coordinate, same units
      - button: "left", "middle", or "right"
      - clickCount: Number of clicks (default: 1)
      - delayBetweenPresseAndReleaseInMs: Delay in milliseconds (default: 10)
@@ -154,7 +155,7 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is 
    Parameters:
      - virtualKey: VirtualKey name (e.g., "Enter", "Tab", "A")
      - virtualKeyModifiers: Optional modifier ("control", "shift", "menu", "windows")
-     - unicodeKey: Optional explicit unicode character
+     - unicodeKey: Optional explicit unicode character (one character; longer strings are ignored)
    ```
 
 5. **Text entry**:

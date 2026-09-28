@@ -55,7 +55,7 @@ Scopes the snapshot to one element's subtree. Pass the bare handle of a containe
 | `dc:Type` | The element owns a locally set DataContext of that type |
 | `o:.5` | Opacity (omitted when 1); `xf` marks a RenderTransform |
 | `@@x,y,w,h` | Arranged bounds relative to the snapshot root (`full` only); `uno_app_pointer_click` takes window coordinates, so take the snapshot without `elementRef` |
-| `!hidden` / `!offscreen` / `!code` | Collapsed (with `includeHidden`), outside the window (`full`), or created in code |
+| `!hidden` / `!offscreen` / `!code` | Collapsed (with `includeHidden`), outside the snapshot root, which is the window when unscoped (`full`), or created in code |
 
 The tree shows binding paths, not values. To read `IsEnabled`, `IsChecked`, or a bound `Text` at this moment, use `uno_app_get_element_datacontext` on the element or a nearby container, or check a screenshot.
 

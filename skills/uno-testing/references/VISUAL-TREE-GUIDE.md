@@ -23,7 +23,7 @@ The snapshot is the hierarchical structure of every UI element currently rendere
 
 ### includeHidden (default: false)
 
-When `true`, collapsed elements are listed with a `!hidden` flag. Use it to prove something is collapsed or to find an element that appears later; never interact with a hidden element.
+When `true`, collapsed elements are listed with a `!hidden` flag at `"normal"` or `"full"` detail (`"compact"` lists them without the flag), so pair it with `detail: "normal"` to prove something is collapsed. Use it for that or to find an element that appears later; never interact with a hidden element.
 
 ### elementRef (optional)
 
@@ -83,7 +83,7 @@ The centre point for `uno_app_pointer_click` is `x + w/2, y + h/2`: here `175, 2
 - `PasswordBox` - Secure text input
 - `ComboBox` - Dropdown selection (`[x]`)
 - `CheckBox` - Boolean toggle (`[t]`)
-- `RadioButton` - Exclusive selection (`[s]` or `[st]`)
+- `RadioButton` - Exclusive selection (`[st]`)
 - `Slider`, `NumberBox` - Range value (`[r]`: `setRangeValue`)
 - `ToggleSwitch` - On/off toggle (`[t]`)
 

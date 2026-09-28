@@ -16,7 +16,7 @@ The Uno App MCP server exposes tools that let an agent:
 
 ## Prerequisites
 
-1. The Uno App MCP server is configured, its host is connected, a solution is selected, and its app tools are licensed (`uno_health` reports a non-zero `toolCount`; a zero with `HostUnreachable` or `NoCandidates` in `issues` is a connection or workspace problem, not a licence problem)
+1. The Uno App MCP server is configured, its host is connected, a solution is selected, and its app tools are licensed (`uno_health` reports a non-zero `toolCount`; a zero with `HostUnreachable`, `NoSolutionFound`, or `WorkspaceAmbiguous` in `issues` is a connection or workspace problem, not a licence problem). A Community licence also reports a non-zero `toolCount` but lacks the tools marked Pro or Business below; `uno_discover_tools` shows which ones this machine has
 2. The target application is an Uno Platform project (Uno.Sdk 6.x) under the App MCP's workspace folder
 3. The project has a target framework the tools can launch: `netX.0-desktop` for desktop, `netX.0-browserwasm` for WebAssembly. Read the exact monikers from `<TargetFrameworks>` in the `.csproj`; Uno.Sdk 6.7 projects use `net10.0-*`
 
@@ -39,7 +39,7 @@ The Uno App MCP server exposes tools that let an agent:
 |------|-------------|
 | `uno_app_start` | Builds and starts the application in debug mode with Hot Reload; kills any instance it already started |
 | `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) |
-| `uno_app_get_memory_counters` | Returns the running app's memory counters (for example total available memory); useful for leak checks across a flow |
+| `uno_app_get_memory_counters` | Business licence only. Returns the running app's memory counters (for example total available memory); useful for leak checks across a flow |
 | `uno_app_close` | Terminates the running application (desktop only) |
 | `uno_devserver_diagnostics` | Reports the DevServer port, solution, instance count, and last launch outcome without changing anything |
 
@@ -49,17 +49,19 @@ The Uno App MCP server exposes tools that let an agent:
 |------|-------------|
 | `uno_app_get_screenshot` | Captures the window, or one element, as an image |
 | `uno_app_visualtree_snapshot` | Returns the visual tree as an indented text outline with element handles |
-| `uno_app_get_element_datacontext` | Returns an element's DataContext as XML |
+| `uno_app_get_element_datacontext` | Pro or Business licence. Returns an element's DataContext as XML |
 
 ### Interaction Tools
 
 | Tool | Description |
 |------|-------------|
 | `uno_app_element_peer_default_action` | Invokes the default automation action on an element |
-| `uno_app_element_peer_action` | Invokes a specific automation pattern action (`toggle`, `setValue`, ...) |
+| `uno_app_element_peer_action` | Pro or Business licence. Invokes a specific automation pattern action (`toggle`, `setValue`, ...) |
 | `uno_app_pointer_click` | Clicks at physical coordinates |
 | `uno_app_key_press` | Presses one key on the focused element |
 | `uno_app_type_text` | Types text into the focused element |
+
+**Community fallback.** When `uno_discover_tools` does not list the Pro or Business tools: fill a field with its default action (focus) followed by `uno_app_type_text`, read state from screenshots and the tree's text, and report every DataContext assertion as not run.
 
 Some clients expose these only through a proxy: `uno_discover_tools` lists them and `uno_execute_tool(toolName, arguments)` runs one. The parameters below are the same either way.
 
@@ -93,7 +95,7 @@ Each call terminates any app the tool already started. After it returns, confirm
 Tool: uno_app_visualtree_snapshot
 Parameters:
   - detail: "compact" (default: structure and origin), "normal" (adds automation patterns, bindings, DataContext, state flags), or "full" (adds framework nodes, bounds, offscreen flags)
-  - includeHidden: Include collapsed elements, flagged !hidden (default: false)
+  - includeHidden: Include collapsed elements, flagged !hidden at "normal" or "full" detail (default: false)
   - elementRef: Optional handle; scopes the snapshot to that element's subtree
 ```
 
@@ -130,7 +132,7 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`); `#Name` is the `
      - action: invoke (default), toggle, expand, collapse, select, addToSelection, removeFromSelection, setValue, setRangeValue
      - actionParameters: Optional array; for setValue/setRangeValue the first entry is the value
    ```
-   The line's pattern letters say which actions the element supports: `[v]` accepts `setValue`, `[r]` accepts `setRangeValue`, `[t]` accepts `toggle`. `setValue` fills a `TextBox` without needing keyboard focus.
+   The line's pattern letters say which actions the element supports: `[v]` accepts `setValue`, `[r]` accepts `setRangeValue`, `[t]` accepts `toggle`. `setValue` fills a `TextBox` without needing keyboard focus. This tool needs a Pro or Business licence; on Community, use the default action to focus the field, then `uno_app_type_text`.
 
 **Fallback approach:** coordinates and keyboard, when no pattern applies.
 
@@ -162,7 +164,7 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`); `#Name` is the `
      - text: String of text to type
      - intervalInMs: Delay between key presses
    ```
-   Keyboard input goes to the focused element and needs an active desktop session; on a disconnected remote desktop it does nothing. Prefer `setValue` for form fields.
+   Both tools raise key events in-process on the element that holds XAML focus and return `false` when nothing is focused, so focus the field first (its default action). Prefer `setValue` for form fields when it is available.
 
 ### Capturing Screenshots
 
@@ -189,7 +191,7 @@ Parameters:
   - elementRef: Bare handle from the snapshot
 ```
 
-Returns an XML representation of the element's DataContext. Because the snapshot shows binding paths rather than current values, this is how to check ViewModel state, collection counts, computed properties, and flags such as `IsEnabled` or `IsChecked`.
+Returns an XML representation of the element's DataContext. Because the snapshot shows binding paths rather than current values, this is how to check ViewModel state, collection counts, computed properties, and flags such as `IsEnabled` or `IsChecked`. It needs a Pro or Business licence; on Community, read what the screenshot and the tree's text show, and report DataContext assertions as not run.
 
 ## Testing Patterns
 

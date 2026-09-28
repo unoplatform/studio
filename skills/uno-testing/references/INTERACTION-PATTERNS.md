@@ -25,9 +25,6 @@ The most reliable way to click a button:
 
 The handle is the bare token after `^`; pass `"5k"`, never `"^5k"`.
 
-   ```
-   ```
-
 ### Double-Click Scenarios
 
 For elements requiring double-click, use pointer click at the centre of the element's `@@x,y,w,h` bounds from a `detail: "full"` snapshot:
@@ -40,12 +37,12 @@ uno_app_pointer_click(x: 250, y: 100, button: "left", clickCount: 2, delayBetwee
 
 ### Entering Text in a TextBox
 
-Preferred: set the value through the automation peer. A `TextBox` line shows `[v]`, so it accepts `setValue`, which needs no keyboard focus and works on a disconnected desktop:
+Preferred: set the value through the automation peer. A `TextBox` line shows `[v]`, so it accepts `setValue`, which needs no keyboard focus. The tool needs a Pro or Business licence:
    ```
    uno_app_element_peer_action(elementRef: "5o", action: "setValue", actionParameters: ["Hello World"])
    ```
 
-Keyboard alternative, when the app reacts to key events:
+Keyboard alternative, when the app reacts to key events or the peer action tool is not licensed:
 1. Focus the element:
    ```
    uno_app_element_peer_default_action(elementRef: "5o")
@@ -251,9 +248,9 @@ This pattern is complex and may require coordinate-based interaction with carefu
 
 ## Timing and Synchronization
 
-### Keyboard Needs a Desktop Session
+### Keyboard Needs a Focused Element
 
-`uno_app_key_press` and `uno_app_type_text` inject input into the focused window. On a locked or disconnected remote desktop they succeed but nothing arrives. Prefer peer actions (`setValue`, `toggle`, `invoke`) for anything a test must not skip.
+`uno_app_key_press` and `uno_app_type_text` raise key events in-process on the element that holds XAML focus. They return `false` when nothing is focused, so invoke the field's default action first. Prefer peer actions (`setValue`, `toggle`, `invoke`) when they are licensed.
 
 ### Waiting for UI Updates
 

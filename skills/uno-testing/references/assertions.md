@@ -53,7 +53,7 @@ The snapshot shows binding paths (`IsEnabled={CanSave}`), not current values. Re
 
 ### Data Assertions
 
-Use `uno_app_get_element_datacontext` to validate bound data:
+Use `uno_app_get_element_datacontext` (Pro or Business licence; on Community, report these assertions as not run) to validate bound data:
 
 ```
 uno_app_get_element_datacontext(elementRef: "5k")

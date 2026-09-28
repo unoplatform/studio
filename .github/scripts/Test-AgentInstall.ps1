@@ -19,10 +19,15 @@ $errors = [System.Collections.Generic.List[string]]::new()
 $savedHomes = @{ COPILOT_HOME = $env:COPILOT_HOME; CODEX_HOME = $env:CODEX_HOME }
 
 function Invoke-Agent([string]$label) {
-    # Splat so npm's .ps1 shims (codex on Windows) get separate arguments. Merge stderr so failures are reported.
+    # Splat so npm's .ps1 shims (codex on Windows) get separate arguments.
+    # Keep stderr out of stdout: callers may parse stdout as JSON.
     $command, $arguments = $args
-    $out = & $command @arguments 2>&1 | Out-String
-    if ($LASTEXITCODE) { $errors.Add("${label}: exit $LASTEXITCODE`n$out") }
+    $stderrFile = Join-Path $work 'agent-stderr.txt'
+    $out = & $command @arguments 2> $stderrFile | Out-String
+    $exitCode = $LASTEXITCODE
+    $stderr = Get-Content -LiteralPath $stderrFile -Raw
+    if ($exitCode) { $errors.Add("${label}: exit $exitCode`n$out`n$stderr") }
+    elseif ($stderr) { Write-Host "${label}:`n$stderr" }
     $out
 }
 

@@ -42,7 +42,7 @@ try {
         if ($entry.PSObject.Properties['version']) { $versions["$f (plugins[uno-platform-studio].version)"] = $entry.version }
         $versions["$f (plugins[uno-platform-studio].source.ref)"] = $entry.source.ref
         if ($entry.source.path -ne $plugin) { $errors.Add("${f}: plugin source.path must be '$plugin'") }
-        # Claude Code expands an `owner/repo` url to SSH, which fails for users without a GitHub key.
+        # Claude Code clones an `owner/repo` source over SSH only when the user's key authenticates to github.com, and over HTTPS otherwise (or always, with CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1).
         $expected = $entry.source.source -eq 'github' ? @{ key = 'repo'; value = 'unoplatform/studio' } : @{ key = 'url'; value = 'https://github.com/unoplatform/studio.git' }
         if ($entry.source.($expected.key) -ne $expected.value) { $errors.Add("${f}: plugin source.$($expected.key) must be '$($expected.value)'") }
     }
@@ -59,15 +59,20 @@ try {
     # (for example "the `uno-toolkit` skill (`references/card.md`)"), otherwise in the current skill.
     # Mentions inside fenced code blocks, HTML comments, and the YAML frontmatter do not count.
     function Get-ProseLines([string]$file) {
-        $inFence = $false; $inComment = $false; $inFrontmatter = $false; $first = $true
+        $fence = $null; $inComment = $false; $inFrontmatter = $false; $first = $true
         foreach ($line in Get-Content $file) {
             if ($first) { $first = $false; if ($line -eq '---') { $inFrontmatter = $true; continue } }
             if ($inFrontmatter) { if ($line -eq '---') { $inFrontmatter = $false }; continue }
-            if ($line -match '^\s*(```|~~~)') { $inFence = -not $inFence; continue }
-            if ($inFence) { continue }
-            if ($inComment) { if ($line -match '-->') { $inComment = $false }; continue }
-            if ($line -match '<!--' -and $line -notmatch '-->') { $inComment = $true; continue }
-            $line -replace '<!--.*?-->', ''
+            # A fence closes only on the same character with at least the opener's length (CommonMark).
+            if ($line -match '^\s*(`{3,}|~{3,})') {
+                if (-not $fence) { $fence = $Matches[1]; continue }
+                if ($Matches[1][0] -eq $fence[0] -and $Matches[1].Length -ge $fence.Length) { $fence = $null; continue }
+            }
+            if ($fence) { continue }
+            if ($inComment) { if ($line -match '-->') { $inComment = $false; $line -replace '^.*?-->', '' }; continue }
+            $line = $line -replace '<!--.*?-->', ''
+            if ($line -match '<!--') { $inComment = $true; $line -replace '<!--.*$', ''; continue }
+            $line
         }
     }
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
@@ -79,18 +84,20 @@ try {
         $routed = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
         foreach ($file in $files) {
             $isHub = $file -eq $skill
+            $relative = [IO.Path]::GetRelativePath($root, $file) -replace '\\', '/'
             foreach ($line in Get-ProseLines $file) {
-                foreach ($m in [regex]::Matches($line, 'uno-(?:mvux|navigation|toolkit|themes|testing)-[a-z0-9-]+')) {
-                    $errors.Add("${file}: references retired per-topic skill '$($m.Value)' (it is now a references/ file inside a hub)")
+                # Retired skill names are only flagged when written as code (`uno-toolkit-card`), so prose like "uno-toolkit-based" passes.
+                foreach ($m in [regex]::Matches($line, '`uno-(?:mvux|navigation|toolkit|themes|testing)-[a-z0-9-]+`')) {
+                    $errors.Add("${relative}: references retired per-topic skill '$($m.Value)' (it is now a references/ file inside a hub)")
                 }
                 foreach ($m in [regex]::Matches($line, 'references/([A-Za-z0-9._-]+\.md)')) {
                     $before = $line.Substring(0, $m.Index)
-                    $named = [regex]::Matches($before, 'uno-[a-z]+') | ForEach-Object Value | Where-Object { $_ -in $hubs } | Select-Object -Last 1
+                    $named = [regex]::Matches($before, '(?<![a-z-])uno-[a-z]+(?![a-z-])') | ForEach-Object Value | Where-Object { $_ -in $hubs } | Select-Object -Last 1
                     $hub = $named ? $named : $dir.Name
                     $name = $m.Groups[1].Value
                     # Case-sensitive existence check: CI runs on Linux.
                     $exists = @(Get-ChildItem "$plugin/skills/$hub/references" -Filter *.md -ErrorAction SilentlyContinue | Where-Object { $_.Name -ceq $name }).Count -gt 0
-                    if (-not $exists) { $errors.Add("${file}: '$($m.Value)' does not exist in skill '$hub'") }
+                    if (-not $exists) { $errors.Add("${relative}: '$($m.Value)' does not exist in skill '$hub'") }
                     elseif ($isHub -and $hub -eq $dir.Name) { $routed.Add($name) | Out-Null }
                 }
             }

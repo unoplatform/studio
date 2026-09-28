@@ -29,7 +29,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/StatusBa
 
 - `utu:StatusBar.Foreground` — StatusBarForegroundTheme enum value
 - `utu:StatusBar.Background` — color or brush
-- StatusBarForegroundTheme values: `Light` (white icons), `Dark` (black icons), `Auto` (matches theme, updates on change), `AutoInverse` (opposite of theme, updates on change)
+- StatusBarForegroundTheme values: `None`, `Light` (white icons), `Dark` (black icons), `Auto` (matches theme, updates on change), `AutoInverse` (opposite of theme, updates on change)
 - Applied as attached properties on the Page element
 - Works on iOS and Android only
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`

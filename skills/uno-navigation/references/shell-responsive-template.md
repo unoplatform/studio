@@ -10,10 +10,10 @@ Ready-to-use template for a responsive navigation shell that switches between a 
 | Search / Explore | `&#xE721;` | `\uE721` |
 | Settings / Gear | `&#xE713;` | `\uE713` |
 | Profile / Person | `&#xE77B;` | `\uE77B` |
-| Favorites / Heart | `&#xE734;` | `\uE734` |
+| Favorites / Heart | `&#xEB51;` | `\uEB51` |
 | Add / Plus | `&#xE710;` | `\uE710` |
 | List / Bullets | `&#xE8FD;` | `\uE8FD` |
-| Chart / Analytics | `&#xE9D9;` | `\uE9D9` |
+| Chart / Analytics | `&#xE9D2;` | `\uE9D2` |
 | Calendar / Date | `&#xE787;` | `\uE787` |
 | Mail / Messages | `&#xE715;` | `\uE715` |
 
@@ -39,7 +39,9 @@ The content area Grid with `Region.Navigator="Visibility"` must be **empty** —
     <Grid uen:Region.Attached="True">
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>
-                <!-- Narrow: TabBar visible, NavigationView pane hidden -->
+                <!-- Narrow (<700px): no trigger, so this state never activates by itself. The base
+                     values below (TabBar visible, pane hidden) ARE the narrow layout; these setters only
+                     document it and are reapplied when Normal/Wide stop matching. -->
                 <VisualState x:Name="Narrow">
                     <VisualState.Setters>
                         <Setter Target="BottomTabs.Visibility" Value="Visible" />
@@ -75,11 +77,15 @@ The content area Grid with `Region.Navigator="Visibility"` must be **empty** —
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
 
-        <!-- NavigationView: visible on Normal/Wide, pane hidden on Narrow -->
+        <!-- NavigationView: base values are the narrow layout (pane hidden, no toggle);
+             the Normal/Wide states turn the pane on -->
         <NavigationView x:Name="NavView"
                         uen:Region.Attached="True"
                         IsSettingsVisible="False"
-                        IsBackButtonVisible="Collapsed">
+                        IsBackButtonVisible="Collapsed"
+                        IsPaneToggleButtonVisible="False"
+                        PaneDisplayMode="LeftMinimal"
+                        IsPaneOpen="False">
             <NavigationView.MenuItems>
                 <!-- REPLACE: One NavigationViewItem per page -->
                 <NavigationViewItem uen:Region.Name="PAGE1_NAME"
@@ -114,30 +120,31 @@ The content area Grid with `Region.Navigator="Visibility"` must be **empty** —
                           uen:Region.Attached="True"
                           uen:Region.Navigator="Visibility" />
 
-                    <!-- Bottom TabBar: visible on Narrow, hidden on Normal/Wide -->
+                    <!-- Bottom TabBar: visible by default (narrow), collapsed by the Normal/Wide states.
+                         Do not set Visibility="Collapsed" here: the Narrow state has no trigger, so the
+                         base value is what phones get. -->
                     <utu:TabBar x:Name="BottomTabs"
                                 Grid.Row="1"
                                 uen:Region.Attached="True"
-                                Style="{StaticResource BottomTabBarStyle}"
-                                Visibility="Collapsed">
+                                Style="{StaticResource BottomTabBarStyle}">
                         <!-- REPLACE: One TabBarItem per page (must mirror NavigationViewItems) -->
                         <utu:TabBarItem uen:Region.Name="PAGE1_NAME"
                                         Content="PAGE1_LABEL"
-                                        Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                                        Style="{StaticResource BottomTabBarItemStyle}">
                             <utu:TabBarItem.Icon>
                                 <FontIcon Glyph="PAGE1_ICON_GLYPH" />
                             </utu:TabBarItem.Icon>
                         </utu:TabBarItem>
                         <utu:TabBarItem uen:Region.Name="PAGE2_NAME"
                                         Content="PAGE2_LABEL"
-                                        Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                                        Style="{StaticResource BottomTabBarItemStyle}">
                             <utu:TabBarItem.Icon>
                                 <FontIcon Glyph="PAGE2_ICON_GLYPH" />
                             </utu:TabBarItem.Icon>
                         </utu:TabBarItem>
                         <utu:TabBarItem uen:Region.Name="PAGE3_NAME"
                                         Content="PAGE3_LABEL"
-                                        Style="{StaticResource MaterialBottomTabBarItemStyle}">
+                                        Style="{StaticResource BottomTabBarItemStyle}">
                             <utu:TabBarItem.Icon>
                                 <FontIcon Glyph="PAGE3_ICON_GLYPH" />
                             </utu:TabBarItem.Icon>

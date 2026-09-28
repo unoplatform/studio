@@ -36,8 +36,8 @@ This covers when to use messaging, sending entity messages from services, observ
 
 From the fetched docs, the messaging pattern involves:
 1. **Service** sends `EntityMessage<T>` via `IMessenger.Send(...)`
-2. **Model** uses `.Observe(messenger)` on a `ListState` to auto-apply changes
-3. **Entity changes** (Created/Updated/Deleted) are applied to the matching state
+2. **Model** uses `.Observe(messenger, e => e.Id)` on a `ListState` (or `messenger.Observe(state, e => e.Id)`) to auto-apply changes; the key selector is required
+3. **Entity changes** (Created/Updated/Deleted) are matched to items by the key selector and applied to the state
 
 ### Step 4: For Manual Message Handling
 
@@ -47,12 +47,12 @@ If the user needs custom logic when messages arrive, the reference page covers t
 
 - Register `IMessenger` as a singleton in DI: `services.AddSingleton<IMessenger, WeakReferenceMessenger>()`
 - `EntityMessage<T>` carries an entity change type (Created, Updated, Deleted) and the entity
-- `.Observe(messenger)` on a `ListState` auto-applies incoming entity changes
-- Records need key equality for matching (see `references/records.md`)
+- `.Observe(messenger, e => e.Id)` on a `ListState` auto-applies incoming entity changes; every overload takes a key selector
+- Matching uses the key selector, not `IKeyEquatable<T>`; key equality still matters for list diffing, item updates, and selection (see `references/records.md`)
 - Namespace: `Uno.Extensions.Reactive.Messaging`
 
 ## Related Skills
 
 - `references/liststate.md` — Mutable collections that messaging updates
-- `references/records.md` — Key equality for entity matching
+- `references/records.md` — Key equality for list diffing and item updates
 - `references/commands.md` — Commands that trigger CRUD operations

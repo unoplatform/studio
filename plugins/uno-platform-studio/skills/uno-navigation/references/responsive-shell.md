@@ -62,8 +62,8 @@ See also the `uno-toolkit` skill (`references/responsive.md`).
 - Both navigation controls (`NavigationView` and `TabBar`) MUST have `uen:Region.Attached="True"`
 - Both MUST use identical `uen:Region.Name` values for the same pages — they share the content area
 - The `VisualStateManager` goes on the root `Grid` with `uen:Region.Attached="True"`
-- The `Narrow` state has NO `StateTriggers` — it is the default (smallest) state
-- States are ordered by ascending width: Narrow (default) < Normal (700px) < Wide (1000px)
+- The `Narrow` state has no `StateTriggers`, so it is never activated on its own: the element base values in the XAML are the narrow layout (TabBar visible, pane hidden). Do not give the `TabBar` a `Visibility="Collapsed"` base value or phones never see it; when `Normal`/`Wide` stop matching, WinUI reapplies the base values
+- States are ordered by ascending width: base XAML (<700px) < Normal (700px) < Wide (1000px)
 - The shared content area with `Region.Navigator="Visibility"` serves both navigation controls
 - **The content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`

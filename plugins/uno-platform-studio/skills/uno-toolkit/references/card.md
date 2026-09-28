@@ -3,7 +3,7 @@
 ## Critical Rules
 
 - **NEVER use `Card`** — always use `CardContentControl`. The `Card` control has rigid predefined slots (HeaderContent, SubHeaderContent, AvatarContent, etc.) that constrain layout. `CardContentControl` gives full layout freedom via `ContentTemplate`.
-- **NEVER use `Border` with `CornerRadius` to wrap content.** This is the most common Border anti-pattern in generated XAML and the parser flags it as `GRD1102`. Always use `CardContentControl` instead — it provides correct elevation, corner radius, theming, and accessibility automatically.
+- **NEVER use `Border` with `CornerRadius` to wrap content.** This is the most common Border anti-pattern in generated XAML; Uno Studio's output grader reports it as `GRD1102`. Always use `CardContentControl` instead — it provides correct elevation, corner radius, theming, and accessibility automatically.
 
 ### Anti-pattern detection (matches `GRD1102`)
 
@@ -16,7 +16,7 @@ If you find yourself writing a `<Border>` that meets **all** of the following, s
 That's a card. `<Border CornerRadius="8" Background="..." Padding="16">…</Border>` is a card written the wrong way.
 
 ```xml
-<!-- WRONG: Border-as-card (the parser will report GRD1102) -->
+<!-- WRONG: Border-as-card (Studio's grader reports GRD1102) -->
 <Border CornerRadius="8"
         Background="{ThemeResource SurfaceBrush}"
         Padding="16">
@@ -76,17 +76,17 @@ Key page:
 - **`CardContentControl`** — fully custom layout via `ContentTemplate`. This is the only card control you should use.
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 - Do NOT use `Card` — it has predefined slots that limit layout flexibility
-- Do NOT use `Border` as a card (`CornerRadius` + `Background`/`Padding`/`BorderBrush`) — the parser reports this as `GRD1102`; use `CardContentControl` instead
+- Do NOT use `Border` as a card (`CornerRadius` + `Background`/`Padding`/`BorderBrush`) — Studio's grader reports this as `GRD1102`; use `CardContentControl` instead
 
 ## Critical: Content Binding in DataTemplates
 
-When `CardContentControl` is used **inside** an `ItemsRepeater`, `ListView`, or any other `DataTemplate`, you **MUST** set `Content="{Binding}"` on the `CardContentControl`. Without this, the inner `ContentTemplate > DataTemplate` has **no DataContext** and all bindings inside it resolve to null (rendering the card empty/invisible).
+When `CardContentControl` is used **inside** an `ItemsRepeater`, `ListView`, or any other `DataTemplate`, set `Content="{Binding}"` on the `CardContentControl` so the inner `ContentTemplate > DataTemplate` gets the item as its DataContext.
 
 ### Rules
 
 - **ALWAYS** set `Content="{Binding}"` on `CardContentControl` when it appears inside a `DataTemplate`
 - **NEVER** use indexed bindings (e.g. `{Binding Items[0].Label}`) inside card templates — use `ItemsSource` with a nested `ItemsRepeater` instead
-- The `ContentTemplate`'s inner `DataTemplate` inherits its DataContext **only** from the `Content` property — if `Content` is not bound, the inner template has no data
+- The `ContentTemplate`'s inner `DataTemplate` takes its DataContext from the `Content` property, so bind `Content` to the item
 
 ### Correct pattern
 
@@ -106,7 +106,7 @@ When `CardContentControl` is used **inside** an `ItemsRepeater`, `ListView`, or 
 ### Wrong pattern (missing Content binding)
 
 ```xml
-<!-- ❌ WRONG: No Content="{Binding}" — inner DataTemplate has no DataContext -->
+<!-- ❌ WRONG: No Content="{Binding}" — inner DataTemplate is not bound to the item -->
 <DataTemplate x:DataType="local:MenuItem">
   <utu:CardContentControl Style="{StaticResource FilledCardContentControlStyle}">
     <utu:CardContentControl.ContentTemplate>

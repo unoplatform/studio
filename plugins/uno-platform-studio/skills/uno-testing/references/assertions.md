@@ -14,7 +14,7 @@ Use `uno_app_get_screenshot` to capture visual state:
 uno_app_get_screenshot(fileType: "png", quality: 100)
 ```
 
-Omit `path` to receive the image in the result. A `path` must be inside the App MCP workspace (the solution folder) and in a folder that already exists.
+Omit `path` to receive the image in the result. A `path` must be inside the App MCP workspace (the solution folder); if the save reports a missing path, create the folder and retry.
 
 **Validation approaches:**
 1. **Visual comparison**: Compare with baseline images
@@ -143,7 +143,7 @@ uno_app_get_screenshot(
 )
 ```
 
-Create the folder first; the tool does not.
+If the save reports a missing path, create the folder and retry.
 
 ### Assertion Strategies
 

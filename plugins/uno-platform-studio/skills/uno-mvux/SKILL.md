@@ -35,11 +35,11 @@ Look at `<UnoFeatures>` in the app's project file before writing any presentatio
 | Load a collection | `references/listfeed.md` | `IListFeed<T>`, `ListFeed.Async`, `IImmutableList<T>` |
 | Show a feed in XAML with loading, error, and empty UI | `references/feedview.md` | `mvux:FeedView`, `{Binding Data}`, `Refresh` |
 | Two-way bind user input, hold editable state | `references/state-basics.md` | `IState<T>`, `State.Value`, `UpdateAsync`, `ForEach` |
-| Add, remove, or edit items in a list | `references/liststate.md` | `IListState<T>`, `AddAsync`, `RemoveAllAsync`, `UpdateAsync` |
+| Add, remove, or edit items in a list | `references/liststate.md` | `IListState<T>`, `AddAsync`, `RemoveAllAsync`, `UpdateAllAsync`, `UpdateItemAsync` |
 | Bind a Button or other control to a Model method | `references/commands.md` | public methods → `IAsyncCommand`, `[ImplicitCommands]` |
 | Track the selected item or items of a list | `references/selection.md` | `.Selection(state)`, `IState<T?>`, `IState<IImmutableList<T>>` |
 | Infinite scroll or page-by-page loading | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PageRequest` |
-| Keep several pages in sync after create/update/delete | `references/messaging.md` | `IMessenger`, `EntityMessage<T>`, `.Observe(messenger)` |
+| Keep several pages in sync after create/update/delete | `references/messaging.md` | `IMessenger`, `EntityMessage<T>`, `.Observe(messenger, e => e.Id)` |
 
 ## Critical rules
 
@@ -48,13 +48,13 @@ These come up in nearly every MVUX task. Each reference repeats the ones it need
 - **Models are `partial record` types with a `Model` suffix** (`MainModel`, `ProductsModel`). The generator emits `MainViewModel`; that generated type is what the page's `DataContext` receives. Services are injected through the record's constructor parameters.
 - **Entities are records.** MVUX relies on immutability and value equality. Use `with` expressions to produce modified copies.
 - **Feeds are read-only, states are writable.** `IFeed<T>` and `IListFeed<T>` have no `Update`/`Add`/`Remove`; calling them is a compile error. If code must mutate, the property must be `IState<T>` or `IListState<T>` (convert with `ListState.FromFeed(this, feed)`).
-- **The mutation method is `UpdateAsync`, and it must be awaited.** There is no `Update` method on `IState<T>`; generic models emit that wrong name constantly. `await state.UpdateAsync(current => ...)`.
+- **The mutation method is `UpdateAsync`, and it must be awaited.** `Update` still exists on `IState<T>` and `IListState<T>` but only as a hidden, deprecated alias (`EditorBrowsable(Never)`, and its `CancellationToken` has no default), so generic models that emit `state.Update(x => ...)` produce code that is either a compile error or deprecated. Always write `await state.UpdateAsync(current => ...)`. On a list, edit one item with `UpdateAllAsync(predicate, updater)` or `UpdateItemAsync(item, updater)`; the single-delegate `UpdateAsync` on `IListState<T>` receives the whole `IImmutableList<T>`.
 - **Updaters are pure.** Derive the new value only from the `current` argument. Do not capture fields or perform side effects inside the lambda; MVUX applies it against a cached value and a non-pure updater gives unstable results. A `static` local function is the safest form.
-- **List item types need key equality.** Any record used in `IListFeed<T>` or `IListState<T>` must implement `Uno.Extensions.Equality.IKeyEquatable<T>`, which is auto-generated for a `partial record` with an `Id` or `Key` property, or via `[Key]`. Without it every change re-renders the whole list and `UpdateAsync` cannot find the item. Never invent a substitute interface such as `IHasKey<T>`.
-- **Bind the Model surface with `{Binding}`, not `x:Bind`.** The page's DataContext is the generated ViewModel, which `x:Bind` cannot see at compile time (CS0400).
+- **List item types need key equality.** Any record used in `IListFeed<T>` or `IListState<T>` must implement `Uno.Extensions.Equality.IKeyEquatable<T>`, which is auto-generated for a `partial record` with an `Id` or `Key` property, or via `[Key]` (assembly-wide names via `[assembly: ImplicitKeys(...)]`). Without it every change re-renders the whole list, and the `UpdateAsync(T item)` / `UpdateItemAsync` overloads cannot find the item to replace. Never invent a substitute interface such as `IHasKey<T>`.
+- **Bind the Model surface with `{Binding}`, not `x:Bind`.** The page's DataContext is the generated ViewModel, and `x:Bind` against it fails at build (observed on Uno.Sdk 6.7.30; TwoWay bindings report UXAML0001).
 - **`FeedView` binds the feed, templates bind `Data`.** `Source="{Binding MyFeed}"` on the `FeedView`; inside its value template use `{Binding Data.Property}`. `FeedView` already exposes `Refresh`; do not create a refresh command. The value template can bind `{Binding Refresh}`, but `ErrorTemplate` and `ProgressTemplate` receive the exception and the progress flag as their DataContext, so a retry button there needs `Command="{Binding Refresh, ElementName=<feedViewName>}"`.
-- **Any public method on the Model becomes a command.** Method parameters whose name and type match a feed or state receive a snapshot of the current value. Opt out with `[ImplicitCommands(false)]`.
-- **Service methods take a `CancellationToken` and return `ValueTask<T>` or `Task<T>`** (`ValueTask<IImmutableList<T>>` for lists).
+- **Any public method on the Model becomes a command.** A method parameter whose name and type match an `IFeed<T>`/`IState<T>` property receives a snapshot of the current value (documented for single-value feeds; for list feeds the parameter type is `IImmutableList<T>`, verify before relying on it). Opt out with `[ImplicitCommands(false)]`.
+- **Service methods take a `CancellationToken` and return `ValueTask<T>`** (`ValueTask<IImmutableList<T>>` for lists). `Feed.Async`/`ListFeed.Async` take an `AsyncFunc<T>` (`ValueTask<T>(CancellationToken)`), so such a method group passes directly; a `Task<T>` method needs a lambda: `Feed.Async(async ct => await Service.GetAsync(ct))`.
 
 ## Related skills
 

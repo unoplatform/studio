@@ -53,7 +53,7 @@ uno_platform_docs_search("MVUX selection command check current selected item but
 - Use `.Selection(state)` operator on `IListFeed<T>` or `IListState<T>` to enable selection tracking
 - Single selection: `IState<T?>` holds the selected item
 - Multi-selection: `IState<IImmutableList<T>>` holds selected items
-- The `ListView` SelectionMode must be set appropriately (Single, Multiple, Extended)
+- The `ListView` SelectionMode must be set appropriately (Single or Multiple)
 - Selection sync happens automatically between the UI control and the state
 - For programmatic/manual selection, use `IListState<T>` (not `IListFeed<T>`)
 

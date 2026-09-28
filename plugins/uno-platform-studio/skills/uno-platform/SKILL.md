@@ -32,11 +32,12 @@ Worked examples:
 ## Project-wide rules
 
 - **Feature switches live in `<UnoFeatures>`** in the project file (for example `<UnoFeatures>Material;Navigation;Toolkit;MVUX</UnoFeatures>`). Add the feature there instead of adding raw NuGet package references; the Uno SDK resolves versions.
-- **Keep the app's presentation pattern.** An app with `Mvvm` in `<UnoFeatures>` or CommunityToolkit.Mvvm ViewModels (`ObservableObject`, `[RelayCommand]`) stays MVVM: write ViewModels the same way and do not load `uno-mvux` or introduce MVUX unless the user asks for a migration. MVUX is the default only for new apps.
-- **The XAML dialect is WinUI 3.** Use `Microsoft.UI.Xaml` types and `x:Bind`/`Binding` as in WinUI, except on MVUX pages: bind the Model surface with `{Binding}`, because `x:Bind` cannot see the generated ViewModel type (build error CS0400). Do not use WPF, UWP-only, or Xamarin.Forms/MAUI syntax.
+- **Keep the app's presentation pattern.** An app with `Mvvm` in `<UnoFeatures>` or CommunityToolkit.Mvvm ViewModels (`ObservableObject`, `[RelayCommand]`) stays MVVM: write ViewModels with CommunityToolkit.Mvvm, load only the UI hubs (`uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-testing`), and do not load `uno-mvux` or introduce MVUX unless the user asks for a migration. MVUX is the default only for new apps.
+- **The XAML dialect is WinUI 3.** Use `Microsoft.UI.Xaml` types and `x:Bind`/`Binding` as in WinUI, except on MVUX pages: bind the Model surface with `{Binding}`, because `x:Bind` to the generated `*ViewModel` fails at build (observed on Uno.Sdk 6.7.30; TwoWay bindings report UXAML0001). Do not use WPF, UWP-only, or Xamarin.Forms/MAUI syntax.
 - **Toolkit and Extensions namespaces** are `xmlns:utu="using:Uno.Toolkit.UI"`, `xmlns:uen="using:Uno.Extensions.Navigation.UI"`, and `xmlns:mvux="using:Uno.Extensions.Reactive.UI"`.
 - **Prefer platform controls over hand-built approximations.** A rounded `Border` with a background is a card, so use `CardContentControl`; a row of buttons that switches views is a `TabBar`; a list with add/remove is an `IListState<T>`. The domain skills spell these out.
 - **Ground API details in the docs, not memory.** Call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result. Never pass a URL, `.html` link, or hand-built path. Uno APIs change between releases and the docs MCP is version-correct.
+- **Hot Design and Hot Reload questions** have no hub of their own: `uno-testing` covers how `MainWindow.UseStudio()` interacts with an app under test; for everything else search the docs.
 - **Verify before finishing.** When the Uno App MCP is available, use `uno-testing` to confirm the change renders and behaves correctly rather than declaring success from the code alone.
 
 ## New app scaffolding

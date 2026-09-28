@@ -25,20 +25,28 @@ uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/navigation/Navigation
 The documentation covers two parallel families:
 
 **Non-result overloads** — navigate to a destination, don't expect a return value:
-- `NavigateRouteAsync("routeName")` — navigate by route string
-- `NavigateViewAsync<TView>()` — navigate to a specific view type
-- `NavigateViewModelAsync<TViewModel>()` — navigate to the route registered for a ViewModel type
-- `NavigateDataAsync<TData>(data)` — navigate with data; the destination is resolved from the data type
-- `NavigateBackAsync()` — pop one level off the back stack
+- `NavigateRouteAsync(this, "routeName")` — navigate by route string
+- `NavigateViewAsync<TView>(this)` — navigate to a specific view type
+- `NavigateViewModelAsync<TViewModel>(this)` — navigate to the route registered for a ViewModel type
+- `NavigateDataAsync(this, data)` — navigate with data; the destination is resolved from the data type
+- `NavigateBackAsync(this)` — pop one level off the back stack
+
+Every overload takes the `sender` (usually `this`) as its first argument.
 
 **Result overloads** — navigate AND retrieve a typed result from the destination page:
-- `NavigateRouteForResultAsync<TResult>("routeName")`
-- `NavigateViewForResultAsync<TView, TResult>()`
-- `NavigateViewModelForResultAsync<TViewModel, TResult>()`
-- `NavigateDataForResultAsync<TData, TResult>()`
-- `NavigateBackWithResultAsync(data)` — used on the destination page to return data to the caller
+- `NavigateRouteForResultAsync<TResult>(this, "routeName")`
+- `NavigateViewForResultAsync<TView, TResult>(this)`
+- `NavigateViewModelForResultAsync<TViewModel, TResult>(this)`
+- `NavigateDataForResultAsync<TData, TResult>(this, data)`
+- `NavigateBackWithResultAsync(this, data: value)` — used on the destination page to return data to the caller (`data` is a named argument after the optional qualifier)
 
-The result overloads return `Task<NavigationResult<TResult>>`. The caller awaits, then reads `.Result` for the returned value.
+The result overloads return `Task<NavigationResultResponse<TResult>?>`, whose `.Result` is a `Task<Option<TResult>>`:
+
+```csharp
+var response = await navigator.NavigateViewModelForResultAsync<DetailsViewModel, Order>(this);
+var result = await response!.Result;
+if (result.IsSome(out var order)) { /* use order */ }
+```
 
 ### Step 3: For Advanced Navigation Techniques
 
@@ -52,14 +60,14 @@ Key page:
 ## Critical Rules
 
 - **Pick the correct overload for the navigation scenario.** Non-result overloads (`NavigateViewModelAsync<TViewModel>`) are for one-way navigation. Result overloads (`NavigateViewModelForResultAsync<TViewModel, TResult>`) are for request-and-await-response flows where the destination page calls `NavigateBackWithResultAsync(data)` to return a value. Using the non-result overload when a return value is needed silently throws away the result.
-- Navigation methods are **extension methods on `INavigator`** — they are not extension methods on `string`, `Route`, or any view type. Get an `INavigator` instance first (constructor injection or `this.GetNavigator()`), then call `await navigator.Navigate*Async(...)`.
+- Navigation methods are **extension methods on `INavigator`** — they are not extension methods on `string`, `Route`, or any view type. Get an `INavigator` instance first (constructor injection, or `this.Navigator()` on a view, which returns `INavigator?`), then call `await navigator.Navigate*Async(this, ...)`. `Region.GetNavigator(element)` is unrelated: it returns the `Region.Navigator` attached-property string, not an `INavigator`.
 
 ## Key Principles (Stable)
 
-- Get `INavigator` via constructor injection or `this.GetNavigator()` extension method
-- All navigation methods are async; non-result overloads return `Task<NavigationResponse>`, result overloads return `Task<NavigationResultResponse<TResult>>`
+- Get `INavigator` via constructor injection or the `this.Navigator()` extension method (nullable)
+- All navigation methods are async and take `sender` first; non-result overloads return `Task<NavigationResponse?>`, result overloads return `Task<NavigationResultResponse<TResult>?>`
 - `NavigateViewModelAsync` is the most common one-way overload — maps to the route registered for that ViewModel
-- `NavigateBackAsync()` goes back one level
+- `NavigateBackAsync(this)` goes back one level
 - Combine with `Qualifiers.ClearBackStack` to clear navigation history
 - Always `await` navigation calls
 
@@ -68,12 +76,11 @@ Key page:
 The second Critical Rule above (extension methods on `INavigator`) is the most-seen mistake. Concrete example:
 
 ```csharp
-// WRONG: CS1929 — string has no NavigateRouteAsync
+// WRONG: CS1929 (or CS1061 when Uno.Extensions.Navigation is not imported): string has no NavigateRouteAsync
 await "/details".NavigateRouteAsync(...);
 
-// CORRECT: Get INavigator first
-var navigator = this.GetNavigator();
-await navigator.NavigateRouteAsync(this, route: "/details");
+// CORRECT: get an INavigator first (nullable on a view)
+await this.Navigator()!.NavigateRouteAsync(this, "/details");
 ```
 
 In XAML, prefer the `uen:Navigation.Request` attached property instead of code-behind navigation:

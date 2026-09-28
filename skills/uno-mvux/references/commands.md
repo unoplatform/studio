@@ -46,8 +46,8 @@ If the user needs manual control over commands, the reference page has an "Expli
 
 ## Critical Rules
 
-- **Feed parameter injection works for any feed type** (`IFeed<T>`, `IListFeed<T>`, `IState<T>`, `IListState<T>`) — the matching parameter receives a *snapshot* of the current value.
-- **But you can only mutate writable types from inside a command body.** `IState<T>` and `IListState<T>` expose `UpdateAsync` / `AddAsync` / `RemoveAsync`. `IFeed<T>` and `IListFeed<T>` are **read-only** — calling `.Update(...)`, `.UpdateAsync(...)`, `.AddAsync(...)`, or `.RemoveAsync(...)` on an injected `IListFeed`/`IFeed` is a compile error.
+- **Feed parameter injection** — a parameter whose name and type match an `IFeed<T>`/`IState<T>` property receives a *snapshot* of the current value. The docs show single-value feeds; for `IListFeed<T>`/`IListState<T>` the parameter would be `IImmutableList<T>` (not documented, verify before relying on it).
+- **But you can only mutate writable types from inside a command body.** `IState<T>` exposes `UpdateAsync`/`SetAsync`; `IListState<T>` exposes `AddAsync` / `InsertAsync` / `RemoveAllAsync(predicate)` / `UpdateAllAsync` / `UpdateItemAsync` (there is no `RemoveAsync`). `IFeed<T>` and `IListFeed<T>` are **read-only** — calling `.UpdateAsync(...)`, `.AddAsync(...)`, or `.RemoveAllAsync(...)` on an injected `IListFeed`/`IFeed` is a compile error.
 - If a command needs to mutate a collection, the property on the Model must be `IListState<T>` (not `IListFeed<T>`); convert with `ListState.FromFeed(this, sourceFeed)` if needed.
 - **When mutating via `UpdateAsync`, the updater must be pure** — derive the new value solely from the `current` value, with no captured external state or side effects. See `references/state-basics.md` and `references/liststate.md` for details.
 

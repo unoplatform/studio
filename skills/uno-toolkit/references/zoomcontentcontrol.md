@@ -21,8 +21,8 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/ZoomCon
 
 ## Critical Rules
 
-- The fit-to-available-size property is **`AutoFit`** (boolean). There is **no `AutoFitToCanvas`** property — that name does not exist on `ZoomContentControl`.
-- Programmatic zoom uses methods `ZoomTo(float)` and `ZoomToRect(Rect)` on the control instance — not a settable `Zoom` property.
+- The fit-to-available-size property is **`AutoFitToCanvas`** (boolean). There is **no `AutoFit`** property.
+- Programmatic zoom sets the `ZoomLevel` dependency property (bindable, clamped by `MinZoomLevel`/`MaxZoomLevel`). Methods are `FitToCanvas()`, `CenterContent()`, `ResetZoom()`, `ResetScroll()`, `ResetViewport()`. There is **no `ZoomTo`, `ZoomToRect`, or `Zoom`**.
 
 ## Key Principles (Stable)
 
@@ -30,8 +30,8 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/ZoomCon
 - `ZoomLevel` — current zoom (bindable, two-way)
 - `IsZoomAllowed` — enable/disable zoom
 - `IsPanAllowed` — enable/disable pan
-- `AutoFit` — fit content to available size
-- Supports mouse wheel, middle-click pan, pinch-to-zoom gestures
+- `AutoFitToCanvas` — fit content to available size
+- Supports mouse wheel and pinch-to-zoom gestures
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills

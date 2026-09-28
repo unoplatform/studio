@@ -29,7 +29,7 @@ uno_platform_docs_search("Uno Toolkit CommandExtensions attached property Comman
 ## Critical Rules
 
 - There is **no `CommandTrigger` attached property**. `utu:CommandExtensions.Command="{Binding ...}"` alone is sufficient — the trigger event is determined automatically by the control type (Enter on `TextBox`/`PasswordBox`, item click on `ListView`, toggle on `ToggleSwitch`, invocation on `NavigationView`, tap on any `UIElement`). Do not invent a separate trigger property.
-- `Command` on `ListView` requires `IsItemClickEnabled="True"` to fire.
+- For `ListView` item clicks, `IsItemClickEnabled="True"` is typically required (verify against the docs).
 
 ## Key Principles (Stable)
 

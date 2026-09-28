@@ -10,10 +10,10 @@ Ready-to-use templates for a bottom TabBar navigation shell. Copy, substitute pl
 | Search / Explore | `&#xE721;` | `\uE721` |
 | Settings / Gear | `&#xE713;` | `\uE713` |
 | Profile / Person | `&#xE77B;` | `\uE77B` |
-| Favorites / Heart | `&#xE734;` | `\uE734` |
+| Favorites / Heart | `&#xEB51;` | `\uEB51` |
 | Add / Plus | `&#xE710;` | `\uE710` |
 | List / Bullets | `&#xE8FD;` | `\uE8FD` |
-| Chart / Analytics | `&#xE9D9;` | `\uE9D9` |
+| Chart / Analytics | `&#xE9D2;` | `\uE9D2` |
 | Calendar / Date | `&#xE787;` | `\uE787` |
 | Mail / Messages | `&#xE715;` | `\uE715` |
 | Cart / Shopping | `&#xE7BF;` | `\uE7BF` |
@@ -38,46 +38,44 @@ The content area Grid with `Region.Navigator="Visibility"` must be **empty** —
       xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource BackgroundBrush}">
 
-    <Grid>
-        <Grid uen:Region.Attached="True">
-            <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+    <Grid uen:Region.Attached="True">
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <!-- Content area: visibility-based region switching (empty — framework injects views) -->
-            <Grid Grid.Row="0"
-                  uen:Region.Attached="True"
-                  uen:Region.Navigator="Visibility" />
+        <!-- Content area: visibility-based region switching (empty — framework injects views) -->
+        <Grid Grid.Row="0"
+              uen:Region.Attached="True"
+              uen:Region.Navigator="Visibility" />
 
-            <!-- Bottom TabBar -->
-            <utu:TabBar Grid.Row="1"
-                        uen:Region.Attached="True"
-                        Style="{StaticResource BottomTabBarStyle}">
-                <!-- REPLACE: One TabBarItem per Tab page -->
-                <utu:TabBarItem uen:Region.Name="PAGE1_NAME"
-                                Content="PAGE1_LABEL"
-                                Style="{StaticResource MaterialBottomTabBarItemStyle}">
-                    <utu:TabBarItem.Icon>
-                        <FontIcon Glyph="PAGE1_ICON_GLYPH" />
-                    </utu:TabBarItem.Icon>
-                </utu:TabBarItem>
-                <utu:TabBarItem uen:Region.Name="PAGE2_NAME"
-                                Content="PAGE2_LABEL"
-                                Style="{StaticResource MaterialBottomTabBarItemStyle}">
-                    <utu:TabBarItem.Icon>
-                        <FontIcon Glyph="PAGE2_ICON_GLYPH" />
-                    </utu:TabBarItem.Icon>
-                </utu:TabBarItem>
-                <utu:TabBarItem uen:Region.Name="PAGE3_NAME"
-                                Content="PAGE3_LABEL"
-                                Style="{StaticResource MaterialBottomTabBarItemStyle}">
-                    <utu:TabBarItem.Icon>
-                        <FontIcon Glyph="PAGE3_ICON_GLYPH" />
-                    </utu:TabBarItem.Icon>
-                </utu:TabBarItem>
-            </utu:TabBar>
-        </Grid>
+        <!-- Bottom TabBar -->
+        <utu:TabBar Grid.Row="1"
+                    uen:Region.Attached="True"
+                    Style="{StaticResource BottomTabBarStyle}">
+            <!-- REPLACE: One TabBarItem per Tab page -->
+            <utu:TabBarItem uen:Region.Name="PAGE1_NAME"
+                            Content="PAGE1_LABEL"
+                            Style="{StaticResource BottomTabBarItemStyle}">
+                <utu:TabBarItem.Icon>
+                    <FontIcon Glyph="PAGE1_ICON_GLYPH" />
+                </utu:TabBarItem.Icon>
+            </utu:TabBarItem>
+            <utu:TabBarItem uen:Region.Name="PAGE2_NAME"
+                            Content="PAGE2_LABEL"
+                            Style="{StaticResource BottomTabBarItemStyle}">
+                <utu:TabBarItem.Icon>
+                    <FontIcon Glyph="PAGE2_ICON_GLYPH" />
+                </utu:TabBarItem.Icon>
+            </utu:TabBarItem>
+            <utu:TabBarItem uen:Region.Name="PAGE3_NAME"
+                            Content="PAGE3_LABEL"
+                            Style="{StaticResource BottomTabBarItemStyle}">
+                <utu:TabBarItem.Icon>
+                    <FontIcon Glyph="PAGE3_ICON_GLYPH" />
+                </utu:TabBarItem.Icon>
+            </utu:TabBarItem>
+        </utu:TabBar>
     </Grid>
 </Page>
 ```
@@ -159,7 +157,7 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 6. Replace `PAGE1_LABEL`, `PAGE2_LABEL`, `PAGE3_LABEL` with display labels (or use `x:Uid` for localization)
 7. Replace `PAGE1_ICON_GLYPH`, etc. with glyphs from the Icon Lookup Table above (e.g., `&#xE80F;`)
 8. Add or remove `TabBarItem` entries to match the number of Tab pages in the plan
-9. The `BottomTabBarStyle` goes on the `TabBar` container; `MaterialBottomTabBarItemStyle` goes on each `TabBarItem`
+9. The `BottomTabBarStyle` goes on the `TabBar` container; `BottomTabBarItemStyle` goes on each `TabBarItem`. Both keys exist in the Material and Simple toolkit themes (`MaterialBottomTabBarItemStyle` is the Material-only alias and fails under Simple)
 
 ## Route Registration Rules
 

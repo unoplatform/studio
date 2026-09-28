@@ -53,13 +53,13 @@ See the `references/responsive-shell.md`.
 - TabBar uses region-based navigation similarly to NavigationView
 - Each `TabBarItem` gets `uen:Region.Name="RouteName"`
 - Parent container and content area need `Region.Attached="True"`
-- Apply `BottomTabBarStyle` to the `TabBar`; per-`TabBarItem` styling comes from the active design-theme (e.g., `MaterialBottomTabBarItemStyle` from the `uno-toolkit` skill (`references/material-theme.md`))
+- Apply `BottomTabBarStyle` to the `TabBar` and `BottomTabBarItemStyle` to each `TabBarItem`; both keys resolve under the Material and Simple toolkit themes. `MaterialBottomTabBarItemStyle` is the Material-only alias and throws under Simple; see the `uno-toolkit` skill (`references/tabbar.md`, `references/material-theme.md`)
 - Requires `Toolkit` in `<UnoFeatures>` along with `Navigation`
 - XAML namespaces: `xmlns:uen="using:Uno.Extensions.Navigation.UI"` and `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Critical Rules
 
-- The root `Grid` with `uen:Region.Attached="True"` MUST be a direct child of the Page content — it enables region navigation
+- The root `Grid` with `uen:Region.Attached="True"` is the Page content (the template shows it as the direct child of `Page`); it enables region navigation
 - `uen:Region.Navigator="Visibility"` MUST be on the content area Grid — this tells the framework to toggle child visibility
 - **The content area Grid with `Region.Navigator="Visibility"` must be empty in XAML.** Do not add `Collapsed` child elements for each route. The navigation framework resolves registered routes and injects the corresponding views at runtime.
 - `uen:Region.Attached="True"` MUST also be on the TabBar itself

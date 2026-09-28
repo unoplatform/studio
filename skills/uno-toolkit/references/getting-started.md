@@ -40,12 +40,12 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls-styles.
 
 - Add `Toolkit` to `<UnoFeatures>` in the project file
 - For Material styling, use `MaterialToolkitTheme` in App.xaml (replaces separate MaterialTheme + ToolkitResources)
-- For Cupertino styling, use `CupertinoToolkitTheme`
+- For Cupertino styling, merge `CupertinoToolkitResources` (Uno.Toolkit.WinUI.Cupertino)
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 - CLI: `dotnet new unoapp -o MyApp -toolkit` to create a new project with Toolkit
 
 ## Related Skills
 
 - `references/material-theme.md` — MaterialToolkitTheme configuration
-- `references/cupertino-theme.md` — CupertinoToolkitTheme configuration
+- `references/cupertino-theme.md` — CupertinoToolkitResources configuration
 - the `uno-themes` skill (`references/material.md`) — Material theme installation

@@ -30,10 +30,10 @@ uno_platform_docs_search("Uno Toolkit DrawerFlyoutPresenter flyout bottom sheet 
 ## Key Principles (Stable)
 
 - `DrawerControl` has a main content area and a drawer that slides in
-- `DrawerOpenDirection` — Left, Right, Up, Down
+- `OpenDirection` (enum `DrawerOpenDirection`: Left, Right, Up, Down; default `Right`)
 - `IsOpen` property controls drawer state (bindable)
 - `DrawerFlyoutPresenter` — adds swipe gesture support to standard Flyouts
-- `DrawerLength` — size of the drawer
+- `DrawerDepth` — size of the drawer (`DrawerFlyoutPresenter` uses the attached `DrawerLength` instead, a `GridLength` defaulting to `0.66*`)
 - Supports light dismiss (tap outside to close)
 
 ## Related Skills

@@ -57,29 +57,46 @@ try {
     # Each skill is a hub: SKILL.md must route to every file in its references/, and a
     # `references/<topic>.md` mention resolves in the hub named earlier on the same line
     # (for example "the `uno-toolkit` skill (`references/card.md`)"), otherwise in the current skill.
+    # Mentions inside fenced code blocks, HTML comments, and the YAML frontmatter do not count.
+    function Get-ProseLines([string]$file) {
+        $inFence = $false; $inComment = $false; $inFrontmatter = $false; $first = $true
+        foreach ($line in Get-Content $file) {
+            if ($first) { $first = $false; if ($line -eq '---') { $inFrontmatter = $true; continue } }
+            if ($inFrontmatter) { if ($line -eq '---') { $inFrontmatter = $false }; continue }
+            if ($line -match '^\s*(```|~~~)') { $inFence = -not $inFence; continue }
+            if ($inFence) { continue }
+            if ($inComment) { if ($line -match '-->') { $inComment = $false }; continue }
+            if ($line -match '<!--' -and $line -notmatch '-->') { $inComment = $true; continue }
+            $line -replace '<!--.*?-->', ''
+        }
+    }
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"
         if (-not (Test-Path $skill)) { $errors.Add("$($dir.Name): missing SKILL.md"); continue }
-        $text = Get-Content $skill -Raw
-
-        foreach ($ref in [regex]::Matches($text, '`(uno-[a-z0-9-]+)`') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique) {
-            if ($ref -in $hubs) { continue }
-            if ($ref -match '^uno-(mvux|navigation|toolkit|themes|testing)-') { $errors.Add("${skill}: references retired per-topic skill '$ref' (it is now a references/ file inside a hub)") }
-        }
         $files = @($skill) + @(Get-ChildItem "$plugin/skills/$($dir.Name)/references" -Filter *.md -ErrorAction SilentlyContinue | ForEach-Object FullName)
+        $onDisk = @(Get-ChildItem "$plugin/skills/$($dir.Name)/references" -Filter *.md -ErrorAction SilentlyContinue | ForEach-Object Name)
+        $routed = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
         foreach ($file in $files) {
-            foreach ($line in Get-Content $file) {
-                foreach ($m in [regex]::Matches($line, 'references/[A-Za-z0-9._-]+\.md')) {
+            $isHub = $file -eq $skill
+            foreach ($line in Get-ProseLines $file) {
+                foreach ($m in [regex]::Matches($line, 'uno-(?:mvux|navigation|toolkit|themes|testing)-[a-z0-9-]+')) {
+                    $errors.Add("${file}: references retired per-topic skill '$($m.Value)' (it is now a references/ file inside a hub)")
+                }
+                foreach ($m in [regex]::Matches($line, 'references/([A-Za-z0-9._-]+\.md)')) {
                     $before = $line.Substring(0, $m.Index)
                     $named = [regex]::Matches($before, 'uno-[a-z]+') | ForEach-Object Value | Where-Object { $_ -in $hubs } | Select-Object -Last 1
                     $hub = $named ? $named : $dir.Name
-                    if (-not (Test-Path "$plugin/skills/$hub/$($m.Value)")) { $errors.Add("${file}: '$($m.Value)' does not exist in skill '$hub'") }
+                    $name = $m.Groups[1].Value
+                    # Case-sensitive existence check: CI runs on Linux.
+                    $exists = @(Get-ChildItem "$plugin/skills/$hub/references" -Filter *.md -ErrorAction SilentlyContinue | Where-Object { $_.Name -ceq $name }).Count -gt 0
+                    if (-not $exists) { $errors.Add("${file}: '$($m.Value)' does not exist in skill '$hub'") }
+                    elseif ($isHub -and $hub -eq $dir.Name) { $routed.Add($name) | Out-Null }
                 }
             }
         }
-        foreach ($ref in Get-ChildItem "$plugin/skills/$($dir.Name)/references" -Filter *.md -ErrorAction SilentlyContinue) {
-            if ($text -notmatch [regex]::Escape("references/$($ref.Name)")) { $errors.Add("${skill}: does not route to 'references/$($ref.Name)'") }
+        foreach ($name in $onDisk) {
+            if (-not $routed.Contains($name)) { $errors.Add("${skill}: does not route to 'references/$name'") }
         }
     }
 }

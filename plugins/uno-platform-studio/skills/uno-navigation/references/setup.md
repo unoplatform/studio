@@ -41,7 +41,7 @@ uno_platform_docs_search("Uno Navigation host builder UseNavigation UseToolkitNa
 
 - Add `Navigation` to `<UnoFeatures>`: `<UnoFeatures>Navigation;Toolkit</UnoFeatures>`
 - Adding `Toolkit` enables TabBar and NavigationBar controls with navigation support
-- Navigation is configured via the host builder in App.xaml.cs using `.UseNavigation()`
+- Navigation is configured in App.xaml.cs: `.UseToolkitNavigation()` on the `IApplicationBuilder` before `.Configure(host => ...)`, then `.UseNavigation(RegisterRoutes)` on the host builder. With MVUX use `.UseNavigation(ReactiveViewModelMappings.ViewModelMappings, RegisterRoutes)` so `*Model` records map to their generated ViewModels. A bare `.UseNavigation()` compiles but registers no routes
 - Routes are registered using `ViewMap`, `DataViewMap`, or `RouteMap`
 - The navigation host (`Shell.xaml`) is the root of the navigation hierarchy
 - Do NOT use `Region.Attached="True"` inside Shell.xaml or ExtendedSplashScreen content

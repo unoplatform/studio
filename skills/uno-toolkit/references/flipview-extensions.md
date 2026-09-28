@@ -13,7 +13,7 @@ uno_platform_docs_search("Uno Toolkit FlipView extensions navigation buttons pre
 ### Step 2: For Reference
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls-styles.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/FlipView-extensions.md")
 ```
 
 Look for FlipViewExtensions in the helpers section.
@@ -21,7 +21,6 @@ Look for FlipViewExtensions in the helpers section.
 ## Key Principles (Stable)
 
 - Shows Previous/Next navigation arrows on FlipView
-- Buttons auto-show on hover for desktop
 - Customizable button templates via default chevron styles
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 

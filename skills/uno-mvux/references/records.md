@@ -29,7 +29,7 @@ If the user needs key equality for entity matching (messaging, selection), searc
 uno_platform_docs_search("MVUX key equality entity matching record identifier")
 ```
 
-The messaging reference covers how records are matched by key:
+The messaging reference covers how entity messages are matched by a key selector:
 - **Messaging Reference**: `external/uno.extensions/doc/Learn/Mvux/Advanced/Messaging.md`
 
 ### Step 3: For General C# Records
@@ -38,7 +38,7 @@ If the user needs help with C# record syntax itself, this is standard C# languag
 
 ## Key Equality Requirement (Critical)
 
-**Record types used as items in MVUX collections (`IListFeed<T>`, `IListState<T>`) MUST support key equality via `Uno.Extensions.Equality.IKeyEquatable<T>`.** Without it, MVUX cannot distinguish a modified entity from a different one — every change forces a full list re-render (flickering, lost scroll position, broken animations). For single-value `IState<T>` / `IFeed<T>`, key equality matters for messaging-driven entity matching.
+**Record types used as items in MVUX collections (`IListFeed<T>`, `IListState<T>`) MUST support key equality via `Uno.Extensions.Equality.IKeyEquatable<T>`.** Without it, MVUX cannot distinguish a modified entity from a different one — every change forces a full list re-render (flickering, lost scroll position, broken animations), and `UpdateAsync(T item)`/`UpdateItemAsync` cannot find the item. Messaging (`Observe`) matches by its own key selector, not by `IKeyEquatable<T>`.
 
 ### Automatic generation (recommended)
 
@@ -66,7 +66,7 @@ public partial record OrderLine(
 Configure which property names are auto-detected as keys:
 
 ```csharp
-[assembly: ImplicitKeyEquality("Id", "Key", "EntityId")]
+[assembly: ImplicitKeys("Id", "Key", "EntityId")]
 ```
 
 ### Disabling generation
@@ -101,5 +101,5 @@ The interface is exactly **`Uno.Extensions.Equality.IKeyEquatable<T>`**. Do not 
 ## Related Skills
 
 - `references/overview.md` — MVUX architecture requiring records
-- `references/messaging.md` — Entity matching depends on key equality
+- `references/messaging.md` — Entity messages matched by key selector
 - `references/selection.md` — Selection tracking relies on equality

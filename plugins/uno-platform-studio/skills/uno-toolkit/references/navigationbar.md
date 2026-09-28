@@ -27,13 +27,13 @@ uno_platform_docs_search("NavigationBar Chefs app example navigation back")
 
 ## Critical Rules
 
-- **`MainCommand` is an `AppBarButton`** — there is no dedicated `NavigationBarMainCommand` type. Use `<utu:NavigationBar.MainCommand><AppBarButton Icon="Back" Command="{Binding GoBackCommand}"/></utu:NavigationBar.MainCommand>` (or equivalent attribute form). The same `AppBarButton` type is used for `PrimaryCommands` and `SecondaryCommands` items.
+- **`MainCommand` is an `AppBarButton`** — there is no dedicated `NavigationBarMainCommand` type. Use `<utu:NavigationBar.MainCommand><AppBarButton Icon="Back" Command="{Binding GoBackCommand}"/></utu:NavigationBar.MainCommand>` (or equivalent attribute form). `PrimaryCommands` and `SecondaryCommands` take `ICommandBarElement`s (`AppBarButton`, `AppBarToggleButton`, `AppBarSeparator`).
 
 ## Key Principles (Stable)
 
 - `MainCommand` — the back-button slot; an `AppBarButton` instance
-- `PrimaryCommands` — action `AppBarButton`s displayed on the right
-- `SecondaryCommands` — overflow `AppBarButton`s in the overflow menu
+- `PrimaryCommands` — action `ICommandBarElement`s displayed on the right
+- `SecondaryCommands` — overflow `ICommandBarElement`s in the overflow menu
 - Two rendering modes: `Windows` (XAML drawn) and `Native` (platform AppBar on iOS/Android)
 - Content property is the title
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`

@@ -25,7 +25,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reacti
 ### Step 2: Learn Feed Creation Methods
 
 From the fetched docs, the key factory methods on the `Feed` static class are:
-- `Feed.Async(...)` — from a `Task<T>` returning method
+- `Feed.Async(...)` — from an `AsyncFunc<T>` (`ValueTask<T>(CancellationToken)`); a `ValueTask<T>` method group passes directly, a `Task<T>` method needs `async ct => await ...`
 - `Feed.AsyncEnumerable(...)` — from an `IAsyncEnumerable<T>`
 - `Feed.Create(...)` — from a custom async function
 
@@ -65,7 +65,7 @@ This covers binding feed data, showing errors, and using feeds inside DataTempla
 - Feeds automatically track loading/error/none/value states
 - Feeds are **stateless** — they don't cache values (use `IState<T>` for caching)
 - The service method should accept a `CancellationToken` parameter for proper cancellation
-- Service return types should use `ValueTask<T>` or `Task<T>`
+- Service return types should use `ValueTask<T>` (a `Task<T>` method must be wrapped in a lambda for `Feed.Async`)
 - For collections, use `IListFeed<T>` instead (see `references/listfeed.md`)
 
 ## Related Skills

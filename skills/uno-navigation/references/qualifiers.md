@@ -43,7 +43,7 @@ Key page:
 ## Key Principles (Stable)
 
 - `-/` prefix: clears back stack (e.g., `uen:Navigation.Request="-/Login"`)
-- `!/` prefix: opens a dialog/flyout
+- `!` prefix: opens a dialog/flyout (documented as `!Route`; `!/Route` also parses)
 - Qualifiers can be combined with route names
 - From code: use `Qualifiers.ClearBackStack`, `Qualifiers.Dialog`, etc.
 - `Qualifiers` class is in `Uno.Extensions.Navigation` namespace

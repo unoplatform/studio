@@ -19,7 +19,7 @@ uno_platform_docs_search("ItemsRepeaterExtensions SelectedItem SelectedItems Sel
 ### Step 2: For Controls Reference
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls-styles.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/itemsrepeater-extensions.md")
 ```
 
 Look for ItemsRepeaterExtensions in the helpers section.
@@ -30,8 +30,8 @@ Look for ItemsRepeaterExtensions in the helpers section.
 - `utu:ItemsRepeaterExtensions.SelectedIndex` — single selection index (bindable)
 - `utu:ItemsRepeaterExtensions.SelectedItems` — multiple selected items (bindable)
 - `utu:ItemsRepeaterExtensions.SelectedIndexes` — multiple selection indexes (bindable)
-- `utu:ItemsRepeaterExtensions.SelectionMode` — Single, Multiple, None
-- Supports `ISupportIncrementalLoading` for automatic data fetching on scroll
+- `utu:ItemsRepeaterExtensions.SelectionMode` — None, Single, SingleOrNone, Multiple
+- Incremental loading via `SupportsIncrementalLoading`, `DataFetchSize`, `IncrementalLoadingThreshold`, `IsLoading` (works with `ISupportIncrementalLoading` sources)
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills

@@ -23,15 +23,15 @@ Use semantic keys in XAML for portable, theme-agnostic styling:
 | `FilledButtonStyle` | `Button` | Yes | |
 | `ElevatedButtonStyle` | `Button` | | Not implemented by every design-theme |
 | `FilledTonalButtonStyle` | `Button` | | |
-| `OutlinedButtonStyle` | `Button` | | Not implemented by every design-theme |
+| `OutlinedButtonStyle` | `Button` | | Resolves in both themes; under Simple it aliases to the tonal style |
 | `TextButtonStyle` | `Button` | | |
 | `IconButtonStyle` | `Button` | | |
 | `TextToggleButtonStyle` | `ToggleButton` | | |
-| `IconToggleButtonStyle` | `ToggleButton` | Yes | Default implicit for ToggleButton |
+| `IconToggleButtonStyle` | `ToggleButton` | Material | Material's implicit `ToggleButton` style; Simple's implicit is `ToggleButtonStyle` |
 | `FilledTextBoxStyle` | `TextBox` | | |
-| `OutlinedTextBoxStyle` | `TextBox` | | Implicit default in some design-themes |
+| `OutlinedTextBoxStyle` | `TextBox` | Yes | Implicit default in both Material and Simple |
 | `FilledPasswordBoxStyle` | `PasswordBox` | | |
-| `OutlinedPasswordBoxStyle` | `PasswordBox` | | Implicit default in some design-themes |
+| `OutlinedPasswordBoxStyle` | `PasswordBox` | Yes | Implicit default in both Material and Simple |
 | `ComboBoxStyle` | `ComboBox` | Yes | |
 | `ComboBoxItemStyle` | `ComboBoxItem` | | |
 | `CheckBoxStyle` | `CheckBox` | Yes | |
@@ -81,7 +81,7 @@ Use semantic keys in XAML for portable, theme-agnostic styling:
 | `SurfaceSmallFabStyle` | `Button` | |
 | `SurfaceLargeFabStyle` | `Button` | |
 
-> **Note:** Individual design-themes may also expose additional theme-prefixed styles (e.g. danger variants, size variants, controls without a cross-theme equivalent) that are **not** part of the shared semantic surface. See the design-theme-specific references (`material.md`, `simple.md`) for those.
+> **Note:** Individual design-themes may also expose additional theme-prefixed styles (e.g. danger variants, controls without a cross-theme equivalent) that are **not** part of the shared semantic surface. See the design-theme-specific references (`material.md`, `simple.md`) for those.
 
 ---
 
@@ -113,16 +113,16 @@ Each typography style exposes individual font properties for lightweight styling
 | `TitleLarge` | `TitleLargeFontFamily`, `TitleLargeFontSize`, `TitleLargeFontWeight` |
 | `TitleMedium` | `TitleMediumFontFamily`, `TitleMediumFontSize`, `TitleMediumFontWeight` |
 | `TitleSmall` | `TitleSmallFontFamily`, `TitleSmallFontSize`, `TitleSmallFontWeight` |
-| `BodyLarge` | `BodyLargeFontFamily`, `BodyLargeFontSize`, `BodyLargeFontWeight` |
-| `BodyMedium` | `BodyMediumFontFamily`, `BodyMediumFontSize`, `BodyMediumFontWeight` |
-| `BodySmall` | `BodySmallFontFamily`, `BodySmallFontSize`, `BodySmallFontWeight` |
-| `LabelLarge` | `LabelLargeFontFamily`, `LabelLargeFontSize`, `LabelLargeFontWeight` |
-| `LabelMedium` | `LabelMediumFontFamily`, `LabelMediumFontSize`, `LabelMediumFontWeight` |
-| `LabelSmall` | `LabelSmallFontFamily`, `LabelSmallFontSize`, `LabelSmallFontWeight` |
-| `LabelExtraSmall` | `LabelExtraSmallFontFamily`, `LabelExtraSmallFontSize`, `LabelExtraSmallFontWeight` |
-| `CaptionLarge` | `CaptionLargeFontFamily`, `CaptionLargeFontSize`, `CaptionLargeFontWeight` |
-| `CaptionMedium` | `CaptionMediumFontFamily`, `CaptionMediumFontSize`, `CaptionMediumFontWeight` |
-| `CaptionSmall` | `CaptionSmallFontFamily`, `CaptionSmallFontSize`, `CaptionSmallFontWeight` |
+| `BodyLarge` | `BodyLargeFontFamily`, `BodyLargeFontSize`, `BodyLargeFontWeight`, `BodyLargeCharacterSpacing` |
+| `BodyMedium` | `BodyMediumFontFamily`, `BodyMediumFontSize`, `BodyMediumFontWeight`, `BodyMediumCharacterSpacing` |
+| `BodySmall` | `BodySmallFontFamily`, `BodySmallFontSize`, `BodySmallFontWeight`, `BodySmallCharacterSpacing` |
+| `LabelLarge` | `LabelLargeFontFamily`, `LabelLargeFontSize`, `LabelLargeFontWeight`, `LabelLargeCharacterSpacing` |
+| `LabelMedium` | `LabelMediumFontFamily`, `LabelMediumFontSize`, `LabelMediumFontWeight`, `LabelMediumCharacterSpacing` |
+| `LabelSmall` | `LabelSmallFontFamily`, `LabelSmallFontSize`, `LabelSmallFontWeight`, `LabelSmallCharacterSpacing` |
+| `LabelExtraSmall` | `LabelExtraSmallFontFamily`, `LabelExtraSmallFontSize`, `LabelExtraSmallFontWeight`, `LabelExtraSmallCharacterSpacing` |
+| `CaptionLarge` | `CaptionLargeFontFamily`, `CaptionLargeFontSize`, `CaptionLargeFontWeight`, `CaptionLargeCharacterSpacing` |
+| `CaptionMedium` | `CaptionMediumFontFamily`, `CaptionMediumFontSize`, `CaptionMediumFontWeight`, `CaptionMediumCharacterSpacing` |
+| `CaptionSmall` | `CaptionSmallFontFamily`, `CaptionSmallFontSize`, `CaptionSmallFontWeight`, `CaptionSmallCharacterSpacing` |
 
 ### Typography Decision Guide
 
@@ -150,7 +150,7 @@ Layer 1: Color Palette (SharedColorPalette.xaml)
            |
            v
 Layer 2: Semantic Brushes (SharedColors.xaml)
-    ~288 SolidColorBrush resources generated from palette + opacity tokens
+    280 SolidColorBrush resources generated from palette + opacity tokens
            |
            v
 Layer 3: Control Lightweight Styling Keys
@@ -257,7 +257,7 @@ Every Color key generates **9 SolidColorBrush variants** at different opacity le
 | `Low` | 0.32 | Low-emphasis text, placeholders |
 | `Disabled` | 0.12 | Disabled state backgrounds |
 
-**Total: ~288 semantic brushes** across Primary (63), Secondary (54), Tertiary (36), Error (36), Surface (63), Background (18), Outline (18).
+**Total: 280 semantic brushes** across Primary (63), Secondary (54), Tertiary (36), Error (36), Surface (55), Background (18), Outline (18).
 
 ### Color Pairing Rules (CRITICAL)
 
@@ -292,7 +292,7 @@ Every Color key generates **9 SolidColorBrush variants** at different opacity le
 
 ### Method 1: Override Color Palette (Full Cascade)
 
-Override `*Color` keys in a ResourceDictionary referenced by your theme. All ~288 brushes and controls update automatically.
+Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in a ResourceDictionary referenced by the theme's `Colors` (`ThemeColors.OverrideSource`). All 280 brushes and controls update automatically.
 
 **Always provide both** `Light` and `Default` (Dark) theme values.
 

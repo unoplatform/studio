@@ -22,7 +22,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/TabBarIt
 ## Key Principles (Stable)
 
 - Attached properties for `TabBarItem` controls
-- Enables on-click navigation behavior
+- `OnClickBehaviors` (`None`, `Auto`, `BackNavigation`, `ScrollToTop`) with `OnClickBehaviorsTarget` define what re-clicking the already selected tab does; routing tabs to pages is `uen:Region` work (see the `uno-navigation` skill, `references/tabbar.md`)
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills

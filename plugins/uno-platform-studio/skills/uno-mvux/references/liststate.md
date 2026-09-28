@@ -37,7 +37,7 @@ Search for mutation operations:
 uno_platform_docs_search("MVUX ListState add remove update items operation")
 ```
 
-Key operations: `AddAsync`, `RemoveAllAsync`, `UpdateAsync`, `InsertAsync`.
+Key operations: `AddAsync`, `InsertAsync`, `RemoveAllAsync(predicate)`, `UpdateAllAsync(predicate, updater)`, `UpdateItemAsync(item, updater)`, and `UpdateAsync(list => ...)` (the single-delegate overload receives the whole `IImmutableList<T>`).
 
 ### Step 4: For Messaging Integration
 
@@ -60,7 +60,7 @@ See the `references/messaging.md` for full details.
 
 ## Key Equality Requirement (Critical)
 
-**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. This is essential for `IListState<T>` because mutation operations (`UpdateAsync`, `RemoveAllAsync`, selection tracking) rely on key equality to identify which item to target. Without it, MVUX cannot match an updated instance to its original, causing broken updates, lost selection state, and full list re-renders.
+**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. The `UpdateAsync(T item)` and `UpdateItemAsync(oldItem, updater)` overloads and selection tracking rely on key equality to identify which item to target (`RemoveAllAsync` and `UpdateAllAsync` take a predicate instead). Without it, MVUX cannot match an updated instance to its original, causing broken updates, lost selection state, and full list re-renders.
 
 ### Automatic generation (recommended)
 
@@ -90,7 +90,7 @@ Either `Uno.Extensions.Equality.KeyAttribute` or `System.ComponentModel.DataAnno
 Configure which property names are auto-detected as keys:
 
 ```csharp
-[assembly: ImplicitKeyEquality("Id", "Key", "EntityId")]
+[assembly: ImplicitKeys("Id", "Key", "EntityId")]
 ```
 
 ### Disabling generation
@@ -108,18 +108,22 @@ public partial record MyItem(Guid Id, string Name);
 - At least one key property is required — without it, mutations and selection cannot identify items
 - Key properties define **identity** (same entity); non-key properties define **state** (changed data)
 - `KeyEquals` returns `true` when two instances represent the same entity, even if other properties differ
-- `UpdateAsync` uses key equality to find the existing item to replace — without it, the update silently fails or replaces the wrong item
+- `UpdateAsync(T item)` and `UpdateItemAsync` use key equality to find the existing item to replace — without it, the update silently fails or replaces the wrong item
 
 ## Updater Purity (Critical)
 
-The function passed to `UpdateAsync` (and to the item-level updaters) **must be pure**: derive the new value *solely* from the `current` value it receives, with no capture of external/mutable variables and no side effects. MVUX is stateless and lockless and applies the updater against the current cached value, so an updater that depends on anything other than its input is not guaranteed to produce a stable result. Project the value you were given onto a new immutable value (use `with` expressions on records); never reach outside the lambda for state.
+The function passed to `UpdateAsync`, `UpdateAllAsync`, or `UpdateItemAsync` **must be pure**: derive the new value *solely* from the `current` value it receives, with no capture of external/mutable variables and no side effects. MVUX is stateless and lockless and applies the updater against the current cached value, so an updater that depends on anything other than its input is not guaranteed to produce a stable result. Project the value you were given onto a new immutable value (use `with` expressions on records); never reach outside the lambda for state.
 
 ```csharp
-// Correct: pure projection of the current item
-await Items.UpdateAsync(item => item with { IsDone = true });
+// Correct: pure projection of the matching item
+await Items.UpdateAllAsync(item => item.Id == id, item => item with { IsDone = true }, ct);
+// or, with the existing instance in hand:
+await Items.UpdateItemAsync(existing, item => item with { IsDone = true }, ct);
 
 // Wrong: result captures external mutable state
-await Items.UpdateAsync(_ => _externalItem);
+await Items.UpdateAllAsync(item => item.Id == id, _ => _externalItem, ct);
+
+// Note: Items.UpdateAsync(list => ...) receives the whole IImmutableList<T>, not one item.
 ```
 
 ## Related Skills

@@ -16,7 +16,7 @@ Primary documentation page:
 Fetch results and look for the control documentation:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls-styles.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/ExtendedSplashScreen.md")
 ```
 
 Search for ExtendedSplashScreen in the controls list.
@@ -31,7 +31,7 @@ See the `uno-navigation` skill (`references/setup.md`).
 
 - Based on `LoadingView` — shows native splash image with custom loading content
 - Requires `Init()` call on Android in `MainActivity.OnCreate`
-- Do NOT use `Region.Attached="True"` inside ExtendedSplashScreen content
+- For navigation regions and splash content, see the `uno-navigation` skill (`references/setup.md`)
 - Content is shown on top of the native splash screen image
 - Loading screen visuals (splash image, background color) are primarily controlled by **Resizetizer** configuration
 

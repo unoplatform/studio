@@ -1,5 +1,7 @@
 # Uno Toolkit FlexPanel
 
+> **Availability:** `FlexPanel` is unreleased as of 2026-09. It lives in uno.toolkit.ui PR #1639 and is absent from Toolkit 10.0.0-dev.3 and 11.0.0-dev.94. Before using it, confirm `utu:FlexPanel` resolves in the installed Toolkit version (search the Toolkit assembly or try the type in XAML). If it does not, use `AutoLayout`, `Grid`, or `WrapPanel` instead.
+
 ## Workflow
 
 > **Docs lookup:** call `uno_platform_docs_search(...)` first, then `uno_platform_docs_fetch(sourcePath="…")` using the `sourcePath` field from a result (a relative `.md` path; add the result's `anchor` for a section). Never pass a URL, a `.html` link, or a hand-built path.
@@ -10,21 +12,7 @@
 uno_platform_docs_search("Uno Toolkit FlexPanel flexbox grow shrink basis wrap gap")
 ```
 
-Primary documentation pages:
-- **FlexPanel Control**: `external/uno.toolkit.ui/doc/controls/FlexPanel.md`
-- **FlexPanel How-To**: `external/uno.toolkit.ui/doc/controls/walkthroughs/FlexPanel.howto.md`
-
-Fetch the how-to for task-oriented recipes:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/walkthroughs/FlexPanel.howto.md")
-```
-
-### Step 2: For Detailed Properties Reference
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/FlexPanel.md")
-```
+The `FlexPanel.md` and `FlexPanel.howto.md` doc pages will exist once PR #1639 ships; until then the search returns nothing and the notes below are the reference.
 
 ## Key Principles (Stable)
 

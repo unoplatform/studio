@@ -11,28 +11,35 @@ The Simple theme is a lightweight design system with minimal, essential styling,
 | Topic | Search query |
 |---|---|
 | Installation / `SimpleTheme` setup | `uno_platform_docs_search("Uno Simple theme installation SimpleTheme UnoFeatures")` |
-| Simple style keys (buttons, inputs, etc.) | `uno_platform_docs_search("Uno Simple controls styles danger size variants")` |
-| `DefaultSize` (Small / Medium) | `uno_platform_docs_search("Uno Simple DefaultSize SimpleControlSize button height")` |
+| Simple style keys (buttons, inputs, etc.) | `uno_platform_docs_search("Uno Simple controls styles danger")` |
+| Density, spacing, corner radius, design tokens | `uno_platform_docs_search("Uno Themes DefaultDensity design tokens Space Radius ControlHeight")` |
+| Seed colors | `uno_platform_docs_search("Uno Themes seed colors PrimarySeed ThemeColors")` |
 | Color override / palette | `uno_platform_docs_search("Uno Themes ThemeColors OverrideSource palette")` |
 | Font override | `uno_platform_docs_search("Uno Simple FontOverrideSource Inter font family")` |
 | Utility brushes (overlays, scrims) | `uno_platform_docs_search("Uno Simple utility brushes overlay scrim measurement")` |
 
 ### Step 2: Fetch a page
 
-Uno's published docs have **no Simple-theme-specific pages** — the inline tables in this reference are the authoritative reference for Simple. For cross-theme topics, search and fetch the `sourcePath` from a result, e.g. lightweight styling:
-
+- **Simple Getting Started**: `external/uno.themes/doc/simple-getting-started.md`
+- **Simple Controls Styles** (authoritative key list): `external/uno.themes/doc/simple-controls-styles.md`
+- **Semantic styles**: `external/uno.themes/doc/semantic-styles.md`
+- **Design tokens** (`Space*`, `Radius*`, `ControlHeight*`, density): `external/uno.themes/doc/design-tokens.md`
+- **Seed colors**: `external/uno.themes/doc/seed-colors.md`
+- **Themes overview**: `external/uno.themes/doc/themes-overview.md`
 - **Lightweight Styling** (cross-theme): `external/uno.themes/doc/lightweight-styling.md`
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.themes/doc/lightweight-styling.md")
+uno_platform_docs_fetch(sourcePath="external/uno.themes/doc/simple-controls-styles.md")
 ```
+
+The inline tables below are a fast lookup; `simple-controls-styles.md` wins when they disagree.
 
 ## Critical Rules
 
-- **Simple uses a flat grayscale palette** for all roles except Error (which uses red). Primary, Secondary, Tertiary, Surface, and Outline are achromatic grays. To introduce brand colors, override the palette via `ColorOverrideSource` / `ColorOverrideDictionary`.
-- **Simple defaults to Inter** for all typography (`SimpleFontFamily`); `CharacterSpacing=0` on all styles; font weights are `Bold` / `SemiBold` / `Normal` (no `Medium`).
+- **Simple uses a flat grayscale palette** for all roles except Error (which uses red). Primary, Secondary, Tertiary, Surface, and Outline are achromatic grays. To introduce brand colors, set seeds or override the palette through `SimpleTheme.Colors` (`<ut:ThemeColors PrimarySeed="..." />` or `OverrideSource`); `ColorOverrideSource` / `ColorOverrideDictionary` are obsolete.
+- **Simple defaults to Inter** for all typography; `CharacterSpacing` is 0 where the M3 scale defines it (Display, Body, Label, Caption); font weights are `Bold` / `SemiBold` / `Normal` (no `Medium`). `SimpleFontFamily` is a legacy key no type-scale slot reads; override fonts through `FontOverrideSource` (see Customization).
 - **Typography style keys are NEVER theme-prefixed.** Write `DisplayLarge`, `BodyMedium`, `LabelSmall` — NOT `SimpleDisplayLarge`. The theme-prefix pattern only applies to the Simple-only control styles listed below.
-- **`DefaultSize` affects implicit styles only.** Setting `<SimpleTheme DefaultSize="Medium" />` switches the unsized button / icon-button / toggle-button defaults from 32px (Small) to 40px (Medium). Size-specific styles (`SimpleSmall*`, `SimpleMedium*`) always use their declared size regardless of `DefaultSize`.
+- **Sizes come from design tokens, not size-named styles.** `DefaultDensity` (`Compact` / `Regular` / `Comfy`, spacing ×0.75 / ×1 / ×1.25) and `DefaultCornerRadius` on the theme scale the `Space*`, `Radius*`, and `ControlHeight*` tokens every control reads. There is no `DefaultSize` and no `SimpleSmall*` / `SimpleMedium*` style family (they were removed in Uno.Themes 7.0.3).
 
 ## SimpleTheme Configuration
 
@@ -43,12 +50,14 @@ uno_platform_docs_fetch(sourcePath="external/uno.themes/doc/lightweight-styling.
 | `Colors` | `ThemeColors` (`using:Uno.Themes`) | — | Palette overrides: `OverrideSource` (URI of a XAML ResourceDictionary overriding `*Color` keys) or `OverrideDictionary` (inline). Replaces the obsolete `ColorOverrideSource` / `ColorOverrideDictionary` |
 | `FontOverrideSource` | `string` (URI) | — | Path to a XAML ResourceDictionary overriding font resources |
 | `FontOverrideDictionary` | `ResourceDictionary` | — | Inline ResourceDictionary overriding font resources |
-| `DefaultSize` | `SimpleControlSize` | `Small` | Default size variant for buttons / icon buttons / toggle buttons |
+| `DefaultDensity` | `Density` | `Regular` | `Compact` / `Regular` / `Comfy`: scales the spacing tokens ×0.75 / ×1 / ×1.25 |
+| `DefaultCornerRadius` | `CornerRadius` | theme default | Base corner radius the `Radius*` tokens derive from |
+| `DefaultSpacing` | `double` | theme default | Base spacing unit (Uno.Themes 8.0 / main) |
 
 ```xml
 <SimpleTheme xmlns="using:Uno.Simple"
              FontOverrideSource="ms-appx:///Styles/Application/FontOverride.xaml"
-             DefaultSize="Medium">
+             DefaultDensity="Compact">
     <SimpleTheme.Colors>
         <ut:ThemeColors xmlns:ut="using:Uno.Themes"
                         OverrideSource="ms-appx:///Styles/Application/ColorOverride.xaml" />
@@ -56,7 +65,9 @@ uno_platform_docs_fetch(sourcePath="external/uno.themes/doc/lightweight-styling.
 </SimpleTheme>
 ```
 
-When overriding the palette, **always provide both `Light` and `Default` (Dark) theme values**.
+When overriding the palette, **always provide both `Light` and `Default` (Dark) theme values**. For a brand color without a palette file, set seeds instead: `<ut:ThemeColors PrimarySeed="#0F62FE" />` (`SecondarySeed`, `TertiarySeed` optional; `SeedColorMode` on 8.0).
+
+Enable the theme with `<UnoFeatures>SimpleTheme</UnoFeatures>` (the recommended template already does).
 
 ## Simple-Only Style Keys
 
@@ -70,15 +81,6 @@ When overriding the palette, **always provide both `Light` and `Default` (Dark) 
 | `SimpleIconButtonSubtleStyle` | `Button` | Subtle (tertiary) icon button |
 | `SimpleIconButtonDangerPrimaryStyle` | `Button` | Destructive filled icon button |
 | `SimpleIconButtonDangerSubtleStyle` | `Button` | Destructive subtle icon button |
-
-### Size Variants (Small / Medium)
-
-Pattern: `Simple{Size}{Style}`. `Small` = 32px, `Medium` = 40px (button height).
-
-| Size | Button | Icon Button | ToggleButton |
-|---|---|---|---|
-| Small | `SimpleSmallFilledButtonStyle`, `SimpleSmallFilledTonalButtonStyle`, `SimpleSmallTextButtonStyle`, `SimpleSmallDangerPrimaryButtonStyle`, `SimpleSmallDangerSubtleButtonStyle` | `SimpleSmallIconButtonStyle`, `SimpleSmallIconButtonNeutralStyle`, `SimpleSmallIconButtonSubtleStyle`, `SimpleSmallIconButtonDangerPrimaryStyle`, `SimpleSmallIconButtonDangerSubtleStyle` | `SimpleSmallToggleButtonStyle` |
-| Medium | `SimpleMediumFilledButtonStyle`, `SimpleMediumFilledTonalButtonStyle`, `SimpleMediumTextButtonStyle`, `SimpleMediumDangerPrimaryButtonStyle`, `SimpleMediumDangerSubtleButtonStyle` | `SimpleMediumIconButtonStyle`, `SimpleMediumIconButtonNeutralStyle`, `SimpleMediumIconButtonSubtleStyle`, `SimpleMediumIconButtonDangerPrimaryStyle`, `SimpleMediumIconButtonDangerSubtleStyle` | `SimpleMediumToggleButtonStyle` |
 
 ### Input Variants
 
@@ -125,15 +127,15 @@ These reference a Simple-specific **pink primitive scale**: `SimplePink200Color`
 
 Simple supports five escalating overrides (ordered by scope):
 
-1. **Override color palette (full cascade)** — `ThemeColors.OverrideSource` / `OverrideDictionary` in `SimpleTheme.Colors`. All brushes cascade.
-2. **Switch default size variant** — `DefaultSize="Medium"` on `SimpleTheme`. Affects implicit button / icon-button / toggle-button styles only; size-named variants are unaffected.
+1. **Seed or override the color palette (full cascade)** — `PrimarySeed` (and `SecondarySeed` / `TertiarySeed`), or `OverrideSource` / `OverrideDictionary`, on the `ThemeColors` in `SimpleTheme.Colors`. All brushes cascade.
+2. **Density, spacing, corner radius** — `DefaultDensity="Compact|Regular|Comfy"`, `DefaultCornerRadius`, `DefaultSpacing` on `SimpleTheme`; every control follows through the `Space*` / `Radius*` / `ControlHeight*` tokens.
 3. **Override specific brushes (targeted)** — `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` in App.xaml.
 4. **Override per-control instance (scoped)** — wrap the brush override inside the control's `Resources` block.
-5. **Override font family** — `FontOverrideSource` / `FontOverrideDictionary` on `SimpleTheme`, or override `SimpleFontFamily` directly. Default is **Inter**.
+5. **Override font family** — `FontOverrideSource` / `FontOverrideDictionary` on `SimpleTheme` with a dictionary that redefines `DefaultFontFamily` (works on 7.x and 8.0). On 7.x the per-weight keys `SimpleRegularFontFamily` / `SimpleSemiBoldFontFamily` / `SimpleBoldFontFamily` also work; `SimpleFontFamily` is legacy and changes nothing. Default is **Inter**.
 
 Customization precedence (highest → lowest): per-instance `Control.Resources` → `Page.Resources` → app-level overrides → `SimpleTheme` defaults → `SharedColorPalette` / `SharedColors` / `SharedTypography` foundation.
 
 ## Related Skills
 
-- `references/semantic-colors-brushes.md` — **Read this first** for the shared semantic surface (style keys, typography, palette, brushes) common to Simple AND Material. Most styling should use those portable keys; reach for Simple-prefixed styles only when targeting Simple-specific concepts (danger variants, explicit sizes, Expander, etc.).
+- `references/semantic-colors-brushes.md` — **Read this first** for the shared semantic surface (style keys, typography, palette, brushes) common to Simple AND Material. Most styling should use those portable keys; reach for Simple-prefixed styles only when targeting Simple-specific concepts (danger variants, Expander, PersonPicture, etc.).
 - `references/material.md` — Material theme reference. Use when targeting Material instead of (or alongside) Simple.

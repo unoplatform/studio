@@ -38,7 +38,7 @@ Key page:
 
 - **Always apply a style** to TabBar for proper appearance (e.g., `BottomTabBarStyle`, `TopTabBarStyle`, `VerticalTabBarStyle`)
 - Styling goes on the **TabBar container**, not individual TabBarItems
-- `TabBarItem` supports `Icon`, `Content` (label), and `Badge`
+- `TabBarItem` supports `Icon`, `Content` (label), `BadgeValue`, and `BadgeVisibility`
 - For navigation, use with `uen:Region.Name` on each TabBarItem
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 

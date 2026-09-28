@@ -27,7 +27,7 @@ uno_platform_docs_search("LoadingView howto walkthrough AsyncCommand loading")
 
 ## Key Principles (Stable)
 
-- `Source` property binds to an `ILoadable` (like `AsyncCommand`)
+- `Source` property binds to an `ILoadable` (`Uno.Toolkit.ILoadable`, in the `Uno.Toolkit` package; e.g. `AsyncCommand`)
 - Loading content is displayed when the source is busy
 - `CompositeLoadableSource` combines multiple ILoadable sources
 - `LoadingContent` — custom content shown during loading (default is ProgressRing)

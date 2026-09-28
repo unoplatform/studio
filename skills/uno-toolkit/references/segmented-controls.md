@@ -16,16 +16,16 @@ Primary documentation pages:
 Fetch the TabBar page and look for segmented control styles:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/TabBarAndTabBarItem.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/SegmentedControls.md")
 ```
 
 ## Critical Rules
 
-- The segmented style key is **`SegmentedStyle`** — apply it on the `TabBar` (`Style="{StaticResource SegmentedStyle}"`). There is no `SegmentedTabBarStyle` key; using that name will silently fall through to the default `TabBar` look.
+- The segmented style keys are **`CupertinoSegmentedStyle`** and **`CupertinoSlidingSegmentedStyle`** (item styles `CupertinoSegmentedItemStyle` / `CupertinoSlidingSegmentedItemStyle`), applied on the `TabBar`. They ship only in `Uno.Toolkit.WinUI.Cupertino`; Material and Simple ship no segmented style. There is no `SegmentedStyle` or `SegmentedTabBarStyle` key; either name silently falls through to the default `TabBar` look.
 
 ## Key Principles (Stable)
 
-- Segmented controls use `TabBar` with `Style="{StaticResource SegmentedStyle}"`
+- Segmented controls use `TabBar` with `Style="{StaticResource CupertinoSegmentedStyle}"` (or `CupertinoSlidingSegmentedStyle`)
 - Each option is a `TabBarItem`
 - Single selection mode — mutually exclusive options
 - The concrete segmented-button visual comes from the active design-theme

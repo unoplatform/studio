@@ -16,7 +16,7 @@ The Uno App MCP server exposes tools that let an agent:
 
 ## Prerequisites
 
-1. The Uno App MCP server is configured, and its app tools are licensed (`uno_health` reports a non-zero `toolCount`)
+1. The Uno App MCP server is configured, its host is connected, a solution is selected, and its app tools are licensed (`uno_health` reports a non-zero `toolCount`; a zero with `HostUnreachable` or `NoCandidates` in `issues` is a connection or workspace problem, not a licence problem)
 2. The target application is an Uno Platform project (Uno.Sdk 6.x) under the App MCP's workspace folder
 3. The project has a target framework the tools can launch: `netX.0-desktop` for desktop, `netX.0-browserwasm` for WebAssembly. Read the exact monikers from `<TargetFrameworks>` in the `.csproj`; Uno.Sdk 6.7 projects use `net10.0-*`
 
@@ -38,7 +38,8 @@ The Uno App MCP server exposes tools that let an agent:
 | Tool | Description |
 |------|-------------|
 | `uno_app_start` | Builds and starts the application in debug mode with Hot Reload; kills any instance it already started |
-| `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, platform, uptime) |
+| `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) |
+| `uno_app_get_memory_counters` | Returns the running app's memory counters (for example total available memory); useful for leak checks across a flow |
 | `uno_app_close` | Terminates the running application (desktop only) |
 | `uno_devserver_diagnostics` | Reports the DevServer port, solution, instance count, and last launch outcome without changing anything |
 
@@ -176,9 +177,9 @@ Parameters:
 
 Without `path`, the image comes back in the tool result and can be inspected directly. With `path`:
 - the path must be inside the App MCP's workspace directory (the selected solution's folder; `uno_health` reports it as `effectiveWorkspaceDirectory`), or the call fails with a security error;
-- the folder must already exist; the tool does not create it.
+- if the save fails with "Could not find a part of the path", the folder is missing: create it and retry.
 
-Create the folder first, save, then copy the file elsewhere if the task keeps screenshots outside the solution.
+Save inside the solution, then copy the file elsewhere if the task keeps screenshots outside it.
 
 ### Validating Element State
 

@@ -10,10 +10,10 @@ Ready-to-use templates for a NavigationView (sidebar/hamburger) navigation shell
 | Search / Explore | `&#xE721;` | `\uE721` |
 | Settings / Gear | `&#xE713;` | `\uE713` |
 | Profile / Person | `&#xE77B;` | `\uE77B` |
-| Favorites / Heart | `&#xE734;` | `\uE734` |
+| Favorites / Heart | `&#xEB51;` | `\uEB51` |
 | Add / Plus | `&#xE710;` | `\uE710` |
 | List / Bullets | `&#xE8FD;` | `\uE8FD` |
-| Chart / Analytics | `&#xE9D9;` | `\uE9D9` |
+| Chart / Analytics | `&#xE9D2;` | `\uE9D2` |
 | Calendar / Date | `&#xE787;` | `\uE787` |
 | Mail / Messages | `&#xE715;` | `\uE715` |
 | Cart / Shopping | `&#xE7BF;` | `\uE7BF` |
@@ -115,6 +115,9 @@ Use this variant when the plan includes a Settings page. The NavigationView Sett
 ## SHELL_PAGE_NAME.xaml.cs (With Settings — code-behind for Region.SetName)
 
 ```csharp
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
 namespace PAGE_NAMESPACE;
 
 public sealed partial class SHELL_PAGE_NAME : Page

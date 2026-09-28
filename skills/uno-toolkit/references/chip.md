@@ -29,7 +29,7 @@ uno_platform_docs_search("Chip ChipGroup howto walkthrough selection filter")
 
 - `Chip` is derived from `ToggleButton` — can be checked/unchecked
 - Styles: `AssistChipStyle`, `InputChipStyle`, `FilterChipStyle`, `SuggestionChipStyle`
-- `ChipGroup` manages a collection of chips with `SelectionMode` (Single, Multiple, None)
+- `ChipGroup` manages a collection of chips with `SelectionMode` (None, Single, SingleOrNone, Multiple)
 - `CanRemove="True"` enables a remove button on the chip
 - Icon support via `Icon` property
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`

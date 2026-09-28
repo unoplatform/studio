@@ -25,13 +25,13 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reacti
 ### Step 2: Learn ListFeed Creation Methods
 
 From the fetched docs, the key factory methods on the `ListFeed` static class:
-- `ListFeed.Async(...)` — from a method returning `Task<IImmutableList<T>>`
+- `ListFeed.Async(...)` — from an `AsyncFunc<IImmutableList<T>>`, i.e. a `ValueTask<IImmutableList<T>>(CancellationToken)` method group; wrap a `Task`-returning method in a lambda
 - `ListFeed.AsyncEnumerable(...)` — from an `IAsyncEnumerable<IImmutableList<T>>`
 - `ListFeed.PaginatedAsync(...)` — for paginated/infinite scroll (see `references/pagination.md`)
 
 ### Step 3: For ListFeed Operators
 
-The reference page covers operators like `Where`, `Select`, and `AsFeed`. These operate on individual items in the collection.
+The reference page covers operators like `Where`, `AsFeed`, `AsListFeed`, and `Selection`. `Where` filters individual items. There is no `Select` on `IListFeed<T>`; to project, use `.AsFeed().Select(...)`.
 
 ### Step 4: For How-To Walkthroughs
 
@@ -51,7 +51,7 @@ The how-to page shows how to bind `IListFeed<T>` to `ListView` via `FeedView` an
 
 - `IListFeed<T>` is **read-only** — use `IListState<T>` for add/remove/update
 - Service methods should return `ValueTask<IImmutableList<T>>` (from `System.Collections.Immutable`)
-- Operators like `Where` and `Select` work on individual items, not the list itself
+- `Where` filters individual items; `IListFeed<T>` has no `Select` (project via `.AsFeed().Select(...)`)
 - ListFeed automatically handles loading/error/empty states
 - Use `IListFeed<T>` when data is pulled from a service and is read-only
 - Use `IListState<T>` when you need to edit the collection client-side
@@ -88,7 +88,7 @@ Either `Uno.Extensions.Equality.KeyAttribute` or `System.ComponentModel.DataAnno
 Configure which property names are auto-detected as keys:
 
 ```csharp
-[assembly: ImplicitKeyEquality("Id", "Key", "EntityId")]
+[assembly: ImplicitKeys("Id", "Key", "EntityId")]
 ```
 
 ### Disabling generation

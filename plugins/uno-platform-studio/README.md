@@ -6,7 +6,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 
 | Asset | Purpose |
 |---|---|
-| `skills/` | Seven domain skills. Each `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+| `skills/` | Six domain skills. Each `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 
 | Skill | Covers | References |
 |---|---|---|
@@ -19,7 +19,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 
 ### Why hubs instead of one skill per topic
 
-Agents decide whether to load a skill from its `name` and `description` alone, and every host caps how much of that listing it will show. Claude Code budgets about 1% of the context window for the whole skill list and drops descriptions (leaving bare names) once it is exceeded; Codex caps the list at 8,000 characters; the [Agent Skills spec](https://agentskills.io/specification) limits each description to 1,024 characters. Sixty-two separate skills produced roughly 27,000 characters of listing text, so most of them were shown to the model as bare names and never triggered. Seven hubs fit inside every budget, and the per-topic detail is still one `Read` away through the topic map.
+Agents decide whether to load a skill from its `name` and `description` alone, and every host caps how much of that listing it will show. Claude Code caps the listing through its `skillListingBudgetFraction` setting and each description through `skillListingMaxDescChars` (1,536 characters), and once the listing budget is exceeded it drops descriptions, leaving bare names; Codex gives the catalog 2% of the model's context window (about 5,400 tokens on a 272k model, capped at 10,000) and shortens descriptions to fit; the [Agent Skills spec](https://agentskills.io/specification) limits each description to 1,024 characters. Sixty-two separate skills produced roughly 27,000 characters of listing text, so most of them were shown to the model as bare names and never triggered. Six hubs fit inside every budget, and the per-topic detail is still one `Read` away through the topic map.
 
 ### Writing a skill description
 

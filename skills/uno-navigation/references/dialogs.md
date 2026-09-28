@@ -38,7 +38,7 @@ See the `references/data.md` for `NavigateBackWithResultAsync`.
 ## Key Principles (Stable)
 
 - Message dialogs are the simplest dialog type — title, message, and buttons via `navigator.ShowMessageDialogAsync(...)`, no route registration required
-- Use `!/` qualifier prefix or `Qualifiers.Dialog` to open a `Page`/`ContentDialog`-based dialog via navigation
+- Use the `!` qualifier prefix (`uen:Navigation.Request="!Filter"`, the documented form; `!/Filter` also parses) or `Qualifiers.Dialog` from code to open a `Page`/`ContentDialog`-based dialog via navigation
 - If the target is a `Page`, it displays as a flyout
 - If the target is a `ContentDialog`, it displays as a modal
 - Dialog results can be returned via `NavigateBackWithResultAsync` (or directly from `ShowMessageDialogAsync` for the simple case)

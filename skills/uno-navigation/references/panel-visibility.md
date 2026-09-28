@@ -30,7 +30,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation
 - After injection, children are toggled via Visibility — all remain in the visual tree
 - Good for small numbers of views where you want instant switching
 - Switching between routes is a visibility toggle, not a push. A route whose view is a `Page` is wrapped in a `FrameView`, so `-` still pops within that tab
-- The region control must be a `Grid`; any other panel is silently ignored
+- The region control must be a `Grid`; on any other panel the request bubbles up to the parent region, so the shell Frame navigates the whole page instead of the content area
 
 ## Typical Usage Pattern
 

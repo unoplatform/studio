@@ -59,7 +59,7 @@ Key page:
 
 ## Critical Rules
 
-- **Pick the correct overload for the navigation scenario.** Non-result overloads (`NavigateViewModelAsync<TViewModel>`) are for one-way navigation. Result overloads (`NavigateViewModelForResultAsync<TViewModel, TResult>`) are for request-and-await-response flows where the destination page calls `NavigateBackWithResultAsync(data)` to return a value. Using the non-result overload when a return value is needed silently throws away the result.
+- **Pick the correct overload for the navigation scenario.** Non-result overloads (`NavigateViewModelAsync<TViewModel>`) are for one-way navigation. Result overloads (`NavigateViewModelForResultAsync<TViewModel, TResult>`) are for request-and-await-response flows where the destination page calls `NavigateBackWithResultAsync(this, data: value)` to return a value. Using the non-result overload when a return value is needed silently throws away the result.
 - Navigation methods are **extension methods on `INavigator`** — they are not extension methods on `string`, `Route`, or any view type. Get an `INavigator` instance first (constructor injection, or `this.Navigator()` on a view, which returns `INavigator?`), then call `await navigator.Navigate*Async(this, ...)`. `Region.GetNavigator(element)` is unrelated: it returns the `Region.Navigator` attached-property string, not an `INavigator`.
 
 ## Key Principles (Stable)

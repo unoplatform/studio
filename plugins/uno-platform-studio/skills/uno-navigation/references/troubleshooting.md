@@ -38,7 +38,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation
 4. **Missing XAML namespace**: `xmlns:uen="using:Uno.Extensions.Navigation.UI"` required for regions and attached properties
 5. **Back stack issues**: Use qualifiers (`-/` or `Qualifiers.ClearBackStack`) to manage back stack
 6. **Data not arriving**: Ensure `DataViewMap` is registered for the data type, and ViewModel accepts data via constructor
-7. **`Region.Navigator="Visibility"` does nothing**: it works only on a `Grid`; on any other panel the navigator is silently ignored
+7. **`Region.Navigator="Visibility"` does nothing**: it works only on a `Grid`; on any other panel the region cannot navigate, so the request bubbles up to the parent region and the shell Frame navigates the whole page instead of the content area (only a trace log records it)
 8. **`XamlParseException: Cannot find a Resource with the Name/Key BottomTabBarStyle`**: the alias keys exist only in the Material and Simple toolkit themes. Remove the `Style` attributes on Fluent (`-preset blank`), or use the `Cupertino*` keys on Cupertino. The same error for `BackgroundBrush` means the page background needs `ApplicationPageBackgroundThemeBrush` (Fluent) or `CupertinoSystemBackgroundBrush` (Cupertino)
 9. **Settings never highlights in NavigationView**: the built-in `SettingsItem` is not enumerated by the navigator. Set `IsSettingsVisible="False"` and add a `NavigationViewItem` with `uen:Region.Name="Settings"` to `FooterMenuItems`
 

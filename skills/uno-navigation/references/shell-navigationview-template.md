@@ -228,3 +228,5 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
   <!-- Repeat for each nav item -->
 </root>
 ```
+
+When using `x:Uid`, set `x:Uid="PAGE1_NAME_NavItem"` on the `NavigationViewItem` instead of `Content="PAGE1_LABEL"`.

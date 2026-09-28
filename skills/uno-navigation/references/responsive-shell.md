@@ -1,0 +1,77 @@
+# Uno Navigation Responsive Shell
+
+## Reference Templates
+
+For a complete, compilable responsive shell XAML with parameterized placeholders, see:
+
+**`references/shell-responsive-template.md`** — Contains:
+- Icon lookup table (Home, Search, Settings, Profile, etc.)
+- SHELL_PAGE_NAME.xaml responsive shell template (NavigationView + TabBar + VisualStateManager)
+- Breakpoint summary table (Narrow / Normal / Wide)
+- Route registration template
+- Substitution rules
+
+## Workflow
+
+> **Docs lookup:** call `uno_platform_docs_search(...)` first, then `uno_platform_docs_fetch(sourcePath="…")` using the `sourcePath` field from a result (a relative `.md` path; add the result's `anchor` for a section). Never pass a URL, a `.html` link, or a hand-built path.
+
+### Step 1: Fetch the Responsive Shell Documentation
+
+```
+uno_platform_docs_search("Uno Navigation responsive shell NavigationView TabBar adaptive screen size")
+```
+
+Primary documentation page:
+- **Build Responsive Navigation Layouts**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md`
+
+Fetch the walkthrough:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md")
+```
+
+### Step 2: For ResponsiveExtension
+
+If using the Toolkit's `ResponsiveExtension`:
+
+```
+uno_platform_docs_search("Uno Toolkit responsive extension screen size breakpoints")
+```
+
+See also the `uno-toolkit` skill (`references/responsive.md`).
+
+## Key Principles (Stable)
+
+- Use VisualStateManager with adaptive triggers to show/hide different navigation controls
+- Both TabBar and NavigationView can use the same region names for shared content
+- `ResponsiveExtension` can toggle Visibility based on breakpoints (Normal, Wide, etc.)
+- The content area remains the same — only the navigation control changes
+- Common pattern: TabBar at bottom for mobile, NavigationView sidebar for desktop
+- XAML namespaces: `xmlns:uen="using:Uno.Extensions.Navigation.UI"` and `xmlns:utu="using:Uno.Toolkit.UI"`
+
+## Breakpoint Summary
+
+| State | Width | TabBar | NavigationView Pane | Use Case |
+|---|---|---|---|---|
+| Narrow | < 700px | Visible | Hidden | Mobile phones |
+| Normal | 700-999px | Hidden | Visible (auto) | Tablets |
+| Wide | >= 1000px | Hidden | Visible (expanded) | Desktops |
+
+## Critical Rules
+
+- Both navigation controls (`NavigationView` and `TabBar`) MUST have `uen:Region.Attached="True"`
+- Both MUST use identical `uen:Region.Name` values for the same pages — they share the content area
+- The `VisualStateManager` goes on the root `Grid` with `uen:Region.Attached="True"`
+- The `Narrow` state has no `StateTriggers`, so it is never activated on its own: the element base values in the XAML are the narrow layout (TabBar visible, pane hidden). Do not give the `TabBar` a `Visibility="Collapsed"` base value or phones never see it; when `Normal`/`Wide` stop matching, WinUI reapplies the base values
+- States are ordered by ascending width: base XAML (<700px) < Normal (700px) < Wide (1000px)
+- The shared content area with `Region.Navigator="Visibility"` serves both navigation controls
+- **The content area Grid with `Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route, as the docs' responsive walkthrough does. Never add unnamed `Collapsed` pages.
+- Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
+
+## Related Skills
+
+- `references/tabbar.md` — Mobile-only shell
+- `references/navigationview.md` — Desktop-only shell
+- `references/panel-visibility.md` — Visibility-based content switching details
+- the `uno-toolkit` skill (`references/responsive.md`) — Responsive markup extensions
+- `references/regions.md` — Region concepts

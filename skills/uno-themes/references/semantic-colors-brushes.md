@@ -27,7 +27,7 @@ Use semantic keys in XAML for portable, theme-agnostic styling:
 | `TextButtonStyle` | `Button` | | |
 | `IconButtonStyle` | `Button` | | |
 | `TextToggleButtonStyle` | `ToggleButton` | | |
-| `IconToggleButtonStyle` | `ToggleButton` | Material | Material's implicit `ToggleButton` style; Simple's implicit is `ToggleButtonStyle` |
+| `IconToggleButtonStyle` | `ToggleButton` | Material | Material's implicit `ToggleButton` style; Simple's implicit is `TextToggleButtonStyle`. There is no `ToggleButtonStyle` key |
 | `FilledTextBoxStyle` | `TextBox` | | |
 | `OutlinedTextBoxStyle` | `TextBox` | Yes | Implicit default in both Material and Simple |
 | `FilledPasswordBoxStyle` | `PasswordBox` | | |
@@ -43,7 +43,7 @@ Use semantic keys in XAML for portable, theme-agnostic styling:
 | `ListViewStyle` | `ListView` | Yes | |
 | `ListViewItemStyle` | `ListViewItem` | Yes | |
 | `ContentDialogStyle` | `ContentDialog` | Yes | |
-| `CommandBarStyle` | `CommandBar` | Yes | Not implemented by every design-theme |
+| `CommandBarStyle` | `CommandBar` | Yes | Material only; Simple ships no `CommandBar` style |
 | `AppBarButtonStyle` | `AppBarButton` | Yes | |
 | `NavigationViewStyle` | `NavigationView` | Yes | |
 | `NavigationViewItemStyle` | `NavigationViewItem` | Yes | |
@@ -241,7 +241,7 @@ Defined in `SharedColorPalette.xaml`, these 33 `Color` resources are the foundat
 
 ### The Brush System (Layer 2)
 
-Every Color key generates **9 SolidColorBrush variants** at different opacity levels.
+Every Color key generates **9 SolidColorBrush variants** at different opacity levels, except `SurfaceTintColor` (rest brush only) and `ShadowColor` (no brush).
 
 #### Brush Naming Pattern: `{ColorRole}{StateVariant}Brush`
 

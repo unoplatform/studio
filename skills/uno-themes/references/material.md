@@ -37,7 +37,7 @@ uno_platform_docs_fetch(sourcePath="…")  # the sourcePath field from a search 
 
 - **Brushes use `{ThemeResource}`, NOT `{StaticResource}`** — so the bound color follows the active theme (Light / Dark) at runtime. `<TextBlock Foreground="{ThemeResource PrimaryBrush}" />`.
 - **Styles use `{StaticResource}`** — control styles don't change with the theme; their internal bindings already use ThemeResource for brushes.
-- **Use `MaterialToolkitTheme` or `MaterialTheme`, not both** — when using both Toolkit + Material, `MaterialToolkitTheme` replaces `MaterialTheme + ToolkitResources`. Mixing them double-loads resources.
+- **Use `MaterialToolkitTheme` or `MaterialTheme`, not both** — when using both Toolkit + Material, `MaterialToolkitTheme` replaces `MaterialTheme + ToolkitResources`. Mixing them double-loads resources. The Simple counterpart is `SimpleToolkitTheme` (see `references/simple.md`).
 
 ## Installation (quick reference)
 
@@ -136,7 +136,7 @@ Each style exposes `{StyleKey}FontFamily`, `FontSize`, `FontWeight` resource key
 
 Uno Themes ships attached properties (`ControlExtensions`, `xmlns:ut="using:Uno.Themes"`) that the Material templates consume:
 
-- **`ut:ControlExtensions.Icon`** — adds an icon to a `Button` (esp. `IconButtonStyle`), `TextBox`, `ComboBox`, `PasswordBox`; `LeadingIcon` / `TrailingIcon` place it.
+- **`ut:ControlExtensions.Icon`** — adds an icon to a `Button` (esp. `IconButtonStyle`), `TextBox`, `ComboBox`, `PasswordBox`; Material renders it as the leading icon. `ut:ControlExtensions.LeadingIcon` / `TrailingIcon` are consumed only by Simple's `Button` and `ToggleButton` templates.
 - **`ut:ControlExtensions.Elevation`** — MD3 elevation, applied by `ElevatedButtonStyle`.
 - **`ut:ControlExtensions.AlternateContent`** — content shown when `ToggleButton.IsChecked` is true.
 
@@ -144,11 +144,11 @@ Uno Themes ships attached properties (`ControlExtensions`, `xmlns:ut="using:Uno.
 
 Three escalating scopes:
 
-1. **Palette override (full cascade)** — override `*Color` keys through `MaterialTheme.Colors`: `<MaterialTheme.Colors><ut:ThemeColors xmlns:ut="using:Uno.Themes" OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" /></MaterialTheme.Colors>` (or `OverrideDictionary`). `ColorOverrideSource` / `ColorOverrideDictionary` on the theme are obsolete in Uno.Themes 7. All 280 brushes and controls update automatically. Generate the palette XAML via **Material Theme Builder** (DSP format), or skip the file and set seeds: `<ut:ThemeColors PrimarySeed="#0F62FE" SecondarySeed="..." TertiarySeed="..." />` (see `external/uno.themes/doc/seed-colors.md`).
+1. **Palette override (full cascade)** — override `*Color` keys through `MaterialTheme.Colors`: `<MaterialTheme.Colors><ut:ThemeColors xmlns:ut="using:Uno.Themes" OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" /></MaterialTheme.Colors>` (or `OverrideDictionary`). `ColorOverrideSource` / `ColorOverrideDictionary` on the theme are obsolete but still work; the template still emits `ColorOverrideSource`, so migrate it when touching that line. All 280 brushes and controls update automatically. Generate the palette XAML via **Material Theme Builder** (DSP format), or skip the file and set seeds: `<ut:ThemeColors PrimarySeed="#0F62FE" SecondarySeed="..." TertiarySeed="..." />` (see `external/uno.themes/doc/seed-colors.md`).
 2. **Specific brush override (targeted)** — drop a `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` into App.xaml or scoped resources.
 3. **Per-instance override (scoped)** — wrap the override in the control's `Resources` block.
 
-Font override: set `FontOverrideSource` / `FontOverrideDictionary` on `MaterialTheme`, or override individual `*FontFamily` keys.
+Font override: set `FontOverrideSource` / `FontOverrideDictionary` on `MaterialTheme` with a dictionary that redefines `DefaultFontFamily`, the root token every type-scale style reads. The `MaterialRegularFontFamily` / `MaterialMediumFontFamily` / `MaterialLightFontFamily` keys still exist but are legacy.
 
 ## C# Markup
 

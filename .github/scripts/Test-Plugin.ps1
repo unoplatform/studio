@@ -42,7 +42,8 @@ try {
         if ($entry.PSObject.Properties['version']) { $versions["$f (plugins[uno-platform-studio].version)"] = $entry.version }
         $versions["$f (plugins[uno-platform-studio].source.ref)"] = $entry.source.ref
         if ($entry.source.path -ne $plugin) { $errors.Add("${f}: plugin source.path must be '$plugin'") }
-        # Claude Code clones an `owner/repo` source over SSH only when the user's key authenticates to github.com, and over HTTPS otherwise (or always, with CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1).
+        # The `github` owner/repo form is the Copilot marketplace's (.github/plugin/marketplace.json); the `git-subdir` URL form is Claude Code's and Codex's.
+        # Claude Code clones over SSH only when the user's key authenticates to github.com, and over HTTPS otherwise (or always, with CLAUDE_CODE_PLUGIN_PREFER_HTTPS=1).
         $expected = $entry.source.source -eq 'github' ? @{ key = 'repo'; value = 'unoplatform/studio' } : @{ key = 'url'; value = 'https://github.com/unoplatform/studio.git' }
         if ($entry.source.($expected.key) -ne $expected.value) { $errors.Add("${f}: plugin source.$($expected.key) must be '$($expected.value)'") }
     }
@@ -63,13 +64,13 @@ try {
         foreach ($line in Get-Content $file) {
             if ($first) { $first = $false; if ($line -eq '---') { $inFrontmatter = $true; continue } }
             if ($inFrontmatter) { if ($line -eq '---') { $inFrontmatter = $false }; continue }
+            if ($inComment) { if ($line -match '-->') { $inComment = $false; $line -replace '^.*?-->', '' }; continue }
             # A fence closes only on the same character with at least the opener's length (CommonMark).
             if ($line -match '^\s*(`{3,}|~{3,})') {
                 if (-not $fence) { $fence = $Matches[1]; continue }
                 if ($Matches[1][0] -eq $fence[0] -and $Matches[1].Length -ge $fence.Length) { $fence = $null; continue }
             }
             if ($fence) { continue }
-            if ($inComment) { if ($line -match '-->') { $inComment = $false; $line -replace '^.*?-->', '' }; continue }
             $line = $line -replace '<!--.*?-->', ''
             if ($line -match '<!--') { $inComment = $true; $line -replace '<!--.*$', ''; continue }
             $line

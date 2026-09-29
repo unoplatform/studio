@@ -77,7 +77,7 @@ Check which `AppWindow` members each head implements before relying on one; fetc
 
 ## Gradual migration
 
-When a big app cannot move in one step, run the WPF app and the Uno Platform app side by side from a shared library and move feature areas across. Uno Islands (hosting Uno Platform XAML inside a WPF window) is documented as an early preview built on the older Skia.Wpf head, with gaps in focus, keyboard, and drag-and-drop handling; confirm it works with the Uno Platform version in use before recommending it.
+When a big app cannot move in one step, run the WPF app and the Uno Platform app side by side from a shared library and move feature areas across.
 
 ## Expectations from a real port
 

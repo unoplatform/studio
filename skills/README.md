@@ -1,12 +1,12 @@
 # Uno Platform Agent Skills
 
-Standalone copies of seven Uno Platform skills for AI coding agents: the `uno-build-app` workflow, the `uno-platform` router and five domain hubs (`uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-testing`) whose `references/` folders hold one short guide per topic.
+Standalone copies of eight Uno Platform skills for AI coding agents: the `uno-build-app` workflow, the `uno-platform` router and six domain hubs (`uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-testing`, `uno-migration`) whose `references/` folders hold one short guide per topic.
 
 This folder is for agents that **don't use the plugin system**: Cursor, Gemini CLI, Windsurf, Cline, and others. If your agent supports plugins (Claude Code, GitHub Copilot CLI, Copilot in VS Code, OpenAI Codex CLI), prefer installing the [`uno-platform-studio` plugin](../plugins/uno-platform-studio) instead, which bundles these same skills with proper metadata.
 
 ## Install all skills
 
-Each skill is a self-contained folder: the five domain hubs carry a `references/` folder that their `SKILL.md` routes to, `uno-build-app` also carries output templates in `assets/`, and `uno-platform` has only its `SKILL.md`. Copy the whole folder, never `SKILL.md` alone. A `uno-*` glob copies the full catalog.
+Each skill is a self-contained folder: the six domain hubs carry a `references/` folder that their `SKILL.md` routes to, `uno-build-app` also carries output templates in `assets/`, and `uno-platform` has only its `SKILL.md`. Copy the whole folder, never `SKILL.md` alone. A `uno-*` glob copies the full catalog.
 
 `main` can contain unreleased changes. For the version the plugin ships, clone the [latest release](https://github.com/unoplatform/studio/releases/latest) tag instead, e.g. `git clone --branch <tag> https://github.com/unoplatform/studio.git`.
 

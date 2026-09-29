@@ -1,6 +1,6 @@
 ---
 name: uno-platform
-description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-testing) and sets the project-wide rules that apply before any of them."
+description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-testing, uno-migration) and sets the project-wide rules that apply before any of them."
 metadata:
   author: uno-platform
   category: overview
@@ -21,6 +21,7 @@ Most real requests touch two or three domains. Load every one that applies.
 | Uno Toolkit controls (`TabBar`, `NavigationBar`, `CardContentControl`, `Chip`, `DrawerControl`, `SafeArea`, `AutoLayout`, `LoadingView`, `ShadowContainer`, and more) or its attached-property extensions | `uno-toolkit` |
 | Colors, brushes, typography, Material Design 3, the Simple theme, dark mode, restyling controls, theme resource keys | `uno-themes` |
 | Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (needs the Uno App MCP) | `uno-testing` |
+| Porting or assessing a WPF or Silverlight app: namespace and API mapping, unsupported XAML, windows to pages, Windows-only APIs | `uno-migration` (then the UI hubs it points to) |
 
 Worked examples:
 

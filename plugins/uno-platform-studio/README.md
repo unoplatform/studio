@@ -7,7 +7,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | Asset | Purpose |
 |---|---|
 | `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
-| `skills/` | The `uno-build-app` workflow skill and six domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+| `skills/` | The `uno-build-app` workflow skill and seven domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 | `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
 
 | Skill | Covers | References |
@@ -19,6 +19,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `uno-toolkit` | Uno Toolkit controls (TabBar, NavigationBar, CardContentControl, Chip, Drawer, SafeArea, AutoLayout, LoadingView, ShadowContainer, …) and attached-property extensions, plus setup, theming, lightweight styling, and C# Markup. | 32 |
 | `uno-themes` | Uno Material (MD3), Simple theme, and the shared semantic colors, brushes, and typography. | 3 |
 | `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions. | 4 |
+| `uno-migration` | Migrating WPF and Silverlight apps: readiness assessment, API and XAML mapping, windows to pages and dialogs, settings and DI, Windows-only features behind interfaces, Silverlight subsystems. | 6 |
 
 ### Why hubs instead of one skill per topic
 
@@ -69,7 +70,7 @@ If your agent does not support a plugin format (Cursor, Gemini CLI, Windsurf, Cl
 
 Marketplace installs use the release tag pinned by `source.ref`, not the latest code on `main`. The agent and `uno-build-app` workflow described below are available from this checkout until a release containing them is published. See [Releasing](#releasing).
 
-To try this checkout before that release, use `claude --plugin-dir ./plugins/uno-platform-studio --agent uno-platform-studio:uno-dev`, or `copilot plugin install ./plugins/uno-platform-studio`. For Codex, copy all seven folders under `skills/` into your project's `.agents/skills/`, then install the custom agent below. Avoid enabling an older plugin copy of the same skills in that session.
+To try this checkout before that release, use `claude --plugin-dir ./plugins/uno-platform-studio --agent uno-platform-studio:uno-dev`, or `copilot plugin install ./plugins/uno-platform-studio`. For Codex, copy all eight folders under `skills/` into your project's `.agents/skills/`, then install the custom agent below. Avoid enabling an older plugin copy of the same skills in that session.
 
 ## Use the `uno-dev` agent
 

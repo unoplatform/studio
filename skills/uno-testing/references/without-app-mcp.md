@@ -52,8 +52,12 @@ adb shell uiautomator dump /sdcard/ui.xml && adb exec-out cat /sdcard/ui.xml > u
 - Type into an `EditText`: tap it, then `adb shell input text "Ada"` (`%s` for a space).
 - Dump again after every action: bounds move when layout changes, and assertions read the new dump.
 - The `text` attribute stays empty, even on an `EditText` after typing: assert a field's value through the label or message that displays it, or a screenshot.
-- `ERROR: null root node` means the UI is still starting or animating: wait a second and dump again.
+- A dump waits for the UI to go idle, so it fails (`ERROR: null root node`, or a timeout) while the app is starting or an animation runs, such as an indeterminate `ProgressRing`. Dump again once it settles. To assert a loading state itself, capture timed frames to files and check them in your script (a region still empty, a spinner's pixels present); do not read those frames back.
 - In Git Bash, set `MSYS_NO_PATHCONV=1`, or `/sdcard/...` is rewritten into a Windows path.
+
+## Iterating
+
+Scripting the checks pays off, but a full end-to-end pass on Android takes minutes. After a fix, rebuild only the target that changed and re-run only the checks for the flow it touched; run the whole pass once at the end.
 
 ## Screenshots
 

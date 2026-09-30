@@ -20,7 +20,7 @@ Most real requests touch two or three domains. Load every one that applies.
 | Pages, routes, back navigation, dialogs, tab bars, navigation drawers, passing data between pages, app shell | `uno-navigation` |
 | Uno Toolkit controls (`TabBar`, `NavigationBar`, `CardContentControl`, `Chip`, `DrawerControl`, `SafeArea`, `AutoLayout`, `LoadingView`, `ShadowContainer`, and more) or its attached-property extensions | `uno-toolkit` |
 | Colors, brushes, typography, Material Design 3, the Simple theme, dark mode, restyling controls, theme resource keys | `uno-themes` |
-| Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (needs the Uno App MCP) | `uno-testing` |
+| Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (the Uno App MCP, or the platform accessibility tree for Release builds) | `uno-testing` |
 
 Worked examples:
 
@@ -37,7 +37,7 @@ Worked examples:
 - **Prefer platform controls over hand-built approximations.** A rounded `Border` with a background is a card, so use `CardContentControl`; a row of buttons that switches views is a `TabBar`; a list with add/remove is an `IListState<T>`. The domain skills spell these out.
 - **Ground API details in the docs, not memory.** Call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result. Never pass a URL, `.html` link, or hand-built path. Uno APIs change between releases and the docs MCP is version-correct.
 - **Hot Design and Hot Reload questions** have no hub of their own: `uno-testing` covers how `MainWindow.UseStudio()` interacts with an app under test; for everything else search the docs.
-- **Verify before finishing.** When the Uno App MCP is available, use `uno-testing` to confirm the change renders and behaves correctly rather than declaring success from the code alone.
+- **Verify before finishing.** Use `uno-testing` (the Uno App MCP on Debug builds, the platform accessibility tree on Release builds) to confirm the change renders and behaves correctly rather than declaring success from the code alone.
 
 ## New app scaffolding
 

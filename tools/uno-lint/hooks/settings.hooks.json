@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uno-lint --hook",
+            "timeout": 10,
+            "statusMessage": "uno-lint"
+          }
+        ]
+      }
+    ]
+  }
+}

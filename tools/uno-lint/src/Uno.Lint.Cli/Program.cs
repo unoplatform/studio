@@ -117,8 +117,15 @@ internal static class Program
                 return 0;
             }
 
-            var added = input?["new_string"]?.GetValue<string>() ?? input?["content"]?.GetValue<string>();
-            if (string.IsNullOrEmpty(added) || !File.Exists(file))
+            if (!File.Exists(file))
+            {
+                return 0;
+            }
+
+            // The edit is not located in the saved file (concurrent change, ambiguous text, a different path):
+            // better to say nothing than to blame the agent for lines it did not write.
+            var full = File.ReadAllText(file);
+            if (!TryGetAddedLines(payload, full, out var addedLines) || addedLines.Count == 0)
             {
                 return 0;
             }
@@ -132,21 +139,9 @@ internal static class Program
             EditorConfig.Apply(file, options, profileExplicit);
 
             // Lint the whole file so context rules (ThemeDictionaries, NavigationBar, suppressions) see everything,
-            // then keep only findings inside the lines the edit added.
-            var full = File.ReadAllText(file);
+            // then keep only findings on the lines the edit added.
             var result = new Linter(options).RunSingleFile(file);
-            var findings = result.Findings;
-
-            if (EditRange.TryLocate(full, added!, out var firstLine, out var lastLine))
-            {
-                findings = findings.Where(f => f.Line >= firstLine && f.Line <= lastLine).ToList();
-            }
-            else
-            {
-                // The edit is not in the saved file (concurrent change, or the tool reported a different path):
-                // better to say nothing than to blame the agent for the whole file.
-                return 0;
-            }
+            var findings = result.Findings.Where(f => addedLines.Contains(f.Line)).ToList();
 
             if (findings.Count == 0)
             {
@@ -187,6 +182,56 @@ internal static class Program
 
         return 0;
     }
+
+    /// <summary>
+    /// The 1-based lines the edit added to the saved file. Uses tool_response.structuredPatch when the host sends it
+    /// (Claude Code does, for Edit and Write), else falls back to locating the edit's text in the file.
+    /// </summary>
+    internal static bool TryGetAddedLines(JsonNode? payload, string fullText, out HashSet<int> lines)
+    {
+        lines = new HashSet<int>();
+        var input = payload?["tool_input"];
+        var response = payload?["tool_response"];
+
+        if (response?["structuredPatch"] is JsonArray patch)
+        {
+            // A Write that created the file has an empty patch: every line is new.
+            if (Str(response["type"]) == "create")
+            {
+                lines = EditRange.AllLines(fullText);
+                return true;
+            }
+
+            var hunks = patch.OfType<JsonObject>().Select(h => new PatchHunk(
+                h["newStart"] is JsonValue start && start.TryGetValue<int>(out var s) ? s : 1,
+                (h["lines"] as JsonArray)?.Select(Str).OfType<string>().ToList() ?? new List<string>()));
+            lines = EditRange.FromPatch(hunks);
+            return true;
+        }
+
+        // Write without a patch replaced the whole file.
+        if (Str(input?["content"]) != null)
+        {
+            lines = EditRange.AllLines(fullText);
+            return true;
+        }
+
+        var edits = input?["edits"] is JsonArray multi ? multi.OfType<JsonObject>().Cast<JsonNode>().ToList() : new List<JsonNode> { input! };
+        var located = false;
+        foreach (var edit in edits)
+        {
+            var replaceAll = edit?["replace_all"] is JsonValue all && all.TryGetValue<bool>(out var b) && b;
+            if (EditRange.TryLocate(fullText, Str(edit?["old_string"]) ?? string.Empty, Str(edit?["new_string"]) ?? string.Empty, replaceAll, out var found))
+            {
+                lines.UnionWith(found);
+                located = true;
+            }
+        }
+
+        return located;
+    }
+
+    private static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var s) ? s : null;
 
     // ---------------------------------------------------------------- reports
 

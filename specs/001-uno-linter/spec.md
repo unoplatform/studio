@@ -11,7 +11,7 @@ Skills advise, but nothing verifies. The `uno-platform-studio` plugin ships skil
 
 The Uno Linter closes the loop. It reads XAML with a real XML parser and C# with Roslyn, applies a small set of semantic rules, and reports each hit as file, line, rule id, what was found and what to use instead. It runs in about a tenth of a second after each edit so the agent fixes the problem in the same turn, never blocks an edit, and only reports the lines the edit added.
 
-A working C# prototype exists under [`tools/uno-lint`](../../tools/uno-lint/) with 32 passing tests and a first run across five real apps. The decisions this spec asks for are the rule tiers, the first shipping surface and who owns the rule list.
+A working C# prototype exists under [`tools/uno-lint`](../../tools/uno-lint/) with 78 passing tests and a first run across five real apps. The decisions this spec asks for are the rule tiers, the first shipping surface and who owns the rule list.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -64,7 +64,7 @@ A sample-gallery maintainer runs the linter on a whole project before publishing
 1. **Given** a project folder, **When** the linter runs in path mode, **Then** it prints a count per rule, the top files per rule with sample findings, and the four info counters
 2. **Given** findings at warning severity exist, **When** the run ends, **Then** the exit code is 1; **Given** none exist, **Then** it is 0; **Given** the path does not exist, **Then** it is 2
 3. **Given** the `--json` switch, **When** the run ends, **Then** output is machine-readable with root, profile, Toolkit detection, counts, info and one entry per finding
-4. **Given** files under `bin`, `obj`, `.git`, or generated `*.g.cs`, **When** the linter runs, **Then** they are skipped; **Given** Dev, Harness, Probe or Tests path segments, **Then** they are skipped unless `--include-dev` is passed
+4. **Given** files under `bin`, `obj`, `.git`, or generated `*.g.cs`, **When** the linter runs, **Then** they are skipped; **Given** a folder named Dev, Harness, Probe(s) or Test(s), or ending in one (`MyApp.Tests`), **Then** its files are skipped unless `--include-dev` is passed
 
 ---
 
@@ -101,14 +101,16 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 ### Edge Cases
 
 - A XAML file that does not parse as XML is counted as unparsed and skipped; the run continues and the count is reported.
-- An edit whose text cannot be located in the saved file (concurrent change, different path) produces no findings rather than blaming the agent for the whole file.
+- An edit whose text cannot be located in the saved file (concurrent change, different path), or appears more than once, produces no findings rather than blaming the agent for lines it did not write.
+- An agent copies an existing block that carries a suppression comment to a new place; the new copy is reported, because the added lines come from the patch, not from searching for the text.
 - Line endings differ between the edit payload and the saved file (CRLF vs LF); the edit is still located.
 - A brush whose `Color` is a `{ThemeResource}` follows the theme and is not a TOKENTHEME finding even though it is defined once.
 - A `Border` with a radius on only some corners (`8,0,0,0`) is a swatch or joined edge, not a card.
 - `ActualHeight > 0` asks whether layout has run; it is not a breakpoint.
 - A brush defined once with a hex literal is one problem; it is reported once as TOKENTHEME, not also as HEX.
 - A suppression comment with no reason (`allow hex -->`) does not suppress; the comment terminator is not a reason.
-- A project named `TestApp` must not be skipped by the dev-path rule, which matches only `/Tests/` as a path segment.
+- A project named `TestApp`, a `Content/TestPages/` folder or a page named `ProbeResultsPage.xaml` must not be skipped by the dev-path rule, which matches whole folder names only (`Dev`, `Harness`, `Probe(s)`, `Test(s)`, or a folder ending in `.Tests` and the like).
+- `Text="#404"` is text, not a color; HEX only fires on color properties.
 
 ## Requirements *(mandatory)*
 
@@ -116,10 +118,10 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 
 #### Rules
 
-- **FR-001**: System MUST detect hex color literals in XAML attributes and element content outside palette files (`*Palette*.xaml`, `*Colors*.xaml`, `*Tokens*.xaml`) and theme override files (`ColorPaletteOverride*.xaml`); keyed resources inside `ResourceDictionary.ThemeDictionaries` are exempt (HEX, UNOL001)
+- **FR-001**: System MUST detect hex color literals on color properties (property or element named for a color, brush, background, foreground, fill, stroke or tint, including `Setter` and keyframe values targeting one) outside palette files and theme override files; a file is a palette file when a whole word of its name is `Palette`, `Colors` or `Tokens` (`AppColors.xaml`, `BrandPalette.Dark.xaml`, not `ColorPickerPage.xaml` or `AuthTokenPage.xaml`), and a theme override file when its name contains `ColorOverride` or `ColorPaletteOverride`; keyed resources inside `ResourceDictionary.ThemeDictionaries` are exempt (HEX, UNOL001)
 - **FR-002**: System MUST detect app-defined `*Brush` resources outside `ThemeDictionaries` whose color is fixed, excluding keys named `*Invariant`, `*OnDark`, `*OnLight` or `*Fixed` and excluding brushes whose color is a `{ThemeResource}` (TOKENTHEME, UNOL002)
-- **FR-003**: System MUST detect inline path-mini-language `Data` on `Path`/`PathIcon`, inline `PathGeometry`/`GeometryGroup`, and basic shapes composed inside a `Viewbox`, outside `Icons*.xaml` files and outside `ControlTemplate` elements (ICON, UNOL003)
-- **FR-004**: System MUST detect classes deriving from a control base type whose name matches a platform or Toolkit control and whose companion XAML does not already use that control (BUILTIN, UNOL004)
+- **FR-003**: System MUST detect inline path-mini-language `Data` on `Path`/`PathIcon`, inline `PathGeometry`/`GeometryGroup`, and basic shapes composed inside a `Viewbox`, outside icon files (a whole word of the name is `Icons`: `Icons.xaml`, `MaterialIcons.xaml`, not `LexiconPage.xaml`) and outside `ControlTemplate` elements (ICON, UNOL003)
+- **FR-004**: System MUST detect classes deriving from a control base type whose name contains a platform or Toolkit control as a whole PascalCase word (`StarRating`, `RecipeCard`; not `OperatingHoursView` or `DiscardBanner`) and whose companion XAML does not already use that control (BUILTIN, UNOL004)
 - **FR-005**: System MUST detect relational comparisons against `ActualWidth`, `ActualHeight`, `NewSize` or `Bounds` in `*.xaml.cs`, excluding comparisons against zero (RESPONSIVE, UNOL005)
 - **FR-006**: System MUST detect `Border` elements with a uniform `CornerRadius` and a `Background`, `BorderBrush` or `Padding`, outside `ControlTemplate` elements, treating a Border without Background inside `ShadowContainer` as not a card (CARD, UNOL101)
 - **FR-007**: System MUST detect `Navigation.Request="-"` in a XAML file that contains no `NavigationBar` (BACKBAR, UNOL102)
@@ -139,8 +141,8 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 #### Surfaces
 
 - **FR-017**: System MUST provide a command-line entry point taking a folder or file path with `--profile`, `--json`, `--top`, `--include-dev`, `--list-rules` switches, exiting 0 when clean, 1 when findings at warning or above remain, 2 on bad input
-- **FR-018**: System MUST provide a `--hook` mode that reads the Claude Code PostToolUse payload on standard input, lints the saved file for full context, keeps only findings inside the lines the edit added, returns them as `additionalContext`, and always exits 0
-- **FR-019**: The hook MUST locate the edited text in the saved file regardless of CRLF/LF differences and re-indentation, and MUST report nothing when the text cannot be located
+- **FR-018**: System MUST provide a `--hook` mode that reads the Claude Code PostToolUse payload on standard input, lints the saved file for full context, keeps only findings on the lines the edit added, returns them as `additionalContext`, and always exits 0
+- **FR-019**: The hook MUST take the added lines from the payload's `tool_response.structuredPatch` when present (every line for a Write that created the file). Without one, it MUST diff `old_string` against `new_string` so unchanged context lines are not reported, locate `new_string` in the saved file regardless of CRLF/LF differences and re-indentation, and report nothing when the text is not found or is found more than once without `replace_all`
 - **FR-020**: System MUST expose the same rules as an MCP tool on the Uno dev server returning the same JSON shape as the CLI (phase 2)
 - **FR-021**: System MUST expose the same rules as a Roslyn analyzer package honoring the same `.editorconfig` keys (phase 3)
 - **FR-022**: The rule library MUST target netstandard2.0 so one assembly can serve the CLI, the MCP tool and the analyzer
@@ -172,7 +174,7 @@ This feature has no graphical UI. Its user-facing surface is text consumed by ag
 - **SC-004**: Zero edits are blocked or rolled back by the hook across all runs
 - **SC-005**: On agent-built sample apps, the HEX count per app drops to zero within one agent turn after the hook is installed
 - **SC-006**: The hook, the CLI and the MCP tool report identical counts on the same corpus
-- **SC-007**: Every rule has at least one positive and one negative unit test and one regression test per false positive found in the field (currently 32 tests)
+- **SC-007**: Every rule has at least one positive and one negative unit test and one regression test per false positive found in the field (currently 78 tests)
 
 ### Qualitative Outcomes
 

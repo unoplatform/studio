@@ -4,7 +4,9 @@ namespace Uno.Lint;
 
 public sealed class Linter
 {
-    private static readonly Regex DevPath = new Regex(@"(?i)[\\/](Dev|Harness|Probes?|Tests?)[\\/]|Harness|Probe", RegexOptions.Compiled);
+    // A folder named Dev, Harness, Probe(s) or Test(s), or a project folder ending in one (MyApp.Tests). Whole segments
+    // only: TestApp/, ProbeResultsPage.xaml and Content/TestPages/ are app code.
+    private static readonly Regex DevSegment = new Regex(@"(?i)^(?:.+\.)?(?:Dev|Harness|Probes?|Tests?)$", RegexOptions.Compiled);
     private static readonly Regex ExcludedDir = new Regex(@"[\\/](bin|obj|node_modules|\.git|\.vs)[\\/]", RegexOptions.Compiled);
     private static readonly Regex GeneratedCs = new Regex(@"(?i)\.g(\.i)?\.cs$|\.designer\.cs$|GlobalUsings\.g\.cs$", RegexOptions.Compiled);
 
@@ -34,7 +36,7 @@ public sealed class Linter
         foreach (var f in candidates)
         {
             var relative = Relative(baseDir, f);
-            if (!_options.IncludeDev && DevPath.IsMatch(relative))
+            if (!_options.IncludeDev && IsDevPath(relative))
             {
                 result.SkippedDevFiles++;
                 continue;
@@ -144,6 +146,13 @@ public sealed class Linter
         }
 
         return directory;
+    }
+
+    /// <summary>True when a directory segment of <paramref name="relativePath"/> (not the file name) marks dev or test code.</summary>
+    public static bool IsDevPath(string relativePath)
+    {
+        var segments = relativePath.Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
+        return segments.Take(segments.Length - 1).Any(DevSegment.IsMatch);
     }
 
     private static bool IsSourceFile(string path) =>

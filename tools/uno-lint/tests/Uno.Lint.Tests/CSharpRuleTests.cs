@@ -123,4 +123,34 @@ public sealed partial class P : Page
         var platform = "public sealed partial class StarRating : Control { }";
         Assert.Single(Lint(platform, "StarRating.cs", toolkit: false).Where(x => x.Rule == Rules.Builtin));
     }
+
+    [Theory]
+    [InlineData("OperatingHoursView")]
+    [InlineData("ParameterEditor")]
+    [InlineData("DiscardBanner")]
+    [InlineData("SpreadsheetGrid")]
+    [InlineData("SwitcherooPanel")]
+    public void Builtin_ignores_control_words_inside_other_words(string className)
+    {
+        var code = $"public sealed partial class {className} : UserControl {{ }}";
+        Assert.DoesNotContain(Lint(code, className + ".xaml.cs"), x => x.Rule == Rules.Builtin);
+    }
+
+    [Theory]
+    [InlineData("StarRating", "RatingControl")]
+    [InlineData("CalorieMeter", "ProgressBar")]
+    [InlineData("MacroNutrientBar", "ProgressBar")]
+    [InlineData("AppTopBar", "utu:NavigationBar")]
+    [InlineData("Navbar", "utu:NavigationBar")]
+    [InlineData("RecipeCard", "utu:CardContentControl")]
+    [InlineData("FilterChips", "utu:Chip")]
+    [InlineData("BottomSheet", "Flyout")]
+    [InlineData("UIToggle", "ToggleSwitch")]
+    [InlineData("BusyIndicator", "ProgressRing")]
+    public void Builtin_matches_control_words(string className, string suggestion)
+    {
+        var code = $"public sealed partial class {className} : UserControl {{ }}";
+        var hit = Assert.Single(Lint(code, className + ".xaml.cs"), x => x.Rule == Rules.Builtin);
+        Assert.Contains(suggestion, hit.Message);
+    }
 }

@@ -53,19 +53,27 @@ public static class CSharpAnalyzer
     }
 
     // Name pattern -> suggested control, token whose presence in the companion XAML means it is already used.
+    // Patterns run against the class name split into words ("StarRatingView" -> "Star Rating View") with \b on word
+    // edges, so a word inside another word does not count: OperatingHoursView, ParameterEditor, DiscardBanner and
+    // SpreadsheetGrid do not match rating, meter, card or sheet.
     private static readonly BuiltinEntry[] BuiltinMap =
     {
-        new BuiltinEntry(@"rating|stars?$",                   "RatingControl",                                      "RatingControl",      false),
-        new BuiltinEntry(@"progress|meter|gauge|macro\w*bar", "ProgressBar (lightweight keys)",                     "ProgressBar",        false),
-        new BuiltinEntry(@"tabbar|tabs$|segment",             "utu:TabBar (SegmentedStyle / TopTabBarStyle)",       "TabBar",             true),
-        new BuiltinEntry(@"(nav|app|top|title|header)bar",    "utu:NavigationBar",                                  "NavigationBar",      true),
-        new BuiltinEntry(@"card",                             "utu:CardContentControl + lightweight keys",          "CardContentControl", true),
-        new BuiltinEntry(@"chip",                             "utu:Chip / utu:ChipGroup",                           "Chip",               true),
-        new BuiltinEntry(@"drawer|sheet",                     "Flyout + DrawerFlyoutPresenter style via a ! route", "Flyout",             true),
-        new BuiltinEntry(@"pips|dots|pager",                  "PipsPager",                                          "Pips",               false),
-        new BuiltinEntry(@"toggle|switch",                    "ToggleSwitch / ToggleButton",                        "Toggle",             false),
-        new BuiltinEntry(@"spinner|loader|busy",              "ProgressRing / utu:LoadingView",                     "Progress",           false),
+        new BuiltinEntry(@"\brating\b|\bstars?$",                           "RatingControl",                                      "RatingControl",      false),
+        new BuiltinEntry(@"\b(progress|meter|gauge)\b|\bmacro\b.*\bbar$",   "ProgressBar (lightweight keys)",                     "ProgressBar",        false),
+        new BuiltinEntry(@"\btab ?bar\b|\btabs$|\bsegment(ed)?\b",          "utu:TabBar (SegmentedStyle / TopTabBarStyle)",       "TabBar",             true),
+        new BuiltinEntry(@"\b(nav|navigation|app|top|title|header) ?bar\b", "utu:NavigationBar",                                  "NavigationBar",      true),
+        new BuiltinEntry(@"\bcard\b",                                       "utu:CardContentControl + lightweight keys",          "CardContentControl", true),
+        new BuiltinEntry(@"\bchips?\b",                                     "utu:Chip / utu:ChipGroup",                           "Chip",               true),
+        new BuiltinEntry(@"\b(drawer|sheet)\b",                             "Flyout + DrawerFlyoutPresenter style via a ! route", "Flyout",             true),
+        new BuiltinEntry(@"\b(pips|dots|pager)\b",                          "PipsPager",                                          "Pips",               false),
+        new BuiltinEntry(@"\b(toggle|switch)\b",                            "ToggleSwitch / ToggleButton",                        "Toggle",             false),
+        new BuiltinEntry(@"\b(spinner|loader|busy)\b",                      "ProgressRing / utu:LoadingView",                     "Progress",           false),
     };
+
+    // Word boundaries inside a PascalCase identifier: "StarRating" -> "Star Rating", "UIToggle" -> "UI Toggle".
+    private static readonly Regex WordBoundary = new Regex(@"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|_", RegexOptions.Compiled);
+
+    public static string SplitWords(string identifier) => WordBoundary.Replace(identifier, " ").Trim();
 
     public static IEnumerable<Finding> Analyze(CSharpFile file, ProjectContext context, Func<RuleDescriptor, bool> isEnabled)
     {
@@ -226,7 +234,8 @@ public static class CSharpAnalyzer
             }
 
             var className = cls.Identifier.Text;
-            var entry = BuiltinMap.FirstOrDefault(e => e.NamePattern.IsMatch(className));
+            var words = SplitWords(className);
+            var entry = BuiltinMap.FirstOrDefault(e => e.NamePattern.IsMatch(words));
             if (entry == null)
             {
                 continue;

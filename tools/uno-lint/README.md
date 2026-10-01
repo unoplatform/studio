@@ -37,7 +37,7 @@ To install as a global tool locally: `dotnet pack src/Uno.Lint.Cli -c Release` t
 
 | Id | Name | Profile | Catches | Use instead |
 |---|---|---|---|---|
-| UNOL001 | HEX | recommended | hex color literal outside a palette file | theme role brush or a palette token |
+| UNOL001 | HEX | recommended | hex color literal on a color property outside a palette file | theme role brush or a palette token |
 | UNOL002 | TOKENTHEME | recommended | app brush with one value for both themes | role brush, ThemeDictionaries, or `{ThemeResource}` color |
 | UNOL003 | ICON | recommended | inline path geometry or shapes drawn as an icon | SymbolIcon/FontIcon, or keyed data in Icons.xaml |
 | UNOL004 | BUILTIN | recommended | custom control named like a platform/Toolkit control | RatingControl, ProgressBar, utu:Chip, utu:TabBar... |
@@ -80,5 +80,9 @@ The `xaml-lint:` prefix from the PowerShell prototype is accepted too.
 ## Claude Code hook
 
 `hooks/settings.hooks.json` runs `uno-lint --hook` after every Edit or Write. The hook reads the tool payload on
-stdin, lints the saved file with full context, reports only findings inside the text the edit added, defaults to
+stdin, lints the saved file with full context, and reports only findings on the lines the edit added, defaults to
 the strict profile so the agent sees every hint, and always exits 0 so it never blocks an edit.
+
+The added lines come from `tool_response.structuredPatch`, which Claude Code sends for Edit and Write. Hosts without
+it fall back to diffing `old_string` against `new_string` and finding `new_string` in the file; when that text is
+missing or appears more than once, the hook says nothing rather than guess.

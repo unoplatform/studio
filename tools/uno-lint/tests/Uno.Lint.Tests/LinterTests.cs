@@ -70,7 +70,7 @@ public class LinterTests : IDisposable
     public void Skips_dev_paths_bin_obj_and_generated_files()
     {
         Write("App.csproj", "<Project/>");
-        Write("Tests/Probe.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border Background=\"#FF0000\"/></Page>");
+        Write("Tests/Sample.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border Background=\"#FF0000\"/></Page>");
         Write("obj/MainPage.g.cs", "class X { void H(object sender, EventArgs e) { } }");
         Write("MainPage.xaml.cs", "partial class MainPage { void H(object sender, EventArgs e) { } }");
 
@@ -78,6 +78,34 @@ public class LinterTests : IDisposable
         Assert.Equal(1, result.FileCount);
         Assert.Equal(1, result.SkippedDevFiles);
         Assert.Single(result.Findings);
+    }
+
+    [Theory]
+    [InlineData("Tests/Foo.xaml", true)]
+    [InlineData("Dev/Scratch.xaml", true)]
+    [InlineData("src/MyApp.Tests/MainPageTests.cs", true)]
+    [InlineData("Content/Probes/Layout.xaml", true)]
+    [InlineData("Views/ProbeResultsPage.xaml", false)]
+    [InlineData("Views/HarnessPage.xaml", false)]
+    [InlineData("TestApp/MainPage.xaml", false)]
+    [InlineData("Content/TestPages/Foo.xaml", false)]
+    [InlineData("Tests.xaml", false)]
+    public void Dev_paths_match_whole_folder_names_only(string relative, bool isDev)
+    {
+        Assert.Equal(isDev, Linter.IsDevPath(relative));
+    }
+
+    [Fact]
+    public void Skips_a_top_level_tests_folder_but_not_a_probe_named_page()
+    {
+        Write("App.csproj", "<Project/>");
+        Write("Tests/Foo.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border Background=\"#FF0000\"/></Page>");
+        Write("Views/ProbeResultsPage.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border Background=\"#FF0000\"/></Page>");
+
+        var result = new Linter(new LintOptions()).Run(_root);
+        Assert.Equal(1, result.SkippedDevFiles);
+        var hit = Assert.Single(result.Findings);
+        Assert.Equal(Path.Combine("Views", "ProbeResultsPage.xaml"), hit.File);
     }
 
     [Fact]

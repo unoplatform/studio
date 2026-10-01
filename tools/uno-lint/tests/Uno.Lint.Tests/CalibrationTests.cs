@@ -64,18 +64,16 @@ public class CalibrationTests
     }
 
     [Fact]
-    public void EditRange_locates_added_text_across_line_ending_and_indent_differences()
+    public void EditRange_fallback_locates_added_text_across_line_ending_and_indent_differences()
     {
         var full = "line1\r\n    <Border\r\n        CornerRadius=\"8\"/>\r\nline4\r\n";
 
-        Assert.True(EditRange.TryLocate(full, "    <Border\n        CornerRadius=\"8\"/>", out var first, out var last));
-        Assert.Equal(2, first);
-        Assert.Equal(3, last);
+        Assert.True(EditRange.TryLocate(full, "", "    <Border\n        CornerRadius=\"8\"/>", false, out var lines));
+        Assert.Equal(new[] { 2, 3 }, lines.OrderBy(l => l));
 
-        Assert.True(EditRange.TryLocate(full, "<Border CornerRadius=\"8\"/>", out first, out last));
-        Assert.Equal(2, first);
-        Assert.Equal(3, last);
+        Assert.True(EditRange.TryLocate(full, "", "<Border CornerRadius=\"8\"/>", false, out lines));
+        Assert.Equal(new[] { 2 }, lines.OrderBy(l => l));
 
-        Assert.False(EditRange.TryLocate(full, "<Grid/>", out _, out _));
+        Assert.False(EditRange.TryLocate(full, "", "<Grid/>", false, out _));
     }
 }

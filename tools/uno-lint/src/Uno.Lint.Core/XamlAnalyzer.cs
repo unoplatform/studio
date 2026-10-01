@@ -7,9 +7,11 @@ namespace Uno.Lint;
 /// <summary>A parsed XAML file with the raw text kept for suppression comments.</summary>
 public sealed class XamlFile
 {
-    private static readonly Regex PaletteName = new Regex(@"(?i)(palette|colou?rs?|tokens?)[^\\/]*\.xaml$", RegexOptions.Compiled);
-    private static readonly Regex IconName = new Regex(@"(?i)icons?[^\\/]*\.xaml$", RegexOptions.Compiled);
-    private static readonly Regex ThemeOverrideName = new Regex(@"(?i)Colou?r(Palette)?Override[^\\/]*\.xaml$", RegexOptions.Compiled);
+    // Matched against the file name's words ("BrandColors.Dark.xaml" -> "Brand Colors Dark"), so a page whose name only
+    // contains the word is not exempt: ColorPickerPage, AuthTokenPage and LexiconPage are linted like any page.
+    private static readonly Regex PaletteName = new Regex(@"(?i)\b(palettes?|colou?rs|tokens)\b", RegexOptions.Compiled);
+    private static readonly Regex IconName = new Regex(@"(?i)\bicons\b", RegexOptions.Compiled);
+    private static readonly Regex ThemeOverrideName = new Regex(@"(?i)\bcolou?r( palette)? override\b", RegexOptions.Compiled);
 
     private XamlFile(string relativePath, string text, XDocument document)
     {
@@ -17,10 +19,10 @@ public sealed class XamlFile
         Text = text;
         Lines = Suppression.SplitLines(text);
         Document = document;
-        var leaf = Path.GetFileName(relativePath);
-        IsPaletteFile = PaletteName.IsMatch(leaf);
-        IsIconFile = IconName.IsMatch(leaf);
-        IsThemeOverrideFile = ThemeOverrideName.IsMatch(leaf);
+        var words = FileNameWords(relativePath);
+        IsPaletteFile = PaletteName.IsMatch(words);
+        IsIconFile = IconName.IsMatch(words);
+        IsThemeOverrideFile = ThemeOverrideName.IsMatch(words);
     }
 
     public string RelativePath { get; }
@@ -30,6 +32,12 @@ public sealed class XamlFile
     public bool IsPaletteFile { get; }
     public bool IsIconFile { get; }
     public bool IsThemeOverrideFile { get; }
+
+    private static string FileNameWords(string relativePath)
+    {
+        var stem = Path.GetFileNameWithoutExtension(relativePath);
+        return string.Join(" ", stem.Split('.', '-', ' ').Select(CSharpAnalyzer.SplitWords));
+    }
 
     public static bool TryParse(string relativePath, string text, out XamlFile? file)
     {
@@ -50,6 +58,10 @@ public sealed class XamlFile
 public static class XamlAnalyzer
 {
     private static readonly Regex HexLiteral = new Regex(@"^\s*#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})\s*$", RegexOptions.Compiled);
+
+    // A property, or an element, that holds a color: Background, BorderBrush, Fill, Stroke, Tint, Color, SolidColorBrush,
+    // GradientStop, ColorAnimation... Text="#404" and Tag="#123" are text that happens to look like hex.
+    private static readonly Regex ColorName = new Regex(@"(?i)colou?r|brush|background|foreground|fill|stroke|tint|gradientstop", RegexOptions.Compiled);
     private static readonly Regex PathMiniLanguage = new Regex(@"^\s*(?:F[01]\s*)?[Mm]", RegexOptions.Compiled);
     private static readonly Regex InvariantKey = new Regex(@"(?i)invariant|ondark|onlight|fixed", RegexOptions.Compiled);
     private static readonly Regex ThemeResourceRef = new Regex(@"\{\s*ThemeResource\b", RegexOptions.Compiled);
@@ -142,7 +154,7 @@ public static class XamlAnalyzer
 
             foreach (var attribute in element.Attributes())
             {
-                if (attribute.IsNamespaceDeclaration || !HexLiteral.IsMatch(attribute.Value))
+                if (attribute.IsNamespaceDeclaration || !HexLiteral.IsMatch(attribute.Value) || !IsColorSlot(element, attribute))
                 {
                     continue;
                 }
@@ -157,7 +169,7 @@ public static class XamlAnalyzer
             }
 
             // <Color x:Key="...">#FF1234</Color> or <SolidColorBrush>#FF1234</SolidColorBrush>
-            if (!element.HasElements && HexLiteral.IsMatch(element.Value))
+            if (!element.HasElements && HexLiteral.IsMatch(element.Value) && IsColorElement(element))
             {
                 var line = LineOf(element);
                 if (!Suppression.IsSuppressed(file.Lines, line, Rules.Hex))
@@ -167,6 +179,56 @@ public static class XamlAnalyzer
             }
         }
     }
+
+    /// <summary>Whether a hex-looking attribute sets a color, judged by the property name, the element, or the Setter/animation target.</summary>
+    private static bool IsColorSlot(XElement element, XAttribute attribute)
+    {
+        var property = attribute.Name.LocalName;
+        if (property == "Value")
+        {
+            return TargetPropertyOf(element) is string target && ColorName.IsMatch(target);
+        }
+
+        return ColorName.IsMatch(LastSegment(property)) || ColorName.IsMatch(element.Name.LocalName);
+    }
+
+    /// <summary>&lt;Color&gt;#..&lt;/Color&gt;, &lt;SolidColorBrush&gt;#..&lt;/SolidColorBrush&gt;, or &lt;Setter.Value&gt;#..&lt;/Setter.Value&gt; on a color property.</summary>
+    private static bool IsColorElement(XElement element)
+    {
+        var name = element.Name.LocalName;
+        if (name == "Setter.Value")
+        {
+            return element.Parent != null && TargetPropertyOf(element.Parent) is string target && ColorName.IsMatch(target);
+        }
+
+        return ColorName.IsMatch(name);
+    }
+
+    /// <summary>
+    /// The property a Setter or keyframe Value is written to: Setter.Property (styles) or Setter.Target (VisualState
+    /// setters, "Hero.Background"), else the nearest Storyboard.TargetProperty.
+    /// </summary>
+    private static string? TargetPropertyOf(XElement element)
+    {
+        var setterProperty = element.Name.LocalName == "Setter" ? element.Attribute("Property")?.Value ?? element.Attribute("Target")?.Value : null;
+        if (setterProperty != null)
+        {
+            return LastSegment(setterProperty.Trim('(', ')'));
+        }
+
+        for (var e = element; e != null; e = e.Parent)
+        {
+            var target = e.Attributes().FirstOrDefault(a => a.Name.LocalName == "Storyboard.TargetProperty")?.Value;
+            if (target != null)
+            {
+                return LastSegment(target.Trim('(', ')'));
+            }
+        }
+
+        return null;
+    }
+
+    private static string LastSegment(string name) => name.Substring(name.LastIndexOf('.') + 1);
 
     // ---------------------------------------------------------------- TOKENTHEME
 

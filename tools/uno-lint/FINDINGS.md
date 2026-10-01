@@ -10,7 +10,7 @@ preserved), C# with Roslyn syntax trees, so comments and strings can no longer t
 
 | Piece | State |
 |---|---|
-| Rule library, 9 rules + 4 info counters | done, 32 unit tests passing |
+| Rule library, 9 rules + 4 info counters | done, 78 unit tests passing |
 | CLI: path mode, `--json`, `--profile`, `--list-rules`, exit codes 0/1/2 | done |
 | CLI: `--hook` (Claude Code PostToolUse payload on stdin, reports only edited lines) | done |
 | Profiles: `recommended` (5 rules) / `strict` (9 rules) | done |
@@ -101,13 +101,24 @@ choice: on the Toolkit's own gallery app it flags 129 handlers, and an MVVM cust
 ## Open items
 
 1. Chip/pill heuristic for CARD, and a ShadowContainer exemption or a better message.
-2. Dev-path skip regex misses `Content/TestPages/` (needs `/Tests?/` exactly); widening it would also skip a real
-   app folder named `TestApp`. Probably make it configurable.
+2. ~~Dev-path skip regex~~: now matches whole folder names (`Tests/`, `MyApp.Tests/`), so `TestApp/`,
+   `Content/TestPages/` and `ProbeResultsPage.xaml` are linted. Still worth making configurable.
 3. Add the correctness rules from `uno-runtime-gotchas.md` that are bugs rather than taste: `x:Bind` against an
    MVUX-generated ViewModel, `{Binding State.Value}`, Uno0001 members read inside framework handlers. Those will earn
    the tool more trust than the style rules.
 4. Get two or three more agent-built repos to calibrate BUILTIN, RESPONSIVE, BACKBAR, OVERLAY.
 5. Expose the same library as an MCP tool on `uno.devserver --mcp-app`, then as a Roslyn analyzer.
+
+## Review fixes (2026-10-01)
+
+- Hook attribution reads `tool_response.structuredPatch` instead of searching for `new_string`, so a copied block,
+  a short edit or unchanged context lines no longer land on the wrong lines.
+- BUILTIN, the palette/icon file exemptions and the dev-path skip match whole words, not substrings.
+- HEX fires only on color properties (`Text="#404"` is text).
+
+Re-run on today's `uno.toolkit.ui` main (179 files, strict): identical to the pre-fix build except one HEX gained,
+`SeedColorSamplePage.xaml` L25 `ColorPicker.Color="#5946D2"`, which the old palette-name match (`Color` in the file
+name) had hidden. Themes sample unchanged. The agent-built apps were not re-run.
 
 ## Run it
 

@@ -41,6 +41,62 @@ public class XamlRuleTests
         Assert.Empty(Lint($"<ResourceDictionary {Ns}><Color x:Key=\"Brand\">#7A67F8</Color></ResourceDictionary>", "ColorPaletteOverride.xaml").Where(x => x.Rule == Rules.Hex));
     }
 
+    [Theory]
+    [InlineData("Colors.xaml", true)]
+    [InlineData("AppColors.xaml", true)]
+    [InlineData("BrandPalette.Dark.xaml", true)]
+    [InlineData("DesignTokens.xaml", true)]
+    [InlineData("ColorPickerPage.xaml", false)]
+    [InlineData("AuthTokenPage.xaml", false)]
+    [InlineData("BackgroundColorPage.xaml", false)]
+    public void Hex_palette_exemption_matches_whole_words_of_the_file_name(string fileName, bool exempt)
+    {
+        var hits = Lint($"<Page {Ns}><Border Background=\"#FF0000\"/></Page>", fileName).Count(x => x.Rule == Rules.Hex);
+        Assert.Equal(exempt ? 0 : 1, hits);
+    }
+
+    [Theory]
+    [InlineData("Icons.xaml", true)]
+    [InlineData("MaterialIcons.xaml", true)]
+    [InlineData("LexiconPage.xaml", false)]
+    [InlineData("IconButtonPage.xaml", false)]
+    public void Icon_file_exemption_matches_whole_words_of_the_file_name(string fileName, bool exempt)
+    {
+        var hits = Lint($"<Page {Ns}><Path Data=\"M0,0 L1,1\"/></Page>", fileName).Count(x => x.Rule == Rules.Icon);
+        Assert.Equal(exempt ? 0 : 1, hits);
+    }
+
+    [Fact]
+    public void Hex_ignores_hex_looking_text_on_non_color_properties()
+    {
+        var xaml = $@"<Page {Ns}>
+  <TextBlock Text=""#404"" Tag=""#ABC123""/>
+  <x:String x:Key=""Code"">#BEEF</x:String>
+  <Style TargetType=""TextBlock""><Setter Property=""Text"" Value=""#404""/></Style>
+</Page>";
+        Assert.DoesNotContain(Lint(xaml), x => x.Rule == Rules.Hex);
+    }
+
+    [Fact]
+    public void Hex_flags_color_slots_in_setters_animations_and_gradients()
+    {
+        var xaml = $@"<Page {Ns}>
+  <Style TargetType=""Border""><Setter Property=""Background"" Value=""#111111""/></Style>
+  <Style TargetType=""Border""><Setter Property=""BorderBrush""><Setter.Value>#222222</Setter.Value></Setter></Style>
+  <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty=""(Border.Background)""><DiscreteObjectKeyFrame Value=""#333333""/></ObjectAnimationUsingKeyFrames>
+  <ColorAnimation To=""#444444""/>
+  <LinearGradientBrush><GradientStop Color=""#555555"" Offset=""0""/></LinearGradientBrush>
+  <utu:ShadowContainer><utu:ShadowContainer.Shadows><utu:ShadowCollection><utu:Shadow Color=""#666666""/></utu:ShadowCollection></utu:ShadowContainer.Shadows></utu:ShadowContainer>
+  <Rectangle Fill=""#777777"" Stroke=""#888888""/>
+  <VisualStateManager.VisualStateGroups><VisualStateGroup><VisualState><VisualState.Setters>
+    <Setter Target=""Hero.Background"" Value=""#999999""/>
+    <Setter Target=""Hero.(Border.BorderBrush)"" Value=""#AAAAAA""/>
+    <Setter Target=""Title.Text"" Value=""#404""/>
+  </VisualState.Setters></VisualState></VisualStateGroup></VisualStateManager.VisualStateGroups>
+</Page>";
+        Assert.Equal(10, Lint(xaml).Count(x => x.Rule == Rules.Hex));
+    }
+
     [Fact]
     public void Hex_skips_keyed_resources_inside_theme_dictionaries()
     {

@@ -46,6 +46,29 @@ jobs:
         shell: pwsh
         run: ./.github/scripts/Test-Plugin.ps1
 
+      # Agents install whatever tag source.ref names (Test-Plugin.ps1 keeps every ref equal to the
+      # plugin version). That tag must be a published release, and a PR must not move the branch back
+      # to an older one. A release run passes too: it validates before stamping the next version.
+      - name: Marketplaces point at a published release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          manifest=plugins/uno-platform-studio/.claude-plugin/plugin.json
+          version=$(jq -r .version "$manifest")
+          case "$version" in ''|null) echo "::error::$manifest has no version"; exit 1;; esac
+          if ! gh release view "$version" --repo "$GITHUB_REPOSITORY" --json tagName >/dev/null; then
+            echo "::error::source.ref '$version' is not a published release of $GITHUB_REPOSITORY"
+            exit 1
+          fi
+          if [ -n "$GITHUB_BASE_REF" ]; then
+            git fetch --depth=1 origin "$GITHUB_BASE_REF"
+            base=$(git show "origin/$GITHUB_BASE_REF:$manifest" | jq -r .version)
+            if [ "$(printf '%s\n' "$base" "$version" | sort -V | head -1)" != "$base" ]; then
+              echo "::error::This PR moves the marketplaces from $base back to $version"
+              exit 1
+            fi
+          fi
+
   agents:
     name: Install in Copilot CLI and Codex
     runs-on: ubuntu-latest

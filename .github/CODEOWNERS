@@ -4,3 +4,11 @@
 # email address that has been added to their GitHub account, for example user@example.com
 
 *                                          @unoplatform/maintainers
+
+# What the marketplaces advertise. Moving source.ref or the plugin version needs one of the
+# plugin-release environment's reviewers, the same people who approve a release.
+/.claude-plugin/marketplace.json                          @carldebilly @ebariche @jeromelaban @agneszitte @kazo0
+/.github/plugin/marketplace.json                          @carldebilly @ebariche @jeromelaban @agneszitte @kazo0
+/.agents/plugins/marketplace.json                         @carldebilly @ebariche @jeromelaban @agneszitte @kazo0
+/plugins/uno-platform-studio/.claude-plugin/plugin.json   @carldebilly @ebariche @jeromelaban @agneszitte @kazo0
+/plugins/uno-platform-studio/.codex-plugin/plugin.json    @carldebilly @ebariche @jeromelaban @agneszitte @kazo0

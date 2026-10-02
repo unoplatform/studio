@@ -1,14 +1,4 @@
----
-name: uno-previews
-description: "Author preview files — a page, UserControl, style or data template rendered on its own, with the data it needs."
-when_to_use: "Use when asked to add previews for pages or controls, to show a page with sample or mock data at design time, to showcase a named Style or DataTemplate, to show several states of one control side by side, or to decide between a standalone preview file and a PreviewGroup. Previews are plain source files: author them directly — nothing needs to be running. For a page bound to an MVUX view-model, pair with `uno-mvux-mocking` to supply the data."
-metadata:
-  author: uno-platform
-  version: "1.0"
-  category: previews
----
-
-# Previews — Agent Skill
+# Previews
 
 A preview renders one page, `UserControl`, control, style or data template on its own in Hot Design's **Previews** panel, with the data you give it. Each hand-authored preview is two files — a XAML file whose root is `<hd:Preview>`, and its code-behind — and it is found by reflection when the app runs. There is nothing to register and no package to add: the Uno SDK adds the reference.
 
@@ -16,7 +6,7 @@ A preview renders one page, `UserControl`, control, style or data template on it
 
 - **Every public control with a parameterless constructor already has a preview**, generated implicitly — a page shows up with no file at all. Only author a preview to add what the implicit one lacks: **data**, a **style**, a **data template**, or a **particular state**.
 - **A page that normally gets its view-model from navigation has none in a preview.** Supply it, or its bindings render empty.
-- **Give a page bound to an MVUX view-model five states, unless asked otherwise: Loaded, Loading, Empty, Error and Stress.** Write them as one `PreviewGroup` per page, each child over its own mock (see `uno-mvux-mocking`). A Loaded preview alone hides how the page handles a slow, empty or failing service.
+- **Give a page bound to an MVUX view-model five states, unless asked otherwise: Loaded, Loading, Empty, Error and Stress.** Write them as one `PreviewGroup` per page, each child over its own mock (see `uno-mvux`, `references/mocking.md`). A Loaded preview alone hides how the page handles a slow, empty or failing service.
 - **Stress is Loaded with worst-case data, meant to break the layout:** many items, very long names and text, unusual characters (accents, emoji, right-to-left scripts), extreme numbers and dates, and every optional value missing. It shows the user where the page breaks, so don't change the page to fit it unless asked.
 
 ## File Location
@@ -74,7 +64,7 @@ public sealed partial class WeatherPagePreview : Preview
 
 Override `LoadDataContext()`. Its result becomes the `DataContext` of the preview's content, so the page's bindings resolve against it. The XAML is the same as Type Only.
 
-For an **MVUX** page, return a mocked view-model — see `uno-mvux-mocking`:
+For an **MVUX** page, return a mocked view-model — see `uno-mvux` (`references/mocking.md`):
 
 ```csharp
 using Uno.HotTesting.Reactive;
@@ -198,8 +188,8 @@ Keep `PreviewName` short and state-descriptive (`"Loading"`, not `"Weather page 
 - **Don't edit `DefaultPreviews.xaml`.** The designer writes and rewrites that file for its own **Add Preview** button. Hand-authored previews go in their own files.
 - **The code-behind must be `partial` and call `InitializeComponent()`**, and its class must match `x:Class`.
 - **Build in Debug to check a preview.** One build is enough: there is no need to force a rebuild or read the generated code.
-- **A preview that renders blank usually means its data was never created.** If `LoadDataContext()`, or the static member a group child binds to, throws, the preview shows the page with no `DataContext` and nothing reports the error. For a mocked MVUX page, check the model against the method-group rule in `uno-mvux-mocking`; before 8.0.0-dev.71, a single blank area is usually a derived member left out of the mock. An *empty* state is different: a `FeedView` with no `NoneTemplate` renders nothing for it, by design. So is a broken Stress preview when the page's Loaded one renders: the mock works and the stress data broke the page. Report what broke; don't debug it unless asked.
-- **An error template in a preview that doesn't mock an error means a mock was not applied.** The real feed ran against the null-injected service and failed. To find which member, call `uno_app_get_element_datacontext` on the error text and search the result for `<StackTrace>`: it names the model's lambda. The usual causes are a feed written as a method group and, before 8.0.0-dev.71, a derived member left out of the mock (see `uno-mvux-mocking`).
+- **A preview that renders blank usually means its data was never created.** If `LoadDataContext()`, or the static member a group child binds to, throws, the preview shows the page with no `DataContext` and nothing reports the error. For a mocked MVUX page, check the model against the method-group rule in `uno-mvux` (`references/mocking.md`); before 8.0.0-dev.71, a single blank area is usually a derived member left out of the mock. An *empty* state is different: a `FeedView` with no `NoneTemplate` renders nothing for it, by design. So is a broken Stress preview when the page's Loaded one renders: the mock works and the stress data broke the page. Report what broke; don't debug it unless asked.
+- **An error template in a preview that doesn't mock an error means a mock was not applied.** The real feed ran against the null-injected service and failed. To find which member, call `uno_app_get_element_datacontext` on the error text and search the result for `<StackTrace>`: it names the model's lambda. The usual causes are a feed written as a method group and, before 8.0.0-dev.71, a derived member left out of the mock (see `uno-mvux`, `references/mocking.md`).
 
 ## Checking a Preview in a Running App (Optional)
 
@@ -214,6 +204,6 @@ An agent with the Uno app MCP can check the same way through `uno_execute_tool`.
 
 ## Related Skills
 
-- [[uno-mvux-mocking]] — Generate the mocked view-models previews bind to
-- [[uno-mvux-feedview]] — How a FeedView renders each mocked state
-- [[uno-themes-material]] — Named styles worth a style preview
+- `uno-mvux` (`references/mocking.md`) — Generate the mocked view-models previews bind to
+- `uno-mvux` (`references/feedview.md`) — How a FeedView renders each mocked state
+- `uno-themes` (`references/material.md`) — Named styles worth a style preview

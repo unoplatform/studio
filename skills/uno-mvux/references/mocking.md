@@ -1,14 +1,4 @@
----
-name: uno-mvux-mocking
-description: "Generate typed mocks of MVUX view-models with Uno.HotTesting.Reactive, to show a page in any feed state without its real services."
-when_to_use: "Use when a page or control bound to an MVUX view-model needs deterministic data without calling its real services — for a preview, a UI test, a screenshot, or a demo — or when asked to show a page loading, failing, empty, refreshing, or with specific data. Also use to explain the MOCK0001, MOCK0002 or MOCK0003 diagnostics. To put the mocked view-model in a preview, pair with `uno-previews`. For a page with no MVUX view-model, the `FeedMock` / `ListFeedMock` factories below are enough on their own."
-metadata:
-  author: uno-platform
-  version: "1.0"
-  category: mvux
----
-
-# MVUX Mocking — Agent Skill
+# MVUX Mocking
 
 Referencing `Uno.HotTesting.Reactive` makes a source generator emit, for every MVUX model it finds:
 
@@ -109,8 +99,8 @@ vm.SetMock(RecipeModelMock.Empty with
 
 ## Related Skills
 
-- [[uno-previews]] — Put the mocked view-model in a preview
-- [[uno-mvux-feed-basics]] — What the mocked feeds stand in for (IFeed<T>)
-- [[uno-mvux-state-basics]] — IState<T>, mocked through its feed interface
-- [[uno-mvux-feedview]] — How a FeedView renders each mocked state
-- [[uno-testing-assertions]] — Asserting on the UI once it is driven by a mock
+- `uno-platform` (`references/previews.md`) — Put the mocked view-model in a preview
+- `references/feed-basics.md` — What the mocked feeds stand in for (IFeed<T>)
+- `references/state-basics.md` — IState<T>, mocked through its feed interface
+- `references/feedview.md` — How a FeedView renders each mocked state
+- `uno-testing` (`references/assertions.md`) — Asserting on the UI once it is driven by a mock

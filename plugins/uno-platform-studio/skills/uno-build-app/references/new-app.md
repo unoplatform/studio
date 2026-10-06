@@ -7,7 +7,7 @@ Defaults for a new app when the brief does not say otherwise. Explicit choices f
 - **Presentation**: MVUX.
 - **Navigation**: Uno.Extensions Navigation (routes, navigation data, dialog results as needed).
 - **Theme**: follow the supplied design. With no design, the Simple theme with the template's Toolkit controls. See [design.md](design.md).
-- **Targets**: Skia Desktop (Windows, Linux, macOS), WebAssembly, Android and iOS, using the template's target structure. Never narrow the targets to the workloads installed on this machine; report the ones you could not build or run instead.
+- **Targets**: Skia Desktop (Windows, Linux, macOS), WebAssembly, Android and iOS, using the template's target structure. Never narrow the targets to the workloads installed on this machine; report the ones you could not build or run instead. When the brief names its targets, those are the targets: pass them to the template with `-platforms` (see *Scaffold*).
 - **Scope**: the client app. Integrate existing backend contracts. Propose missing backend work separately; do not create server projects or provision services unless asked.
 
 ## Scaffold
@@ -29,12 +29,14 @@ dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests un
 - `<AppName>` is a valid C# identifier in PascalCase, derived from the brief.
 - Pass `-theme` explicitly even though Simple is the preset default, so a change to the preset cannot change the app.
 - `-tests unit` adds an NUnit test project. The recommended preset does not add one by default.
-- Do not pass `-platforms`. The preset's target list is the default above.
+- `-platforms` sets the targets: `android`, `ios`, `wasm`, `desktop` (Skia Desktop: Windows, macOS, Linux) and `windows` (WinAppSDK). Pass it only when the brief names its targets, for example `-platforms android desktop`, and put it last: it takes every value after it. Without it the template uses the default list above. Never use it to drop a target whose workload is missing.
 - Then, in the generated `App.xaml.cs`, change `MainWindow.UseStudio();` to `MainWindow.UseStudio(launchHotDesignOnStart: false);`, keeping the `#if DEBUG`. Without the argument, Hot Design opens over the app on its first launch and covers it during runtime checks. The `uno-testing` skill explains why.
 
-Verified with Uno.Templates 6.7.30 (Uno.Sdk 6.7.30, .NET SDK 10.0.400): the command produces one app project targeting `net10.0-android`, `net10.0-ios`, `net10.0-browserwasm`, `net10.0-desktop` and plain `net10.0`, with the features `SimpleTheme`, `Hosting`, `Toolkit`, `Logging`, `MVUX`, `Configuration`, `HttpKiota`, `Serialization`, `Localization`, `Navigation`, `ThemeService` and `SkiaRenderer`, plus a test project using NUnit and FluentAssertions. The plain `net10.0` target is not a platform: `-tests unit` adds it so the test project can reference the app. Keep it. It builds for `net10.0-desktop` with no warnings and its sample test passes. On other template versions, check what was generated rather than assuming this list.
+Verified with Uno.Templates 6.7.30 (Uno.Sdk 6.7.30, .NET SDK 10.0.400): the command produces one app project targeting `net10.0-android`, `net10.0-ios`, `net10.0-browserwasm`, `net10.0-desktop` and plain `net10.0`, with the features `SimpleTheme`, `Hosting`, `Toolkit`, `Logging`, `MVUX`, `Configuration`, `HttpKiota`, `Serialization`, `Localization`, `Navigation`, `ThemeService` and `SkiaRenderer`, plus a test project using NUnit and FluentAssertions. The plain `net10.0` target is not a platform: `-tests unit` adds it so the test project can reference the app. Keep it. It builds for `net10.0-desktop` with no warnings and its sample test passes. With `-platforms android desktop` last, it targets `net10.0-android`, `net10.0-desktop` and plain `net10.0`, with the same features and test project. On other template versions, check what was generated rather than assuming this list.
 
 Start from these features. Add another `UnoFeatures` entry or package only when a concrete feature needs it, say why in the report, and follow the approval policy. Once the developer has approved a kind of addition, do not ask again for the same kind.
+
+Keep what the template sets up: every `UnoFeatures` entry, and the host builder, service registration and `RegisterRoutes` in `App.xaml.cs`. They are the default stack above. Delete the sample pages, models and endpoints you replace, never the features or the wiring. Removing `MVUX`, `Navigation`, `Hosting` or `Toolkit` changes the app's architecture, which takes an explicit instruction from the developer; a brief that leaves the architecture open is not one. To change targets after scaffolding, edit `TargetFrameworks` and nothing else.
 
 ## Where things go
 

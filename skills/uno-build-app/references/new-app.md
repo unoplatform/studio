@@ -1,11 +1,11 @@
 # New App
 
-Defaults for a new app when the brief does not say otherwise. Explicit choices from the developer always win. Do not ask the developer to choose an architecture; these defaults are the answer unless they have already given a different one.
+Defaults for a new app when the brief does not say otherwise. Explicit choices from the developer always win. Do not ask the developer to choose an architecture; these defaults are the answer unless they have already given a different one. A brief that leaves the architecture open, or says it is yours to choose, gets this stack. App size, effort and how complex MVUX or regions look are not reasons to choose another: hand-written view models and a navigator are more code than the template has already wired.
 
 ## Default stack
 
-- **Presentation**: MVUX.
-- **Navigation**: Uno.Extensions Navigation (routes, navigation data, dialog results as needed).
+- **Presentation**: MVUX. Each page's state is a `<Name>Model` of feeds, states and commands (`IFeed`, `IState`, `IListFeed`), not a view model written by hand with `INotifyPropertyChanged`.
+- **Navigation**: Uno.Extensions Navigation (routes, navigation data, dialog results as needed). Pages change through `RegisterRoutes`, `INavigator` and `uen:Navigation.Request`, and tabs or a sidebar are regions, not a navigator or page stack written by hand. A visibility region keeps each tab's page in the visual tree, so its state survives switching tabs.
 - **Theme**: follow the supplied design. With no design, the Simple theme with the template's Toolkit controls. See [design.md](design.md).
 - **Targets**: Skia Desktop (Windows, Linux, macOS), WebAssembly, Android and iOS, using the template's target structure. Never narrow the targets to the workloads installed on this machine; report the ones you could not build or run instead. When the brief names its targets, those are the targets: pass them to the template with `-platforms` (see *Scaffold*).
 - **Scope**: the client app. Integrate existing backend contracts. Propose missing backend work separately; do not create server projects or provision services unless asked.
@@ -36,7 +36,7 @@ Verified with Uno.Templates 6.7.30 (Uno.Sdk 6.7.30, .NET SDK 10.0.400): the comm
 
 Start from these features. Add another `UnoFeatures` entry or package only when a concrete feature needs it, say why in the report, and follow the approval policy. Once the developer has approved a kind of addition, do not ask again for the same kind.
 
-Keep what the template sets up: every `UnoFeatures` entry, and the host builder, service registration and `RegisterRoutes` in `App.xaml.cs`. They are the default stack above. Delete the sample pages, models and endpoints you replace, never the features or the wiring. Removing `MVUX`, `Navigation`, `Hosting` or `Toolkit` changes the app's architecture, which takes an explicit instruction from the developer; a brief that leaves the architecture open is not one. To change targets after scaffolding, edit `TargetFrameworks` and nothing else.
+Keep what the template sets up: every `UnoFeatures` entry, and the host builder, service registration and `RegisterRoutes` in `App.xaml.cs`. They are the default stack above. Delete the sample pages, models and endpoints you replace, never the features or the wiring. Removing `MVUX`, `Navigation`, `Hosting` or `Toolkit` changes the app's architecture, which takes an explicit instruction from the developer; a brief that leaves the architecture open is not one. Keeping the features while writing your own view models or navigator is not the default stack either. To change targets after scaffolding, edit `TargetFrameworks` and nothing else.
 
 ## Where things go
 

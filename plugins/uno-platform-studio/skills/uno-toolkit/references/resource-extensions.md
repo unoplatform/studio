@@ -35,4 +35,4 @@ uno_platform_docs_search("ResourceExtensions Resources attached property diction
 ## Related Skills
 
 - `references/lightweight-styling.md` — General lightweight styling approach
-- the `uno-themes` skill (`references/material.md`) — Material lightweight styling
+- the `uno-themes` skill (`references/material-customization.md`) — Material lightweight styling

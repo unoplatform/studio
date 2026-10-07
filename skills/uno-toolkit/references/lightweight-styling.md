@@ -36,4 +36,4 @@ uno_platform_docs_search("Uno Toolkit [ControlName] lightweight styling resource
 ## Related Skills
 
 - `references/resource-extensions.md` — Per-control resource dictionary
-- the `uno-themes` skill (`references/material.md`) — Material design lightweight styling
+- the `uno-themes` skill (`references/material-customization.md`) — Material design lightweight styling

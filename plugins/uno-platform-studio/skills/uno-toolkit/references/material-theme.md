@@ -35,4 +35,4 @@ uno_platform_docs_search("MaterialToolkitTheme color font override customize pal
 ## Related Skills
 
 - `references/getting-started.md` — Base Toolkit setup
-- the `uno-themes` skill (`references/material.md`) — Material theme (non-Toolkit): installation, color palette customization, typography, control styles
+- the `uno-themes` skill (`references/material.md`, `references/material-customization.md`) — Material theme (non-Toolkit): installation and control styles; color palette and font customization

@@ -172,5 +172,5 @@ Key checks: renamed resource keys, removed converters, NuGet package renames, `U
 ## Related Skills
 
 - `references/semantic-colors-brushes.md` — Shared semantic design language (style keys + typography + colors that work across Material AND Simple themes). Read this first if styling needs to be portable between themes.
-- `references/simple.md` — Simple theme specifics. Use when targeting Simple (the template default) or its theme-specific styles (danger buttons, utility brushes, PersonPicture, etc.).
+- `references/simple.md` — Simple theme setup and customization; `references/simple-styles.md` — its theme-specific styles (danger buttons, utility brushes, PersonPicture, etc.). Use when targeting Simple (the template default).
 - the `uno-toolkit` skill (`references/material-theme.md`) — `MaterialToolkitTheme` setup for Toolkit + Material.

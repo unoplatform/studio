@@ -106,7 +106,7 @@ Use semantic keys in XAML for portable, theme-agnostic styling:
 | `SurfaceSmallFabStyle` | `Button` | |
 | `SurfaceLargeFabStyle` | `Button` | |
 
-> **Note:** Individual design-themes may also expose additional theme-prefixed styles (e.g. danger variants, controls without a cross-theme equivalent) that are **not** part of the shared semantic surface. See the design-theme-specific references (`material.md`, `simple.md`) for those.
+> **Note:** Individual design-themes may also expose additional theme-prefixed styles (e.g. danger variants, controls without a cross-theme equivalent) that are **not** part of the shared semantic surface. See the design-theme-specific references (`material.md`, `simple-styles.md`) for those.
 
 ---
 

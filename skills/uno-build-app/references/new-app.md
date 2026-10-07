@@ -29,6 +29,7 @@ dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests un
 - `<AppName>` is a valid C# identifier in PascalCase, derived from the brief.
 - Pass `-theme` explicitly even though Simple is the preset default, so a change to the preset cannot change the app.
 - `-tests unit` adds an NUnit test project. The recommended preset does not add one by default.
+- `-auth` adds sign-in: `custom` (the app's own login API), `msal` (Microsoft Entra ID), `oidc` (an OpenID Connect provider) or `Web` (a backend that redirects back with tokens). Pass it only when the brief has users signing in, then load the `uno-authentication` skill: the generated code has gaps that skill lists.
 - `-platforms` sets the targets: `android`, `ios`, `wasm`, `desktop` (Skia Desktop: Windows, macOS, Linux) and `windows` (WinAppSDK). Pass it only when the brief names its targets, for example `-platforms android desktop`, and put it last: it takes every value after it. Without it the template uses the default list above. Never use it to drop a target whose workload is missing.
 - Then, in the generated `App.xaml.cs`, change `MainWindow.UseStudio();` to `MainWindow.UseStudio(launchHotDesignOnStart: false);`, keeping the `#if DEBUG`. Without the argument, Hot Design opens over the app on its first launch and covers it during runtime checks. The `uno-testing` skill explains why.
 

@@ -4,6 +4,31 @@ This reference is the definitive reference for the **Semantic Design Language** 
 
 ---
 
+**Contents:**
+
+- [Part 1: Semantic Control Styles](#part-1-semantic-control-styles)
+  - [How It Works](#how-it-works)
+  - [Complete Style Key Reference](#complete-style-key-reference)
+- [Part 2: Semantic Typography](#part-2-semantic-typography)
+  - [Typography Style Keys](#typography-style-keys)
+  - [Font Resource Keys](#font-resource-keys)
+  - [Typography Decision Guide](#typography-decision-guide)
+- [Part 3: Semantic Colors & Brushes](#part-3-semantic-colors--brushes)
+  - [Architecture: Three Layers](#architecture-three-layers)
+  - [The Color Palette (Layer 1)](#the-color-palette-layer-1)
+  - [The Brush System (Layer 2)](#the-brush-system-layer-2)
+  - [Color Pairing Rules (CRITICAL)](#color-pairing-rules-critical)
+  - [Text Emphasis on Surfaces](#text-emphasis-on-surfaces)
+- [Part 4: Customization](#part-4-customization)
+  - [Method 1: Override Color Palette (Full Cascade)](#method-1-override-color-palette-full-cascade)
+  - [Method 2: Override Specific Brushes (Targeted)](#method-2-override-specific-brushes-targeted)
+  - [Method 3: Override Per-Control Instance (Scoped)](#method-3-override-per-control-instance-scoped)
+  - [Customization Precedence (Highest to Lowest)](#customization-precedence-highest-to-lowest)
+- [Decision Guides](#decision-guides)
+  - [Which Color Role?](#which-color-role)
+  - [Which Button Style?](#which-button-style)
+  - [XAML Best Practices](#xaml-best-practices)
+
 ## Part 1: Semantic Control Styles
 
 ### How It Works

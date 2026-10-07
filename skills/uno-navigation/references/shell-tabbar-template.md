@@ -2,6 +2,8 @@
 
 Ready-to-use templates for a bottom TabBar navigation shell. Copy, substitute placeholders, and use.
 
+**Contents:** [Icon Lookup Table](#icon-lookup-table) · [Required XAML Namespaces](#required-xaml-namespaces) · [SHELL_PAGE_NAME.xaml (Shell)](#shell_page_namexaml-shell) · [Page Template (PageName.xaml)](#page-template-pagenamexaml) · [Page Template (PageName.xaml.cs)](#page-template-pagenamexamlcs) · [Route Registration (App.xaml.cs)](#route-registration-appxamlcs) · [Substitution Rules](#substitution-rules) · [Route Registration Rules](#route-registration-rules) · [Localization Template (Strings/en/Resources.resw)](#localization-template-stringsenresourcesresw)
+
 ## Icon Lookup Table
 
 | Page Concept | Glyph | Unicode |

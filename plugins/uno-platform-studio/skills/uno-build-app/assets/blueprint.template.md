@@ -4,7 +4,7 @@
      Write "None" rather than deleting a section. Keep this file current as decisions change. -->
 
 **Brief**: <one-sentence summary of what the app is for, and who uses it>
-**Stack**: <presentation (MVUX / MVVM)>, <navigation>, <theme>, Uno.Sdk <version>
+**Stack**: MVUX, Uno.Extensions Navigation, <theme>, Uno.Sdk <version> <!-- Another presentation or navigation only when the developer asked for it; say where. -->
 **Targets**: <declared targets>
 
 ## Journeys

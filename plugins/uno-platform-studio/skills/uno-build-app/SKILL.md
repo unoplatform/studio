@@ -12,7 +12,7 @@ metadata:
 
 This skill owns the process. The domain skills (`uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-testing`) supply the mechanics: load only the one the current step needs, and read only the `references/` topic that step calls for, not the whole hub. Evidence, not effort, decides when work is done.
 
-The developer's explicit instructions and the host's permissions always outrank this skill.
+The developer's explicit instructions and the host's permissions always outrank this skill. The developer is the person whose request you are carrying out, never you: a choice this skill leaves to the developer is not yours to make.
 
 ## Rules that do not bend
 
@@ -22,7 +22,7 @@ The developer's explicit instructions and the host's permissions always outrank 
 4. **Build and exercise the first feature before repeating its pattern.**
 5. **Never claim a check you did not run.** A check that ran and failed is a failure, not "unavailable".
 6. **Views do not do storage or network. Business rules do not reference views. Services are injected.**
-7. **No unrequested packages, SDK or target changes, or migrations.** Never remove a target or a build property to make a check pass.
+7. **No unrequested packages, SDK, feature or target changes, or migrations.** Never remove a target, an `UnoFeatures` entry or a build property to make a check pass or to simplify a scaffold.
 8. **Deliver real behaviour.** If the app presents data as saved, it persists. Do not simulate core behaviour unless the developer asked for a prototype. A missing backend or integration is reported as a gap, never faked.
 
 ## Step 1: pick the mode
@@ -46,7 +46,7 @@ Feature, Repair and Scoped visual modes follow [references/existing-app.md](refe
 Agent guidance, not a state machine. Scale each phase to the request.
 
 1. **Inspect and scope.** Discovery per [references/discovery.md](references/discovery.md). Output: target project, mode, applicable instructions, target matrix, and the build and test failures that already exist before you change anything.
-2. **Blueprint** (New app only). Fill in [assets/blueprint.template.md](assets/blueprint.template.md) before the first feature, following [references/new-app.md](references/new-app.md) and [references/architecture-baseline.md](references/architecture-baseline.md). Keep it current when decisions change.
+2. **Blueprint** (New app only). Fill in [assets/blueprint.template.md](assets/blueprint.template.md) after scaffolding and before writing any app source, following [references/new-app.md](references/new-app.md) and [references/architecture-baseline.md](references/architecture-baseline.md). Keep it current when decisions change. Before filling it in, load `uno-mvux` (`references/overview.md`) and `uno-navigation` (`references/setup.md`, `references/routes.md`): the default stack's models and routes are written with them.
 3. **Feature contract.** For each meaningful feature, write down: trigger and result; who owns the state and the service; navigation in and out, with payload; data source and persistence; loading, empty and error states; theme, responsive and accessibility states affected; the checks that will prove it. Identify entity identity, invariants and invalid operations from the requirements; never invent missing business rules. "Use `IState<bool>`" is not a contract. "Toggling persists through the settings service, shows a recoverable save failure, and is restored after relaunch" is.
 4. **Select a recipe and skills.** Match the contract to [references/recipes.md](references/recipes.md). Load only the domain skills this feature needs, and within each only the references it names. An incompatible recipe still lends its acceptance checks.
 5. **Implement one complete feature.** Pick the slice that exercises the risky pattern (settings persistence beats another static page). Wire view, model, service, registration, navigation and a meaningful test before replicating anything. If a generated command does nothing, diagnose it (signature, parameters, binding context, generated wrapper, logs) before adding a code-behind workaround. A rendered button with no observable effect is unfinished work. A property changed through live tooling is not a source fix.

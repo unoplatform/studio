@@ -115,13 +115,20 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is 
 
 ### Interacting with Elements
 
-**Preferred approach:** automation peers, using a handle from the latest snapshot.
+**Preferred approach:** automation peers, targeted by selector. Every element tool takes exactly one of:
+
+- `automationId`: the element's `AutomationProperties.AutomationId`, exact and case-sensitive;
+- `name`: its `x:Name` or `AutomationProperties.Name` (the tree's `#Name`), exact and case-sensitive;
+- `elementRef`: a bare handle from the latest snapshot (`"5"`, not `"^5"`), valid until the next UI change.
+
+A selector is resolved against the live tree when the call runs, so it needs no snapshot and never goes stale. `scopeRef` (a handle) limits a selector search to one container when the same id or name appears more than once on the page. 0 matches and N matches are errors: the N-match error lists the candidates as snapshot lines with fresh handles.
 
 1. **Default action** (buttons):
    ```
    Tool: uno_app_element_peer_default_action
    Parameters:
-     - elementRef: Bare handle from the snapshot ("5", not "^5")
+     - automationId | name | elementRef: The target (one of them)
+     - scopeRef: Optional handle; search for the selector under that element only
    ```
    Always runs `invoke`, so it works only on `[i]` elements (`Button`, `HyperlinkButton`). On a `CheckBox`, `TextBox`, `ComboBox`, or list item it returns an unsupported-action failure; use the specific action below.
 
@@ -129,7 +136,7 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is 
    ```
    Tool: uno_app_element_peer_action
    Parameters:
-     - elementRef: Bare handle from the snapshot
+     - automationId | name | elementRef: The target (one of them); scopeRef as above
      - action: invoke (default), toggle, expand, collapse, select, addToSelection, removeFromSelection, setValue, setRangeValue
      - actionParameters: Optional array; for setValue/setRangeValue the first entry is the value
    ```
@@ -164,8 +171,9 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is 
    Parameters:
      - text: String of text to type
      - intervalInMs: Delay between key presses (required; 50 is fine)
+     - automationId | name | elementRef: Optional target; that control is focused first, then typed into
    ```
-   Both tools raise key events in-process on the element that holds XAML focus and return `false` when nothing is focused, so focus the field first: click its bounds, or Tab to it. Prefer `setValue` for form fields when it is available.
+   With a target, `uno_app_type_text` focuses the control and types in one call (the target must be a `Control`, or it fails saying so). Without one, both tools raise key events in-process on the element that holds XAML focus and fail when nothing is focused, so focus the field first: click its bounds, or Tab to it. Prefer `setValue` for form fields when it is available.
 
 ### Capturing Screenshots
 
@@ -175,7 +183,7 @@ Parameters:
   - fileType: "png" or "jpeg"
   - quality: Image quality 1-100 (default: 75)
   - path: Optional file path to save to; omit to receive the image in the result
-  - elementRef: Optional handle; captures only that element
+  - automationId | name | elementRef: Optional target; captures only that element (scopeRef as for the other tools)
 ```
 
 Without `path`, the image comes back in the tool result and can be inspected directly. With `path`:
@@ -189,7 +197,7 @@ Save inside the solution, then copy the file elsewhere if the task keeps screens
 ```
 Tool: uno_app_get_element_datacontext
 Parameters:
-  - elementRef: Bare handle from the snapshot
+  - automationId | name | elementRef: The target (one of them); scopeRef as for the other tools
 ```
 
 Returns an XML representation of the element's DataContext. Because the snapshot shows binding paths rather than current values, this is how to check ViewModel state, collection counts, computed properties, and flags such as `IsEnabled` or `IsChecked`. It needs a Pro or Business licence; on Community, read what the screenshot and the tree's text show, and report DataContext assertions as not run.
@@ -209,8 +217,8 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 
 1. Start the app
 2. Navigate to the form (if needed)
-3. Snapshot to find the input fields
-4. For each field, `uno_app_element_peer_action(elementRef, "setValue", ["value"])`; or click its bounds to focus it and `uno_app_type_text(text, intervalInMs: 50)`
+3. Take the fields' automation ids from the XAML (snapshot only if they have none)
+4. For each field, `uno_app_element_peer_action(automationId, "setValue", ["value"])` or `uno_app_type_text(text, intervalInMs: 50, automationId)`; without an id or name, snapshot for a handle, or click the field's bounds to focus it and type
 5. Submit the form
 6. Validate through screenshot or DataContext
 
@@ -233,8 +241,8 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 ## Best Practices
 
 ### Element Selection
-- **Prefer automation peers** over coordinate clicks
-- Look for elements with `x:Name` or `AutomationProperties.Name`, and suggest adding one when a test has to fall back to text or position
+- **Selectors first**: `automationId`, then `name`; a snapshot handle when the element has neither; coordinates last
+- Give every control a test touches an `AutomationProperties.AutomationId` (and an `x:Name` or `AutomationProperties.Name` where its text may vary); in an existing app, suggest them when a test has to fall back to text or position
 - Act on the named element, not on the `ContentPresenter` inside its template
 
 ### Test Stability

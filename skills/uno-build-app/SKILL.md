@@ -24,6 +24,7 @@ The developer's explicit instructions and the host's permissions always outrank 
 6. **Views do not do storage or network. Business rules do not reference views. Services are injected.**
 7. **No unrequested packages, SDK, feature or target changes, or migrations.** Never remove a target, an `UnoFeatures` entry or a build property to make a check pass or to simplify a scaffold.
 8. **Deliver real behaviour.** If the app presents data as saved, it persists. Do not simulate core behaviour unless the developer asked for a prototype. A missing backend or integration is reported as a gap, never faked.
+9. **Automation ids are part of the view.** Every control a person acts on (`Button`, `HyperlinkButton`, `TextBox`, `CheckBox`, `ToggleSwitch`, `ComboBox`, `Slider`, list and tab items, navigation items) and every element a check reads gets `AutomationProperties.AutomationId`, PascalCase, named for its role and unique on its page (`SaveButton`, `SearchBox`, `AssetsList`); inside an item template, bind it to the item's key. Write it with the element, never as a later pass: the `uno-testing` skill drives the app by `automationId` in one call, with no snapshot, and a control without one costs a snapshot or a coordinate click every time.
 
 ## Step 1: pick the mode
 

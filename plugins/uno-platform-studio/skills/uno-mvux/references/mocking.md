@@ -6,7 +6,7 @@ Referencing `Uno.HotTesting.Reactive` makes a source generator emit, for every M
 - `static partial class {Vm}Mock` — `Create()` and `Create({Model}Mock)` build the **real** view-model over the real model, with every constructor parameter null-injected, then apply the mock.
 - `SetMock(this {Vm}, {Model}Mock)` — swaps the mocked feeds on a live view-model.
 
-Only the members you set are replaced. From 8.0.0-dev.71 on, a derived feed computes over the mocked inputs, so the required members are enough; on an earlier version, set the derived members the page shows as well (see Critical Rules).
+Only the members you set are replaced. A derived feed computes over the mocked inputs, so the required members are enough: set a derived one only to override what it computes.
 
 ## Workflow
 
@@ -14,8 +14,8 @@ Only the members you set are replaced. From 8.0.0-dev.71 on, a derived feed comp
 
 Add `Uno.HotTesting.Reactive` to the project that holds the models, or to a test or preview project that references it. Both work.
 
-- **Use version 8.0.0-dev.14 or later.** No earlier version — the whole 7.x line included — ships the generator: it installs and builds, then generates nothing and says nothing. Each version brings the `Uno.Extensions.Reactive` of the same version with it. In an app already on Uno.Extensions 8.0, use that same version: there is nothing to look up. Otherwise, on Uno Platform 6, use 8.0.0-dev.14, the last version built for it. On Uno Platform 7, use 8.0.0-dev.71, which targets only `net10.0`: it is the first version in which derived feeds compute over mocked inputs. Hot Design does not run on Uno Platform 7 yet, so don't move an app to Uno 7 to get it.
-- **Check the app's Uno.Extensions version first** (`dotnet list package --include-transitive`). In an app still on Uno.Extensions 7.x, the package lifts `Uno.Extensions.Reactive` and `Uno.Extensions.Core` to 8.0 while every other Uno.Extensions package stays on 7.x. That mixed install can build and run, but Uno does not release those versions together. Tell the user before adding it, and offer the fallback under Critical Rules instead.
+- **Use version 7.4.0-dev.81 or later** (8.0.0-dev.71 or later on the 8.0 line). Earlier versions lack the generator or its fixes; most install and build, then generate nothing and say nothing. Each version brings the `Uno.Extensions.Reactive` of the same version with it, so in an app whose Uno.Extensions version qualifies, use that same version: there is nothing to look up. Uno.Sdk 6.8.0-dev.60 and later bring 7.4.0-dev.81 or later.
+- **Check the app's Uno.Extensions version first** (`dotnet list package --include-transitive`). In an app on an earlier version, such as the 7.3 that Uno.Sdk 6.7 brings, the package lifts `Uno.Extensions.Reactive` and `Uno.Extensions.Core` to its own version while every other Uno.Extensions package stays behind. That mixed install can build and run, but Uno does not release those versions together. Tell the user before adding it, and offer the fallback under Critical Rules instead.
 
 ### Step 2: Write against the generated names
 
@@ -46,7 +46,7 @@ using Uno.HotTesting.Reactive;
 var vm = RecipeViewModelMock.Create(new RecipeModelMock
 {
     Steps = ListFeedMock.Value(step1, step2, step3), // required: fed by the service
-    // StepsCount is derived: it computes 3 over the mocked Steps (earlier versions: see Critical Rules)
+    // StepsCount is derived: it computes 3 over the mocked Steps
 });
 ```
 
@@ -81,7 +81,6 @@ vm.SetMock(RecipeModelMock.Empty with
 - **A feed must reach its service through a lambda, not a method group.** `Feed.Async(Service.GetItems)` dereferences `Service` as soon as the property is read, and `Create` null-injects it — so `Create` throws, and inside a preview the only symptom is a blank page. Check every feed of the model before mocking it, rewrite each method group as `Feed.Async(async ct => await Service.GetItems(ct))` (same for `ListFeed.Async`), and tell the user you changed their model. The two forms behave the same at runtime.
 - **Give the page the view-model, not the model.** `{Vm}Mock.Create(...)` returns the generated view-model, which is what the page binds to.
 - **An `IState<T>` input is mocked as `IFeed<T>`** — assign `FeedMock.*` to it, not a `State`.
-- **Before 8.0.0-dev.71, set every derived member the page shows, not only the required ones.** On those versions, 8.0.0-dev.14 included, a derived feed left unset still reads the real input, not the mock, and fails on the null-injected service — the page shows nothing for it. Give it the value it would compute (`StepsCount = FeedMock.Value(3)`), and the matching state in a loading or error mock. From dev.71 on, set a derived member only to override what it computes. `{Model}Mock.Empty` sets only the required members.
 - **Use mocks only from previews and tests.** In an app project, use them from `HotDesignPreviews/` or from test code, never from the app's own pages or models.
 - **`Create` null-injects every constructor parameter.** A model that dereferences a service inside its constructor throws `NullReferenceException` from `Create`; keep model constructors to assignments.
 - **No mock generated?** Read the diagnostics before working around it:

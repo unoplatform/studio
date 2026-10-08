@@ -16,4 +16,5 @@ Rules that do not bend:
 - Ask only when the answer changes business rules, access, data ownership, payments, destructive behaviour or an external contract. Keep working on everything else meanwhile.
 - Exercise the first feature before repeating its pattern. Report what ran, what failed and what could not run, using the skill's report template except in Trivial edit and Diagnostic modes. Never claim a check you did not execute.
 - Views do not do storage or network. Business rules do not reference views. Services are injected.
+- Every control a person acts on, and every element a check reads, carries `AutomationProperties.AutomationId`, unique on its page, written with the XAML. The App MCP acts on it by `automationId` in one call, without a snapshot.
 - No unrequested packages, SDK changes, target changes or migrations.

@@ -1,42 +1,11 @@
 # Uno Material
 
-Consolidated reference for the Uno Material theme. For any deep dive (full key tables, code samples, version-specific gotchas), fetch the authoritative docs via the steps below; the inline tables here cover the most-asked-for facts for fast lookup.
+Reference for installing the Uno Material theme and using its control styles and control extensions. Material follows the MD3 role system; its palette keys (33 colors with Light/Dark variants), the 280 generated brushes, and the M3 type scale are the shared semantic keys in `references/semantic-colors-brushes.md`. Palette, brush, and font customization and version migration are in `references/material-customization.md`.
 
-## Workflow
-
-> **Docs lookup:** call `uno_platform_docs_search(...)` first, then `uno_platform_docs_fetch(sourcePath="…")` using the `sourcePath` field from a result (a relative `.md` path; add the result's `anchor` for a section). Never pass a URL, a `.html` link, or a hand-built path.
-
-### Step 1: Pick the relevant topic and search the docs
-
-| Topic | Search query |
-|---|---|
-| Installation / `MaterialTheme` / `UnoFeatures` | `uno_platform_docs_search("Uno Material installation MaterialTheme UnoFeatures")` |
-| Control styles (Button / TextBox / FAB / etc.) | `uno_platform_docs_search("Uno Material controls styles")` |
-| Color palette + brushes (MD3) | `uno_platform_docs_search("Uno Material colors brushes MD3 palette")` |
-| Typography / type scale | `uno_platform_docs_search("Uno Material typography type scale")` |
-| Lightweight styling (per-control overrides) | `uno_platform_docs_search("Uno Material lightweight styling resource keys")` |
-| Color customization / Theme Builder | `uno_platform_docs_search("Uno Material color customization Theme Builder DSP")` |
-| Font customization | `uno_platform_docs_search("Uno Material font customization font family override")` |
-| Control extensions (icons, elevation) | `uno_platform_docs_search("Uno Material control extensions icons elevation")` |
-| C# Markup with Material | `uno_platform_docs_search("Uno.Themes.WinUI.Markup C# Markup Material")` |
-| Version migration | `uno_platform_docs_search("Uno Material migration v1 v2 v3")` |
-
-### Step 2: Fetch the canonical pages
-
-- **Material Getting Started**: `external/uno.themes/doc/material-getting-started.md`
-- **Material Toolkit Getting Started**: `external/uno.toolkit.ui/doc/material-getting-started.md` (use `MaterialToolkitTheme` for Toolkit+Material)
-- **Material Controls Styles**: `external/uno.themes/doc/material-controls-styles.md`
-- **Lightweight Styling**: `external/uno.themes/doc/lightweight-styling.md`
-- **Material Migration**: `external/uno.themes/doc/material-migration.md`
-
-```
-uno_platform_docs_fetch(sourcePath="…")  # the sourcePath field from a search result above; never a URL/.html
-```
+**Docs searches** (`uno_platform_docs_search`): "Uno Material installation MaterialTheme UnoFeatures", "Uno Material controls styles", "Uno Material control extensions icons elevation", "Uno.Themes.WinUI.Markup C# Markup Material". The inline tables below are a fast lookup; the docs win when they disagree.
 
 ## Critical Rules
 
-- **Brushes use `{ThemeResource}`, NOT `{StaticResource}`** — so the bound color follows the active theme (Light / Dark) at runtime. `<TextBlock Foreground="{ThemeResource PrimaryBrush}" />`.
-- **Styles use `{StaticResource}`** — control styles don't change with the theme; their internal bindings already use ThemeResource for brushes.
 - **Use `MaterialToolkitTheme` or `MaterialTheme`, not both** — when using both Toolkit + Material, `MaterialToolkitTheme` replaces `MaterialTheme + ToolkitResources`. Mixing them double-loads resources. The Simple counterpart is `SimpleToolkitTheme` (see `references/simple.md`).
 
 ## Installation (quick reference)
@@ -86,52 +55,6 @@ Use `<MaterialToolkitTheme xmlns="using:Uno.Toolkit.UI.Material" />` if also usi
 | `OutlinedPasswordBoxStyle` | **Material implicit default** for PasswordBox |
 | `FilledPasswordBoxStyle` | Filled variant |
 
-## Color Palette Keys (Layer 1)
-
-Material follows the MD3 role system. 33 color keys with Light/Dark variants. Most-used role families:
-
-- **Primary**: `PrimaryColor`, `OnPrimaryColor`, `PrimaryContainerColor`, `OnPrimaryContainerColor`, `PrimaryInverseColor`
-- **Secondary**: `SecondaryColor`, `OnSecondaryColor`, `SecondaryContainerColor`, `OnSecondaryContainerColor`
-- **Tertiary**: `TertiaryColor`, `OnTertiaryColor`, `TertiaryContainerColor`, `OnTertiaryContainerColor`
-- **Error**: `ErrorColor`, `OnErrorColor`, `ErrorContainerColor`, `OnErrorContainerColor`
-- **Surface**: `SurfaceColor`, `OnSurfaceColor`, `SurfaceVariantColor`, `OnSurfaceVariantColor`, `SurfaceInverseColor`, `OnSurfaceInverseColor`, `SurfaceTintColor`
-- **Background / Outline / Shadow**: `BackgroundColor`, `OnBackgroundColor`, `OutlineColor`, `OutlineVariantColor`, `ShadowColor`
-
-**Pairing rule**: every background role has a designated foreground role. `PrimaryBrush` ↔ `OnPrimaryBrush`. `ErrorContainerBrush` ↔ `OnErrorContainerBrush`. Don't mix unpaired colors. (See `references/semantic-colors-brushes.md` for the shared semantic surface common to Material + Simple.)
-
-## Brush System (Layer 2)
-
-Each color key generates ~9 brush variants with opacity tokens. Pattern: `{ColorRole}{StateVariant}Brush`.
-
-| Suffix | Opacity | Purpose |
-|---|---|---|
-| *(none)* | 1.0 | Rest state |
-| `Hover` | 0.08 | Pointer hover layer |
-| `Focused` | 0.12 | Keyboard focus layer |
-| `Pressed` | 0.12 | Active press layer |
-| `Dragged` | 0.16 | Drag operation layer |
-| `Selected` | 0.08 | Selected item layer |
-| `Medium` | 0.64 | Medium-emphasis text/icons |
-| `Low` | 0.32 | Low-emphasis text, placeholders |
-| `Disabled` | 0.12 | Disabled state |
-
-Total: 280 brushes generated from the palette + opacity tokens.
-
-## Typography (Layer)
-
-M3 type scale, used as `TextBlock` styles. **Never theme-prefix typography keys** — write `DisplayLarge`, not `MaterialDisplayLarge`.
-
-| Family | Keys |
-|---|---|
-| Display | `DisplayLarge`, `DisplayMedium`, `DisplaySmall` |
-| Headline | `HeadlineLarge`, `HeadlineMedium`, `HeadlineSmall` |
-| Title | `TitleLarge`, `TitleMedium`, `TitleSmall` |
-| Body | `BodyLarge`, `BodyMedium`, `BodySmall` |
-| Label | `LabelLarge`, `LabelMedium`, `LabelSmall`, `LabelExtraSmall` |
-| Caption | `CaptionLarge`, `CaptionMedium`, `CaptionSmall` |
-
-Each style exposes `{StyleKey}FontFamily`, `FontSize`, `FontWeight` resource keys for lightweight styling overrides.
-
 ## Control Extensions
 
 Uno Themes ships attached properties (`ControlExtensions`, `xmlns:ut="using:Uno.Themes"`) that the Material templates consume:
@@ -139,16 +62,6 @@ Uno Themes ships attached properties (`ControlExtensions`, `xmlns:ut="using:Uno.
 - **`ut:ControlExtensions.Icon`** — adds an icon to a `Button` (esp. `IconButtonStyle`), `TextBox`, `ComboBox`, `PasswordBox`; Material renders it as the leading icon. `ut:ControlExtensions.LeadingIcon` / `TrailingIcon` are consumed only by Simple's `Button` and `ToggleButton` templates.
 - **`ut:ControlExtensions.Elevation`** — MD3 elevation, applied by `ElevatedButtonStyle`.
 - **`ut:ControlExtensions.AlternateContent`** — content shown when `ToggleButton.IsChecked` is true.
-
-## Customization
-
-Three escalating scopes:
-
-1. **Palette override (full cascade)** — override `*Color` keys through `MaterialTheme.Colors`: `<MaterialTheme.Colors><ut:ThemeColors xmlns:ut="using:Uno.Themes" OverrideSource="ms-appx:///Styles/ColorPaletteOverride.xaml" /></MaterialTheme.Colors>` (or `OverrideDictionary`). `ColorOverrideSource` / `ColorOverrideDictionary` on the theme are obsolete but still work; the template still emits `ColorOverrideSource`, so migrate it when touching that line. All 280 brushes and controls update automatically. Generate the palette XAML via **Material Theme Builder** (DSP format), or skip the file and set seeds: `<ut:ThemeColors PrimarySeed="#0F62FE" SecondarySeed="..." TertiarySeed="..." />` (see `external/uno.themes/doc/seed-colors.md`).
-2. **Specific brush override (targeted)** — drop a `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` into App.xaml or scoped resources.
-3. **Per-instance override (scoped)** — wrap the override in the control's `Resources` block.
-
-Font override: set `DefaultFontFamily` on the theme (`<MaterialTheme DefaultFontFamily="ms-appx:///Fonts/MyFont.ttf#MyFont" />`, a variable font or one with a font manifest); it generates the root token and every type-scale `*FontFamily` key. Use `FontOverrideSource` / `FontOverrideDictionary` only to override individual font keys. The `MaterialRegularFontFamily` / `MaterialMediumFontFamily` / `MaterialLightFontFamily` keys still exist but are legacy, and the 7.1.1 `TypefacePlain` / `TypefaceBrand` pair the docs site may still show is removed in 8.0 (an override that defines them is silently ignored).
 
 ## C# Markup
 
@@ -161,18 +74,9 @@ new Button().Content("Save").Style(Theme.Button.Styles.Filled)
 // e.g. Theme.Button.Resources.Filled.Background.Default for a resource key
 ```
 
-## Migration
-
-Between major versions, resource keys, converters, and style names can change. Fetch the migration page on upgrade:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.themes/doc/material-migration.md")
-```
-
-Key checks: renamed resource keys, removed converters, NuGet package renames, `UnoFeatures` flag changes. Uno.Themes 8.0 removes `SimpleFontFamily` and the per-weight font keys (root token `DefaultFontFamily`) and reworks seed generation (`SeedColorMode`).
-
 ## Related Skills
 
 - `references/semantic-colors-brushes.md` — Shared semantic design language (style keys + typography + colors that work across Material AND Simple themes). Read this first if styling needs to be portable between themes.
-- `references/simple.md` — Simple theme specifics. Use when targeting Simple (the template default) or its theme-specific styles (danger buttons, utility brushes, PersonPicture, etc.).
+- `references/material-customization.md` — palette, brush, and font overrides, Theme Builder, migration between versions.
+- `references/simple.md` — Simple theme setup and customization; `references/simple-styles.md` — its theme-specific styles (danger buttons, utility brushes, PersonPicture, etc.). Use when targeting Simple (the template default).
 - the `uno-toolkit` skill (`references/material-theme.md`) — `MaterialToolkitTheme` setup for Toolkit + Material.

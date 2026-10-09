@@ -24,10 +24,10 @@ Uno Themes supplies the look of an Uno Platform app through one of two design th
 | Which brush for text on a surface, an error banner, a snackbar, a CTA | `references/semantic-colors-brushes.md` (Decision Guides) | `OnSurfaceBrush`, `OnSurfaceVariantBrush`, `ErrorContainerBrush`, `SurfaceInverseBrush` |
 | Understand palette → brushes → control keys and override precedence | `references/semantic-colors-brushes.md` (Part 3, Part 4) | `*Color` keys, `{Role}{State}Brush`, `FilledButtonBackground` |
 | Install Material, set up `MaterialTheme`, Material control styles, FAB, elevation, icons | `references/material.md` | `<UnoFeatures>Material</UnoFeatures>`, `MaterialTheme`, `ut:ControlExtensions.Icon`, `FabStyle` |
-| Customize the primary color or fonts for Material, Theme Builder, migration between versions | `references/material.md` (Customization, Migration) | `Colors` (`ThemeColors.OverrideSource` / `PrimarySeed`), `DefaultFontFamily`, `material-migration.md` |
+| Customize the primary color or fonts for Material, Theme Builder, migration between versions | `references/material-customization.md` | `Colors` (`ThemeColors.OverrideSource` / `PrimarySeed`), `DefaultFontFamily`, `material-migration.md` |
 | Simple theme (the template default), `SimpleTheme`, grayscale palette, Inter font, density and corner radius | `references/simple.md` | `<UnoFeatures>SimpleTheme</UnoFeatures>`, `SimpleTheme`, `DefaultDensity`, `DefaultCornerRadius` |
-| Danger buttons, error inputs, Expander, AutoSuggestBox, ToolTip, PersonPicture, overlay/scrim brushes | `references/simple.md` (Simple-Only Style Keys, Utility Brushes) | `SimpleDangerPrimaryButtonStyle`, `SimpleTextBoxErrorStyle`, `SimpleBackgroundUtilitiesScrimBrush` |
-| Change one control's color without touching the palette | `references/semantic-colors-brushes.md` (Part 4) or `references/material.md` (Customization) | Layer 3 keys such as `FilledButtonBackground`, `Control.Resources` |
+| Danger buttons, error inputs, Expander, AutoSuggestBox, ToolTip, PersonPicture, overlay/scrim brushes | `references/simple-styles.md` | `SimpleDangerPrimaryButtonStyle`, `SimpleTextBoxErrorStyle`, `SimpleBackgroundUtilitiesScrimBrush` |
+| Change one control's color without touching the palette | `references/semantic-colors-brushes.md` (Part 4) or `references/material-customization.md` | Layer 3 keys such as `FilledButtonBackground`, `Control.Resources` |
 | Style Uno Toolkit controls or configure `MaterialToolkitTheme` / `SimpleToolkitTheme` / `CupertinoToolkitResources` | the `uno-toolkit` skill (`references/material-theme.md`, `references/lightweight-styling.md`) | `MaterialToolkitTheme`, `SimpleToolkitTheme` |
 
 ## Critical rules

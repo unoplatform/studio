@@ -138,6 +138,50 @@ try {
             if (-not $routed.Contains($name)) { $errors.Add("${skill}: does not route to 'references/$name'") }
         }
     }
+
+    # --- Size report. Every file an agent reads stays in its context and is re-read on each later
+    # call, so references get a budget. Larger files are split by task; templates and lookup tables
+    # that should not be split are exempt but need a table of contents (an `](#` link near the top).
+    # ponytail: 4 chars/token is a fixed estimate; recalibrate against the real tokenizer if it drifts.
+    $charsPerToken = 4
+    $referenceBudget = 6000
+    $exempt = @{
+        'uno-navigation/references/shell-navigationview-template.md' = 'complete template'
+        'uno-navigation/references/shell-responsive-template.md'     = 'complete template'
+        'uno-navigation/references/shell-tabbar-template.md'         = 'complete template'
+        'uno-themes/references/semantic-colors-brushes.md'           = 'lookup table'
+    }
+    $budget = [System.Collections.Generic.List[string]]::new()
+    $sizes = foreach ($f in Get-ChildItem "$plugin/skills" -Recurse -File) {
+        $path = [IO.Path]::GetRelativePath("$root/$plugin/skills", $f.FullName) -replace '\\', '/'
+        # Count LF line endings so a Windows (CRLF) checkout reports what CI reports.
+        $chars = ((Get-Content $f.FullName -Raw) -replace "`r`n", "`n").Length
+        $note = ''
+        if ($f.Directory.Name -eq 'references' -and $chars -gt $referenceBudget) {
+            if ($exempt[$path]) {
+                $note = "exempt: $($exempt[$path])"
+                if (-not ((Get-Content $f.FullName -TotalCount 30) -match '\]\(#')) { $budget.Add("${path}: exempt from the size budget ($($exempt[$path])) but has no table of contents in its first 30 lines") }
+            }
+            else {
+                $note = 'over budget'
+                $budget.Add("${path}: $chars characters, over the $referenceBudget-character reference budget (split it by task)")
+            }
+        }
+        [pscustomobject]@{ File = $path; Characters = $chars; Tokens = [int]($chars / $charsPerToken); Note = $note }
+    }
+    $sizes = $sizes | Sort-Object Characters -Descending
+    $total = ($sizes | Measure-Object Characters -Sum).Sum
+    $sizes | Format-Table -AutoSize | Out-String | Write-Host
+    Write-Host "Total: $total characters, ~$([int]($total / $charsPerToken)) tokens at $charsPerToken characters per token."
+    if ($env:GITHUB_STEP_SUMMARY) {
+        @(
+            '## Skill file sizes', '',
+            "Estimated tokens = characters / $charsPerToken. Reference budget: $referenceBudget characters.", '',
+            '| File | Characters | ~Tokens | Note |', '|---|--:|--:|---|'
+            $sizes | ForEach-Object { "| ``$($_.File)`` | $($_.Characters) | $($_.Tokens) | $($_.Note) |" }
+            "| **Total** | $total | $([int]($total / $charsPerToken)) | |"
+        ) | Add-Content $env:GITHUB_STEP_SUMMARY
+    }
 }
 finally {
     Pop-Location
@@ -145,5 +189,7 @@ finally {
 
 $prefix = $env:GITHUB_ACTIONS ? '::error::' : 'ERROR: '
 $errors | ForEach-Object { Write-Host "$prefix$_" }
+# Warnings until the oversized references are split (#161); then these move to $errors.
+$budget | ForEach-Object { Write-Host "$($env:GITHUB_ACTIONS ? '::warning::' : 'WARNING: ')$_" }
 if ($errors.Count) { exit 1 }
 Write-Host "Plugin checks passed (version $version)."

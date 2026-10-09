@@ -13,8 +13,6 @@ For a complete, compilable Frame-based shell with parameterized placeholders, se
 
 ## Workflow
 
-> **Docs lookup:** call `uno_platform_docs_search(...)` first, then `uno_platform_docs_fetch(sourcePath="…")` using the `sourcePath` field from a result (a relative `.md` path; add the result's `anchor` for a section). Never pass a URL, a `.html` link, or a hand-built path.
-
 ### Step 1: Fetch the XAML Navigation Documentation
 
 ```

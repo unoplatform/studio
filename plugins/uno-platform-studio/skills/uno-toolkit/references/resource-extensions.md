@@ -2,8 +2,6 @@
 
 ## Workflow
 
-> **Docs lookup:** call `uno_platform_docs_search(...)` first, then `uno_platform_docs_fetch(sourcePath="…")` using the `sourcePath` field from a result (a relative `.md` path; add the result's `anchor` for a section). Never pass a URL, a `.html` link, or a hand-built path.
-
 ### Step 1: Fetch the ResourceExtensions Documentation
 
 ```
@@ -37,4 +35,4 @@ uno_platform_docs_search("ResourceExtensions Resources attached property diction
 ## Related Skills
 
 - `references/lightweight-styling.md` — General lightweight styling approach
-- the `uno-themes` skill (`references/material.md`) — Material lightweight styling
+- the `uno-themes` skill (`references/material-customization.md`) — Material lightweight styling

@@ -2,6 +2,8 @@
 
 Ready-to-use template for a responsive navigation shell that switches between a bottom TabBar on narrow screens and a sidebar NavigationView on wide screens.
 
+**Contents:** [Icon Lookup Table](#icon-lookup-table) · [Required XAML Namespaces](#required-xaml-namespaces) · [SHELL_PAGE_NAME.xaml (Responsive Shell)](#shell_page_namexaml-responsive-shell) · [Breakpoint Summary](#breakpoint-summary) · [Route Registration (App.xaml.cs)](#route-registration-appxamlcs) · [Substitution Rules](#substitution-rules)
+
 ## Icon Lookup Table
 
 | Page Concept | Glyph | Unicode |

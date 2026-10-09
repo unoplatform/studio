@@ -1,6 +1,6 @@
 ---
 name: uno-platform
-description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-testing) and sets the project-wide rules that apply before any of them."
+description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-testing) and sets the project-wide rules that apply before any of them."
 metadata:
   author: uno-platform
   category: overview
@@ -20,6 +20,7 @@ Most real requests touch two or three domains. Load every one that applies.
 | Pages, routes, back navigation, dialogs, tab bars, navigation drawers, passing data between pages, app shell | `uno-navigation` |
 | Uno Toolkit controls (`TabBar`, `NavigationBar`, `CardContentControl`, `Chip`, `DrawerControl`, `SafeArea`, `AutoLayout`, `LoadingView`, `ShadowContainer`, and more) or its attached-property extensions | `uno-toolkit` |
 | Colors, brushes, typography, Material Design 3, the Simple theme, dark mode, restyling controls, theme resource keys | `uno-themes` |
+| Login, sign-in and sign-out, user accounts, tokens on API calls, Microsoft Entra ID (MSAL), OpenID Connect, protected pages | `uno-authentication` |
 | Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (the Uno App MCP, or the platform accessibility tree for Release builds) | `uno-testing` |
 
 Worked examples:
@@ -41,4 +42,4 @@ Worked examples:
 
 ## New app scaffolding
 
-For a new project, the typical stack this plugin supports is MVUX + Navigation + Toolkit with the Simple theme, which is what `dotnet new unoapp -preset recommended` generates; use Material when the brief asks for Material Design. An app created with `-preset blank` uses Fluent and has no `SimpleTheme` or `MaterialTheme`, so no semantic brush, typography, or style key from `uno-themes` resolves there: use the WinUI resources, or add a theme only with the user's consent. If the user asks for MVVM, use `Mvvm` instead of `MVUX` and skip `uno-mvux`. Read `uno-navigation` (`references/setup.md` and one shell template), `uno-mvux` (`references/overview.md`), and `uno-toolkit` (`references/getting-started.md`) in that order, then build the shell before individual pages.
+For a new project, the typical stack this plugin supports is MVUX + Navigation + Toolkit with the Simple theme, which is what `dotnet new unoapp -preset recommended` generates; use Material when the brief asks for Material Design. An app created with `-preset blank` uses Fluent and has no `SimpleTheme` or `MaterialTheme`, so no semantic brush, typography, or style key from `uno-themes` resolves there: use the WinUI resources, or add a theme only with the user's consent. If the user asks for MVVM, use `Mvvm` instead of `MVUX` and skip `uno-mvux`. If users must sign in, add `-auth` to the template command and load `uno-authentication`. Read `uno-navigation` (`references/setup.md` and one shell template), `uno-mvux` (`references/overview.md`), and `uno-toolkit` (`references/getting-started.md`) in that order, then build the shell before individual pages.

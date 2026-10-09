@@ -48,6 +48,7 @@ The Uno App MCP server exposes tools that let an agent:
 | Tool | Description |
 |------|-------------|
 | `uno_app_get_screenshot` | Captures the window, or one element, as an image |
+| `uno_app_find_elements` | Returns only the elements matching `automationId`, `name`, `text` or `type`, each with its `{state}`; waits with `waitForMs`. The locate and assert tool |
 | `uno_app_visualtree_snapshot` | Returns the visual tree as an indented text outline with element handles |
 | `uno_app_get_element_datacontext` | Pro or Business licence. Returns an element's DataContext as XML |
 
@@ -112,6 +113,33 @@ The result is a text outline, one element per line:
 The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is stripped with a warning); `#Name` is the `x:Name` or `AutomationProperties.Name`; `[i]` lists the supported automation patterns; `Prop={Path}` shows a binding path, not its value. `references/VISUAL-TREE-GUIDE.md` explains every token.
 
 **Tip:** use `detail: "normal"` when you will act on elements, and `elementRef` to keep a large page's tree small. Do not scope a snapshot you take for click coordinates: `@@` bounds are relative to the snapshot root, and clicks are relative to the window.
+
+### Finding Elements and Reading Their State
+
+```
+Tool: uno_app_find_elements
+Parameters (at least one selector; several combine with AND):
+  - automationId: AutomationProperties.AutomationId, exact and case-sensitive
+  - name: x:Name or AutomationProperties.Name (the snapshot's #Name), exact
+  - text: the element's text (TextBlock/TextBox text, string Content), exact; textContains: true for a substring
+  - type: short control type name as the snapshot prints it ("Button", "TextBox")
+  - scopeRef: handle of an element whose subtree bounds the search (one list item, one dialog)
+  - includeHidden: default true; collapsed matches carry !hidden, so false asserts absence from view
+  - detail: "normal" (default: patterns, {state}, bindings), "compact", or "full" (adds @@x,y,w,h bounds)
+  - maxResults: default 20, max 100; the header always has the total
+  - waitForMs: re-check every 100 ms until at least one element matches, max 10000; the header says (waited Ws)
+```
+
+The result is a header, `N matched <selectors>`, then one snapshot line per match with a fresh handle and a `{state}` group:
+
+```
+1 matched automationId=SubmitButton
+Button ^7 #SubmitButton :41 [i] {disabled}  "Submit"  @ Views/NewInspectionPage.xaml
+```
+
+State tokens: `disabled` (IsEnabled false), `checked|unchecked|indeterminate`, `selected`, `expanded|collapsed`, `value=<v>` (slider, progress), `items=<n>` (an `ItemsControl`'s item count), `selectedIndex=<n>`; a token that does not apply is absent, and `!hidden` marks `Visibility.Collapsed`. Zero matches is a normal result; only an invalid query, an unresolvable `scopeRef` or a lost connection is an error. The tool needs the Community licence or better, like the snapshot.
+
+This is the call after every action: `find_elements(automationId: "AssetsList", waitForMs: 2000)` and read `{items=12}`; `find_elements(text: "Saved", textContains: true, waitForMs: 3000)` for a confirmation; `find_elements(automationId: "LoadingRing", includeHidden: false)` and expect `0 matched` before asserting the content. It replaces the snapshot-and-read loop and the screenshot-and-look loop for every question the tree can answer.
 
 ### Interacting with Elements
 
@@ -200,7 +228,7 @@ Parameters:
   - automationId | name | elementRef: The target (one of them); scopeRef as for the other tools
 ```
 
-Returns an XML representation of the element's DataContext. Because the snapshot shows binding paths rather than current values, this is how to check ViewModel state, collection counts, computed properties, and flags such as `IsEnabled` or `IsChecked`. It needs a Pro or Business licence; on Community, read what the screenshot and the tree's text show, and report DataContext assertions as not run.
+Returns an XML representation of the element's DataContext. `uno_app_find_elements` already reports `IsEnabled`, checked, selected, expanded, value, item count and selected index in its `{state}` group; use the DataContext for the values it does not carry: ViewModel properties, computed results, the content of a bound record. It needs a Pro or Business licence; on Community, read what the screenshot and the tree's text show, and report DataContext assertions as not run.
 
 ## Testing Patterns
 
@@ -220,7 +248,7 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 3. Take the fields' automation ids from the XAML (snapshot only if they have none)
 4. For each field, `uno_app_element_peer_action(automationId, "setValue", ["value"])` or `uno_app_type_text(text, intervalInMs: 50, automationId)`; without an id or name, snapshot for a handle, or click the field's bounds to focus it and type
 5. Submit the form
-6. Validate through screenshot or DataContext
+6. Validate with `uno_app_find_elements(waitForMs)`: the success element present, the error text absent, the submit button's `{state}`; the DataContext for a saved value; a screenshot only for a visual check
 
 ### Pattern 3: Navigation Test
 
@@ -247,13 +275,13 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 
 ### Test Stability
 - Confirm the app is connected with `uno_app_get_runtime_info` before testing
-- Refresh the visual tree after actions that change UI state
-- Poll rather than sleep: re-snapshot until the expected element appears
+- After an action, `uno_app_find_elements` with `waitForMs` on the element that should change; do not re-snapshot
+- Poll rather than sleep: `waitForMs` does the polling, up to 10 s per call
 
 ### Assertions
-- Use screenshots for visual validation
-- Use `uno_app_get_element_datacontext` for values
-- Check the visual tree for presence and absence
+- `uno_app_find_elements` for presence, absence, text and state (`{disabled}`, `{checked}`, `{items=N}`)
+- `uno_app_get_element_datacontext` for values the state group does not carry
+- Screenshots for visual validation only, never to learn whether an action worked
 
 ### Cleanup
 - Call `uno_app_close` at the end of tests (desktop), and before any rebuild

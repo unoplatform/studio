@@ -1,0 +1,17 @@
+{
+  "description": "After a .xaml or .cs edit, remind the agent that the running Uno app picks the change up through Hot Reload, so it asserts with uno_app_find_elements instead of restarting the app.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hot-reload-edit.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

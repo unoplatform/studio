@@ -17,4 +17,5 @@ Rules that do not bend:
 - Exercise the first feature before repeating its pattern. Report what ran, what failed and what could not run, using the skill's report template except in Trivial edit and Diagnostic modes. Never claim a check you did not execute.
 - Views do not do storage or network. Business rules do not reference views. Services are injected.
 - Every control a person acts on, and every element a check reads, carries `AutomationProperties.AutomationId`, unique on its page, written with the XAML. The App MCP acts on it by `automationId` in one call, without a snapshot.
+- In an app you created, `App.xaml.cs` calls `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);` under `#if DEBUG`: no Hot Reload indicator or Hot Design button over the app, and Hot Design never opens by itself. Hot Reload and the App MCP keep working. In an existing app, ask before changing the call.
 - No unrequested packages, SDK changes, target changes or migrations.

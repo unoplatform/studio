@@ -86,7 +86,7 @@ Each call terminates any app the tool already started. After it returns, confirm
 
 **WebAssembly targets:** the tool starts the dev server and returns the app URL. A browser must open that URL before the runtime tools work; `connectionTimeoutSeconds` waits for it.
 
-**Hot Design at start:** the template's `MainWindow.UseStudio();` (in `App.xaml.cs`, under `#if DEBUG`) opens Hot Design by itself on the app's first launch, and whenever it was active in the previous session. Its designer and introduction overlay cover the app, and the visual tree does not include them, so the tree looks normal while screenshots and clicks hit the designer. Before starting the app, the call should be `MainWindow.UseStudio(launchHotDesignOnStart: false);`: change it yourself in an app you created, and ask the developer first in an existing app. `true` always opens Hot Design and `null` (the default) restores the last session's state. The `UNO_HOTDESIGN_LAUNCH` environment variable and the `UnoHotDesignLaunch` MSBuild property override the argument.
+**Studio's UI over the app:** the template's `MainWindow.UseStudio();` (in `App.xaml.cs`, under `#if DEBUG`) shows the Hot Reload indicator and the Hot Design button over the app, and opens Hot Design by itself on the app's first launch, and whenever it was active in the previous session. Its designer and introduction overlay cover the app, and the visual tree does not include them, so the tree looks normal while screenshots and clicks hit the designer. Before starting the app, the call should be `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);`: change it yourself in an app you created, and ask the developer first in an existing app. `showHotReloadIndicator: false` removes the overlay (Hot Reload and the App MCP are unaffected); for `launchHotDesignOnStart`, `true` always opens Hot Design and `null` (the default) restores the last session's state. The `UNO_HOTDESIGN_LAUNCH` environment variable and the `UnoHotDesignLaunch` MSBuild property override the argument.
 
 **Before rebuilding:** call `uno_app_close`. A running app locks its `bin` folder, and `dotnet build` or the next `uno_app_start` then fails with `MSB3026`/`MSB3027` copy errors.
 
@@ -268,7 +268,7 @@ Returns an XML representation of the element's DataContext. Because the snapshot
 - Do not call `uno_app_start` again until you know the process has died
 
 ### Screenshots show the Hot Design designer, or clicks do nothing, while the tree looks normal
-- Hot Design opened over the app. Set `MainWindow.UseStudio(launchHotDesignOnStart: false);` in `App.xaml.cs` (in an existing app, only after the developer agrees; otherwise ask them to exit Hot Design in the app window), `uno_app_close`, and start the app again
+- Hot Design opened over the app, or its indicator is in the screenshots. Set `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);` in `App.xaml.cs` (in an existing app, only after the developer agrees; otherwise ask them to exit Hot Design in the app window), `uno_app_close`, and start the app again
 
 ### Build fails with MSB3026/MSB3027 (file in use)
 - The previous instance is still running: `uno_app_close`, then build again

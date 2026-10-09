@@ -41,4 +41,4 @@ Everything else you notice (a stale binding on another page, a hard-coded colour
 
 Adding a package, a `UnoFeatures` entry, or changing the SDK, target list or theme is a dependency change, even when it would make the feature easier. State the concrete reason and follow the host's approval policy. Prefer an implementation that needs no new dependency.
 
-The same goes for changing how the app starts under the debugger. Runtime checks work best with `MainWindow.UseStudio(launchHotDesignOnStart: false);` in `App.xaml.cs`, but in an existing app ask the developer before changing that call. The `uno-testing` skill covers what to do if they decline.
+The same goes for changing how the app starts under the debugger. Runtime checks work best with `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);` in `App.xaml.cs`, but in an existing app ask the developer before changing that call. The `uno-testing` skill covers what to do if they decline.

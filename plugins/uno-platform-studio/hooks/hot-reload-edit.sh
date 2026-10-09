@@ -4,4 +4,4 @@
 # Reads the hook JSON on stdin; prints nothing for other files.
 input=$(cat)
 printf '%s' "$input" | grep -Eq '"file_path" *: *"[^"]*\.(xaml|cs)"' || exit 0
-printf '%s' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"An Uno app source file changed. If the app is running under the App MCP and has been up for about 15 s, Hot Reload applies this edit within a few seconds (a C# edit recreates the current page): assert with uno_app_find_elements(waitForMs) instead of calling uno_app_start. Start again only for a new file, a .csproj or package change, launch arguments, platform, app data or a Release build."}}'
+printf '%s' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"An Uno app source file changed. If the app is running under the App MCP, Hot Reload applies this edit within a few seconds (a C# edit recreates the current page): confirm it with uno_app_hot_reload_status(file) when that tool is available, then assert with uno_app_find_elements(waitForMs), instead of calling uno_app_start. Start again only for a new file, a .csproj or package change, launch arguments, platform, app data or a Release build."}}'

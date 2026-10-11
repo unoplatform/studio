@@ -23,13 +23,14 @@ The Uno App MCP server exposes tools that let an agent:
 ## Quick Start Workflow
 
 1. **Build once** → `dotnet build <app>.csproj -f net10.0-desktop`, so compile errors surface as build output
-2. **Start the app** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`
+2. **Start the app once** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`; its result ends with a `Hot Reload:` line
 3. **Verify it is connected** → `uno_app_get_runtime_info` (poll it; never call `uno_app_start` again to "retry")
 4. **Capture the initial screenshot** → `uno_app_get_screenshot(fileType: "png")`
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
 6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
-7. **Validate results** → screenshots, the visual tree, and DataContext
-8. **Close the app** → `uno_app_close`, always before the next build
+7. **Validate results** → `uno_app_find_elements`, DataContext, screenshots
+8. **Fix in the running app** → edit the file, `uno_app_hot_reload_status(file, waitForMs: 10000)`, then back to step 6; `NOT applied` returns the compiler diagnostics (no `dotnet build`), `RudeEdit` is the only reason to close and start again
+9. **Close the app** → `uno_app_close` at the end, or before a start the skill's rules allow
 
 ## Available MCP Tools
 
@@ -38,7 +39,8 @@ The Uno App MCP server exposes tools that let an agent:
 | Tool | Description |
 |------|-------------|
 | `uno_app_start` | Builds and starts the application in debug mode with Hot Reload; kills any instance it already started |
-| `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) |
+| `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) and its Hot Reload state |
+| `uno_app_hot_reload_status` | Reports the Hot Reload state and recent operations; with `file` and `waitForMs`, waits for the operation covering your edit and reports `applied`, or `NOT applied` with the compiler diagnostics, or `RudeEdit`; `waitForReady: true` waits for Hot Reload to leave `Initializing` |
 | `uno_app_get_memory_counters` | Business licence only. Returns the running app's memory counters (for example total available memory); useful for leak checks across a flow |
 | `uno_app_close` | Terminates the running application (desktop only) |
 | `uno_devserver_diagnostics` | Reports the DevServer port, solution, instance count, and last launch outcome without changing anything |
@@ -89,7 +91,7 @@ Each call terminates any app the tool already started. After it returns, confirm
 
 **Studio's UI over the app:** the template's `MainWindow.UseStudio();` (in `App.xaml.cs`, under `#if DEBUG`) shows the Hot Reload indicator and the Hot Design button over the app, and opens Hot Design by itself on the app's first launch, and whenever it was active in the previous session. Its designer and introduction overlay cover the app, and the visual tree does not include them, so the tree looks normal while screenshots and clicks hit the designer. Before starting the app, the call should be `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);`: change it yourself in an app you created, and ask the developer first in an existing app. `showHotReloadIndicator: false` removes the overlay (Hot Reload and the App MCP are unaffected); for `launchHotDesignOnStart`, `true` always opens Hot Design and `null` (the default) restores the last session's state. The `UNO_HOTDESIGN_LAUNCH` environment variable and the `UnoHotDesignLaunch` MSBuild property override the argument.
 
-**Before rebuilding:** call `uno_app_close`. A running app locks its `bin` folder, and `dotnet build` or the next `uno_app_start` then fails with `MSB3026`/`MSB3027` copy errors.
+**Before rebuilding:** first ask whether a rebuild is needed at all: an edit to an existing `.xaml` or `.cs` file reaches the running app through Hot Reload, and `uno_app_hot_reload_status(file)` reports it with the compiler diagnostics when it failed. When a start is needed (launch arguments, platform, app data, a Release build, the `.csproj` or packages, startup code, or a reported `RudeEdit`), call `uno_app_close` first. A running app locks its `bin` folder, and `dotnet build` or the next `uno_app_start` then fails with `MSB3026`/`MSB3027` copy errors.
 
 ### Inspecting the Visual Tree
 

@@ -45,6 +45,8 @@ fi
 out=$("$cli" --solution-dir "$sln_dir" app hot-reload-status --no-start --file "$file" --waitForMs 8000 2>/dev/null)
 code=$?
 verdict=$(printf '%s' "$out" | tr -d '\r' | grep '^edit to ' | head -1)
+# A host with no connected app answers without a verdict (and exit code 0): nothing ran the edit.
+[ -n "$verdict" ] || remind
 
 case $code in
 	0) printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"Hot Reload $(json_escape "$verdict") The running app now runs this edit (a C# edit recreated the current page: navigate back to the state under test). Assert with uno_app_find_elements(waitForMs); do not dotnet build, uno_app_close or uno_app_start.\"}}" ;;

@@ -1,6 +1,6 @@
 #!/bin/sh
 # PostToolUse on Edit|Write|MultiEdit. After an edit to a .xaml or .cs file, ask the DevServer whether the
-# running Uno app applied it through Hot Reload (`uno-devserver app hot-reload`), and tell the agent the
+# running Uno app applied it through Hot Reload (`uno-devserver app hot-reload-status`), and tell the agent the
 # result: applied -> assert; not applied -> the compiler diagnostics; rude edit -> start the app again.
 # Without the CLI, a running DevServer, or the status tool, it falls back to the reminder that Hot Reload
 # applies the edit. Reads the hook JSON on stdin; prints nothing for other files.
@@ -33,7 +33,7 @@ done
 # the tools list answers at once, where a status call for a missing tool would wait for it.
 "$cli" --solution-dir "$sln_dir" app tools --no-start 2>/dev/null | grep -q uno_app_hot_reload_status || remind
 
-out=$("$cli" --solution-dir "$sln_dir" app hot-reload --no-start --file "$file" --waitForMs 8000 2>/dev/null)
+out=$("$cli" --solution-dir "$sln_dir" app hot-reload-status --no-start --file "$file" --waitForMs 8000 2>/dev/null)
 code=$?
 verdict=$(printf '%s' "$out" | tr -d '\r' | grep '^edit to ' | head -1)
 

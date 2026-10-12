@@ -9,6 +9,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
 | `skills/` | The `uno-build-app` workflow skill and six domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 | `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
+| `hooks/` | Claude Code hooks. After an edit to a `.xaml` or `.cs` file, `PostToolUse` reminds the agent that the running app picks the change up through Hot Reload, so it asserts instead of restarting. |
 
 | Skill | Covers | References |
 |---|---|---|
@@ -160,6 +161,7 @@ Versions before 2.0 shipped one skill per topic (`uno-mvux-feed-basics`, `uno-to
 |---|---|
 | `.claude-plugin/plugin.json` | Claude Code, GitHub Copilot CLI, Copilot in VS Code |
 | `.codex-plugin/plugin.json` | OpenAI Codex CLI |
+| `hooks/hooks.json` | Claude Code (hooks only) |
 
 ## Releasing
 

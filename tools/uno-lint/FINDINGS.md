@@ -10,7 +10,7 @@ preserved), C# with Roslyn syntax trees, so comments and strings can no longer t
 
 | Piece | State |
 |---|---|
-| Rule library, 9 rules + 4 info counters | done, 78 unit tests passing |
+| Rule library, 10 rules + 4 info counters + suppression counts | done, 110 unit tests passing |
 | CLI: path mode, `--json`, `--profile`, `--list-rules`, exit codes 0/1/2 | done |
 | CLI: `--hook` (Claude Code PostToolUse payload on stdin, reports only edited lines) | done |
 | Profiles: `recommended` (5 rules) / `strict` (9 rules) | done |
@@ -18,8 +18,8 @@ preserved), C# with Roslyn syntax trees, so comments and strings can no longer t
 | Toolkit gate: CARD/BACKBAR and the Toolkit BUILTIN suggestions turn off when the project has no Uno.Toolkit | done |
 | MCP tool on `uno.devserver`, Roslyn analyzer package | not started |
 
-Rule ids: UNOL001 HEX, UNOL002 TOKENTHEME, UNOL003 ICON, UNOL004 BUILTIN, UNOL005 RESPONSIVE (recommended);
-UNOL101 CARD, UNOL102 BACKBAR, UNOL103 CODEBEHIND, UNOL104 OVERLAY (strict).
+Rule ids: UNOL001 HEX, UNOL002 TOKENTHEME, UNOL003 ICON, UNOL004 BUILTIN, UNOL005 RESPONSIVE, UNOL201 BINDVALUE
+(recommended); UNOL101 CARD, UNOL102 BACKBAR, UNOL103 CODEBEHIND, UNOL104 OVERLAY (strict).
 
 ## Corpus
 
@@ -119,6 +119,68 @@ choice: on the Toolkit's own gallery app it flags 129 handlers, and an MVVM cust
 Re-run on today's `uno.toolkit.ui` main (179 files, strict): identical to the pre-fix build except one HEX gained,
 `SeedColorSamplePage.xaml` L25 `ColorPicker.Color="#5946D2"`, which the old palette-name match (`Color` in the file
 name) had hidden. Themes sample unchanged. The agent-built apps were not re-run.
+
+## Review fixes (2026-10-13)
+
+Every confirmed bug from the PR review has a regression test in `tests/Uno.Lint.Tests/ReviewFixTests.cs`.
+
+| Review point | Change |
+|---|---|
+| `.editorconfig` sections ignored | Section globs are honored per file with EditorConfig semantics (`[*.xaml]`, `[App/Tests/**]`, `[*.{xaml,cs}]`), nearest file and last matching section winning; severity is resolved per file |
+| Suppression comment above a multi-line element did not reach an attribute hit | Attribute findings anchor on the element's start line as well as the attribute line |
+| `CornerRadius="0"` reported as CARD | A uniform zero radius is a plain box |
+| Avatars, dots and pills reported as CARD | Circle (equal explicit Width/Height, radius at least half), pill (radius at least half an explicit Height) and chip (radius 12+ around a single TextBlock or icon) are not cards |
+| `<StaticResource x:Key="AliasBrush" ResourceKey="..."/>` reported as TOKENTHEME | Alias elements are skipped |
+| Named colors and C# colors not covered | HEX now covers the WinUI named colors (except `Transparent`) in XAML and `Colors.X`, `Color.FromArgb`, `ColorHelper.FromArgb` in C# |
+| Handler detection looser than FR-008 | Exactly two parameters, `object` first, type ending in `EventArgs` or `Args` second; the parameter-name heuristic is gone |
+| JSON omitted the fix text | `fix` per finding; fix text adapts to the project (Uno.Themes role brushes vs WinUI brushes, Toolkit vs not) |
+| Hook offered suppression on every hit | Hook output leads with the fix and never mentions suppression; allow comments the edit itself added are noted |
+| Suppressions invisible | Counted per rule: `Supp` column in text, `suppressed` and `suppressedFindings` in JSON; suppressed hits of disabled rules are not counted |
+| Hook walked every XAML file on each call | Project files are read first, XAML only for flags still unset, `bin`/`obj` are never entered, and the result is cached in the temp folder keyed by project-file timestamps |
+| Roslyn 4.14 pin | Lowered to 4.8.0; `CSharpFile` accepts a compiler-provided `SyntaxTree` so an analyzer host never parses |
+| No correctness rule in phase 1 | `BINDVALUE` (UNOL201): `{Binding State.Value}` outside a DataTemplate in MVUX projects, recommended profile |
+| TOKENTHEME severity | Ships at `suggestion`; `.editorconfig` can raise it to `warning` |
+| No CI for the tool | `.github/workflows/uno-lint.yml` builds, tests and packs on Ubuntu and Windows when `tools/uno-lint` changes |
+
+`dnx` measured on a developer laptop against a local feed: 570 ms first use, 400 to 450 ms warm; the installed tool is
+about 100 ms warm. The hook ships with the installed tool; `hooks/settings.hooks.dnx.json` is the zero-install variant.
+
+### Corpus after the fixes, strict profile
+
+uno.toolkit.ui has moved on since the first run (179 files; a FlexPanel playground sample was added, which is where the
+extra CODEBEHIND and TOKENTHEME hits come from). The agent-built apps are unchanged.
+
+| Rule | Toolkit samples | Themes | BrewHouse | GridWatch | TestApp |
+|---|---|---|---|---|---|
+| HEX | 288 (19 hex, 250 named, 19 in code) | 0 | 116 (93 hex, 23 named) | 31 | 0 |
+| TOKENTHEME (suggestion) | 9 | 0 | 0 | 18 | 0 |
+| ICON | 5 | 0 | 0 | 0 | 0 |
+| BUILTIN | 0 | 0 | 0 | 0 | 0 |
+| RESPONSIVE | 0 | 0 | 0 | 0 | 0 |
+| BINDVALUE | off (no MVUX) | off | 0 | 0 | off |
+| CARD | 4 | off | 11 | 16 | off |
+| BACKBAR | 0 | off | 0 | 0 | off |
+| CODEBEHIND | 145 | 5 | 0 | 16 | 1 |
+| OVERLAY | 0 | 0 | 0 | 0 | 0 |
+| Suppressed | 0 | 0 | 0 | 0 | 0 |
+
+What moved and why:
+
+- **HEX, named colors.** 250 named colors in the Toolkit gallery, 86 of them in one page (`ShadowContainerSamplePage`,
+  `White`, `LightGray`, `Blue`, `Red` as demo fills). All correct by the rule; a gallery would set
+  `[Samples/**] dotnet_diagnostic.UNOL001.severity = none`. BrewHouse gained 23, all `White` on backgrounds and button
+  foregrounds, which is the same hard-coding as its hex palette. Named colors are the more common form of the problem
+  in agent output than hex was.
+- **HEX, in code.** 19 in the Toolkit samples: 11 `Color.FromArgb` and 8 `Colors.X`, in sample code-behind that builds
+  demo brushes. GridWatch's 31 are hex on shapes plus `Colors.X` in converters.
+- **CARD.** Toolkit 9 to 4 and BrewHouse 16 to 11 after the circle/pill/chip heuristics; the five BrewHouse drops are
+  the `CornerRadius="20" Padding="12,6"` pills noted above. The ShadowContainer pattern still reports (open question).
+- **CODEBEHIND.** Two `(object sender, object e)` methods in the Toolkit samples dropped out under the stricter
+  signature; the FlexPanel playground added 18.
+- **BINDVALUE.** Zero hits on the two MVUX apps: both bind states correctly. The rule is unit-tested only until an app
+  with the trap turns up.
+- **Suppressed.** Zero across the corpus: none of these apps carries allow comments yet. The column exists so that the
+  first agent-built app that does is visible.
 
 ## Run it
 

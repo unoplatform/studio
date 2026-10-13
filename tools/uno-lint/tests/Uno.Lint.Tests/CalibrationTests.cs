@@ -13,14 +13,14 @@ public class CalibrationTests
         Assert.True(XamlFile.TryParse(fileName, xaml, out var file));
         var ctx = new ProjectContext { HasToolkit = true };
         var options = new LintOptions { Profile = Profile.Strict };
-        return XamlAnalyzer.Analyze(file!, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).ToList();
+        return XamlAnalyzer.Analyze(file!, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).Where(f => !f.Suppressed).ToList();
     }
 
     private static List<Finding> LintCs(string code, string fileName = "MainPage.xaml.cs")
     {
         var ctx = new ProjectContext { HasToolkit = true };
         var options = new LintOptions { Profile = Profile.Strict };
-        return CSharpAnalyzer.Analyze(new CSharpFile(fileName, code, null), ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).ToList();
+        return CSharpAnalyzer.Analyze(new CSharpFile(fileName, code, null), ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).Where(f => !f.Suppressed).ToList();
     }
 
     [Fact]

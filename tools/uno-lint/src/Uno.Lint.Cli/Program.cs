@@ -24,7 +24,9 @@ internal static class Program
           --list-rules                       Print the rule catalog.
 
         Exit codes: 0 clean, 1 findings at warning or above, 2 bad input.
-        Suppress one hit with a comment above it: <!-- uno-lint: allow hex - reason --> or // uno-lint: allow codebehind - reason
+        Severities per rule and per path come from .editorconfig (dotnet_diagnostic.UNOL001.severity = none, in any [glob] section).
+        Suppress one hit with a comment above it, reason required: <!-- uno-lint: allow hex - reason --> or // uno-lint: allow codebehind - reason
+        Suppressions are counted per rule in the report; keep them for framework failures with a recorded repro.
         """;
 
     private static int Main(string[] args)
@@ -142,16 +144,20 @@ internal static class Program
             // then keep only findings on the lines the edit added.
             var result = new Linter(options).RunSingleFile(file);
             var findings = result.Findings.Where(f => addedLines.Contains(f.Line)).ToList();
+            var suppressed = result.Suppressed.Where(f => addedLines.Contains(f.Line)).ToList();
 
             if (findings.Count == 0)
             {
                 return 0;
             }
 
+            // Lead with the fix and keep the escape hatch out of the default message: in field transcripts an agent
+            // offered "allow" on every hit took it on nearly half of them. Suppression stays documented in --help and
+            // the README, and every suppression the agent does write is counted and reported.
             var leaf = Path.GetFileName(file);
             var rules = findings.Select(f => f.Rule).Distinct().ToList();
             var context = new StringBuilder();
-            context.AppendLine($"uno-lint: this edit to {leaf} added {findings.Count} semantic-bypass pattern(s):");
+            context.AppendLine($"uno-lint: this edit to {leaf} added {findings.Count} pattern(s) the platform already covers. Fix them before moving on:");
             foreach (var f in findings)
             {
                 context.AppendLine($"- L{f.Line} {f.Rule.Name} ({f.Rule.Id}): {f.Message}");
@@ -159,14 +165,18 @@ internal static class Program
 
             foreach (var r in rules)
             {
-                context.AppendLine($"{r.Name} fix: {r.Fix}");
+                var fix = findings.First(f => f.Rule == r).Fix;
+                context.AppendLine($"{r.Name} fix: {fix}");
             }
 
-            context.Append("A deliberate exception gets \"uno-lint: allow <rule> - reason\" in a comment above it. If a framework mechanism failed, record the repro before working around it.");
+            if (suppressed.Count > 0)
+            {
+                context.AppendLine($"Note: this edit also added {suppressed.Count} allow comment(s) ({string.Join(", ", suppressed.Select(s => s.Rule.Name).Distinct())}). Suppressions are counted in the project report; each one needs a framework failure with a recorded repro behind it.");
+            }
 
             var output = new JsonObject
             {
-                ["systemMessage"] = $"uno-lint: {findings.Count} hit(s) in {leaf} ({string.Join(", ", rules.Select(r => r.Name))})",
+                ["systemMessage"] = $"uno-lint: {findings.Count} hit(s) in {leaf} ({string.Join(", ", rules.Select(r => r.Name))})" + (suppressed.Count > 0 ? $", {suppressed.Count} suppressed" : string.Empty),
                 ["hookSpecificOutput"] = new JsonObject
                 {
                     ["hookEventName"] = "PostToolUse",
@@ -238,9 +248,11 @@ internal static class Program
     private static string ToJson(LintResult result, LintOptions options)
     {
         var counts = new JsonObject();
+        var suppressedCounts = new JsonObject();
         foreach (var rule in Rules.All)
         {
             counts[rule.Name] = result.Findings.Count(f => f.Rule == rule);
+            suppressedCounts[rule.Name] = result.SuppressedCount(rule);
         }
 
         var findings = new JsonArray();
@@ -254,6 +266,20 @@ internal static class Program
                 ["file"] = f.File,
                 ["line"] = f.Line,
                 ["message"] = f.Message,
+                ["fix"] = f.Fix,
+            });
+        }
+
+        var suppressed = new JsonArray();
+        foreach (var f in result.Suppressed)
+        {
+            suppressed.Add(new JsonObject
+            {
+                ["id"] = f.Rule.Id,
+                ["rule"] = f.Rule.Name,
+                ["file"] = f.File,
+                ["line"] = f.Line,
+                ["message"] = f.Message,
             });
         }
 
@@ -263,10 +289,14 @@ internal static class Program
             ["profile"] = options.Profile.ToString().ToLowerInvariant(),
             ["toolkit"] = result.Context.HasToolkit,
             ["extensionsNavigation"] = result.Context.HasExtensionsNavigation,
+            ["mvux"] = result.Context.HasMvux,
+            ["unoThemes"] = result.Context.HasUnoThemes,
             ["files"] = result.FileCount,
             ["skippedDev"] = result.SkippedDevFiles,
             ["unparsedXaml"] = result.UnparsedXamlFiles,
             ["counts"] = counts,
+            ["suppressed"] = suppressedCounts,
+            ["suppressedFindings"] = suppressed,
             ["info"] = new JsonObject
             {
                 ["tokenRefs"] = result.Info.TokenReferences,
@@ -285,23 +315,35 @@ internal static class Program
     private static string ToText(LintResult result, LintOptions options, int top)
     {
         var sb = new StringBuilder();
-        var toolkit = result.Context.HasToolkit ? "toolkit" : "no toolkit";
+        var stack = string.Join(", ", new[]
+        {
+            result.Context.HasToolkit ? "toolkit" : "no toolkit",
+            result.Context.HasUnoThemes ? "uno.themes" : "fluent only",
+            result.Context.HasMvux ? "mvux" : null,
+        }.Where(s => s != null));
         sb.AppendLine($"uno-lint  {result.Root}");
-        sb.AppendLine($"profile={options.Profile.ToString().ToLowerInvariant()}  {toolkit}  {result.FileCount} files, {result.SkippedDevFiles} dev/harness skipped, {result.UnparsedXamlFiles} xaml unparsed");
+        sb.AppendLine($"profile={options.Profile.ToString().ToLowerInvariant()}  {stack}  {result.FileCount} files, {result.SkippedDevFiles} dev/harness skipped, {result.UnparsedXamlFiles} xaml unparsed");
         sb.AppendLine();
-        sb.AppendLine("Id       Rule         Count  Title");
-        sb.AppendLine("-------  -----------  -----  -----");
+        sb.AppendLine("Id       Rule         Count  Supp  Title");
+        sb.AppendLine("-------  -----------  -----  ----  -----");
         foreach (var rule in Rules.All)
         {
-            var severity = Rules.Resolve(rule, options, result.Context);
-            var count = severity == Severity.None ? "off" : result.Findings.Count(f => f.Rule == rule).ToString();
-            sb.AppendLine($"{rule.Id}  {rule.Name,-11}  {count,5}  {rule.Title}");
+            // A rule disabled project-wide shows "off"; one disabled only in some .editorconfig sections still shows its count.
+            var severity = Rules.Resolve(rule, options, result.Context, filePath: null);
+            var hits = result.Findings.Count(f => f.Rule == rule);
+            var count = severity == Severity.None && hits == 0 ? "off" : hits.ToString();
+            var supp = result.SuppressedCount(rule);
+            sb.AppendLine($"{rule.Id}  {rule.Name,-11}  {count,5}  {(supp == 0 ? "" : supp.ToString()),4}  {rule.Title}");
         }
 
-        sb.AppendLine($"{"",-7}  {"TOKEN",-11}  {result.Info.TokenReferences,5}  info: refs to {result.Info.TokenKeys} app-defined brush keys");
-        sb.AppendLine($"{"",-7}  {"ADAPTIVE",-11}  {result.Info.AdaptiveTriggers,5}  info: AdaptiveTrigger count (utu:Responsive: {result.Info.ResponsiveExtensions})");
-        sb.AppendLine($"{"",-7}  {"TEMPLATE",-11}  {result.Info.ControlTemplates,5}  info: app ControlTemplates");
-        sb.AppendLine($"{"",-7}  {"WORKAROUND",-11}  {result.Info.WorkaroundMarkers,5}  info: WORKAROUND(...) markers");
+        sb.AppendLine($"{"",-7}  {"TOKEN",-11}  {result.Info.TokenReferences,5}  {"",4}  info: refs to {result.Info.TokenKeys} app-defined brush keys");
+        sb.AppendLine($"{"",-7}  {"ADAPTIVE",-11}  {result.Info.AdaptiveTriggers,5}  {"",4}  info: AdaptiveTrigger count (utu:Responsive: {result.Info.ResponsiveExtensions})");
+        sb.AppendLine($"{"",-7}  {"TEMPLATE",-11}  {result.Info.ControlTemplates,5}  {"",4}  info: app ControlTemplates");
+        sb.AppendLine($"{"",-7}  {"WORKAROUND",-11}  {result.Info.WorkaroundMarkers,5}  {"",4}  info: WORKAROUND(...) markers");
+        if (result.Suppressed.Count > 0)
+        {
+            sb.AppendLine($"Supp = hits covered by an allow comment ({result.Suppressed.Count} total, {result.Suppressed.Count * 100 / Math.Max(1, result.Suppressed.Count + result.Findings.Count)}% of all hits). Each needs a framework failure with a repro behind it.");
+        }
 
         foreach (var rule in Rules.All)
         {

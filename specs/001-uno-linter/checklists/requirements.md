@@ -26,8 +26,9 @@
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
-- [ ] Open questions resolved (tiering, first surface, ownership, TOKENTHEME severity)
+- [x] Open questions on tiering, first surface, ownership and TOKENTHEME severity resolved in the 2026-10-06 review
+- [ ] Open questions on the ShadowContainer exemption, IDE results and where the code lives
 
 ## Outstanding Clarifications
 
-**Status**: 🚧 Five open questions listed in spec.md, to be resolved with the prototype author and the Studio plugin owner.
+**Status**: 🚧 Three open questions remain in spec.md (ShadowContainer exemption, IDE results, repository home for the prototype). The 2026-10-06 review resolved the rest: CARD stays strict until measured, plugin hook first with the installed tool (dnx measured at 400 to 570 ms), skill owners own fix text, TOKENTHEME at `suggestion`.

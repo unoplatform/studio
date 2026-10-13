@@ -10,7 +10,7 @@ public class CSharpRuleTests
         var file = new CSharpFile(fileName, code, companionXaml);
         var ctx = new ProjectContext { HasToolkit = toolkit };
         var options = new LintOptions { Profile = profile };
-        return CSharpAnalyzer.Analyze(file, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).ToList();
+        return CSharpAnalyzer.Analyze(file, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).Where(f => !f.Suppressed).ToList();
     }
 
     // ------------------------------------------------------------ CODEBEHIND

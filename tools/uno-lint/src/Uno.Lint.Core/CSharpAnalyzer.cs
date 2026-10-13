@@ -2,17 +2,27 @@ using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Uno.Lint;
 
+/// <summary>
+/// A C# file ready for the rules. The CLI builds it from text; an analyzer host hands over the compiler's own
+/// <see cref="SyntaxTree"/> instead, so the rules never parse or read the disk themselves.
+/// </summary>
 public sealed class CSharpFile
 {
     public CSharpFile(string relativePath, string text, string? companionXamlText)
+        : this(relativePath, CSharpSyntaxTree.ParseText(text), companionXamlText)
+    {
+    }
+
+    public CSharpFile(string relativePath, SyntaxTree tree, string? companionXamlText)
     {
         RelativePath = relativePath;
-        Text = text;
-        Lines = Suppression.SplitLines(text);
-        Tree = CSharpSyntaxTree.ParseText(text);
+        Tree = tree;
+        Text = tree.GetText().ToString();
+        Lines = Suppression.SplitLines(Text);
         IsCodeBehind = relativePath.EndsWith(".xaml.cs", StringComparison.OrdinalIgnoreCase);
         CompanionXamlText = companionXamlText;
     }
@@ -75,6 +85,7 @@ public static class CSharpAnalyzer
 
     public static string SplitWords(string identifier) => WordBoundary.Replace(identifier, " ").Trim();
 
+    /// <summary>Every finding for the file, including suppressed ones flagged as such.</summary>
     public static IEnumerable<Finding> Analyze(CSharpFile file, ProjectContext context, Func<RuleDescriptor, bool> isEnabled)
     {
         var root = file.Tree.GetRoot();
@@ -103,6 +114,11 @@ public static class CSharpAnalyzer
             findings.AddRange(FindBuiltinShadows(file, root, context));
         }
 
+        if (isEnabled(Rules.Hex))
+        {
+            findings.AddRange(FindColorsInCode(file, root));
+        }
+
         return findings;
     }
 
@@ -112,28 +128,21 @@ public static class CSharpAnalyzer
     {
         foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
         {
+            // An event handler: (object sender, SomethingEventArgs e). The second type's suffix is the signal, not the
+            // parameter names; a Toolkit or platform args type always ends in EventArgs or Args.
             var parameters = method.ParameterList.Parameters;
-            if (parameters.Count < 2 || !IsObjectType(parameters[0].Type))
+            if (parameters.Count != 2 || !IsObjectType(parameters[0].Type))
             {
                 continue;
             }
 
             var secondType = parameters[1].Type?.ToString() ?? string.Empty;
-            var isHandler = secondType.EndsWith("EventArgs", StringComparison.Ordinal) ||
-                            secondType.EndsWith("Args", StringComparison.Ordinal) ||
-                            parameters[0].Identifier.Text == "sender";
-            if (!isHandler)
+            if (!secondType.EndsWith("EventArgs", StringComparison.Ordinal) && !secondType.EndsWith("Args", StringComparison.Ordinal))
             {
                 continue;
             }
 
-            var line = LineOf(method.Identifier);
-            if (Suppression.IsSuppressed(file.Lines, line, Rules.CodeBehind))
-            {
-                continue;
-            }
-
-            yield return new Finding(Rules.CodeBehind, file.RelativePath, line, $"handler {method.Identifier.Text}");
+            yield return New(Rules.CodeBehind, file, LineOf(method.Identifier), $"handler {method.Identifier.Text}");
         }
     }
 
@@ -154,14 +163,14 @@ public static class CSharpAnalyzer
 
             if (OverlayName.IsMatch(shortName))
             {
-                if (isEnabled(Rules.Overlay) && !Suppression.IsSuppressed(file.Lines, line, Rules.Overlay))
+                if (isEnabled(Rules.Overlay))
                 {
-                    yield return new Finding(Rules.Overlay, file.RelativePath, line, $"{target}.Visibility set in code-behind");
+                    yield return New(Rules.Overlay, file, line, $"{target}.Visibility set in code-behind");
                 }
             }
-            else if (isEnabled(Rules.CodeBehind) && !Suppression.IsSuppressed(file.Lines, line, Rules.CodeBehind))
+            else if (isEnabled(Rules.CodeBehind))
             {
-                yield return new Finding(Rules.CodeBehind, file.RelativePath, line, $"{target}.Visibility set in code-behind");
+                yield return New(Rules.CodeBehind, file, line, $"{target}.Visibility set in code-behind");
             }
         }
     }
@@ -195,13 +204,7 @@ public static class CSharpAnalyzer
                 continue;
             }
 
-            var line = LineOf(binary.OperatorToken);
-            if (Suppression.IsSuppressed(file.Lines, line, Rules.Responsive))
-            {
-                continue;
-            }
-
-            yield return new Finding(Rules.Responsive, file.RelativePath, line, $"breakpoint on {member} in code-behind");
+            yield return New(Rules.Responsive, file, LineOf(binary.OperatorToken), $"breakpoint on {member} in code-behind");
         }
     }
 
@@ -251,17 +254,56 @@ public static class CSharpAnalyzer
                 continue;
             }
 
-            var line = LineOf(cls.Identifier);
-            if (Suppression.IsSuppressed(file.Lines, line, Rules.Builtin))
+            yield return New(Rules.Builtin, file, LineOf(cls.Identifier), $"{className} : {baseType} -> {entry.Suggestion}");
+        }
+    }
+
+    // ---------------------------------------------------------------- HEX in code
+
+    /// <summary>
+    /// Colors.White, Color.FromArgb(...) and ColorHelper.FromArgb(...) are as hard-coded as a hex literal in XAML.
+    /// Colors.Transparent is a legitimate "no color" and is skipped.
+    /// </summary>
+    private static IEnumerable<Finding> FindColorsInCode(CSharpFile file, SyntaxNode root)
+    {
+        foreach (var access in root.DescendantNodes().OfType<MemberAccessExpressionSyntax>())
+        {
+            if (LastIdentifier(access.Expression) != "Colors")
             {
                 continue;
             }
 
-            yield return new Finding(Rules.Builtin, file.RelativePath, line, $"{className} : {baseType} -> {entry.Suggestion}");
+            var color = access.Name.Identifier.Text;
+            if (color == "Transparent" || !XamlAnalyzer.IsColorLiteral(color))
+            {
+                continue;
+            }
+
+            // Colors.Red.ToString() etc. still hard-code the colour; a nested access like Foo.Colors.Red is covered by LastIdentifier.
+            yield return New(Rules.Hex, file, LineOf(access.Name.Identifier), $"Colors.{color} in code");
+        }
+
+        foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
+        {
+            if (!(invocation.Expression is MemberAccessExpressionSyntax access) || access.Name.Identifier.Text != "FromArgb")
+            {
+                continue;
+            }
+
+            var owner = LastIdentifier(access.Expression);
+            if (owner != "Color" && owner != "ColorHelper")
+            {
+                continue;
+            }
+
+            yield return New(Rules.Hex, file, LineOf(access.Name.Identifier), $"{owner}.FromArgb(...) in code");
         }
     }
 
     // ---------------------------------------------------------------- helpers
+
+    private static Finding New(RuleDescriptor rule, CSharpFile file, int line, string message) =>
+        new Finding(rule, file.RelativePath, line, message, Suppression.IsSuppressed(file.Lines, line, rule));
 
     private static bool IsObjectType(TypeSyntax? type)
     {
@@ -279,14 +321,18 @@ public static class CSharpAnalyzer
             || type.ToString() == "Object" || type.ToString() == "System.Object";
     }
 
-    private static string? LastIdentifier(TypeSyntax type)
+    private static string? LastIdentifier(ExpressionSyntax expression)
     {
-        switch (type)
+        switch (expression)
         {
             case QualifiedNameSyntax q:
                 return LastIdentifier(q.Right);
+            case MemberAccessExpressionSyntax m:
+                return m.Name.Identifier.Text;
             case SimpleNameSyntax s:
                 return s.Identifier.Text;
+            case AliasQualifiedNameSyntax a:
+                return a.Name.Identifier.Text;
             default:
                 return null;
         }

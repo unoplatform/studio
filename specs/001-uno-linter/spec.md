@@ -11,7 +11,7 @@ Skills advise, but nothing verifies. The `uno-platform-studio` plugin ships skil
 
 The Uno Linter closes the loop. It reads XAML with a real XML parser and C# with Roslyn, applies a small set of semantic rules, and reports each hit as file, line, rule id, what was found and what to use instead. It runs in about a tenth of a second after each edit so the agent fixes the problem in the same turn, never blocks an edit, and only reports the lines the edit added.
 
-A working C# prototype exists under [`tools/uno-lint`](../../tools/uno-lint/) with 78 passing tests and a first run across five real apps. The decisions this spec asks for are the rule tiers, the first shipping surface and who owns the rule list.
+A working C# prototype exists under [`tools/uno-lint`](../../tools/uno-lint/) with 110 passing tests and a first run across five real apps. The decisions this spec asks for are the rule tiers, the first shipping surface and who owns the rule list; the first review round (2026-10-06) answered most of them, see Open Questions.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -109,8 +109,13 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 - `ActualHeight > 0` asks whether layout has run; it is not a breakpoint.
 - A brush defined once with a hex literal is one problem; it is reported once as TOKENTHEME, not also as HEX.
 - A suppression comment with no reason (`allow hex -->`) does not suppress; the comment terminator is not a reason.
+- A suppression comment above a multi-line element covers a hit on that element's fifth attribute line: XML has no place for a comment inside a start tag, so the element's start line is an anchor too.
 - A project named `TestApp`, a `Content/TestPages/` folder or a page named `ProbeResultsPage.xaml` must not be skipped by the dev-path rule, which matches whole folder names only (`Dev`, `Harness`, `Probe(s)`, `Test(s)`, or a folder ending in `.Tests` and the like).
-- `Text="#404"` is text, not a color; HEX only fires on color properties.
+- `Text="#404"` is text, not a color; HEX only fires on color properties. `Foreground="Red"` is a color; `Transparent` is not reported.
+- `CornerRadius="0"` is a plain box, a 48x48 Border with radius 24 is an avatar, a 32-high Border with radius 16 is a pill, and a radius of 12 or more around a single TextBlock is a chip. None is a card.
+- `<StaticResource x:Key="AccentAliasBrush" ResourceKey="PrimaryBrush"/>` follows whatever its target does and is not a TOKENTHEME finding.
+- An `.editorconfig` section `[App/Tests/**]` turning HEX off applies to files under that folder only, exactly as a Roslyn analyzer would read it.
+- `{Binding Pair.Value}` inside a `DataTemplate` is left alone: the item may really have a `Value` property. Outside templates, in an MVUX project, `X.Value` is the state trap.
 
 ## Requirements *(mandatory)*
 
@@ -118,34 +123,37 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 
 #### Rules
 
-- **FR-001**: System MUST detect hex color literals on color properties (property or element named for a color, brush, background, foreground, fill, stroke or tint, including `Setter` and keyframe values targeting one) outside palette files and theme override files; a file is a palette file when a whole word of its name is `Palette`, `Colors` or `Tokens` (`AppColors.xaml`, `BrandPalette.Dark.xaml`, not `ColorPickerPage.xaml` or `AuthTokenPage.xaml`), and a theme override file when its name contains `ColorOverride` or `ColorPaletteOverride`; keyed resources inside `ResourceDictionary.ThemeDictionaries` are exempt (HEX, UNOL001)
-- **FR-002**: System MUST detect app-defined `*Brush` resources outside `ThemeDictionaries` whose color is fixed, excluding keys named `*Invariant`, `*OnDark`, `*OnLight` or `*Fixed` and excluding brushes whose color is a `{ThemeResource}` (TOKENTHEME, UNOL002)
+- **FR-001**: System MUST detect hard-coded colors on color properties (property or element named for a color, brush, background, foreground, fill, stroke or tint, including `Setter` and keyframe values targeting one): hex literals and the WinUI named colors except `Transparent`, outside palette files and theme override files; a file is a palette file when a whole word of its name is `Palette`, `Colors` or `Tokens` (`AppColors.xaml`, `BrandPalette.Dark.xaml`, not `ColorPickerPage.xaml` or `AuthTokenPage.xaml`), and a theme override file when its name contains `ColorOverride` or `ColorPaletteOverride`; keyed resources inside `ResourceDictionary.ThemeDictionaries` are exempt. In C#, `Colors.<Name>`, `Color.FromArgb(...)` and `ColorHelper.FromArgb(...)` are reported under the same rule (HEX, UNOL001)
+- **FR-002**: System MUST detect app-defined `*Brush` resources outside `ThemeDictionaries` whose color is fixed, excluding keys named `*Invariant`, `*OnDark`, `*OnLight` or `*Fixed`, brushes whose color is a `{ThemeResource}`, and `StaticResource`/`ThemeResource` alias elements; default severity is `suggestion` (TOKENTHEME, UNOL002)
 - **FR-003**: System MUST detect inline path-mini-language `Data` on `Path`/`PathIcon`, inline `PathGeometry`/`GeometryGroup`, and basic shapes composed inside a `Viewbox`, outside icon files (a whole word of the name is `Icons`: `Icons.xaml`, `MaterialIcons.xaml`, not `LexiconPage.xaml`) and outside `ControlTemplate` elements (ICON, UNOL003)
 - **FR-004**: System MUST detect classes deriving from a control base type whose name contains a platform or Toolkit control as a whole PascalCase word (`StarRating`, `RecipeCard`; not `OperatingHoursView` or `DiscardBanner`) and whose companion XAML does not already use that control (BUILTIN, UNOL004)
 - **FR-005**: System MUST detect relational comparisons against `ActualWidth`, `ActualHeight`, `NewSize` or `Bounds` in `*.xaml.cs`, excluding comparisons against zero (RESPONSIVE, UNOL005)
-- **FR-006**: System MUST detect `Border` elements with a uniform `CornerRadius` and a `Background`, `BorderBrush` or `Padding`, outside `ControlTemplate` elements, treating a Border without Background inside `ShadowContainer` as not a card (CARD, UNOL101)
+- **FR-006**: System MUST detect `Border` elements with a uniform non-zero `CornerRadius` and a `Background`, `BorderBrush` or `Padding`, outside `ControlTemplate` elements, treating as not a card: a Border without Background inside `ShadowContainer`, a circle (explicit equal Width and Height with radius at least half of them), a pill (radius at least half an explicit Height), and a chip (radius 12 or more around no child or a single TextBlock, FontIcon, SymbolIcon, PathIcon or Run) (CARD, UNOL101)
 - **FR-007**: System MUST detect `Navigation.Request="-"` in a XAML file that contains no `NavigationBar` (BACKBAR, UNOL102)
-- **FR-008**: System MUST detect event-handler methods (`object sender` plus an `EventArgs` parameter) and `.Visibility =` assignments in `*.xaml.cs` (CODEBEHIND, UNOL103)
+- **FR-008**: System MUST detect event-handler methods (exactly two parameters: `object` first, a type whose name ends in `EventArgs` or `Args` second) and `.Visibility =` assignments in `*.xaml.cs` (CODEBEHIND, UNOL103)
 - **FR-009**: System MUST detect `.Visibility =` assignments whose target name ends in Overlay, Sheet, Scrim, Drawer, Popup or Panel and report them as OVERLAY (UNOL104) instead of CODEBEHIND
 - **FR-010**: System MUST report four non-gating info counters: references to app-defined brush keys, AdaptiveTrigger count against `utu:Responsive` count, app-authored ControlTemplate count, and `WORKAROUND(` marker count
-- **FR-011**: Each finding MUST carry the rule id, rule name, file path relative to the lint root, 1-based line, a message naming what was found, and the fix text naming what to use instead
+- **FR-011**: Each finding MUST carry the rule id, rule name, file path relative to the lint root, 1-based line, a message naming what was found, and the fix text naming what to use instead, in every output (text, JSON, hook context)
+- **FR-023**: In projects that reference MVUX (`UnoFeatures` `Mvux`, `Uno.Extensions.Reactive`, or its xmlns), System MUST detect `{Binding X.Value}` and `{Binding Path=X.Value}` outside `DataTemplate` elements and name the state to bind instead (BINDVALUE, UNOL201, recommended)
+- **FR-024**: System MUST count suppressed hits per rule and report them next to the active counts in text and JSON, so suppression is a visible metric rather than a silent escape hatch; suppressed hits of disabled rules are not counted
+- **FR-025**: Fix text MUST adapt to the project: HEX names Uno.Themes role brushes only when Uno.Themes (Material, Cupertino or SimpleTheme) is referenced and names WinUI theme brushes otherwise; Toolkit controls are named only when the Toolkit is referenced
 
 #### Profiles and configuration
 
 - **FR-012**: System MUST provide a `recommended` profile enabling HEX, TOKENTHEME, ICON, BUILTIN and RESPONSIVE, and a `strict` profile enabling all nine rules
 - **FR-013**: System MUST default to `recommended` in path mode and to `strict` in hook mode unless a profile is given explicitly
-- **FR-014**: System MUST read `dotnet_diagnostic.UNOLnnn.severity = none|suggestion|warning|error` and `uno_lint.profile = recommended|strict` from `.editorconfig` files from the lint root upward, stopping at `root = true`, nearest file winning
+- **FR-014**: System MUST read `dotnet_diagnostic.UNOLnnn.severity = none|suggestion|warning|error` from `.editorconfig` files from the lint root upward, stopping at `root = true`, honoring section globs per file with EditorConfig semantics (`[*.xaml]`, `[App/Tests/**]`, `[*.{xaml,cs}]`), nearest file and last matching section winning, so a future analyzer reads the same file identically; `uno_lint.profile = recommended|strict` is project-wide
 - **FR-015**: System MUST disable rules whose fix is a Toolkit control when the project has no Uno.Toolkit reference, detected from `UnoFeatures`, `PackageReference` or the `using:Uno.Toolkit.UI` xmlns, with `--toolkit` and `--no-toolkit` overrides
 - **FR-016**: System MUST suppress a single finding when a comment within the three non-blank lines above it, or on the same line, reads `uno-lint: allow <rule> - <reason>`, and MUST NOT suppress when the reason is absent; the legacy `xaml-lint:` prefix MUST be accepted
 
 #### Surfaces
 
 - **FR-017**: System MUST provide a command-line entry point taking a folder or file path with `--profile`, `--json`, `--top`, `--include-dev`, `--list-rules` switches, exiting 0 when clean, 1 when findings at warning or above remain, 2 on bad input
-- **FR-018**: System MUST provide a `--hook` mode that reads the Claude Code PostToolUse payload on standard input, lints the saved file for full context, keeps only findings on the lines the edit added, returns them as `additionalContext`, and always exits 0
+- **FR-018**: System MUST provide a `--hook` mode that reads the Claude Code PostToolUse payload on standard input, lints the saved file for full context, keeps only findings on the lines the edit added, returns them as `additionalContext` leading with the fix and without offering suppression, notes any allow comments the edit itself added, and always exits 0
 - **FR-019**: The hook MUST take the added lines from the payload's `tool_response.structuredPatch` when present (every line for a Write that created the file). Without one, it MUST diff `old_string` against `new_string` so unchanged context lines are not reported, locate `new_string` in the saved file regardless of CRLF/LF differences and re-indentation, and report nothing when the text is not found or is found more than once without `replace_all`
 - **FR-020**: System MUST expose the same rules as an MCP tool on the Uno dev server returning the same JSON shape as the CLI (phase 2)
 - **FR-021**: System MUST expose the same rules as a Roslyn analyzer package honoring the same `.editorconfig` keys (phase 3)
-- **FR-022**: The rule library MUST target netstandard2.0 so one assembly can serve the CLI, the MCP tool and the analyzer
+- **FR-022**: The rule functions MUST be host-agnostic: they take a parsed XAML document or a Roslyn `SyntaxTree` plus the project context and return findings, and never read the disk, parse files or load configuration themselves. Each surface supplies a host layer: the CLI's `Linter` walks folders and reads `.editorconfig`; an analyzer host hands over the compiler's trees, additional files and `AnalyzerConfigOptions`. The rule library targets netstandard2.0 and the lowest Roslyn the analyzer must load in (currently 4.8), so the same assembly can be referenced from all three hosts
 
 ### UX Requirements *(mandatory for UI features)*
 
@@ -172,9 +180,9 @@ This feature has no graphical UI. Its user-facing surface is text consumed by ag
 - **SC-002**: A full scan of a 175-file app completes in under 2 seconds (measured: 0.48 s)
 - **SC-003**: The recommended rules stay under 5% false positives when hits are reviewed by hand across at least eight apps, including the prototype author's samples
 - **SC-004**: Zero edits are blocked or rolled back by the hook across all runs
-- **SC-005**: On agent-built sample apps, the HEX count per app drops to zero within one agent turn after the hook is installed
-- **SC-006**: The hook, the CLI and the MCP tool report identical counts on the same corpus
-- **SC-007**: Every rule has at least one positive and one negative unit test and one regression test per false positive found in the field (currently 78 tests)
+- **SC-005**: On agent-built sample apps, the HEX count per app drops to zero within one agent turn after the hook is installed, with suppressions under 10% of the original hits; a zero reached by allow comments does not count
+- **SC-006**: The hook, the CLI and the MCP tool report identical counts on the same corpus, including under sectioned `.editorconfig` files
+- **SC-007**: Every rule has at least one positive and one negative unit test and one regression test per false positive found in the field (currently 110 tests)
 
 ### Qualitative Outcomes
 
@@ -250,6 +258,8 @@ csproj, xmlns ─(gate)─────┘   netstandard2.0     └── Roslyn 
 
 **Why C#, not PowerShell.** PowerShell cannot ship in the SDK, is Windows-first in practice, and regex misfires: comments and strings trigger C# rules, and context such as "is this Border inside a ControlTemplate" is approximated. `XDocument` makes ancestry exact; Roslyn makes only real syntax count; netstandard2.0 lets a Roslyn analyzer load the same assembly later.
 
+**What is shared and what is not.** Only the rule functions are shared. A Roslyn analyzer cannot do file IO (RS1035) and receives syntax trees, additional files and `AnalyzerConfigOptions` from the compiler, so the CLI's folder walk, `.editorconfig` reader, project-context detection and `CSharpSyntaxTree.ParseText` call all belong to the CLI host, not to the rules. The rules take a parsed document or tree plus a `ProjectContext` and return findings; `CSharpFile` already accepts a compiler-provided `SyntaxTree`. The analyzer in phase 3 is a second host over the same rule assembly, not a port, and `.editorconfig` section handling is implemented in the CLI host the way the compiler does it so the two hosts agree.
+
 **Surface 1, plugin hook and CLI (phase 1).** A `dotnet tool` named `uno-lint`. The `uno-platform-studio` plugin already installs into Claude Code, Copilot CLI and Codex CLI; adding a hooks manifest that calls `uno-lint --hook` ships the linter to all three in one plugin release. This is the Studio plugin route.
 
 **Surface 2, MCP tool (phase 2).** `uno.devserver --mcp-app` already registers the Uno MCP server Studio users have. A `lint_project` / `lint_file` tool on it lets any agent call the linter on demand and lets skills say "run the linter before you report done".
@@ -260,15 +270,15 @@ csproj, xmlns ─(gate)─────┘   netstandard2.0     └── Roslyn 
 
 | Phase | Scope | Exit criteria |
 |---|---|---|
-| 1, now | Calibrate on more real apps; fix CARD pill and ShadowContainer misfires; ship hook via the Studio plugin; `dotnet tool` for CI | recommended rules under 5% false positives on 8+ apps; hook in a plugin release |
-| 2, next | MCP tool on `uno.devserver`; three correctness rules from the runtime-gotchas list; skills call the linter before reporting done; track counts across sample apps | hook and MCP tool agree on every count; each correctness rule has a repro |
+| 1, now | Calibrate on more real apps; CARD chip/avatar/zero-radius heuristics (done), ShadowContainer decision; BINDVALUE correctness rule (done); suppression counts (done); ship hook via the Studio plugin with the global tool and a PATH check; `dotnet tool` for CI | recommended rules under 5% false positives on 8+ apps; suppressions under 10% of hits on agent-built apps; hook in a plugin release |
+| 2, next | MCP tool on `uno.devserver`; two more correctness rules (`x:Bind` against an MVUX ViewModel, Uno0001 members in framework handlers); skills call the linter before reporting done; track counts and suppression rates across sample apps | hook and MCP tool agree on every count; each correctness rule has a repro |
 | 3, later | Roslyn analyzer NuGet; same rules, same `.editorconfig`; warnings in VS, Rider and `dotnet build`; opt-in from the Uno templates | rule list stable for one release cycle before starting |
 
 ## Assumptions
 
 1. **Hook availability**: Claude Code, Copilot CLI and Codex CLI plugins can declare post-edit hooks that receive the edited file path and the added text. Verified for Claude Code; to confirm for the other two before phase 1 ships.
-2. **Binary distribution**: `dnx uno-lint --hook` needs no install step but adds first-run latency; a global tool install is faster but needs a setup step. Decide after measuring `dnx` cold start.
-3. **Theme vocabulary**: role brush keys (`PrimaryBrush`, `SurfaceBrush`, `OutlineBrush`) resolve the same under SimpleTheme and Material, so fix text can name them without checking which theme is in use.
+2. **Binary distribution**: measured on 2026-10-13 against a local feed: `dotnet dnx Uno.Lint.Tool -- --hook` takes about 570 ms on first use and 400 to 450 ms warm; the installed tool takes about 100 ms warm. `dnx` therefore misses the 250 ms hook budget (SC-001) but still beats the PowerShell prototype. Decision: the plugin README installs the global tool (`dotnet tool install -g Uno.Lint.Tool`) and ships `hooks/settings.hooks.json` calling `uno-lint --hook`; `hooks/settings.hooks.dnx.json` is the zero-install alternative. Once a global tool is installed, a hook that calls a missing `uno-lint` surfaces an error on every edit, so the plugin's install check must verify the tool is on PATH.
+3. **Theme vocabulary**: role brush keys (`PrimaryBrush`, `SurfaceBrush`, `OutlineBrush`) resolve the same under SimpleTheme, Material and Cupertino, but do not exist in a Fluent-only app without Uno.Themes. Fix text is therefore gated on an Uno.Themes reference (FR-025); a Fluent-only app is pointed at WinUI theme brushes instead.
 4. **Fix text ownership**: fix wording mirrors the skills in this repository and changes with them.
 5. **Corpus access**: more agent-built apps will be made available to calibrate the four rules with zero hits so far.
 
@@ -278,8 +288,9 @@ csproj, xmlns ─(gate)─────┘   netstandard2.0     └── Roslyn 
 2. **Gate on project references, not a global switch.** A rule whose fix is a Toolkit control is off when the project has no Toolkit. This answers "should checks only run when the app uses Toolkit" per rule rather than globally.
 3. **Report only the edited lines in hook mode.** Full-file context is used for evaluation; only findings inside the added text are returned. This keeps hook output short and avoids blaming the agent for old code.
 4. **Never block.** The hook always exits 0. CI gates through the CLI exit code instead.
-5. **Correctness rules next, not more style rules.** `x:Bind` against an MVUX ViewModel, `{Binding State.Value}`, and Uno0001 members in framework handlers are bugs; catching bugs earns the trust that lets style rules ride along.
-6. **`.editorconfig` over a custom config file.** It is what every .NET analyzer uses and carries over unchanged to the analyzer surface.
+5. **One correctness rule ships in phase 1.** `{Binding State.Value}` (BINDVALUE) is in the prototype now; `x:Bind` against an MVUX ViewModel and Uno0001 members in framework handlers follow in phase 2. Launching with only style rules invited pushback; catching a bug on day one earns the trust that lets the style rules ride along.
+6. **`.editorconfig` over a custom config file.** It is what every .NET analyzer uses and carries over unchanged to the analyzer surface, including section globs.
+7. **Suppression is a metric, and the agent is not offered it.** Field transcripts showed an agent answering 15 of 32 hits with an `allow` comment when the hook mentioned it. The hook now leads with the fix and says nothing about suppression; suppressions the agent writes anyway are counted per rule in every report.
 
 ## Dependencies
 
@@ -290,11 +301,13 @@ csproj, xmlns ─(gate)─────┘   netstandard2.0     └── Roslyn 
 
 ## Open Questions
 
-- [ ] **Tiering**: is the recommended/strict split right, or should CARD move to recommended once the pill and ShadowContainer misfires are fixed?
-- [ ] **First surface**: plugin hook first (reaches three hosts in one release) or MCP tool first (reaches every agent with the Uno MCP)? Recommendation: plugin hook first, MCP tool in the same quarter.
+- [x] **Tiering**: CARD stays strict until the chip, avatar and zero-radius cases are proven on more apps (review, 2026-10-06). The heuristics are in; the measurement is pending.
+- [x] **First surface**: plugin hook first, gated on measured `dnx` cold start (review). Measured 2026-10-13; see Assumption 2.
 - [ ] **Results to the IDE**: yes via phase 3; confirm nothing extra is wanted before then.
-- [ ] **Rule list ownership**: proposal is the team that owns the plugin skills owns the rules, with the runtime-gotchas list as the intake queue.
-- [ ] **TOKENTHEME severity**: warning or suggestion by default?
+- [x] **Rule list ownership**: skill owners own the fix text (UX-004); the rule list sits with the plugin team, the runtime-gotchas list is the intake queue (review).
+- [x] **TOKENTHEME severity**: `suggestion` by default (review); implemented.
+- [ ] **Where the code lives**: keep `tools/uno-lint` in this repository with its own CI job (added), or move the prototype to its own repository once the plugin hook ships? The spec stays here either way.
+- [ ] **ShadowContainer**: a Border with Background and CornerRadius inside `utu:ShadowContainer` is the Toolkit's documented pattern and still reports CARD. Exempt it, or change the message to point at `ElevatedCardContentControlStyle`?
 
 ## Out of Scope
 

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
@@ -66,7 +67,39 @@ public static class XamlAnalyzer
     private static readonly Regex InvariantKey = new Regex(@"(?i)invariant|ondark|onlight|fixed", RegexOptions.Compiled);
     private static readonly Regex ThemeResourceRef = new Regex(@"\{\s*ThemeResource\b", RegexOptions.Compiled);
     private static readonly string[] Shapes = { "Ellipse", "Rectangle", "Line", "Polyline", "Polygon" };
+    private static readonly string[] ChipContent = { "TextBlock", "FontIcon", "SymbolIcon", "PathIcon", "Run" };
 
+    // {Binding X.Value} / {Binding Path=X.Value ...}: the MVUX state trap. Nested markup ({Binding X.Value, Converter={StaticResource C}}) is tolerated.
+    private static readonly Regex BindingMarkup = new Regex(@"\{\s*Binding\b(?<body>(?:[^{}]|\{[^{}]*\})*)\}", RegexOptions.Compiled);
+    private static readonly Regex ValuePath = new Regex(@"^\s*(?:Path\s*=\s*)?(?<path>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.Value\b|[\s,]Path\s*=\s*(?<path>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.Value\b", RegexOptions.Compiled);
+
+    /// <summary>The WinUI named colors (Microsoft.UI.Colors), minus Transparent, which is a legitimate "no color".</summary>
+    private static readonly HashSet<string> NamedColors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond", "Blue",
+        "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate", "Coral", "CornflowerBlue", "Cornsilk",
+        "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenrod", "DarkGray", "DarkGreen", "DarkKhaki", "DarkMagenta",
+        "DarkOliveGreen", "DarkOrange", "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray",
+        "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DodgerBlue", "Firebrick", "FloralWhite",
+        "ForestGreen", "Fuchsia", "Gainsboro", "GhostWhite", "Gold", "Goldenrod", "Gray", "Green", "GreenYellow", "Honeydew",
+        "HotPink", "IndianRed", "Indigo", "Ivory", "Khaki", "Lavender", "LavenderBlush", "LawnGreen", "LemonChiffon",
+        "LightBlue", "LightCoral", "LightCyan", "LightGoldenrodYellow", "LightGray", "LightGreen", "LightPink", "LightSalmon",
+        "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSteelBlue", "LightYellow", "Lime", "LimeGreen", "Linen",
+        "Magenta", "Maroon", "MediumAquamarine", "MediumBlue", "MediumOrchid", "MediumPurple", "MediumSeaGreen",
+        "MediumSlateBlue", "MediumSpringGreen", "MediumTurquoise", "MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose",
+        "Moccasin", "NavajoWhite", "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed", "Orchid", "PaleGoldenrod",
+        "PaleGreen", "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru", "Pink", "Plum", "PowderBlue", "Purple",
+        "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon", "SandyBrown", "SeaGreen", "SeaShell", "Sienna", "Silver",
+        "SkyBlue", "SlateBlue", "SlateGray", "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise",
+        "Violet", "Wheat", "White", "WhiteSmoke", "Yellow", "YellowGreen",
+    };
+
+    public static bool IsColorLiteral(string value) => HexLiteral.IsMatch(value) || NamedColors.Contains(value.Trim());
+
+    /// <summary>
+    /// Every finding for the file, including suppressed ones flagged as such, so the caller can count suppressions.
+    /// <paramref name="isEnabled"/> decides which rules run at all.
+    /// </summary>
     public static IEnumerable<Finding> Analyze(XamlFile file, ProjectContext context, Func<RuleDescriptor, bool> isEnabled)
     {
         var findings = new List<Finding>();
@@ -94,6 +127,11 @@ public static class XamlAnalyzer
         if (isEnabled(Rules.BackBar))
         {
             findings.AddRange(FindBackBars(file));
+        }
+
+        if (isEnabled(Rules.BindValue))
+        {
+            findings.AddRange(FindBindValue(file));
         }
 
         return MergeHexIntoTokenTheme(findings);
@@ -124,7 +162,7 @@ public static class XamlAnalyzer
                 var literal = f.Message.Substring("literal ".Length);
                 var space = literal.IndexOf(' ');
                 literal = space > 0 ? literal.Substring(0, space) : literal;
-                merged.Add(new Finding(Rules.TokenTheme, token.File, token.Line, token.Message + $" (hex literal {literal})"));
+                merged.Add(new Finding(Rules.TokenTheme, token.File, token.Line, token.Message + $" (color literal {literal})", token.Suppressed));
                 tokenLines.Remove(f.Line);
                 continue;
             }
@@ -152,35 +190,27 @@ public static class XamlAnalyzer
                 continue;
             }
 
+            var elementLine = LineOf(element);
             foreach (var attribute in element.Attributes())
             {
-                if (attribute.IsNamespaceDeclaration || !HexLiteral.IsMatch(attribute.Value) || !IsColorSlot(element, attribute))
+                if (attribute.IsNamespaceDeclaration || !IsColorLiteral(attribute.Value) || !IsColorSlot(element, attribute))
                 {
                     continue;
                 }
 
                 var line = LineOf(attribute);
-                if (Suppression.IsSuppressed(file.Lines, line, Rules.Hex))
-                {
-                    continue;
-                }
-
-                yield return new Finding(Rules.Hex, file.RelativePath, line, $"literal {attribute.Value.Trim()} on {element.Name.LocalName}.{attribute.Name.LocalName}");
+                yield return New(Rules.Hex, file, line, $"literal {attribute.Value.Trim()} on {element.Name.LocalName}.{attribute.Name.LocalName}", elementLine);
             }
 
-            // <Color x:Key="...">#FF1234</Color> or <SolidColorBrush>#FF1234</SolidColorBrush>
-            if (!element.HasElements && HexLiteral.IsMatch(element.Value) && IsColorElement(element))
+            // <Color x:Key="...">#FF1234</Color> or <SolidColorBrush>Red</SolidColorBrush>
+            if (!element.HasElements && IsColorLiteral(element.Value) && IsColorElement(element))
             {
-                var line = LineOf(element);
-                if (!Suppression.IsSuppressed(file.Lines, line, Rules.Hex))
-                {
-                    yield return new Finding(Rules.Hex, file.RelativePath, line, $"literal {element.Value.Trim()} in <{element.Name.LocalName}>");
-                }
+                yield return New(Rules.Hex, file, elementLine, $"literal {element.Value.Trim()} in <{element.Name.LocalName}>");
             }
         }
     }
 
-    /// <summary>Whether a hex-looking attribute sets a color, judged by the property name, the element, or the Setter/animation target.</summary>
+    /// <summary>Whether a color-looking attribute sets a color, judged by the property name, the element, or the Setter/animation target.</summary>
     private static bool IsColorSlot(XElement element, XAttribute attribute)
     {
         var property = attribute.Name.LocalName;
@@ -247,6 +277,13 @@ public static class XamlAnalyzer
                 continue;
             }
 
+            // <StaticResource x:Key="AccentAliasBrush" ResourceKey="PrimaryBrush"/> resolves to whatever its target is.
+            var name = element.Name.LocalName;
+            if (name == "StaticResource" || name == "ThemeResource")
+            {
+                continue;
+            }
+
             // Color="{ThemeResource OnSurfaceColor}" follows the theme even though the brush is defined once.
             var color = element.Attribute("Color")?.Value;
             if (color != null && ThemeResourceRef.IsMatch(color))
@@ -260,13 +297,7 @@ public static class XamlAnalyzer
                 continue;
             }
 
-            var line = LineOf(element);
-            if (Suppression.IsSuppressed(file.Lines, line, Rules.TokenTheme))
-            {
-                continue;
-            }
-
-            yield return new Finding(Rules.TokenTheme, file.RelativePath, line, $"{key} has one value for both themes");
+            yield return New(Rules.TokenTheme, file, LineOf(element), $"{key} has one value for both themes");
         }
     }
 
@@ -287,9 +318,9 @@ public static class XamlAnalyzer
             if (name == "Path" || name == "PathIcon")
             {
                 var data = element.Attribute("Data")?.Value;
-                if (data != null && PathMiniLanguage.IsMatch(data) && !Suppression.IsSuppressed(file.Lines, line, Rules.Icon))
+                if (data != null && PathMiniLanguage.IsMatch(data))
                 {
-                    yield return new Finding(Rules.Icon, file.RelativePath, line, $"inline <{name} Data> path geometry");
+                    yield return New(Rules.Icon, file, line, $"inline <{name} Data> path geometry");
                 }
 
                 continue;
@@ -297,21 +328,17 @@ public static class XamlAnalyzer
 
             if (name == "PathGeometry" || name == "GeometryGroup")
             {
-                if (!Suppression.IsSuppressed(file.Lines, line, Rules.Icon))
-                {
-                    yield return new Finding(Rules.Icon, file.RelativePath, line, $"inline <{name}>");
-                }
-
+                yield return New(Rules.Icon, file, line, $"inline <{name}>");
                 continue;
             }
 
             if (name == "Viewbox")
             {
                 var shapes = element.Descendants().Where(d => Shapes.Contains(d.Name.LocalName)).ToList();
-                if (shapes.Count > 0 && !Suppression.IsSuppressed(file.Lines, line, Rules.Icon))
+                if (shapes.Count > 0)
                 {
                     var kinds = string.Join("/", shapes.Select(s => s.Name.LocalName).Distinct());
-                    yield return new Finding(Rules.Icon, file.RelativePath, line, $"Viewbox composed of {shapes.Count} shape(s) ({kinds})");
+                    yield return New(Rules.Icon, file, line, $"Viewbox composed of {shapes.Count} shape(s) ({kinds})");
                 }
             }
         }
@@ -329,8 +356,8 @@ public static class XamlAnalyzer
                 continue;
             }
 
-            // A radius on only some corners ("8,0,0,0") is a swatch, a segment or a joined edge, not a card.
-            if (HasZeroCorner(cornerRadius))
+            // A radius on only some corners ("8,0,0,0") is a swatch, a segment or a joined edge; a zero radius is a plain box.
+            if (!TryUniformRadius(cornerRadius, out var radius) || radius == 0)
             {
                 continue;
             }
@@ -353,17 +380,85 @@ public static class XamlAnalyzer
                 continue;
             }
 
-            var line = LineOf(border);
-            if (Suppression.IsSuppressed(file.Lines, line, Rules.Card))
+            // Avatars and dots (a square Border whose radius makes it a circle), pills (radius >= half the explicit
+            // height) and chips (a large radius around one short piece of content) are not cards; utu:Chip or a
+            // PersonPicture is their home, which is a different rule.
+            if (!double.IsNaN(radius) && IsCircleOrPill(border, radius))
+            {
+                continue;
+            }
+
+            if (!double.IsNaN(radius) && radius >= 12 && IsChipContent(border))
             {
                 continue;
             }
 
             var name = border.Attributes().FirstOrDefault(a => a.Name.LocalName == "Name")?.Value;
             var label = name != null ? $"<Border x:Name=\"{name}\">" : "<Border>";
-            yield return new Finding(Rules.Card, file.RelativePath, line, $"{label} drawn as a card");
+            yield return New(Rules.Card, file, LineOf(border), $"{label} drawn as a card");
         }
     }
+
+    /// <summary>
+    /// True for a uniform radius ("8", "8,8,8,8", or a non-numeric value such as a resource reference, reported as NaN);
+    /// false when corners differ.
+    /// </summary>
+    private static bool TryUniformRadius(string cornerRadius, out double radius)
+    {
+        radius = double.NaN;
+        var trimmed = cornerRadius.Trim();
+        if (trimmed.StartsWith("{", StringComparison.Ordinal))
+        {
+            return true; // "{StaticResource CardCornerRadius}": uniform, size unknown
+        }
+
+        var parts = trimmed.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0)
+        {
+            return false;
+        }
+
+        var values = new List<double>();
+        foreach (var part in parts)
+        {
+            if (!double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
+            {
+                return parts.Length == 1; // a single non-numeric token: treat as uniform, size unknown
+            }
+
+            values.Add(v);
+        }
+
+        if (values.Distinct().Count() > 1)
+        {
+            return false;
+        }
+
+        radius = values[0];
+        return true;
+    }
+
+    private static bool IsCircleOrPill(XElement border, double radius)
+    {
+        var width = Num(border.Attribute("Width"));
+        var height = Num(border.Attribute("Height"));
+
+        if (width.HasValue && height.HasValue && Math.Abs(width.Value - height.Value) < 0.5 && radius * 2 >= width.Value - 0.5)
+        {
+            return true; // circle: avatar, dot, badge
+        }
+
+        return height.HasValue && radius * 2 >= height.Value - 0.5; // pill
+    }
+
+    private static bool IsChipContent(XElement border)
+    {
+        var children = border.Elements().Where(e => !e.Name.LocalName.StartsWith("Border.", StringComparison.Ordinal)).ToList();
+        return children.Count == 0 || (children.Count == 1 && ChipContent.Contains(children[0].Name.LocalName));
+    }
+
+    private static double? Num(XAttribute? attribute) =>
+        attribute != null && double.TryParse(attribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : (double?)null;
 
     // ---------------------------------------------------------------- BACKBAR
 
@@ -382,13 +477,42 @@ public static class XamlAnalyzer
                 continue;
             }
 
-            var line = LineOf(request);
-            if (Suppression.IsSuppressed(file.Lines, line, Rules.BackBar))
+            yield return New(Rules.BackBar, file, LineOf(request), "hand-built back button; no NavigationBar on this page", LineOf(element));
+        }
+    }
+
+    // ---------------------------------------------------------------- BINDVALUE
+
+    private static IEnumerable<Finding> FindBindValue(XamlFile file)
+    {
+        foreach (var element in file.Document.Descendants())
+        {
+            // Inside an item template the context is an entity, where "Item.Value" may be a real property (KeyValuePair).
+            if (IsInside(element, "DataTemplate"))
             {
                 continue;
             }
 
-            yield return new Finding(Rules.BackBar, file.RelativePath, line, "hand-built back button; no NavigationBar on this page");
+            var elementLine = LineOf(element);
+            foreach (var attribute in element.Attributes())
+            {
+                if (attribute.IsNamespaceDeclaration || attribute.Value.IndexOf(".Value", StringComparison.Ordinal) < 0)
+                {
+                    continue;
+                }
+
+                foreach (Match binding in BindingMarkup.Matches(attribute.Value))
+                {
+                    var m = ValuePath.Match(binding.Groups["body"].Value);
+                    if (!m.Success)
+                    {
+                        continue;
+                    }
+
+                    var path = m.Groups["path"].Value;
+                    yield return New(Rules.BindValue, file, LineOf(attribute), $"{{Binding {path}.Value}} on {element.Name.LocalName}.{attribute.Name.LocalName}; bind {path} itself", elementLine);
+                }
+            }
         }
     }
 
@@ -429,15 +553,13 @@ public static class XamlAnalyzer
 
     // ---------------------------------------------------------------- helpers
 
-    private static bool HasZeroCorner(string cornerRadius)
+    /// <summary>A finding at <paramref name="line"/>, suppressed when an allow comment covers that line or any extra anchor (e.g. the element's start line).</summary>
+    private static Finding New(RuleDescriptor rule, XamlFile file, int line, string message, params int[] extraAnchors)
     {
-        var parts = cornerRadius.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length < 2)
-        {
-            return false;
-        }
-
-        return parts.Any(p => double.TryParse(p, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v) && v == 0);
+        var anchors = new int[extraAnchors.Length + 1];
+        anchors[0] = line;
+        Array.Copy(extraAnchors, 0, anchors, 1, extraAnchors.Length);
+        return new Finding(rule, file.RelativePath, line, message, Suppression.IsSuppressed(file.Lines, rule, anchors));
     }
 
     private static bool IsInside(XElement element, string ancestorLocalName)

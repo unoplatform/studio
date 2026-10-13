@@ -12,7 +12,8 @@ public class XamlRuleTests
         Assert.True(XamlFile.TryParse(fileName, xaml, out var file), "test XAML must parse");
         var ctx = new ProjectContext { HasToolkit = toolkit };
         var options = new LintOptions { Profile = profile };
-        return XamlAnalyzer.Analyze(file!, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).ToList();
+        // Analyzers return suppressed hits flagged so the Linter can count them; these tests look at active findings.
+        return XamlAnalyzer.Analyze(file!, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).Where(f => !f.Suppressed).ToList();
     }
 
     // ------------------------------------------------------------ HEX

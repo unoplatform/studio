@@ -13,7 +13,6 @@ public sealed class Linter
     // A folder named Dev, Harness, Probe(s) or Test(s), or a project folder ending in one (MyApp.Tests). Whole segments
     // only: TestApp/, ProbeResultsPage.xaml and Content/TestPages/ are app code.
     private static readonly Regex DevSegment = new Regex(@"(?i)^(?:.+\.)?(?:Dev|Harness|Probes?|Tests?)$", RegexOptions.Compiled);
-    private static readonly HashSet<string> ExcludedDirNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "bin", "obj", "node_modules", ".git", ".vs", ".idea" };
     private static readonly Regex GeneratedCs = new Regex(@"(?i)\.g(\.i)?\.cs$|\.designer\.cs$|GlobalUsings\.g\.cs$", RegexOptions.Compiled);
 
     private readonly LintOptions _options;
@@ -23,17 +22,27 @@ public sealed class Linter
         _options = options;
     }
 
-    /// <summary>Lint every .xaml and .cs file under <paramref name="root"/> (or the single file it names).</summary>
+    /// <summary>
+    /// Lint every .xaml and .cs file under <paramref name="root"/>, or the single file it names. A single file is
+    /// linted with the same project root, dev-path skip and configuration a directory run would give it, so the hook
+    /// and the CLI agree on every file.
+    /// </summary>
     public LintResult Run(string root)
     {
         var fullRoot = Path.GetFullPath(root);
         var isDirectory = Directory.Exists(fullRoot);
-        var baseDir = isDirectory ? fullRoot : (Path.GetDirectoryName(fullRoot) ?? fullRoot);
-
         var result = new LintResult { Root = fullRoot };
 
+        if (!isDirectory && !FileKinds.IsSourceFile(fullRoot))
+        {
+            throw new ArgumentException($"Not a XAML or C# file: {fullRoot}", nameof(root));
+        }
+
+        var projectRoot = isDirectory ? fullRoot : FindProjectRoot(Path.GetDirectoryName(fullRoot) ?? fullRoot);
+        var baseDir = projectRoot;
+
         var candidates = isDirectory
-            ? EnumerateFiles(fullRoot, IsSourceFile).Where(f => !GeneratedCs.IsMatch(f)).ToList()
+            ? FileWalker.Enumerate(fullRoot, FileKinds.IsSourceFile).Where(f => !GeneratedCs.IsMatch(f)).ToList()
             : new List<string> { fullRoot };
 
         var files = new List<string>();
@@ -51,8 +60,20 @@ public sealed class Linter
 
         result.FileCount = files.Count;
 
-        var projectRoot = isDirectory ? fullRoot : FindProjectRoot(baseDir);
-        result.Context = DetectContext(projectRoot, useCache: !isDirectory);
+        // In directory mode every source file is read once and reused for context detection.
+        var texts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        string ReadCached(string path)
+        {
+            if (!texts.TryGetValue(path, out var t))
+            {
+                t = ReadText(path);
+                texts[path] = t;
+            }
+
+            return t;
+        }
+
+        result.Context = DetectContext(projectRoot, useCache: !isDirectory, ReadCached);
 
         var definedBrushKeys = new HashSet<string>(StringComparer.Ordinal);
         var referencedBrushKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -60,7 +81,7 @@ public sealed class Linter
 
         foreach (var path in files)
         {
-            var text = ReadText(path);
+            var text = ReadCached(path);
             if (string.IsNullOrEmpty(text))
             {
                 continue;
@@ -85,7 +106,7 @@ public sealed class Linter
                 var companionPath = path.EndsWith(".xaml.cs", StringComparison.OrdinalIgnoreCase)
                     ? path.Substring(0, path.Length - 3)
                     : null;
-                var companion = companionPath != null && File.Exists(companionPath) ? ReadText(companionPath) : null;
+                var companion = companionPath != null && File.Exists(companionPath) ? ReadCached(companionPath) : null;
                 var cs = new CSharpFile(relative, text, companion);
                 raw.AddRange(CSharpAnalyzer.Analyze(cs, result.Context, enabled).Select(f => WithSeverity(f, path, result.Context)));
             }
@@ -133,11 +154,12 @@ public sealed class Linter
         rule => Rules.Resolve(rule, _options, context, absolutePath) != Severity.None;
 
     /// <summary>
-    /// Project context from the project files first, then from XAML namespaces only for flags the project files left
-    /// unset. In single-file (hook) mode the result is cached on disk keyed by the project files' timestamps, so a
-    /// hook call on a large solution does not re-read every XAML file.
+    /// Project context from the project files first (the csproj files below the root plus every
+    /// Directory.Build.props / Directory.Packages.props above it, where the Uno template puts UnoFeatures), then from
+    /// XAML namespaces only for flags the project files left unset. In single-file (hook) mode the result is cached
+    /// on disk keyed by the project files' timestamps, so a hook call on a large solution does not re-read every XAML file.
     /// </summary>
-    private ProjectContext DetectContext(string projectRoot, bool useCache)
+    private ProjectContext DetectContext(string projectRoot, bool useCache, Func<string, string> read)
     {
         ProjectContext ctx;
         if (!Directory.Exists(projectRoot))
@@ -146,7 +168,7 @@ public sealed class Linter
         }
         else
         {
-            var projectFiles = EnumerateFiles(projectRoot, IsProjectFile).ToList();
+            var projectFiles = FindProjectFiles(projectRoot);
             var cacheKey = useCache ? CacheKey(projectRoot, projectFiles) : null;
             if (cacheKey != null && TryReadCache(cacheKey, out var cached))
             {
@@ -155,10 +177,10 @@ public sealed class Linter
             else
             {
                 ctx = new ProjectContext();
-                ctx.AddProjectFiles(projectFiles.Select(ReadText));
+                ctx.AddProjectFiles(projectFiles.Select(read));
                 if (!ctx.IsComplete)
                 {
-                    ctx.AddXaml(EnumerateFiles(projectRoot, f => f.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase)).Select(ReadText));
+                    ctx.AddXaml(FileWalker.Enumerate(projectRoot, f => f.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase)).Select(read));
                 }
 
                 if (cacheKey != null)
@@ -174,6 +196,27 @@ public sealed class Linter
         }
 
         return ctx;
+    }
+
+    /// <summary>Directory.Build.props and Directory.Packages.props from the drive root down to the project root, then the project files below it.</summary>
+    public static List<string> FindProjectFiles(string projectRoot)
+    {
+        var above = new List<string>();
+        for (var dir = Path.GetDirectoryName(projectRoot); !string.IsNullOrEmpty(dir); dir = Path.GetDirectoryName(dir))
+        {
+            foreach (var name in new[] { "Directory.Build.props", "Directory.Packages.props" })
+            {
+                var candidate = Path.Combine(dir!, name);
+                if (File.Exists(candidate))
+                {
+                    above.Add(candidate);
+                }
+            }
+        }
+
+        above.Reverse();
+        above.AddRange(FileWalker.Enumerate(projectRoot, IsProjectFile));
+        return above;
     }
 
     private static string? CacheKey(string projectRoot, List<string> projectFiles)
@@ -265,48 +308,6 @@ public sealed class Linter
         var segments = relativePath.Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
         return segments.Take(segments.Length - 1).Any(DevSegment.IsMatch);
     }
-
-    /// <summary>Recursive file walk that never descends into bin, obj, .git and the like.</summary>
-    private static IEnumerable<string> EnumerateFiles(string root, Func<string, bool> accept)
-    {
-        var pending = new Stack<string>();
-        pending.Push(root);
-        while (pending.Count > 0)
-        {
-            var dir = pending.Pop();
-            IEnumerable<string> entries;
-            try
-            {
-                entries = Directory.EnumerateFileSystemEntries(dir);
-            }
-            catch (IOException)
-            {
-                continue;
-            }
-            catch (UnauthorizedAccessException)
-            {
-                continue;
-            }
-
-            foreach (var entry in entries)
-            {
-                if (Directory.Exists(entry))
-                {
-                    if (!ExcludedDirNames.Contains(Path.GetFileName(entry)))
-                    {
-                        pending.Push(entry);
-                    }
-                }
-                else if (accept(entry))
-                {
-                    yield return entry;
-                }
-            }
-        }
-    }
-
-    private static bool IsSourceFile(string path) =>
-        path.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase) || path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsProjectFile(string path)
     {

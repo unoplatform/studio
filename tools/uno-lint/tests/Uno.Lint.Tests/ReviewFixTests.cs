@@ -64,7 +64,7 @@ public class ReviewFixTests : IDisposable
         Assert.Equal(Path.Combine("App", "Views", "Main.xaml"), hit.File);
 
         // CODEBEHIND stays on but at suggestion severity, so it no longer gates.
-        var cb = Assert.Single(result.Findings.Where(f => f.Rule == Rules.CodeBehind));
+        var cb = Assert.Single(result.Findings, f => f.Rule == Rules.CodeBehind);
         Assert.Equal(Severity.Suggestion, cb.Severity);
         Assert.True(result.HasGatingFindings); // the HEX warning still gates
     }
@@ -138,7 +138,7 @@ public class ReviewFixTests : IDisposable
     public void Card_treats_a_resource_bound_radius_as_uniform()
     {
         var xaml = $"<Page {Ns}><Border CornerRadius=\"{{StaticResource CardCornerRadius}}\" Background=\"White\"><Grid/></Border></Page>";
-        Assert.Single(LintXaml(xaml).Where(f => f.Rule == Rules.Card));
+        Assert.Single(LintXaml(xaml), f => f.Rule == Rules.Card);
     }
 
     // ------------------------------------------------------------ TOKENTHEME alias (confirmed)
@@ -149,9 +149,9 @@ public class ReviewFixTests : IDisposable
         var xaml = $@"<ResourceDictionary {Ns}>
   <StaticResource x:Key=""AccentAliasBrush"" ResourceKey=""PrimaryBrush"" />
   <ThemeResource x:Key=""SurfaceAliasBrush"" ResourceKey=""SurfaceBrush"" />
-  <SolidColorBrush x:Key=""BrandBlueBrush"" Color=""#0000FF"" />
+  <SolidColorBrush x:Key=""BrandBlueBrush"" Color=""{{StaticResource BrandBlue}}"" />
 </ResourceDictionary>";
-        var hit = Assert.Single(LintXaml(xaml, "App.xaml").Where(f => f.Rule == Rules.TokenTheme));
+        var hit = Assert.Single(LintXaml(xaml, "App.xaml"), f => f.Rule == Rules.TokenTheme);
         Assert.Contains("BrandBlueBrush", hit.Message);
     }
 
@@ -209,7 +209,7 @@ partial class MainPage : Page
         Assert.Contains(mvux, f => f.Line == 2 && f.Message.Contains("Name.Value") && f.Message.Contains("bind Name itself"));
         Assert.Contains(mvux, f => f.Line == 3 && f.Message.Contains("Profile.Address.Value"));
 
-        Assert.Empty(LintXaml(xaml, mvux: false).Where(f => f.Rule == Rules.BindValue));
+        Assert.DoesNotContain(LintXaml(xaml, mvux: false), f => f.Rule == Rules.BindValue);
     }
 
     [Fact]
@@ -269,7 +269,7 @@ partial class MainPage : Page
     public void TokenTheme_defaults_to_suggestion_and_does_not_gate()
     {
         Write("App.csproj", "<Project/>");
-        Write("App.xaml", "<ResourceDictionary xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"><SolidColorBrush x:Key=\"StatusBrush\" Color=\"#18D96A\"/></ResourceDictionary>");
+        Write("App.xaml", "<ResourceDictionary xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\" xmlns:x=\"http://schemas.microsoft.com/winfx/2006/xaml\"><SolidColorBrush x:Key=\"StatusBrush\" Color=\"{StaticResource StatusColor}\"/></ResourceDictionary>");
 
         var result = new Linter(new LintOptions()).Run(_root);
         var hit = Assert.Single(result.Findings);
@@ -342,7 +342,7 @@ partial class MainPage : Page
         var first = new Linter(new LintOptions { Profile = Profile.Strict }).RunSingleFile(Path.Combine(_root, "Views", "Main.xaml"));
         Assert.True(first.Context.HasToolkit, "Toolkit detected from the XAML namespace");
         Assert.False(first.Context.HasMvux, "obj/ is not walked");
-        Assert.Single(first.Findings.Where(f => f.Rule == Rules.Card));
+        Assert.Single(first.Findings, f => f.Rule == Rules.Card);
 
         var second = new Linter(new LintOptions { Profile = Profile.Strict }).RunSingleFile(Path.Combine(_root, "Views", "Main.xaml"));
         Assert.True(second.Context.HasToolkit);

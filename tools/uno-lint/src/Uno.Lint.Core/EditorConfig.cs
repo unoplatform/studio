@@ -9,15 +9,23 @@ namespace Uno.Lint;
 ///   [*.xaml]
 ///   dotnet_diagnostic.UNOL001.severity = none | silent | suggestion | warning | error
 ///   uno_lint.profile = recommended | strict
-/// The profile is project-wide: the last one read wins regardless of its section.
+/// Severity keys count only inside a [section]; EditorConfig allows only "root" in the preamble and the compiler
+/// does not read severities there, so a preamble severity is recorded in <see cref="IgnoredPreambleKeys"/> and
+/// otherwise ignored. The profile is project-wide: the last one read wins wherever it sits.
+/// Files are loaded from the lint root upward (nearest last) and, in directory mode, downward too, so a nested
+/// <c>App/.editorconfig</c> applies whether the run starts at the repo root or at the file.
 /// </summary>
 public sealed class EditorConfigSet
 {
     private readonly List<Section> _sections = new List<Section>();
+    private readonly List<string> _ignoredPreambleKeys = new List<string>();
 
     public Profile? Profile { get; private set; }
 
-    /// <summary>Severity for a rule id on a file. Sections are applied in file order, nearest .editorconfig last; the last match wins.</summary>
+    /// <summary>Severity keys found above any section header, which a Roslyn analyzer would not honor.</summary>
+    public IReadOnlyList<string> IgnoredPreambleKeys => _ignoredPreambleKeys;
+
+    /// <summary>Severity for a rule id on a file. Sections are applied in load order, nearest .editorconfig last; the last match wins.</summary>
     public bool TryGetSeverity(string ruleId, string? filePath, out Severity severity)
     {
         severity = Severity.None;
@@ -45,12 +53,29 @@ public sealed class EditorConfigSet
     public IEnumerable<string> SectionedRuleIds() =>
         _sections.Where(s => s.Glob != null).SelectMany(s => s.Severities.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Loads the chain for a folder or file: ancestors first (farthest to nearest, stopping at <c>root = true</c>),
+    /// then, for a folder, every .editorconfig below it in path order so deeper files are applied last.
+    /// </summary>
     public static EditorConfigSet Load(string rootOrFile)
     {
         var set = new EditorConfigSet();
-        foreach (var path in FindFiles(rootOrFile))
+        var full = Path.GetFullPath(rootOrFile);
+        foreach (var path in FindAncestors(full))
         {
             set.AddFile(path);
+        }
+
+        if (Directory.Exists(full))
+        {
+            var nested = FileWalker.Enumerate(full, f => string.Equals(Path.GetFileName(f), ".editorconfig", StringComparison.OrdinalIgnoreCase))
+                .Where(f => !string.Equals(Path.GetDirectoryName(f), full, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(f => f.Count(c => c == '\\' || c == '/'))
+                .ThenBy(f => f, StringComparer.OrdinalIgnoreCase);
+            foreach (var path in nested)
+            {
+                set.AddFile(path);
+            }
         }
 
         return set;
@@ -67,6 +92,10 @@ public sealed class EditorConfigSet
         {
             return;
         }
+        catch (UnauthorizedAccessException)
+        {
+            return;
+        }
 
         AddText(lines, Path.GetDirectoryName(Path.GetFullPath(path)) ?? string.Empty);
     }
@@ -74,8 +103,7 @@ public sealed class EditorConfigSet
     /// <summary>Parses .editorconfig text whose section globs are relative to <paramref name="directory"/>.</summary>
     public void AddText(IEnumerable<string> lines, string directory)
     {
-        var current = new Section(directory, null);
-        _sections.Add(current);
+        Section? current = null;
 
         foreach (var raw in lines)
         {
@@ -95,7 +123,15 @@ public sealed class EditorConfigSet
             var d = DiagnosticLine.Match(line);
             if (d.Success && TryParseSeverity(d.Groups[2].Value, out var severity))
             {
-                current.Severities[d.Groups[1].Value.ToUpperInvariant()] = severity;
+                if (current == null)
+                {
+                    _ignoredPreambleKeys.Add(d.Groups[1].Value.ToUpperInvariant());
+                }
+                else
+                {
+                    current.Severities[d.Groups[1].Value.ToUpperInvariant()] = severity;
+                }
+
                 continue;
             }
 
@@ -117,10 +153,10 @@ public sealed class EditorConfigSet
     }
 
     /// <summary>The .editorconfig files from the root upward, farthest first so the nearest file's sections are applied last.</summary>
-    private static IEnumerable<string> FindFiles(string rootOrFile)
+    private static IEnumerable<string> FindAncestors(string rootOrFile)
     {
         var found = new List<string>();
-        var dir = Directory.Exists(rootOrFile) ? Path.GetFullPath(rootOrFile) : Path.GetDirectoryName(Path.GetFullPath(rootOrFile));
+        var dir = Directory.Exists(rootOrFile) ? rootOrFile : Path.GetDirectoryName(rootOrFile);
         while (!string.IsNullOrEmpty(dir))
         {
             var candidate = Path.Combine(dir!, ".editorconfig");
@@ -166,26 +202,21 @@ public sealed class EditorConfigSet
     private sealed class Section
     {
         private readonly string _directory;
-        private readonly Regex? _pattern;
+        private readonly Regex _pattern;
 
-        public Section(string directory, string? glob)
+        public Section(string directory, string glob)
         {
             _directory = directory.Replace('\\', '/').TrimEnd('/');
             Glob = glob;
-            _pattern = glob == null ? null : GlobToRegex(glob);
+            _pattern = GlobToRegex(glob);
         }
 
-        public string? Glob { get; }
+        public string Glob { get; }
 
         public Dictionary<string, Severity> Severities { get; } = new Dictionary<string, Severity>(StringComparer.OrdinalIgnoreCase);
 
         public bool Matches(string? normalizedFilePath)
         {
-            if (_pattern == null)
-            {
-                return true; // preamble: applies to every file
-            }
-
             if (normalizedFilePath == null)
             {
                 return false; // a sectioned severity needs a file to match against

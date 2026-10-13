@@ -8,22 +8,15 @@ namespace Uno.Lint;
 /// <summary>A parsed XAML file with the raw text kept for suppression comments.</summary>
 public sealed class XamlFile
 {
-    // Matched against the file name's words ("BrandColors.Dark.xaml" -> "Brand Colors Dark"), so a page whose name only
-    // contains the word is not exempt: ColorPickerPage, AuthTokenPage and LexiconPage are linted like any page.
-    private static readonly Regex PaletteName = new Regex(@"(?i)\b(palettes?|colou?rs|tokens)\b", RegexOptions.Compiled);
-    private static readonly Regex IconName = new Regex(@"(?i)\bicons\b", RegexOptions.Compiled);
-    private static readonly Regex ThemeOverrideName = new Regex(@"(?i)\bcolou?r( palette)? override\b", RegexOptions.Compiled);
-
     private XamlFile(string relativePath, string text, XDocument document)
     {
         RelativePath = relativePath;
         Text = text;
         Lines = Suppression.SplitLines(text);
         Document = document;
-        var words = FileNameWords(relativePath);
-        IsPaletteFile = PaletteName.IsMatch(words);
-        IsIconFile = IconName.IsMatch(words);
-        IsThemeOverrideFile = ThemeOverrideName.IsMatch(words);
+        IsPaletteFile = FileKinds.IsPaletteFile(relativePath);
+        IsIconFile = FileKinds.IsIconFile(relativePath);
+        IsThemeOverrideFile = FileKinds.IsThemeOverrideFile(relativePath);
     }
 
     public string RelativePath { get; }
@@ -33,12 +26,6 @@ public sealed class XamlFile
     public bool IsPaletteFile { get; }
     public bool IsIconFile { get; }
     public bool IsThemeOverrideFile { get; }
-
-    private static string FileNameWords(string relativePath)
-    {
-        var stem = Path.GetFileNameWithoutExtension(relativePath);
-        return string.Join(" ", stem.Split('.', '-', ' ').Select(CSharpAnalyzer.SplitWords));
-    }
 
     public static bool TryParse(string relativePath, string text, out XamlFile? file)
     {
@@ -104,14 +91,17 @@ public static class XamlAnalyzer
     {
         var findings = new List<Finding>();
 
-        if (isEnabled(Rules.Hex) && !file.IsPaletteFile && !file.IsThemeOverrideFile)
+        // A brush defined once with a literal color is one problem, reported once under HEX (the gating rule) with a
+        // note that it is also single-themed; TOKENTHEME takes it only when HEX is not running on this file.
+        var hexActive = isEnabled(Rules.Hex) && !file.IsPaletteFile && !file.IsThemeOverrideFile;
+        if (hexActive)
         {
             findings.AddRange(FindHex(file));
         }
 
         if (isEnabled(Rules.TokenTheme) && !file.IsThemeOverrideFile)
         {
-            findings.AddRange(FindTokenTheme(file));
+            findings.AddRange(FindTokenTheme(file, hexActive));
         }
 
         if (isEnabled(Rules.Icon) && !file.IsIconFile)
@@ -134,48 +124,7 @@ public static class XamlAnalyzer
             findings.AddRange(FindBindValue(file));
         }
 
-        return MergeHexIntoTokenTheme(findings);
-    }
-
-    /// <summary>
-    /// A brush defined once with a hex literal is one problem, not two: keep the TOKENTHEME finding and fold the
-    /// literal into its message instead of reporting HEX on the same line as well.
-    /// </summary>
-    private static List<Finding> MergeHexIntoTokenTheme(List<Finding> findings)
-    {
-        var tokenLines = new Dictionary<int, Finding>();
-        foreach (var f in findings.Where(f => f.Rule == Rules.TokenTheme))
-        {
-            tokenLines[f.Line] = f;
-        }
-
-        if (tokenLines.Count == 0)
-        {
-            return findings;
-        }
-
-        var merged = new List<Finding>(findings.Count);
-        foreach (var f in findings)
-        {
-            if (f.Rule == Rules.Hex && tokenLines.TryGetValue(f.Line, out var token))
-            {
-                var literal = f.Message.Substring("literal ".Length);
-                var space = literal.IndexOf(' ');
-                literal = space > 0 ? literal.Substring(0, space) : literal;
-                merged.Add(new Finding(Rules.TokenTheme, token.File, token.Line, token.Message + $" (color literal {literal})", token.Suppressed));
-                tokenLines.Remove(f.Line);
-                continue;
-            }
-
-            if (f.Rule == Rules.TokenTheme && !tokenLines.ContainsKey(f.Line))
-            {
-                continue; // already emitted merged
-            }
-
-            merged.Add(f);
-        }
-
-        return merged;
+        return findings;
     }
 
     // ---------------------------------------------------------------- HEX
@@ -184,13 +133,17 @@ public static class XamlAnalyzer
     {
         foreach (var element in file.Document.Descendants())
         {
-            // A keyed resource inside ThemeDictionaries is a theme-aware token, which is what the rule asks for.
-            if (IsInside(element, "ResourceDictionary.ThemeDictionaries") && HasKey(element))
+            // A keyed resource inside ThemeDictionaries is a theme-aware token, which is what the rule asks for; so is
+            // anything inside one (a GradientStop in a keyed brush, a Setter in a keyed Style, a property element).
+            if (IsThemeDictionaryToken(element))
             {
                 continue;
             }
 
             var elementLine = LineOf(element);
+            var singleThemed = SingleThemedBrushKey(element);
+            var note = singleThemed != null ? $"; {singleThemed} is also defined once for both themes" : string.Empty;
+
             foreach (var attribute in element.Attributes())
             {
                 if (attribute.IsNamespaceDeclaration || !IsColorLiteral(attribute.Value) || !IsColorSlot(element, attribute))
@@ -199,15 +152,60 @@ public static class XamlAnalyzer
                 }
 
                 var line = LineOf(attribute);
-                yield return New(Rules.Hex, file, line, $"literal {attribute.Value.Trim()} on {element.Name.LocalName}.{attribute.Name.LocalName}", elementLine);
+                yield return New(Rules.Hex, file, line, $"literal {attribute.Value.Trim()} on {element.Name.LocalName}.{attribute.Name.LocalName}{note}", elementLine);
             }
 
             // <Color x:Key="...">#FF1234</Color> or <SolidColorBrush>Red</SolidColorBrush>
             if (!element.HasElements && IsColorLiteral(element.Value) && IsColorElement(element))
             {
-                yield return New(Rules.Hex, file, elementLine, $"literal {element.Value.Trim()} in <{element.Name.LocalName}>");
+                yield return New(Rules.Hex, file, elementLine, $"literal {element.Value.Trim()} in <{element.Name.LocalName}>{note}");
             }
         }
+    }
+
+    /// <summary>True for a keyed resource inside ThemeDictionaries, or any element nested in one.</summary>
+    private static bool IsThemeDictionaryToken(XElement element)
+    {
+        var keyedBelow = false;
+        for (var e = element; e != null; e = e.Parent)
+        {
+            if (e.Name.LocalName == "ResourceDictionary.ThemeDictionaries")
+            {
+                return keyedBelow;
+            }
+
+            if (HasKey(e) && e.Name.LocalName != "ResourceDictionary")
+            {
+                keyedBelow = true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>The key of an app-defined brush that has one value for both themes, or null when the element is not one.</summary>
+    private static string? SingleThemedBrushKey(XElement element)
+    {
+        var key = KeyOf(element);
+        if (key == null || !key.EndsWith("Brush", StringComparison.Ordinal) || InvariantKey.IsMatch(key))
+        {
+            return null;
+        }
+
+        var name = element.Name.LocalName;
+        if (name == "StaticResource" || name == "ThemeResource" || IsInside(element, "ResourceDictionary.ThemeDictionaries"))
+        {
+            return null;
+        }
+
+        return key;
+    }
+
+    /// <summary>A brush whose Color attribute or text content is a literal, which HEX reports when it runs.</summary>
+    private static bool CarriesLiteralColor(XElement element)
+    {
+        var color = element.Attribute("Color")?.Value;
+        return (color != null && IsColorLiteral(color)) || (!element.HasElements && IsColorLiteral(element.Value));
     }
 
     /// <summary>Whether a color-looking attribute sets a color, judged by the property name, the element, or the Setter/animation target.</summary>
@@ -262,24 +260,20 @@ public static class XamlAnalyzer
 
     // ---------------------------------------------------------------- TOKENTHEME
 
-    private static IEnumerable<Finding> FindTokenTheme(XamlFile file)
+    private static IEnumerable<Finding> FindTokenTheme(XamlFile file, bool hexActive)
     {
         foreach (var element in file.Document.Descendants())
         {
-            var key = KeyOf(element);
-            if (key == null || !key.EndsWith("Brush", StringComparison.Ordinal) || InvariantKey.IsMatch(key))
+            // Keyed *Brush outside ThemeDictionaries; <StaticResource x:Key="AliasBrush" ResourceKey="..."/> resolves to
+            // whatever its target is and is skipped.
+            var key = SingleThemedBrushKey(element);
+            if (key == null)
             {
                 continue;
             }
 
-            if (IsInside(element, "ResourceDictionary.ThemeDictionaries"))
-            {
-                continue;
-            }
-
-            // <StaticResource x:Key="AccentAliasBrush" ResourceKey="PrimaryBrush"/> resolves to whatever its target is.
-            var name = element.Name.LocalName;
-            if (name == "StaticResource" || name == "ThemeResource")
+            // HEX already reports this brush, with the single-theme note, when it runs on this file.
+            if (hexActive && CarriesLiteralColor(element))
             {
                 continue;
             }

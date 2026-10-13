@@ -24,6 +24,8 @@ public sealed class CSharpFile
         Text = tree.GetText().ToString();
         Lines = Suppression.SplitLines(Text);
         IsCodeBehind = relativePath.EndsWith(".xaml.cs", StringComparison.OrdinalIgnoreCase);
+        IsAppCodeBehind = string.Equals(Path.GetFileName(relativePath), "App.xaml.cs", StringComparison.OrdinalIgnoreCase);
+        IsPaletteFile = FileKinds.IsPaletteFile(relativePath);
         CompanionXamlText = companionXamlText;
     }
 
@@ -32,12 +34,20 @@ public sealed class CSharpFile
     public string[] Lines { get; }
     public SyntaxTree Tree { get; }
     public bool IsCodeBehind { get; }
+
+    /// <summary>App.xaml.cs hosts lifecycle handlers (OnLaunched, OnSuspending, OnUnhandledException), not page logic.</summary>
+    public bool IsAppCodeBehind { get; }
+
+    /// <summary>A Palette.cs or Tokens.cs: literal colors belong here, as in Palette.xaml.</summary>
+    public bool IsPaletteFile { get; }
+
     public string? CompanionXamlText { get; }
 }
 
 public static class CSharpAnalyzer
 {
-    private static readonly Regex OverlayName = new Regex(@"(?i)(overlay|sheet|scrim|drawer|popup|panel)$", RegexOptions.Compiled);
+    // "Panel" is the most common suffix for a plain layout container (RootPanel, ContentPanel), so it is not an overlay signal.
+    private static readonly Regex OverlayName = new Regex(@"(?i)(overlay|sheet|scrim|drawer|popup)$", RegexOptions.Compiled);
     private static readonly Regex SizeMember = new Regex(@"(?:^|\.)(NewSize\.(?:Width|Height)|ActualWidth|ActualHeight|Bounds\.(?:Width|Height))$", RegexOptions.Compiled);
 
     private static readonly HashSet<string> ControlBaseTypes = new HashSet<string>(StringComparer.Ordinal)
@@ -91,7 +101,9 @@ public static class CSharpAnalyzer
         var root = file.Tree.GetRoot();
         var findings = new List<Finding>();
 
-        if (file.IsCodeBehind)
+        // CODEBEHIND is about page and control code-behind; App.xaml.cs and Application subclasses carry the
+        // lifecycle handlers the template ships (OnLaunched, OnSuspending, OnUnhandledException).
+        if (file.IsCodeBehind && !file.IsAppCodeBehind)
         {
             if (isEnabled(Rules.CodeBehind))
             {
@@ -114,7 +126,7 @@ public static class CSharpAnalyzer
             findings.AddRange(FindBuiltinShadows(file, root, context));
         }
 
-        if (isEnabled(Rules.Hex))
+        if (isEnabled(Rules.Hex) && !file.IsPaletteFile)
         {
             findings.AddRange(FindColorsInCode(file, root));
         }
@@ -132,6 +144,11 @@ public static class CSharpAnalyzer
             // parameter names; a Toolkit or platform args type always ends in EventArgs or Args.
             var parameters = method.ParameterList.Parameters;
             if (parameters.Count != 2 || !IsObjectType(parameters[0].Type))
+            {
+                continue;
+            }
+
+            if (method.Parent is ClassDeclarationSyntax owner && DerivesFromApplication(owner))
             {
                 continue;
             }
@@ -301,6 +318,9 @@ public static class CSharpAnalyzer
     }
 
     // ---------------------------------------------------------------- helpers
+
+    private static bool DerivesFromApplication(ClassDeclarationSyntax cls) =>
+        cls.BaseList?.Types.Select(t => LastIdentifier(t.Type)).Any(n => n == "Application") == true;
 
     private static Finding New(RuleDescriptor rule, CSharpFile file, int line, string message) =>
         new Finding(rule, file.RelativePath, line, message, Suppression.IsSuppressed(file.Lines, line, rule));

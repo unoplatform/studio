@@ -46,21 +46,24 @@ public class CalibrationTests
     if (0 < Spacer.ActualHeight) { }
     if (e.NewSize.Width >= 720) { }
   } }";
-        Assert.Single(LintCs(code).Where(f => f.Rule == Rules.Responsive));
+        Assert.Single(LintCs(code), f => f.Rule == Rules.Responsive);
     }
 
     [Fact]
-    public void Hex_literal_on_a_single_valued_brush_is_reported_once_as_TokenTheme()
+    public void Hex_literal_on_a_single_valued_brush_is_reported_once_as_Hex_with_a_theme_note()
     {
-        // GridWatch App.xaml: 18 brushes each produced a HEX and a TOKENTHEME hit on the same line.
+        // GridWatch App.xaml: 18 brushes each produced a HEX and a TOKENTHEME hit on the same line. One problem, one
+        // finding, under the gating rule, keyed on the element rather than the line so formatting does not matter.
         var xaml = $@"<ResourceDictionary {Ns}>
   <SolidColorBrush x:Key=""StatusOnlineBrush"" Color=""#18D96A""/>
-  <SolidColorBrush x:Key=""StatusWarningBrush"" Color=""#F59E0B""/>
+  <SolidColorBrush x:Key=""StatusWarningBrush""
+                   Color=""#F59E0B""/>
 </ResourceDictionary>";
         var findings = LintXaml(xaml, "App.xaml");
         Assert.Equal(2, findings.Count);
-        Assert.All(findings, f => Assert.Equal(Rules.TokenTheme, f.Rule));
-        Assert.Contains(findings, f => f.Message.Contains("StatusOnlineBrush") && f.Message.Contains("#18D96A"));
+        Assert.All(findings, f => Assert.Equal(Rules.Hex, f.Rule));
+        Assert.Contains(findings, f => f.Line == 2 && f.Message.Contains("#18D96A") && f.Message.Contains("StatusOnlineBrush is also defined once"));
+        Assert.Contains(findings, f => f.Line == 4 && f.Message.Contains("#F59E0B") && f.Message.Contains("StatusWarningBrush is also defined once"));
     }
 
     [Fact]

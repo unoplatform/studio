@@ -38,8 +38,8 @@ public class XamlRuleTests
     [Fact]
     public void Hex_skips_palette_files()
     {
-        Assert.Empty(Lint($"<ResourceDictionary {Ns}><Color x:Key=\"Brand\">#7A67F8</Color></ResourceDictionary>", "Colors.xaml").Where(x => x.Rule == Rules.Hex));
-        Assert.Empty(Lint($"<ResourceDictionary {Ns}><Color x:Key=\"Brand\">#7A67F8</Color></ResourceDictionary>", "ColorPaletteOverride.xaml").Where(x => x.Rule == Rules.Hex));
+        Assert.DoesNotContain(Lint($"<ResourceDictionary {Ns}><Color x:Key=\"Brand\">#7A67F8</Color></ResourceDictionary>", "Colors.xaml"), x => x.Rule == Rules.Hex);
+        Assert.DoesNotContain(Lint($"<ResourceDictionary {Ns}><Color x:Key=\"Brand\">#7A67F8</Color></ResourceDictionary>", "ColorPaletteOverride.xaml"), x => x.Rule == Rules.Hex);
     }
 
     [Theory]
@@ -107,27 +107,27 @@ public class XamlRuleTests
     <ResourceDictionary x:Key=""Dark""><Color x:Key=""Brand"">#A59CFF</Color></ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>";
-        Assert.Empty(Lint(xaml, "App.xaml").Where(x => x.Rule == Rules.Hex));
+        Assert.DoesNotContain(Lint(xaml, "App.xaml"), x => x.Rule == Rules.Hex);
     }
 
     [Fact]
     public void Hex_ignores_non_color_hash_values_and_resource_refs()
     {
         var f = Lint($"<Page {Ns}><TextBlock Text=\"#hashtag\" Foreground=\"{{ThemeResource PrimaryBrush}}\"/></Page>");
-        Assert.Empty(f.Where(x => x.Rule == Rules.Hex));
+        Assert.DoesNotContain(f, x => x.Rule == Rules.Hex);
     }
 
     [Fact]
     public void Hex_honours_suppression_comment_with_reason()
     {
         var xaml = $"<Page {Ns}>\n<!-- uno-lint: allow hex - chart series colour -->\n<Border Background=\"#FF0000\"/>\n</Page>";
-        Assert.Empty(Lint(xaml).Where(x => x.Rule == Rules.Hex));
+        Assert.DoesNotContain(Lint(xaml), x => x.Rule == Rules.Hex);
 
         var legacy = $"<Page {Ns}>\n<!-- xaml-lint: allow hex - chart series colour -->\n<Border Background=\"#FF0000\"/>\n</Page>";
-        Assert.Empty(Lint(legacy).Where(x => x.Rule == Rules.Hex));
+        Assert.DoesNotContain(Lint(legacy), x => x.Rule == Rules.Hex);
 
         var noReason = $"<Page {Ns}>\n<!-- uno-lint: allow hex -->\n<Border Background=\"#FF0000\"/>\n</Page>";
-        Assert.Single(Lint(noReason).Where(x => x.Rule == Rules.Hex));
+        Assert.Single(Lint(noReason), x => x.Rule == Rules.Hex);
     }
 
     // ------------------------------------------------------------ TOKENTHEME
@@ -135,7 +135,8 @@ public class XamlRuleTests
     [Fact]
     public void TokenTheme_flags_single_valued_app_brush()
     {
-        var f = Lint($"<ResourceDictionary {Ns}><SolidColorBrush x:Key=\"AccentBrush\" Color=\"Red\"/></ResourceDictionary>", "App.xaml");
+        // A fixed color through a StaticResource: not a literal (so not HEX), but still one value for both themes.
+        var f = Lint($"<ResourceDictionary {Ns}><SolidColorBrush x:Key=\"AccentBrush\" Color=\"{{StaticResource BrandRed}}\"/></ResourceDictionary>", "App.xaml");
         var hit = Assert.Single(f, x => x.Rule == Rules.TokenTheme);
         Assert.Contains("AccentBrush", hit.Message);
     }
@@ -145,7 +146,7 @@ public class XamlRuleTests
     {
         // The PowerShell prototype flagged this in the Toolkit's own Colors.xaml; it follows the theme.
         var f = Lint($"<ResourceDictionary {Ns}><SolidColorBrush x:Key=\"DividerBrush\" Color=\"{{ThemeResource OnSurfaceColor}}\" Opacity=\"0.13\"/></ResourceDictionary>", "Colors.xaml");
-        Assert.Empty(f.Where(x => x.Rule == Rules.TokenTheme));
+        Assert.DoesNotContain(f, x => x.Rule == Rules.TokenTheme);
     }
 
     [Fact]
@@ -158,7 +159,7 @@ public class XamlRuleTests
   <SolidColorBrush x:Key=""ScrimInvariantBrush"" Color=""Black""/>
   <SolidColorBrush x:Key=""InkOnLightBrush"" Color=""Black""/>
 </ResourceDictionary>";
-        Assert.Empty(Lint(xaml, "App.xaml").Where(x => x.Rule == Rules.TokenTheme));
+        Assert.DoesNotContain(Lint(xaml, "App.xaml"), x => x.Rule == Rules.TokenTheme);
     }
 
     // ------------------------------------------------------------ ICON
@@ -185,8 +186,8 @@ public class XamlRuleTests
     <ControlTemplate TargetType=""Button""><Path Data=""M 0 0 L 1 1""/></ControlTemplate>
   </Setter.Value></Setter></Style>
 </Page>";
-        Assert.Empty(Lint(xaml).Where(x => x.Rule == Rules.Icon));
-        Assert.Empty(Lint($"<ResourceDictionary {Ns}><Path Data=\"M 0 0\"/></ResourceDictionary>", "Icons.xaml").Where(x => x.Rule == Rules.Icon));
+        Assert.DoesNotContain(Lint(xaml), x => x.Rule == Rules.Icon);
+        Assert.DoesNotContain(Lint($"<ResourceDictionary {Ns}><Path Data=\"M 0 0\"/></ResourceDictionary>", "Icons.xaml"), x => x.Rule == Rules.Icon);
     }
 
     // ------------------------------------------------------------ CARD
@@ -203,7 +204,7 @@ public class XamlRuleTests
   </Setter.Value></Setter></Style>
   <utu:ShadowContainer><Border CornerRadius=""8"" Padding=""4""/></utu:ShadowContainer>
 </Page>";
-        var hit = Assert.Single(Lint(xaml).Where(x => x.Rule == Rules.Card));
+        var hit = Assert.Single(Lint(xaml), x => x.Rule == Rules.Card);
         Assert.Contains("Hero", hit.Message);
     }
 
@@ -211,8 +212,8 @@ public class XamlRuleTests
     public void Card_and_BackBar_are_off_without_toolkit_or_in_recommended_profile()
     {
         var xaml = $"<Page {Ns}><Border CornerRadius=\"8\" Background=\"Red\"/><Button uen:Navigation.Request=\"-\" xmlns:uen=\"using:Uno.Extensions.Navigation.UI\"/></Page>";
-        Assert.Empty(Lint(xaml, toolkit: false).Where(x => x.Rule == Rules.Card || x.Rule == Rules.BackBar));
-        Assert.Empty(Lint(xaml, profile: Profile.Recommended).Where(x => x.Rule == Rules.Card || x.Rule == Rules.BackBar));
+        Assert.DoesNotContain(Lint(xaml, toolkit: false), x => x.Rule == Rules.Card || x.Rule == Rules.BackBar);
+        Assert.DoesNotContain(Lint(xaml, profile: Profile.Recommended), x => x.Rule == Rules.Card || x.Rule == Rules.BackBar);
         Assert.Equal(2, Lint(xaml).Count(x => x.Rule == Rules.Card || x.Rule == Rules.BackBar));
     }
 
@@ -222,7 +223,7 @@ public class XamlRuleTests
     public void BackBar_skips_pages_with_a_navigation_bar()
     {
         var xaml = $"<Page {Ns} xmlns:uen=\"using:Uno.Extensions.Navigation.UI\"><utu:NavigationBar/><Button uen:Navigation.Request=\"-\"/></Page>";
-        Assert.Empty(Lint(xaml).Where(x => x.Rule == Rules.BackBar));
+        Assert.DoesNotContain(Lint(xaml), x => x.Rule == Rules.BackBar);
     }
 
     // ------------------------------------------------------------ parsing

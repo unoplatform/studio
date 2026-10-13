@@ -77,8 +77,12 @@ dotnet_diagnostic.UNOL002.severity = warning     # TOKENTHEME gates here (defaul
 dotnet_diagnostic.UNOL001.severity = none        # demo pages may show literal colors
 ```
 
-One deliberate exception, reason required, in a comment within three lines above the hit or on the same line. For an
-attribute on a multi-line element the comment goes above the element's start tag:
+A severity key above any `[section]` is ignored (and reported), as a Roslyn analyzer would ignore it; nested
+`.editorconfig` files below the lint root are loaded too, so `uno-lint .` and `uno-lint App/MainPage.xaml` agree.
+
+One deliberate exception, reason required, in a comment directly above the hit (consecutive comment lines count, the
+first non-comment line stops the search) or on the same line. For an attribute on a multi-line element the comment
+goes above the element's start tag. `uno-lint: allow all - reason` covers every rule at that spot:
 
 ```xml
 <!-- uno-lint: allow hex - chart series colour, no role covers it -->

@@ -29,24 +29,24 @@ while [ -n "$dir" ]; do
 done
 [ -n "$sln_dir" ] || exit 0
 
-# --no-start: a hook never starts a DevServer. The status tool is only offered by App MCP 2.0 and later;
-# the tools list answers at once, where a status call for a missing tool would wait for it.
-tools=$("$cli" --solution-dir "$sln_dir" app tools --no-start 2>/dev/null)
-printf '%s' "$tools" | grep -q uno_app_hot_reload_status || remind
-
-# After a rude edit no later edit applies until the app is rebuilt, so the restart comes after the edits that
-# belong together. uno_app_restart (App MCP 2.0.0-dev.8+) closes and starts with the last start's arguments.
-if printf '%s' "$tools" | grep -q uno_app_restart; then
-	restart='finish the edits that belong with this one, then uno_app_restart once (it closes and starts the app with the last start arguments)'
-else
-	restart='finish the edits that belong with this one, then uno_app_close and uno_app_start once'
-fi
-
-out=$("$cli" --solution-dir "$sln_dir" app hot-reload-status --no-start --file "$file" --waitForMs 8000 2>/dev/null)
+# One CLI call per edit. --no-start: a hook never starts a DevServer, and with it the CLI does not wait for a
+# tool the host does not list (the status tool is only offered by App MCP 2.0 and later): no host or no tool is
+# exit code 2. 5 s covers an applied edit (0.3 to 4 s); a slower one is reported as not covered, and re-saving
+# asks again.
+out=$("$cli" --solution-dir "$sln_dir" app hot-reload-status --no-start --file "$file" --waitForMs 5000 2>/dev/null)
 code=$?
 verdict=$(printf '%s' "$out" | tr -d '\r' | grep '^edit to ' | head -1)
 # A host with no connected app answers without a verdict (and exit code 0): nothing ran the edit.
 [ -n "$verdict" ] || remind
+
+# After a rude edit no later edit applies until the app is rebuilt, so the restart comes after the edits that
+# belong together. An App MCP with uno_app_restart (closes and starts with the last start's arguments) names it
+# in its rude-edit verdict; an older one needs the pair.
+if printf '%s' "$out" | grep -q uno_app_restart; then
+	restart='finish the edits that belong with this one, then uno_app_restart once (it closes and starts the app with the last start arguments)'
+else
+	restart='finish the edits that belong with this one, then uno_app_close and uno_app_start once'
+fi
 
 case $code in
 	0) printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"Hot Reload $(json_escape "$verdict") The running app now runs this edit (a C# edit recreated the current page: navigate back to the state under test). Assert with uno_app_find_elements(waitForMs); do not dotnet build, uno_app_close or uno_app_start.\"}}" ;;

@@ -5,7 +5,7 @@ Date: 2026-09-30. Prototype state; see the spec in specs/001-uno-linter for the 
 ## What was built
 
 A netstandard2.0 rule library (`Uno.Lint.Core`) with a `dotnet tool`-style CLI on top (`uno-lint`).
-All nine rules from the PowerShell prototype are ported. XAML is read with `XDocument` (line info
+All nine rules from the PowerShell prototype are ported, plus BINDVALUE. XAML is read with `XDocument` (line info
 preserved), C# with Roslyn syntax trees, so comments and strings can no longer trigger rules.
 
 | Piece | State |
@@ -181,6 +181,26 @@ What moved and why:
   with the trap turns up.
 - **Suppressed.** Zero across the corpus: none of these apps carries allow comments yet. The column exists so that the
   first agent-built app that does is visible.
+
+## Review fixes, round 2 (2026-10-13)
+
+Every item from the second review, each with a regression test in `tests/Uno.Lint.Tests/ReviewRound2Tests.cs`.
+
+| Review point | Change |
+|---|---|
+| Nested `.editorconfig` ignored in directory mode, honored in hook mode | Directory mode also loads every `.editorconfig` below the root, depth-ordered; single-file mode resolves the chain from the project root. Same file, same config, same result |
+| `Directory.Build.props` above the csproj never read | Project files now include every `Directory.Build.props` / `Directory.Packages.props` from the drive root down to the project root, so the Toolkit, MVUX and Themes gates agree in every mode |
+| HEX/TOKENTHEME fold keyed on line number | The fold is keyed on the element and goes the other way: the gating HEX finding is kept with a "also defined once for both themes" note; TOKENTHEME takes the brush only when HEX is not running on the file; `allow hex` suppresses it |
+| Unkeyed children inside `ThemeDictionaries` flagged | Anything nested under a keyed resource inside `ThemeDictionaries` is exempt |
+| `App.xaml.cs` lifecycle handlers flagged | `App.xaml.cs` and `Application` subclasses are exempt from CODEBEHIND |
+| Preamble severities honored | Ignored and reported on stderr; put them under `[*]` |
+| Suppression look-behind crossed element boundaries | It stops at the first non-comment line; consecutive comment lines still count; `allow all` documented |
+| `panel` in the OVERLAY suffix set | Dropped; `RootPanel.Visibility` is CODEBEHIND |
+| No palette-file exemption on the C# side | `Palette.cs`, `AppColors.cs`, `DesignTokens.cs` are exempt like their XAML counterparts |
+| Path mode accepted any file; dev-path skip only in directory mode | Non `.xaml`/`.cs` files exit 2; a single file is linted relative to its project root so `Tests/` is skipped there too |
+| XAML read twice in directory mode | Texts are read once and shared with context detection |
+| "nine rules", BINDVALUE missing from FR-012, Key Entities | Fixed in the spec, README and here |
+| Dead `Polyfills.cs`, 41 xUnit analyzer warnings | Removed; warnings fixed |
 
 ## Run it
 

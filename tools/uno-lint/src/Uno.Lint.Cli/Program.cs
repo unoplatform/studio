@@ -25,7 +25,8 @@ internal static class Program
 
         Exit codes: 0 clean, 1 findings at warning or above, 2 bad input.
         Severities per rule and per path come from .editorconfig (dotnet_diagnostic.UNOL001.severity = none, in any [glob] section).
-        Suppress one hit with a comment above it, reason required: <!-- uno-lint: allow hex - reason --> or // uno-lint: allow codebehind - reason
+        Suppress one hit with a comment directly above it (or above the element's start tag), reason required:
+          <!-- uno-lint: allow hex - reason -->   // uno-lint: allow codebehind - reason   "allow all - reason" covers every rule there.
         Suppressions are counted per rule in the report; keep them for framework failures with a recorded repro.
         """;
 
@@ -89,7 +90,19 @@ internal static class Program
             return Fail($"Path not found: {path}");
         }
 
-        EditorConfig.Apply(path, options, profileExplicit);
+        if (File.Exists(path) && !FileKinds.IsSourceFile(path))
+        {
+            return Fail($"Not a XAML or C# file: {path}");
+        }
+
+        // Configuration is resolved from the project root so a single file gets the same .editorconfig chain as a
+        // directory run would give it (nested files included).
+        var configRoot = Directory.Exists(path) ? path : Linter.FindProjectRoot(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        EditorConfig.Apply(configRoot, options, profileExplicit);
+        if (options.EditorConfig != null && options.EditorConfig.IgnoredPreambleKeys.Count > 0 && !json)
+        {
+            Console.Error.WriteLine($"uno-lint: ignoring {string.Join(", ", options.EditorConfig.IgnoredPreambleKeys.Distinct())} severity above any [section] in .editorconfig; put it under [*] (a Roslyn analyzer would not read it there either).");
+        }
         var result = new Linter(options).Run(path);
 
         if (json)
@@ -138,7 +151,7 @@ internal static class Program
                 options.Profile = Profile.Strict;
             }
 
-            EditorConfig.Apply(file, options, profileExplicit);
+            EditorConfig.Apply(Linter.FindProjectRoot(Path.GetDirectoryName(Path.GetFullPath(file))!), options, profileExplicit);
 
             // Lint the whole file so context rules (ThemeDictionaries, NavigationBar, suppressions) see everything,
             // then keep only findings on the lines the edit added.

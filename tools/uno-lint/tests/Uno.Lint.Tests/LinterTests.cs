@@ -32,10 +32,10 @@ public class LinterTests : IDisposable
 
         var strict = new Linter(new LintOptions { Profile = Profile.Strict }).Run(_root);
         Assert.True(strict.Context.HasToolkit);
-        Assert.Single(strict.Findings.Where(f => f.Rule == Rules.Card));
+        Assert.Single(strict.Findings, f => f.Rule == Rules.Card);
 
         var recommended = new Linter(new LintOptions()).Run(_root);
-        Assert.Empty(recommended.Findings.Where(f => f.Rule == Rules.Card));
+        Assert.DoesNotContain(recommended.Findings, f => f.Rule == Rules.Card);
     }
 
     [Fact]
@@ -46,8 +46,8 @@ public class LinterTests : IDisposable
 
         var result = new Linter(new LintOptions { Profile = Profile.Strict }).Run(_root);
         Assert.False(result.Context.HasToolkit);
-        Assert.Empty(result.Findings.Where(f => f.Rule == Rules.Card));
-        Assert.Single(result.Findings.Where(f => f.Rule == Rules.Hex));
+        Assert.DoesNotContain(result.Findings, f => f.Rule == Rules.Card);
+        Assert.Single(result.Findings, f => f.Rule == Rules.Hex);
     }
 
     [Fact]
@@ -62,8 +62,8 @@ public class LinterTests : IDisposable
         Assert.Equal(Profile.Strict, options.Profile);
 
         var result = new Linter(options).Run(_root);
-        Assert.Empty(result.Findings.Where(f => f.Rule == Rules.Hex));
-        Assert.Single(result.Findings.Where(f => f.Rule == Rules.Card));
+        Assert.DoesNotContain(result.Findings, f => f.Rule == Rules.Hex);
+        Assert.Single(result.Findings, f => f.Rule == Rules.Card);
     }
 
     [Fact]
@@ -116,6 +116,6 @@ public class LinterTests : IDisposable
 
         var result = new Linter(new LintOptions { Profile = Profile.Strict }).RunSingleFile(Path.Combine(_root, "Views", "Detail.xaml"));
         Assert.True(result.Context.HasToolkit);
-        Assert.Single(result.Findings.Where(f => f.Rule == Rules.Card));
+        Assert.Single(result.Findings, f => f.Rule == Rules.Card);
     }
 }

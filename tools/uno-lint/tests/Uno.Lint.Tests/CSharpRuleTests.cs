@@ -40,10 +40,10 @@ public sealed partial class MainPage : Page
     // void Fake(object sender, RoutedEventArgs e) { }
     private const string Doc = ""void Fake(object sender, RoutedEventArgs e)"";
 }";
-        Assert.Empty(Lint(code).Where(x => x.Rule == Rules.CodeBehind));
+        Assert.DoesNotContain(Lint(code), x => x.Rule == Rules.CodeBehind);
 
         var handlerInModel = "public class MainModel { void OnX(object sender, EventArgs e) { Foo.Visibility = Visibility.Collapsed; } }";
-        Assert.Empty(Lint(handlerInModel, "MainModel.cs").Where(x => x.Rule == Rules.CodeBehind));
+        Assert.DoesNotContain(Lint(handlerInModel, "MainModel.cs"), x => x.Rule == Rules.CodeBehind);
     }
 
     [Fact]
@@ -55,11 +55,11 @@ public sealed partial class PlayerPage : Page
     // uno-lint: allow codebehind - MediaPlayerElement transport glue
     private void OnPositionChanged(object sender, RoutedEventArgs e) { }
 }";
-        Assert.Empty(Lint(code).Where(x => x.Rule == Rules.CodeBehind));
+        Assert.DoesNotContain(Lint(code), x => x.Rule == Rules.CodeBehind);
 
         var unsuppressed = "public sealed partial class P : Page { void OnX(object sender, RoutedEventArgs e) { } }";
-        Assert.Empty(Lint(unsuppressed, profile: Profile.Recommended).Where(x => x.Rule == Rules.CodeBehind));
-        Assert.Single(Lint(unsuppressed, profile: Profile.Strict).Where(x => x.Rule == Rules.CodeBehind));
+        Assert.DoesNotContain(Lint(unsuppressed, profile: Profile.Recommended), x => x.Rule == Rules.CodeBehind);
+        Assert.Single(Lint(unsuppressed, profile: Profile.Strict), x => x.Rule == Rules.CodeBehind);
     }
 
     // ------------------------------------------------------------ OVERLAY
@@ -70,7 +70,7 @@ public sealed partial class PlayerPage : Page
         var code = "public sealed partial class P : Page { void Show() { FilterSheet.Visibility = Visibility.Visible; this.LoadingOverlay.Visibility = Visibility.Collapsed; } }";
         var hits = Lint(code);
         Assert.Equal(2, hits.Count(x => x.Rule == Rules.Overlay));
-        Assert.Empty(hits.Where(x => x.Rule == Rules.CodeBehind));
+        Assert.DoesNotContain(hits, x => x.Rule == Rules.CodeBehind);
     }
 
     // ------------------------------------------------------------ RESPONSIVE
@@ -90,7 +90,7 @@ public sealed partial class P : Page
 }";
         var hits = Lint(code).Where(x => x.Rule == Rules.Responsive).ToList();
         Assert.Equal(2, hits.Count);
-        Assert.Empty(Lint(code, "MainModel.cs").Where(x => x.Rule == Rules.Responsive));
+        Assert.DoesNotContain(Lint(code, "MainModel.cs"), x => x.Rule == Rules.Responsive);
     }
 
     // ------------------------------------------------------------ BUILTIN
@@ -99,7 +99,7 @@ public sealed partial class P : Page
     public void Builtin_flags_custom_control_shadowing_platform_control()
     {
         var code = "namespace App.Controls { public sealed partial class StarRating : UserControl { } }";
-        var hit = Assert.Single(Lint(code, "StarRating.xaml.cs").Where(x => x.Rule == Rules.Builtin));
+        var hit = Assert.Single(Lint(code, "StarRating.xaml.cs"), x => x.Rule == Rules.Builtin);
         Assert.Contains("RatingControl", hit.Message);
     }
 
@@ -107,21 +107,21 @@ public sealed partial class P : Page
     public void Builtin_skips_when_companion_xaml_already_uses_the_control_or_base_is_not_a_control()
     {
         var code = "public sealed partial class StarRating : UserControl { }";
-        Assert.Empty(Lint(code, "StarRating.xaml.cs", companionXaml: "<UserControl><RatingControl/></UserControl>").Where(x => x.Rule == Rules.Builtin));
+        Assert.DoesNotContain(Lint(code, "StarRating.xaml.cs", companionXaml: "<UserControl><RatingControl/></UserControl>"), x => x.Rule == Rules.Builtin);
 
         var service = "public class RatingService : IDisposable { }";
-        Assert.Empty(Lint(service, "RatingService.cs").Where(x => x.Rule == Rules.Builtin));
+        Assert.DoesNotContain(Lint(service, "RatingService.cs"), x => x.Rule == Rules.Builtin);
     }
 
     [Fact]
     public void Builtin_toolkit_suggestions_are_gated_on_toolkit()
     {
         var code = "public sealed partial class RecipeCard : ContentControl { }";
-        Assert.Single(Lint(code, "RecipeCard.cs", toolkit: true).Where(x => x.Rule == Rules.Builtin));
-        Assert.Empty(Lint(code, "RecipeCard.cs", toolkit: false).Where(x => x.Rule == Rules.Builtin));
+        Assert.Single(Lint(code, "RecipeCard.cs", toolkit: true), x => x.Rule == Rules.Builtin);
+        Assert.DoesNotContain(Lint(code, "RecipeCard.cs", toolkit: false), x => x.Rule == Rules.Builtin);
 
         var platform = "public sealed partial class StarRating : Control { }";
-        Assert.Single(Lint(platform, "StarRating.cs", toolkit: false).Where(x => x.Rule == Rules.Builtin));
+        Assert.Single(Lint(platform, "StarRating.cs", toolkit: false), x => x.Rule == Rules.Builtin);
     }
 
     [Theory]

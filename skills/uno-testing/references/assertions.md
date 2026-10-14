@@ -40,7 +40,7 @@ Use `uno_app_visualtree_snapshot` to verify UI structure:
 
 ### Property Assertions
 
-The snapshot shows binding paths (`IsEnabled={CanSave}`), not current values. Read the value from the element's DataContext, or from a screenshot for visual state:
+The snapshot shows binding paths (`IsEnabled={CanSave}`), not current values. `uno_app_find_elements` reports most as `{state}`; read the rest from the DataContext:
 
 | Property | What to Check |
 |----------|---------------|
@@ -81,7 +81,7 @@ Verify:
 ```
 1. uno_app_visualtree_snapshot(detail: "normal")
 2. Find the button by `#Name` or its quoted text
-3. Read `IsEnabled` from the DataContext (or confirm the disabled look in a screenshot)
+3. `uno_app_find_elements` on it: `{disabled}` means `IsEnabled` is false
 4. Verify the quoted text matches
 ```
 

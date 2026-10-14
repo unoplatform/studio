@@ -160,7 +160,7 @@ Without that tool, click its bounds, or focus it and press `Space`.
 
 ### Verifying State
 
-After toggling, read `IsChecked` from the element's DataContext; the snapshot shows the binding path, not the value.
+After toggling, `uno_app_find_elements` on it reports `{checked}` or `{unchecked}`; the snapshot shows only bindings.
 
 ## Slider Interactions
 
@@ -248,7 +248,7 @@ This pattern is complex and may require coordinate-based interaction with carefu
 
 ### Keyboard Needs a Focused Element
 
-`uno_app_key_press` and `uno_app_type_text` raise key events in-process on the element that holds XAML focus. They return `false` when nothing is focused, and no tool focuses an element directly, so click the field's bounds or Tab to it first. Prefer peer actions (`setValue`, `toggle`, `invoke`) when they are licensed.
+`uno_app_key_press` and `uno_app_type_text` raise key events in-process on the element that holds XAML focus and fail when none is. `uno_app_type_text` given `automationId` or `name` focuses it first; else click the field or Tab to it. Prefer peer actions (`setValue`, `toggle`, `invoke`) when they are licensed.
 
 ### Waiting for UI Updates
 

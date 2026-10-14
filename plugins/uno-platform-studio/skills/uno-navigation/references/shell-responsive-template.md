@@ -211,5 +211,5 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 5. Replace `PAGE1_ICON_GLYPH`, etc. with glyphs from the Icon Lookup Table
 6. Add or remove `NavigationViewItem` + `TabBarItem` pairs as needed
 7. Both `NavigationViewItem` and `TabBarItem` for the same page MUST use the same `uen:Region.Name`
-8. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does
+8. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does. The `""` root and `ShellModel` exist only in an app created with `-shell`; without it (the template default) `ShellModel` fails with CS0246, so drop its `ViewMap` and the `""` `RouteMap` and register `"Main"` at the top level, as the template does
 9. `BackgroundBrush` is an Uno.Themes key; on Fluent (`-preset blank`) use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`

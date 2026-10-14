@@ -59,7 +59,7 @@ See the `references/messaging.md` for full details.
 
 ## Key Equality Requirement (Critical)
 
-**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. The `UpdateAsync(T item)` and `UpdateItemAsync(oldItem, updater)` overloads and selection tracking rely on key equality to identify which item to target (`RemoveAllAsync` and `UpdateAllAsync` take a predicate instead). Without it, those overloads do not compile (CS0311, constrained `where T : IKeyEquatable<T>`), and an edited item is diffed as a remove plus an add, which loses selection state.
+**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. The `UpdateAsync(T item)` and `UpdateItemAsync(oldItem, updater)` overloads and selection tracking rely on key equality to identify which item to target (`RemoveAllAsync` and `UpdateAllAsync` take a predicate instead). Without it, those overloads do not compile (CS0311, or CS0453 for `UpdateItemAsync`; constrained `where T : IKeyEquatable<T>`), and an edited item is diffed as a remove plus an add, which loses selection state.
 
 ### Automatic generation (recommended)
 
@@ -107,7 +107,7 @@ public partial record MyItem(Guid Id, string Name);
 - At least one key property is required — without it, the key-based mutation overloads do not compile and edited items lose selection
 - Key properties define **identity** (same entity); non-key properties define **state** (changed data)
 - `KeyEquals` returns `true` when two instances represent the same entity, even if other properties differ
-- `UpdateAsync(T item)` and `UpdateItemAsync` are constrained `where T : IKeyEquatable<T>` — without key equality they do not compile (CS0311); `UpdateItemAsync` replaces every key-equal item
+- `UpdateAsync(T item)` and `UpdateItemAsync` are constrained `where T : IKeyEquatable<T>` — without key equality they do not compile (CS0311/CS0453); `UpdateItemAsync` replaces every key-equal item
 
 ## Updater Purity (Critical)
 

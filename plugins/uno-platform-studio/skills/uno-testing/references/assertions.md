@@ -1,6 +1,6 @@
 # Uno Platform Test Assertions Skill
 
-> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, stop and tell the user to sign in to Uno Platform and enable the Uno tooling rather than attempting to test without them.
+> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, follow the fallbacks in SKILL.md (the platform accessibility tree, then a static review labelled as unverified) rather than testing blind.
 
 This reference provides patterns for validating UI state and asserting test conditions when testing Uno Platform applications with the Uno App MCP tools.
 

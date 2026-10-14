@@ -10,7 +10,7 @@
 uno_platform_docs_search("Uno Toolkit FlexPanel flexbox grow shrink basis wrap gap")
 ```
 
-The docs track stable Toolkit and have no `FlexPanel` page yet, so the search returns nothing and the notes below are the reference.
+Primary documentation pages: **FlexPanel**: `external/uno.toolkit.ui/doc/controls/FlexPanel.md`; **FlexPanel How-To**: `external/uno.toolkit.ui/doc/controls/walkthroughs/FlexPanel.howto.md`. Fetch with `uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/FlexPanel.md")`; the notes below are the checked surface.
 
 ## Key Principles (Stable)
 
@@ -53,7 +53,7 @@ The docs track stable Toolkit and have no `FlexPanel` page yet, so the search re
   </utu:FlexPanel>
   ```
 
-- **Rows can overflow — that is correct flexbox.** A flex item does not shrink below its min-content size by default (CSS Flexbox 4.5). Set `FlexMinWidth="0"` (or `FlexMinHeight="0"` in a column) to opt out. `ScrollViewer` and `ScrollView` children already floor at `0`, matching CSS `overflow: scroll`.
+- **Children can be crushed to `0` — that is Yoga, not CSS.** There is no min-content floor (WinUI cannot report one), so a `TextBlock` can shrink to nothing. Set `Shrink="0"` to keep a child at its natural size, or `FlexMinWidth` / `FlexMinHeight` for an explicit floor.
 
 - **`FlexMinWidth` / `FlexMinHeight` are NOT `FrameworkElement.MinWidth` / `MinHeight`.** The framework properties force `Measure` to return at least *X*; these clamp the flex-resolved slot to at least *X*. The `Flex` prefix is deliberate — both can sit on the same element meaning different things.
 

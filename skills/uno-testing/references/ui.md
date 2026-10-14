@@ -1,6 +1,6 @@
 # Uno Platform UI Testing
 
-> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Confirm the `uno_app_*` tools are available first (through `uno_discover_tools` when the client only lists the proxy tools); if they are not, stop and tell the user to sign in to Uno Platform and enable the Uno tooling rather than attempting to test without them.
+> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Confirm the `uno_app_*` tools are available first (through `uno_discover_tools` when the client only lists the proxy tools); if they are not, follow the fallbacks in SKILL.md (the platform accessibility tree, then a static review labelled as unverified) rather than testing blind.
 
 This reference covers launching apps, inspecting UI elements, simulating user interactions, and validating visual output with the Uno App MCP tools.
 
@@ -29,7 +29,7 @@ The Uno App MCP server exposes tools that let an agent:
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
 6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
 7. **Validate results** → `uno_app_find_elements`, DataContext, screenshots
-8. **Fix in the running app** → edit the file, `uno_app_hot_reload_status(file, waitForMs: 10000)`, then back to step 6; `NOT applied` returns the compiler diagnostics (no `dotnet build`), `RudeEdit` is the only reason for `uno_app_restart`
+8. **Fix in the running app** → edit the file, `uno_app_hot_reload_status(file, waitForMs: 10000)`, then back to step 6; `NOT applied` returns the compiler diagnostics (no `dotnet build`), `RudeEdit`, an `InternalError`, or a file still not covered after a second save are the reasons for `uno_app_restart`; act on the sentence the status returns
 9. **Close the app** → `uno_app_close` at the end, or before a start the skill's rules allow
 
 ## Available MCP Tools
@@ -170,7 +170,7 @@ A selector is resolved against the live tree when the call runs, so it needs no 
      - action: invoke (default), toggle, expand, collapse, select, addToSelection, removeFromSelection, setValue, setRangeValue
      - actionParameters: Optional array; for setValue/setRangeValue the first entry is the value
    ```
-   The line's pattern letters say which actions the element supports: `[t]` `toggle`, `[x]` `expand`/`collapse`, `[s]` `select`, `[v]` `setValue`, `[r]` `setRangeValue`. `setValue` fills a `TextBox` without needing keyboard focus. `ListViewItem` shows no letters on Uno, so select it by pointer or keyboard. This tool needs a Pro or Business licence; on Community, click the field's bounds to focus it, then `uno_app_type_text`.
+   The line's pattern letters say which actions the element supports: `[t]` `toggle`, `[x]` `expand`/`collapse`, `[s]` `select`, `[v]` `setValue`, `[r]` `setRangeValue`. `setValue` fills a `TextBox` without needing keyboard focus. `ListViewItem` shows no `s` on Uno (and `[i]` only when the list has `IsItemClickEnabled="True"`, where the default action raises `ItemClick`), so select it by pointer or keyboard and read `{selected}` from `uno_app_find_elements`. This tool needs a Pro or Business licence; on Community, click the field's bounds to focus it, then `uno_app_type_text`.
 
 **Fallback approach:** coordinates and keyboard, when no pattern applies.
 
@@ -303,7 +303,7 @@ Returns an XML representation of the element's DataContext. `uno_app_find_elemen
 ### Build fails with MSB3026/MSB3027 (file in use)
 - The previous instance is still running: `uno_app_close`, then build again
 
-### Screenshot "path must be within the current working directory" or "Could not find a part of the path"
+### Screenshot "Security error: path must be within ..." or "Could not find a part of the path"
 - Save inside the workspace directory, into a folder that exists, or omit `path`
 
 ### Element not found in visual tree

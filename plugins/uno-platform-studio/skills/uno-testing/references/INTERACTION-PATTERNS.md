@@ -105,7 +105,7 @@ uno_app_key_press(virtualKey: "Escape")
 
 ### Selecting an Item in a ListView
 
-`ListViewItem` exposes no automation pattern on Uno, so peer actions fail on it. Use the pointer or the keyboard:
+`ListViewItem` exposes no select pattern on Uno (only `invoke`, when the list has `IsItemClickEnabled="True"`), so the `s` peer action fails on it. Use the pointer or the keyboard:
 
 1. Take an unscoped `detail: "full"` snapshot to find the item and its `@@x,y,w,h` bounds
 2. Click its centre:
@@ -219,7 +219,7 @@ uno_app_key_press(virtualKey: "End")       // Scroll to bottom
 
 ### Scrolling to Element
 
-If an element is off-screen (`!offscreen` in a `full` snapshot), Tab to it or scroll with the keys above; focus brings it into view. There is no tool that focuses an element directly.
+If an element is off-screen (`!offscreen` in a `full` snapshot), Tab to it or scroll with the keys above; focus brings it into view. To focus an element directly, `uno_app_type_text(text, automationId | name)` focuses it before typing; otherwise Tab to it or click its bounds.
 
 ## Context Menu Interactions
 

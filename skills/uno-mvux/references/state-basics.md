@@ -29,7 +29,7 @@ From the fetched docs, the key factory methods on the `State` and `State<T>` cla
 
 ### Step 3: For Updating State Programmatically
 
-The state reference page covers `UpdateAsync`, `SetAsync`, and `ForEach` for subscribing to changes. Focus on the "Update: How to update a state" section.
+The state reference page covers `UpdateAsync`, `SetAsync` (struct, nullable-struct and `string` states only; a record state uses `UpdateAsync(_ => newValue)`), and `ForEach` for subscribing to changes. Focus on the "Update: How to update a state" section.
 
 ### Step 4: For Two-Way Binding Examples
 

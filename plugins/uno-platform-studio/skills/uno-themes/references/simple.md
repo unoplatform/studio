@@ -45,11 +45,11 @@ Enable the theme with `<UnoFeatures>SimpleTheme</UnoFeatures>` (`SimpleTheme;Too
 
 Simple supports five escalating overrides (ordered by scope):
 
-1. **Seed or override the color palette (full cascade)** — seeds or `OverrideSource` / `OverrideDictionary` on `SimpleTheme.Colors`, as above. All brushes cascade.
+1. **Seed or override the color palette (full cascade)** — seeds or `OverrideSource` / `OverrideDictionary` on `SimpleTheme.Colors`, as above. All brushes cascade (a seed leaves the four `Error*` colours at their base values).
 2. **Density, spacing, corner radius** — `DefaultDensity`, `DefaultSpacing`, `DefaultCornerRadius` on `SimpleTheme`; every control follows through the `Space*` / `Radius*` tokens.
 3. **Override specific brushes (targeted)** — `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` in App.xaml.
 4. **Override per-control instance (scoped)** — wrap the brush override inside the control's `Resources` block.
-5. **Override font family** — set `DefaultFontFamily` on the theme (`<SimpleTheme DefaultFontFamily="ms-appx:///Fonts/MyFont.ttf#MyFont" />`); use `FontOverrideSource` / `FontOverrideDictionary` only to override individual font keys. `SimpleFontFamily`, the per-weight `Simple*FontFamily` keys, and the 7.1.1 `TypefacePlain` / `TypefaceBrand` pair no longer exist; an override that still defines them is silently ignored (Uno.Themes 8.0 migration guide). The docs site still serves the 7.x migration page, which recommends `TypefacePlain`; ignore that on 8.0.
+5. **Override font family** — set `DefaultFontFamily` on the theme (`<SimpleTheme DefaultFontFamily="ms-appx:///Fonts/MyFont.ttf#MyFont" />`); use `FontOverrideSource` / `FontOverrideDictionary` only to override individual font keys. `SimpleFontFamily`, the per-weight `Simple*FontFamily` keys, and the 7.1.1 `TypefacePlain` / `TypefaceBrand` pair no longer exist; an override that still defines them is silently ignored (Uno.Themes 8.0 migration guide). The published migration page (`external/uno.themes/doc/material-migration.md`, section "Upgrading to Uno Themes v8") documents the removal.0.
 
 Customization precedence (highest → lowest): per-instance `Control.Resources` → `Page.Resources` → app-level overrides → `SimpleTheme` defaults → `SharedColorPalette` / `SharedColors` / `SharedTypography` foundation.
 

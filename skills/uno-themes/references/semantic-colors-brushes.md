@@ -320,7 +320,7 @@ Every Color key generates **9 SolidColorBrush variants** at different opacity le
 
 ### Method 1: Override Color Palette (Full Cascade)
 
-Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in a ResourceDictionary referenced by the theme's `Colors` (`ThemeColors.OverrideSource`). All 280 brushes and controls update automatically.
+Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in a ResourceDictionary referenced by the theme's `Colors` (`ThemeColors.OverrideSource`). All 280 brushes and controls update automatically, except that a seed leaves the four `Error*` colours at their base values.
 
 **Always provide both** `Light` and `Default` (Dark) theme values.
 

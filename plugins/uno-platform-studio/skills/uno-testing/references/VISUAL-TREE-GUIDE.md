@@ -86,7 +86,7 @@ The centre point for `uno_app_pointer_click` is `x + w/2, y + h/2`: here `175, 2
 - `RadioButton` - Exclusive selection (`[st]`: `select` or `toggle`)
 - `Slider`, `NumberBox` - Range value (`[r]`: `setRangeValue`)
 - `ToggleSwitch` - On/off toggle (`[t]`: `toggle`)
-- `ListViewItem` - No pattern letters on Uno; select by pointer click or arrow keys
+- `ListViewItem` - No `s` letter on Uno (`[i]` only with `IsItemClickEnabled="True"`); select by pointer click or arrow keys
 
 The default action is `invoke` and only `[i]` elements accept it.
 

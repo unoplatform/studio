@@ -21,6 +21,7 @@ internal static class Program
           --top <n>                          Files listed per rule in the text report. Default: 12.
           --include-dev                      Also lint Dev/Harness/Probe/Tests paths.
           --toolkit / --no-toolkit           Force the Uno.Toolkit gate instead of detecting it.
+          --xaml-engine <builtin|xamlparser> Experimental: run HEX and CARD on Uno.XamlParser, which repairs broken markup.
           --list-rules                       Print the rule catalog.
 
         Exit codes: 0 clean, 1 findings at warning or above, 2 bad input.
@@ -50,6 +51,11 @@ internal static class Program
                 case "--include-dev": options.IncludeDev = true; break;
                 case "--toolkit": options.AssumeToolkit = true; break;
                 case "--no-toolkit": options.AssumeToolkit = false; break;
+                case "--xaml-engine":
+                    if (++i >= args.Length) { return Fail("--xaml-engine needs builtin or xamlparser"); }
+                    if (args[i] == "xamlparser") { options.XamlEngine = new Uno.Lint.Xaml.XamlParserEngine(); }
+                    else if (args[i] != "builtin") { return Fail("--xaml-engine needs builtin or xamlparser"); }
+                    break;
                 case "--top":
                     if (++i >= args.Length || !int.TryParse(args[i], out top)) { return Fail("--top needs a number"); }
                     break;
@@ -307,6 +313,10 @@ internal static class Program
             ["files"] = result.FileCount,
             ["skippedDev"] = result.SkippedDevFiles,
             ["unparsedXaml"] = result.UnparsedXamlFiles,
+            ["xamlEngine"] = options.XamlEngine?.Name ?? "builtin",
+            ["repairedXaml"] = result.RepairedXamlFiles,
+            ["lineShiftedXaml"] = result.LineShiftedXamlFiles,
+            ["partialXaml"] = result.PartialXamlFiles,
             ["counts"] = counts,
             ["suppressed"] = suppressedCounts,
             ["suppressedFindings"] = suppressed,
@@ -335,7 +345,7 @@ internal static class Program
             result.Context.HasMvux ? "mvux" : null,
         }.Where(s => s != null));
         sb.AppendLine($"uno-lint  {result.Root}");
-        sb.AppendLine($"profile={options.Profile.ToString().ToLowerInvariant()}  {stack}  {result.FileCount} files, {result.SkippedDevFiles} dev/harness skipped, {result.UnparsedXamlFiles} xaml unparsed");
+        sb.AppendLine($"profile={options.Profile.ToString().ToLowerInvariant()}  {stack}  {result.FileCount} files, {result.SkippedDevFiles} dev/harness skipped, {result.UnparsedXamlFiles} xaml unparsed" + (options.XamlEngine != null ? $", engine={options.XamlEngine.Name}, {result.RepairedXamlFiles} repaired ({result.PartialXamlFiles} partial, {result.LineShiftedXamlFiles} with shifted lines)" : string.Empty));
         sb.AppendLine();
         sb.AppendLine("Id       Rule         Count  Supp  Title");
         sb.AppendLine("-------  -----------  -----  ----  -----");

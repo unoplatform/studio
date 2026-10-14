@@ -45,81 +45,57 @@ public sealed class XamlFile
 
 public static class XamlAnalyzer
 {
-    private static readonly Regex HexLiteral = new Regex(@"^\s*#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})\s*$", RegexOptions.Compiled);
-
-    // A property, or an element, that holds a color: Background, BorderBrush, Fill, Stroke, Tint, Color, SolidColorBrush,
-    // GradientStop, ColorAnimation... Text="#404" and Tag="#123" are text that happens to look like hex.
-    private static readonly Regex ColorName = new Regex(@"(?i)colou?r|brush|background|foreground|fill|stroke|tint|gradientstop", RegexOptions.Compiled);
+    // Color, key and geometry predicates live in RuleLogic so every XAML host shares them.
     private static readonly Regex PathMiniLanguage = new Regex(@"^\s*(?:F[01]\s*)?[Mm]", RegexOptions.Compiled);
-    private static readonly Regex InvariantKey = new Regex(@"(?i)invariant|ondark|onlight|fixed", RegexOptions.Compiled);
     private static readonly Regex ThemeResourceRef = new Regex(@"\{\s*ThemeResource\b", RegexOptions.Compiled);
     private static readonly string[] Shapes = { "Ellipse", "Rectangle", "Line", "Polyline", "Polygon" };
-    private static readonly string[] ChipContent = { "TextBlock", "FontIcon", "SymbolIcon", "PathIcon", "Run" };
 
     // {Binding X.Value} / {Binding Path=X.Value ...}: the MVUX state trap. Nested markup ({Binding X.Value, Converter={StaticResource C}}) is tolerated.
     private static readonly Regex BindingMarkup = new Regex(@"\{\s*Binding\b(?<body>(?:[^{}]|\{[^{}]*\})*)\}", RegexOptions.Compiled);
     private static readonly Regex ValuePath = new Regex(@"^\s*(?:Path\s*=\s*)?(?<path>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.Value\b|[\s,]Path\s*=\s*(?<path>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.Value\b", RegexOptions.Compiled);
 
-    /// <summary>The WinUI named colors (Microsoft.UI.Colors), minus Transparent, which is a legitimate "no color".</summary>
-    private static readonly HashSet<string> NamedColors = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-    {
-        "AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond", "Blue",
-        "BlueViolet", "Brown", "BurlyWood", "CadetBlue", "Chartreuse", "Chocolate", "Coral", "CornflowerBlue", "Cornsilk",
-        "Crimson", "Cyan", "DarkBlue", "DarkCyan", "DarkGoldenrod", "DarkGray", "DarkGreen", "DarkKhaki", "DarkMagenta",
-        "DarkOliveGreen", "DarkOrange", "DarkOrchid", "DarkRed", "DarkSalmon", "DarkSeaGreen", "DarkSlateBlue", "DarkSlateGray",
-        "DarkTurquoise", "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DodgerBlue", "Firebrick", "FloralWhite",
-        "ForestGreen", "Fuchsia", "Gainsboro", "GhostWhite", "Gold", "Goldenrod", "Gray", "Green", "GreenYellow", "Honeydew",
-        "HotPink", "IndianRed", "Indigo", "Ivory", "Khaki", "Lavender", "LavenderBlush", "LawnGreen", "LemonChiffon",
-        "LightBlue", "LightCoral", "LightCyan", "LightGoldenrodYellow", "LightGray", "LightGreen", "LightPink", "LightSalmon",
-        "LightSeaGreen", "LightSkyBlue", "LightSlateGray", "LightSteelBlue", "LightYellow", "Lime", "LimeGreen", "Linen",
-        "Magenta", "Maroon", "MediumAquamarine", "MediumBlue", "MediumOrchid", "MediumPurple", "MediumSeaGreen",
-        "MediumSlateBlue", "MediumSpringGreen", "MediumTurquoise", "MediumVioletRed", "MidnightBlue", "MintCream", "MistyRose",
-        "Moccasin", "NavajoWhite", "Navy", "OldLace", "Olive", "OliveDrab", "Orange", "OrangeRed", "Orchid", "PaleGoldenrod",
-        "PaleGreen", "PaleTurquoise", "PaleVioletRed", "PapayaWhip", "PeachPuff", "Peru", "Pink", "Plum", "PowderBlue", "Purple",
-        "Red", "RosyBrown", "RoyalBlue", "SaddleBrown", "Salmon", "SandyBrown", "SeaGreen", "SeaShell", "Sienna", "Silver",
-        "SkyBlue", "SlateBlue", "SlateGray", "Snow", "SpringGreen", "SteelBlue", "Tan", "Teal", "Thistle", "Tomato", "Turquoise",
-        "Violet", "Wheat", "White", "WhiteSmoke", "Yellow", "YellowGreen",
-    };
-
-    public static bool IsColorLiteral(string value) => HexLiteral.IsMatch(value) || NamedColors.Contains(value.Trim());
+    public static bool IsColorLiteral(string value) => RuleLogic.IsColorLiteral(value);
 
     /// <summary>
     /// Every finding for the file, including suppressed ones flagged as such, so the caller can count suppressions.
     /// <paramref name="isEnabled"/> decides which rules run at all.
     /// </summary>
-    public static IEnumerable<Finding> Analyze(XamlFile file, ProjectContext context, Func<RuleDescriptor, bool> isEnabled)
+    /// <param name="handledElsewhere">Rules another XAML host evaluates for this file; enabled, but not run here.</param>
+    public static IEnumerable<Finding> Analyze(XamlFile file, ProjectContext context, Func<RuleDescriptor, bool> isEnabled, Func<RuleDescriptor, bool>? handledElsewhere = null)
     {
         var findings = new List<Finding>();
+        bool Runs(RuleDescriptor rule) => isEnabled(rule) && handledElsewhere?.Invoke(rule) != true;
 
         // A brush defined once with a literal color is one problem, reported once under HEX (the gating rule) with a
-        // note that it is also single-themed; TOKENTHEME takes it only when HEX is not running on this file.
+        // note that it is also single-themed; TOKENTHEME takes it only when HEX is not active on this file, whichever
+        // host runs HEX.
         var hexActive = isEnabled(Rules.Hex) && !file.IsPaletteFile && !file.IsThemeOverrideFile;
-        if (hexActive)
+        if (hexActive && Runs(Rules.Hex))
         {
             findings.AddRange(FindHex(file));
         }
 
-        if (isEnabled(Rules.TokenTheme) && !file.IsThemeOverrideFile)
+        if (Runs(Rules.TokenTheme) && !file.IsThemeOverrideFile)
         {
             findings.AddRange(FindTokenTheme(file, hexActive));
         }
 
-        if (isEnabled(Rules.Icon) && !file.IsIconFile)
+        if (Runs(Rules.Icon) && !file.IsIconFile)
         {
             findings.AddRange(FindIcons(file));
         }
 
-        if (isEnabled(Rules.Card))
+        if (Runs(Rules.Card))
         {
             findings.AddRange(FindCards(file));
         }
 
-        if (isEnabled(Rules.BackBar))
+        if (Runs(Rules.BackBar))
         {
             findings.AddRange(FindBackBars(file));
         }
 
-        if (isEnabled(Rules.BindValue))
+        if (Runs(Rules.BindValue))
         {
             findings.AddRange(FindBindValue(file));
         }
@@ -187,7 +163,7 @@ public static class XamlAnalyzer
     private static string? SingleThemedBrushKey(XElement element)
     {
         var key = KeyOf(element);
-        if (key == null || !key.EndsWith("Brush", StringComparison.Ordinal) || InvariantKey.IsMatch(key))
+        if (key == null || !key.EndsWith("Brush", StringComparison.Ordinal) || RuleLogic.IsInvariantKey(key))
         {
             return null;
         }
@@ -214,10 +190,10 @@ public static class XamlAnalyzer
         var property = attribute.Name.LocalName;
         if (property == "Value")
         {
-            return TargetPropertyOf(element) is string target && ColorName.IsMatch(target);
+            return TargetPropertyOf(element) is string target && RuleLogic.IsColorName(target);
         }
 
-        return ColorName.IsMatch(LastSegment(property)) || ColorName.IsMatch(element.Name.LocalName);
+        return RuleLogic.IsColorName(LastSegment(property)) || RuleLogic.IsColorName(element.Name.LocalName);
     }
 
     /// <summary>&lt;Color&gt;#..&lt;/Color&gt;, &lt;SolidColorBrush&gt;#..&lt;/SolidColorBrush&gt;, or &lt;Setter.Value&gt;#..&lt;/Setter.Value&gt; on a color property.</summary>
@@ -226,10 +202,10 @@ public static class XamlAnalyzer
         var name = element.Name.LocalName;
         if (name == "Setter.Value")
         {
-            return element.Parent != null && TargetPropertyOf(element.Parent) is string target && ColorName.IsMatch(target);
+            return element.Parent != null && TargetPropertyOf(element.Parent) is string target && RuleLogic.IsColorName(target);
         }
 
-        return ColorName.IsMatch(name);
+        return RuleLogic.IsColorName(name);
     }
 
     /// <summary>
@@ -382,7 +358,7 @@ public static class XamlAnalyzer
                 continue;
             }
 
-            if (!double.IsNaN(radius) && radius >= 12 && IsChipContent(border))
+            if (!double.IsNaN(radius) && radius >= RuleLogic.ChipRadius && IsChipContent(border))
             {
                 continue;
             }
@@ -397,62 +373,13 @@ public static class XamlAnalyzer
     /// True for a uniform radius ("8", "8,8,8,8", or a non-numeric value such as a resource reference, reported as NaN);
     /// false when corners differ.
     /// </summary>
-    private static bool TryUniformRadius(string cornerRadius, out double radius)
-    {
-        radius = double.NaN;
-        var trimmed = cornerRadius.Trim();
-        if (trimmed.StartsWith("{", StringComparison.Ordinal))
-        {
-            return true; // "{StaticResource CardCornerRadius}": uniform, size unknown
-        }
+    private static bool TryUniformRadius(string cornerRadius, out double radius) => RuleLogic.TryUniformRadius(cornerRadius, out radius);
 
-        var parts = trimmed.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0)
-        {
-            return false;
-        }
+    private static bool IsCircleOrPill(XElement border, double radius) =>
+        RuleLogic.IsCircleOrPill(radius, RuleLogic.ParseNumber(border.Attribute("Width")?.Value), RuleLogic.ParseNumber(border.Attribute("Height")?.Value));
 
-        var values = new List<double>();
-        foreach (var part in parts)
-        {
-            if (!double.TryParse(part, NumberStyles.Float, CultureInfo.InvariantCulture, out var v))
-            {
-                return parts.Length == 1; // a single non-numeric token: treat as uniform, size unknown
-            }
-
-            values.Add(v);
-        }
-
-        if (values.Distinct().Count() > 1)
-        {
-            return false;
-        }
-
-        radius = values[0];
-        return true;
-    }
-
-    private static bool IsCircleOrPill(XElement border, double radius)
-    {
-        var width = Num(border.Attribute("Width"));
-        var height = Num(border.Attribute("Height"));
-
-        if (width.HasValue && height.HasValue && Math.Abs(width.Value - height.Value) < 0.5 && radius * 2 >= width.Value - 0.5)
-        {
-            return true; // circle: avatar, dot, badge
-        }
-
-        return height.HasValue && radius * 2 >= height.Value - 0.5; // pill
-    }
-
-    private static bool IsChipContent(XElement border)
-    {
-        var children = border.Elements().Where(e => !e.Name.LocalName.StartsWith("Border.", StringComparison.Ordinal)).ToList();
-        return children.Count == 0 || (children.Count == 1 && ChipContent.Contains(children[0].Name.LocalName));
-    }
-
-    private static double? Num(XAttribute? attribute) =>
-        attribute != null && double.TryParse(attribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : (double?)null;
+    private static bool IsChipContent(XElement border) =>
+        RuleLogic.IsChipContent(border.Elements().Select(e => e.Name.LocalName).Where(n => !n.StartsWith("Border.", StringComparison.Ordinal)).ToList());
 
     // ---------------------------------------------------------------- BACKBAR
 

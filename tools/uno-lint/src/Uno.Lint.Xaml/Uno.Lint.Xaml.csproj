@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Experimental XAML host on Uno.XamlParser (spike). Uno.XamlParser targets net9.0, so this project cannot live in the
+    netstandard2.0 rule library; it plugs in through Uno.Lint.IXamlEngine and reuses the shared RuleLogic predicates.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Uno.Lint.Xaml</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Uno.XamlParser" Version="0.10.0-dev.74" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Uno.Lint.Core\Uno.Lint.Core.csproj" />
+  </ItemGroup>
+
+</Project>

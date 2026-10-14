@@ -11,7 +11,8 @@ Skills tell the agent what to do. This checks what it actually did, deterministi
 src/Uno.Lint.Core   netstandard2.0 rule library (XDocument for XAML, Roslyn 4.8 for C#). The rules are host-agnostic:
                     they take a parsed document or SyntaxTree plus a ProjectContext. Linter.cs is the file-system host;
                     a Roslyn analyzer would be a second host over the same rules.
-src/Uno.Lint.Cli    uno-lint command: path mode, --json, --hook
+src/Uno.Lint.Xaml   experimental XAML host on Uno.XamlParser (net10.0), plugged in through IXamlEngine; see XAMLPARSER-SPIKE.md
+src/Uno.Lint.Cli    uno-lint command: path mode, --json, --hook, --xaml-engine
 tests/Uno.Lint.Tests xunit
 hooks/              Claude Code PostToolUse hook snippet
 FINDINGS.md         results of the first corpus run and per-rule verdicts

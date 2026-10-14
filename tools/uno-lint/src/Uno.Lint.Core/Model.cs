@@ -106,6 +106,16 @@ public sealed class LintResult
     public int FileCount { get; set; }
     public int SkippedDevFiles { get; set; }
     public int UnparsedXamlFiles { get; set; }
+
+    /// <summary>XAML files the built-in parser rejected but the XAML engine repaired; only the engine's rules ran on them.</summary>
+    public int RepairedXamlFiles { get; set; }
+
+    /// <summary>Repaired files whose repair changed the line count, so their line numbers may be off.</summary>
+    public int LineShiftedXamlFiles { get; set; }
+
+    /// <summary>Repaired files the engine could only read up to a point; rules ran on that prefix.</summary>
+    public int PartialXamlFiles { get; set; }
+
     public ProjectContext Context { get; set; } = new ProjectContext();
 
     /// <summary>Active findings, after profile, .editorconfig and project gating; never includes suppressed hits.</summary>
@@ -136,4 +146,7 @@ public sealed class LintOptions
 
     /// <summary>Force the Toolkit gate open or closed instead of detecting it from the project.</summary>
     public bool? AssumeToolkit { get; set; }
+
+    /// <summary>Optional XAML host that owns some XAML rules (experimental: Uno.XamlParser).</summary>
+    public IXamlEngine? XamlEngine { get; set; }
 }

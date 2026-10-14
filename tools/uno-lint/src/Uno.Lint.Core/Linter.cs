@@ -92,13 +92,43 @@ public sealed class Linter
 
             if (path.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase))
             {
-                if (!XamlFile.TryParse(relative, text, out var xaml))
+                // With an engine, it runs the rules it owns (on markup it may have repaired) and the built-in XDocument
+                // path runs the rest. A file XDocument rejects still gets the engine's rules instead of being skipped.
+                var engine = _options.XamlEngine;
+                var builtInParsed = XamlFile.TryParse(relative, text, out var xaml);
+                var engineParsed = false;
+                if (engine != null)
                 {
-                    result.UnparsedXamlFiles++;
+                    var engineResult = engine.Analyze(relative, text, result.Context, enabled);
+                    engineParsed = engineResult.Parsed;
+                    raw.AddRange(engineResult.Findings.Select(f => WithSeverity(f, path, result.Context)));
+                    if (!builtInParsed && engineResult.Parsed)
+                    {
+                        result.RepairedXamlFiles++;
+                        if (engineResult.LinesShifted)
+                        {
+                            result.LineShiftedXamlFiles++;
+                        }
+
+                        if (engineResult.Partial)
+                        {
+                            result.PartialXamlFiles++;
+                        }
+                    }
+                }
+
+                if (!builtInParsed)
+                {
+                    if (!engineParsed)
+                    {
+                        result.UnparsedXamlFiles++;
+                    }
+
                     continue;
                 }
 
-                raw.AddRange(XamlAnalyzer.Analyze(xaml!, result.Context, enabled).Select(f => WithSeverity(f, path, result.Context)));
+                Func<RuleDescriptor, bool>? owned = engine == null ? null : rule => engine.OwnedRules.Contains(rule);
+                raw.AddRange(XamlAnalyzer.Analyze(xaml!, result.Context, enabled, owned).Select(f => WithSeverity(f, path, result.Context)));
                 XamlAnalyzer.CollectInfo(xaml!, result.Info, definedBrushKeys, referencedBrushKeys);
             }
             else

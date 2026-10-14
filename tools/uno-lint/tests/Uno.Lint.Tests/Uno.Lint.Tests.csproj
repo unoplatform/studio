@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Uno.Lint.Core\Uno.Lint.Core.csproj" />
     <ProjectReference Include="..\..\src\Uno.Lint.Cli\Uno.Lint.Cli.csproj" />
+    <ProjectReference Include="..\..\src\Uno.Lint.Xaml\Uno.Lint.Xaml.csproj" />
   </ItemGroup>
 
 </Project>

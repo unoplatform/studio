@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Uno.Lint.Core\Uno.Lint.Core.csproj" />
+    <ProjectReference Include="..\Uno.Lint.Xaml\Uno.Lint.Xaml.csproj" />
   </ItemGroup>
 
 </Project>

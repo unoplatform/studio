@@ -4,6 +4,7 @@ description: "Uno.Extensions.Navigation for Uno Platform apps: route registratio
 metadata:
   author: uno-platform
   category: navigation
+  uno-sdk: "7.0.0-dev.77"
 ---
 
 # Uno Navigation

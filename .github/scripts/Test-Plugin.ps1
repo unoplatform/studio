@@ -107,6 +107,16 @@ try {
         if (-not $markdownValue -or $markdownValue -cne $tomlValue) { $errors.Add("uno-dev: Markdown and Codex agent $field differ or are missing") }
     }
 
+    # --- Every skill names the Uno.Sdk it is built against in `metadata.uno-sdk`, as a version published on NuGet.
+    # main may name a -dev build; the release moves it to the stable release of that minor (Set-UnoSdkVersion.ps1).
+    $unoSdkVersions = (Invoke-RestMethod 'https://api.nuget.org/v3-flatcontainer/uno.sdk/index.json').versions
+    foreach ($file in Get-ChildItem "$plugin/skills/*/SKILL.md") {
+        $sdk = [regex]::Match((Get-Content $file -Raw), '(?m)^  uno-sdk: "?([^"\s]+)"?').Groups[1].Value
+        $relative = [IO.Path]::GetRelativePath($root, $file.FullName) -replace '\\', '/'
+        if (-not $sdk) { $errors.Add("${relative}: missing metadata.uno-sdk (the Uno.Sdk version the skill is built against)") }
+        elseif ($sdk -notin $unoSdkVersions) { $errors.Add("${relative}: metadata.uno-sdk '$sdk' is not a published Uno.Sdk version on NuGet") }
+    }
+
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"

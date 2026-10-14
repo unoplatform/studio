@@ -174,6 +174,8 @@ Releases ship from `release/stable/<major>.<minor>` branches, like the other Uno
 3. Once approved, it releases the next `1.2.<patch>` (starting at `1.2.0`). It stamps that version into every manifest on the release branch, tags the commit, publishes a GitHub Release, and opens a PR that moves the marketplaces on `main` to the new tag.
 4. Merge that PR. Agents start installing the release once `main` points at it.
 
+Each skill's `metadata.uno-sdk` names the Uno.Sdk version it is built against, and CI checks that the version is published on NuGet. On `main` it can be a `-dev` build, so skills can cover APIs that haven't shipped yet. When a release is published, the workflow moves every `-dev` value to the newest stable Uno.Sdk of the same `major.minor` (`.github/scripts/Set-UnoSdkVersion.ps1`). It fails while that minor has no stable release, so a release never targets an SDK users can't install.
+
 Don't edit versions or `source.ref` by hand. On `main` they always show the latest release, and `version.json` holds the next one. The workflow sets them with `.github/scripts/Set-PluginVersion.ps1`, and CI checks that they all agree.
 
 Run the repo checks locally with `pwsh .github/scripts/Test-Plugin.ps1`.

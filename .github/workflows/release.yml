@@ -55,6 +55,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           pwsh .github/scripts/Set-PluginVersion.ps1 -Version "$VERSION"
+          pwsh .github/scripts/Set-UnoSdkVersion.ps1
           pwsh .github/scripts/Test-Plugin.ps1
           if ! git diff --quiet; then
             git commit -am "chore(release): $VERSION"

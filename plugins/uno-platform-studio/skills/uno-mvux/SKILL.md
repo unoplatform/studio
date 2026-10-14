@@ -4,6 +4,7 @@ description: "MVUX state management for Uno Platform apps: feeds, states, FeedVi
 metadata:
   author: uno-platform
   category: mvux
+  uno-sdk: "7.0.0-dev.77"
 ---
 
 # Uno MVUX

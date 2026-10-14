@@ -4,6 +4,7 @@ description: "Uno Themes for Uno Platform apps: Material Design 3 via Uno.Materi
 metadata:
   author: uno-platform
   category: themes
+  uno-sdk: "7.0.0-dev.77"
 ---
 
 # Uno Themes

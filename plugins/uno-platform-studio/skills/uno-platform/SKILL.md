@@ -4,6 +4,7 @@ description: "Entry point for building or changing any Uno Platform app: cross-p
 metadata:
   author: uno-platform
   category: overview
+  uno-sdk: "7.0.0-dev.77"
 ---
 
 # Uno Platform

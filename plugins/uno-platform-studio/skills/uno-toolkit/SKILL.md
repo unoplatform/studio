@@ -4,6 +4,7 @@ description: "Uno Toolkit (Uno.Toolkit.UI, xmlns:utu) controls and helpers for U
 metadata:
   author: uno-platform
   category: toolkit
+  uno-sdk: "7.0.0-dev.77"
 ---
 
 # Uno Toolkit

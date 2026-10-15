@@ -37,7 +37,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls-styles.
 
 ## Key Principles (Stable)
 
-- Add `Toolkit` to `<UnoFeatures>` in the project file, plus the theme feature (`Material`, `SimpleTheme`, or `Cupertino`)
+- Add `Toolkit` to `<UnoFeatures>` in the project file, plus the theme feature (`Material`, `SimpleTheme`, or `Cupertino`; the published Simple page writes `Toolkit;Simple`, but the name the Sdk matches is `SimpleTheme`)
 - For Material styling, use `MaterialToolkitTheme` in App.xaml (replaces separate MaterialTheme + ToolkitResources)
 - For Simple styling (the recommended template preset), use `<utus:SimpleToolkitTheme xmlns:utus="using:Uno.Toolkit.UI.Simple" />` (replaces SimpleTheme + ToolkitResources)
 - For Cupertino styling, merge the `Uno.Cupertino` dictionaries, then `ToolkitResources` and `CupertinoToolkitResources` (see `references/cupertino-theme.md`)

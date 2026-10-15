@@ -27,6 +27,7 @@ From the fetched docs, extract the available templates:
 - **ProgressTemplate** — shown during loading
 - **ErrorTemplate** — shown when an error occurs
 - **NoneTemplate** — shown when there is no data
+- **UndefinedTemplate** — shown before the feed has produced any message (the initial "not loaded yet" state); `None` and `Undefined` also accept plain content instead of a template
 
 ### Step 3: For FeedView How-To Walkthroughs
 

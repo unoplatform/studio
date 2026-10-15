@@ -28,7 +28,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/SafeAre
 
 - **ALWAYS use SafeArea** on pages with TextBox/PasswordBox on mobile — keyboard WILL obscure inputs otherwise
 - Two usage modes: `<utu:SafeArea Insets="...">` (control) or `utu:SafeArea.Insets="..."` (attached property). The control form inserts a `ScrollViewer` as its content root whenever `Insets` contains `SoftInput`; the attached form does not, so put it on an existing `ScrollViewer`
-- `Insets` values: `Left`, `Top`, `Right`, `Bottom`, `SoftInput` (keyboard), or combinations
+- `Insets` values: `Left`, `Top`, `Right`, `Bottom`, `SoftInput` (keyboard), `VisibleBounds` (all four sides, what the template's `MainPage` uses), `All` (`VisibleBounds` plus `SoftInput`), `None`, or combinations
 - `Mode` — `Padding` (default, adds padding) or `InsetMode.Margin` (adds margin)
 - For keyboard: use `Insets="SoftInput"` or `Insets="SoftInput,Bottom"`
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`

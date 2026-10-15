@@ -1,6 +1,6 @@
 # Uno Platform UI Testing
 
-> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Confirm the `uno_app_*` tools are available first (through `uno_discover_tools` when the client only lists the proxy tools); if they are not, stop and tell the user to sign in to Uno Platform and enable the Uno tooling rather than attempting to test without them.
+> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Confirm the `uno_app_*` tools are available first (through `uno_discover_tools` when the client only lists the proxy tools); if they are not, follow the fallbacks in SKILL.md (the platform accessibility tree, then a static review labelled as unverified) rather than testing blind.
 
 This reference covers launching apps, inspecting UI elements, simulating user interactions, and validating visual output with the Uno App MCP tools.
 
@@ -17,7 +17,7 @@ The Uno App MCP server exposes tools that let an agent:
 ## Prerequisites
 
 1. The Uno App MCP server is configured, its host is connected, a solution is selected, and its app tools are licensed (`uno_health` reports a non-zero `toolCount`; a zero with `HostUnreachable`, `NoSolutionFound`, or `WorkspaceAmbiguous` in `issues` is a connection or workspace problem, not a licence problem). A Community licence also reports a non-zero `toolCount` but lacks the tools marked Pro or Business below; `uno_discover_tools` shows which ones this machine has
-2. The target application is an Uno Platform project (Uno.Sdk 6.x) under the App MCP's workspace folder
+2. The target application is an Uno Platform project (Uno.Sdk 6.x or 7.0) under the App MCP's workspace folder
 3. The project has a target framework the tools can launch: `netX.0-desktop` for desktop, `netX.0-browserwasm` for WebAssembly. Read the exact monikers from `<TargetFrameworks>` in the `.csproj`
 
 ## Quick Start Workflow
@@ -29,7 +29,7 @@ The Uno App MCP server exposes tools that let an agent:
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
 6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
 7. **Validate results** → `uno_app_find_elements`, DataContext, screenshots
-8. **Fix in the running app** → edit the file, `uno_app_hot_reload_status(file, waitForMs: 10000)`, then back to step 6; `NOT applied` returns the compiler diagnostics (no `dotnet build`), `RudeEdit` is the only reason to close and start again
+8. **Fix in the running app** → edit the file, `uno_app_hot_reload_status(file, waitForMs: 10000)`, then back to step 6; `NOT applied` returns the compiler diagnostics (no `dotnet build`), `RudeEdit`, an `InternalError`, or a file still not covered after a second save are the reasons for `uno_app_restart`; act on the sentence the status returns
 9. **Close the app** → `uno_app_close` at the end, or before a start the skill's rules allow
 
 ## Available MCP Tools
@@ -38,7 +38,7 @@ The Uno App MCP server exposes tools that let an agent:
 
 | Tool | Description |
 |------|-------------|
-| `uno_app_start` | Builds and starts the application in debug mode with Hot Reload; kills any instance it already started |
+| `uno_app_start` | Builds and starts the application in debug mode with Hot Reload; does not stop a running instance |
 | `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) and its Hot Reload state |
 | `uno_app_hot_reload_status` | Reports the Hot Reload state and recent operations; with `file` and `waitForMs`, waits for the operation covering your edit and reports `applied`, or `NOT applied` with the compiler diagnostics, or `RudeEdit`; `waitForReady: true` waits for Hot Reload to leave `Initializing` |
 | `uno_app_get_memory_counters` | Business licence only. Returns the running app's memory counters (for example total available memory); useful for leak checks across a flow |
@@ -83,9 +83,9 @@ Parameters:
   - display: Optional X11 display for Linux (e.g., ":0"); ignored on other platforms
 ```
 
-Each call terminates any app the tool already started. After it returns, confirm with `uno_app_get_runtime_info`.
+It does not stop a running app: `uno_app_close` it first. After it returns, confirm with `uno_app_get_runtime_info`.
 
-**When the start times out:** the process is usually still launching, and a desktop app connects on its own once it is up. Poll `uno_app_get_runtime_info` every few seconds. If it keeps reporting no instance, read `stdoutFile` and call `uno_devserver_diagnostics`. Do not call `uno_app_start` again: that kills the launching process and starts the wait over.
+**When the start times out:** the process is usually still launching, and a desktop app connects on its own once it is up. Poll `uno_app_get_runtime_info` every few seconds. If it keeps reporting no instance, read `stdoutFile` and call `uno_devserver_diagnostics`. Do not call `uno_app_start` again: that launches a second instance.
 
 **WebAssembly targets:** the tool starts the dev server and returns the app URL. A browser must open that URL before the runtime tools work; `connectionTimeoutSeconds` waits for it.
 
@@ -170,7 +170,7 @@ A selector is resolved against the live tree when the call runs, so it needs no 
      - action: invoke (default), toggle, expand, collapse, select, addToSelection, removeFromSelection, setValue, setRangeValue
      - actionParameters: Optional array; for setValue/setRangeValue the first entry is the value
    ```
-   The line's pattern letters say which actions the element supports: `[t]` `toggle`, `[x]` `expand`/`collapse`, `[s]` `select`, `[v]` `setValue`, `[r]` `setRangeValue`. `setValue` fills a `TextBox` without needing keyboard focus. `ListViewItem` shows no letters on Uno, so select it by pointer or keyboard. This tool needs a Pro or Business licence; on Community, click the field's bounds to focus it, then `uno_app_type_text`.
+   The line's pattern letters say which actions the element supports: `[t]` `toggle`, `[x]` `expand`/`collapse`, `[s]` `select`, `[v]` `setValue`, `[r]` `setRangeValue`. `setValue` fills a `TextBox` without needing keyboard focus. `ListViewItem` shows no `s` on Uno (and `[i]` only when the list has `IsItemClickEnabled="True"`, where the default action raises `ItemClick`), so select it by pointer or keyboard and read `{selected}` from `uno_app_find_elements`. This tool needs a Pro or Business licence; on Community, click the field's bounds to focus it, then `uno_app_type_text`.
 
 **Fallback approach:** coordinates and keyboard, when no pattern applies.
 
@@ -303,7 +303,7 @@ Returns an XML representation of the element's DataContext. `uno_app_find_elemen
 ### Build fails with MSB3026/MSB3027 (file in use)
 - The previous instance is still running: `uno_app_close`, then build again
 
-### Screenshot "path must be within the current working directory" or "Could not find a part of the path"
+### Screenshot "Security error: path must be within ..." or "Could not find a part of the path"
 - Save inside the workspace directory, into a folder that exists, or omit `path`
 
 ### Element not found in visual tree

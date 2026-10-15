@@ -35,7 +35,7 @@ If the user needs help with C# record syntax itself, this is standard C# languag
 
 ## Key Equality Requirement (Critical)
 
-**Record types used as items in MVUX collections (`IListFeed<T>`, `IListState<T>`) MUST support key equality via `Uno.Extensions.Equality.IKeyEquatable<T>`.** Without it, MVUX cannot distinguish a modified entity from a different one — unchanged items still match by value equality, but every edited item becomes a remove plus an add (lost selection, broken animations), and `UpdateAsync(T item)`/`UpdateItemAsync` do not compile (CS0311, constrained `where T : IKeyEquatable<T>`). Messaging (`Observe`) matches by its own key selector, not by `IKeyEquatable<T>`.
+**Record types used as items in MVUX collections (`IListFeed<T>`, `IListState<T>`) MUST support key equality via `Uno.Extensions.Equality.IKeyEquatable<T>`.** Without it, MVUX cannot distinguish a modified entity from a different one — unchanged items still match by value equality, but every edited item becomes a remove plus an add (lost selection, broken animations), and `UpdateAsync(T item)`/`UpdateItemAsync` do not compile (CS0311, or CS0453 for `UpdateItemAsync`; constrained `where T : IKeyEquatable<T>`). Messaging (`Observe`) matches by its own key selector, not by `IKeyEquatable<T>`.
 
 ### Automatic generation (recommended)
 

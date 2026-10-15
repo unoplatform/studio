@@ -57,7 +57,7 @@ Scopes the snapshot to one element's subtree. Pass the bare handle of a containe
 | `@@x,y,w,h` | Arranged bounds relative to the snapshot root (`full` only); `uno_app_pointer_click` takes window coordinates, so take the snapshot without `elementRef` |
 | `!hidden` / `!offscreen` / `!code` | Collapsed (with `includeHidden`), outside the snapshot root, which is the window when unscoped (`full`), or created in code |
 
-The tree shows binding paths, not values. To read `IsEnabled`, `IsChecked`, or a bound `Text` at this moment, use `uno_app_get_element_datacontext` on the element or a nearby container, or check a screenshot.
+The tree shows binding paths, not values. For `IsEnabled`, `IsChecked`, selection or item count, read the `{state}` that `uno_app_find_elements` returns; for other values, `uno_app_get_element_datacontext`.
 
 ### With bounds
 
@@ -86,7 +86,7 @@ The centre point for `uno_app_pointer_click` is `x + w/2, y + h/2`: here `175, 2
 - `RadioButton` - Exclusive selection (`[st]`: `select` or `toggle`)
 - `Slider`, `NumberBox` - Range value (`[r]`: `setRangeValue`)
 - `ToggleSwitch` - On/off toggle (`[t]`: `toggle`)
-- `ListViewItem` - No pattern letters on Uno; select by pointer click or arrow keys
+- `ListViewItem` - No `s` letter on Uno (`[i]` only with `IsItemClickEnabled="True"`); select by pointer click or arrow keys
 
 The default action is `invoke` and only `[i]` elements accept it.
 

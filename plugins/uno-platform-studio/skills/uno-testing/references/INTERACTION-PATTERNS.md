@@ -105,7 +105,7 @@ uno_app_key_press(virtualKey: "Escape")
 
 ### Selecting an Item in a ListView
 
-`ListViewItem` exposes no automation pattern on Uno, so peer actions fail on it. Use the pointer or the keyboard:
+`ListViewItem` exposes no select pattern on Uno (only `invoke`, when the list has `IsItemClickEnabled="True"`), so the `s` peer action fails on it. Use the pointer or the keyboard:
 
 1. Take an unscoped `detail: "full"` snapshot to find the item and its `@@x,y,w,h` bounds
 2. Click its centre:
@@ -160,7 +160,7 @@ Without that tool, click its bounds, or focus it and press `Space`.
 
 ### Verifying State
 
-After toggling, read `IsChecked` from the element's DataContext; the snapshot shows the binding path, not the value.
+After toggling, `uno_app_find_elements` on it reports `{checked}` or `{unchecked}`; the snapshot shows only bindings.
 
 ## Slider Interactions
 
@@ -219,7 +219,7 @@ uno_app_key_press(virtualKey: "End")       // Scroll to bottom
 
 ### Scrolling to Element
 
-If an element is off-screen (`!offscreen` in a `full` snapshot), Tab to it or scroll with the keys above; focus brings it into view. There is no tool that focuses an element directly.
+If an element is off-screen (`!offscreen` in a `full` snapshot), Tab to it or scroll with the keys above; focus brings it into view. To focus an element directly, `uno_app_type_text(text, automationId | name)` focuses it before typing; otherwise Tab to it or click its bounds.
 
 ## Context Menu Interactions
 
@@ -248,7 +248,7 @@ This pattern is complex and may require coordinate-based interaction with carefu
 
 ### Keyboard Needs a Focused Element
 
-`uno_app_key_press` and `uno_app_type_text` raise key events in-process on the element that holds XAML focus. They return `false` when nothing is focused, and no tool focuses an element directly, so click the field's bounds or Tab to it first. Prefer peer actions (`setValue`, `toggle`, `invoke`) when they are licensed.
+`uno_app_key_press` and `uno_app_type_text` raise key events in-process on the element that holds XAML focus and fail when none is. `uno_app_type_text` given `automationId` or `name` focuses it first; else click the field or Tab to it. Prefer peer actions (`setValue`, `toggle`, `invoke`) when they are licensed.
 
 ### Waiting for UI Updates
 

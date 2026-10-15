@@ -49,14 +49,18 @@ context() { printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUs
 startup=
 case $file in *App.xaml.cs) startup=" If the edit changed code that already ran at startup (OnLaunched, host configuration, DI registrations), the app runs it only after a restart: $restart." ;; esac
 
-# Exit code 1 covers every verdict but applied and RudeEdit; only a compile failure is the file's to fix.
+# Exit code 0 is applied, no changes, superseded or ignored (the verdict word tells them apart); 4 is still on its
+# way; 3 is a rude edit; 1 covers every other verdict, and only a compile failure is the file's to fix.
 case $code:$verdict in
-	0:*) context "The running app now runs this edit (a C# edit recreated the current page: navigate back to the state under test). Assert with uno_app_find_elements(waitForMs); do not dotnet build, uno_app_close or uno_app_start.$startup" ;;
-	1:*" Failed in "*) printf '%s' "{\"decision\":\"block\",\"reason\":\"Hot Reload did not apply this edit to the running app. Fix the file and save again; do not build, close or start the app for it. The DevServer reported:\\n$(json_escape "$out")\"}" ;;
+	0:*"': applied"*) context "The running app now runs this edit (a C# edit recreated the current page: navigate back to the state under test). Assert with uno_app_find_elements(waitForMs); do not dotnet build, uno_app_close or uno_app_start.$startup" ;;
+	*"': no changes"*) context "An earlier operation already compiled this file, as happens when edits follow each other within seconds: assert with uno_app_find_elements(waitForMs), and restart only if the app lacks the change." ;;
+	*"': ignored"*) context "The DevServer does not watch this file (not in the app's solution, or a file type Hot Reload does not handle): the running app does not have this edit." ;;
+	*"': superseded"*) context "A later operation recompiled the whole solution and usually includes this edit: assert with uno_app_find_elements(waitForMs), and restart only if the app lacks the change." ;;
+	1:*" Failed in "*) printf '%s' "{\"decision\":\"block\",\"reason\":\"Hot Reload did not apply this edit to the running app. Fix the file and save again; do not close or start the app for it. If no diagnostics are listed below, run dotnet build on the project once to see them. The DevServer reported:\\n$(json_escape "$out")\"}" ;;
 	1:*InternalError*) context "The DevServer failed internally, not on this file: do not save it again for this. Until a restart no later edit applies: $restart, then re-check the state under test." ;;
-	1:*": no changes"*) context "An earlier operation already compiled this file, as happens when edits follow each other within seconds: assert with uno_app_find_elements(waitForMs), and restart only if the app lacks the change." ;;
 	1:*) context "Not applied yet, for a reason that is not in the file. Do not build, close or start the app for it, and do not assert yet: act on what the DevServer reported, and confirm with uno_app_hot_reload_status(file, waitForMs: 10000):\\n$(json_escape "$out")" ;;
 	3:*) context "This is the one case where a restart is needed, and until it no later edit applies: $restart, then re-check the state under test." ;;
+	4:*) context "Still on its way: call uno_app_hot_reload_status(file, waitForMs: 10000) before asserting; do not build, close or start the app for it." ;;
 	*) remind ;;
 esac
 exit 0

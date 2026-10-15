@@ -29,7 +29,7 @@ From the fetched docs, the key factory methods on the `State` and `State<T>` cla
 
 ### Step 3: For Updating State Programmatically
 
-The state reference page covers `UpdateAsync`, `SetAsync`, and `ForEach` for subscribing to changes. Focus on the "Update: How to update a state" section.
+The state reference page covers `UpdateAsync`, `SetAsync` (struct, nullable-struct and `string` states only; a record state uses `UpdateAsync(_ => newValue)`), and `ForEach` for subscribing to changes. Focus on the "Update: How to update a state" section.
 
 ### Step 4: For Two-Way Binding Examples
 
@@ -48,7 +48,7 @@ See also the `references/commands.md`.
 ## Critical Rules
 
 - **The mutation method is `UpdateAsync`** — `public static ValueTask UpdateAsync<T>(this IState<T> state, Func<T?, T?> updater, CancellationToken ct = default)`.
-- **`Update(updater, ct)` is a hidden, deprecated alias, not the API** — it is marked `EditorBrowsable(Never)`, its `CancellationToken` has no default, and its `[Obsolete]` is compiled only into Debug builds of the library, so Release packages accept it silently (the official template still writes `await Count.Update(x => ++x, ct)`). Generic models emit this name constantly; prefer `UpdateAsync`.
+- **`Update(updater, ct)` is a hidden, deprecated alias, not the API** — it is marked `EditorBrowsable(Never)`, its `CancellationToken` has no default, and its `[Obsolete]` is compiled only into Debug builds of the library, so Release packages accept it silently (the official template's MAUI-embedding sample still writes `await Count.Update(x => ++x, ct)`). Generic models emit this name constantly; prefer `UpdateAsync`.
 - `UpdateAsync` returns `ValueTask` — `await` it from inside an `async` method (typically a command body).
 - **The updater must be pure** — derive the new value *solely* from the `current` parameter it receives. Do not capture or read external/mutable variables, and do not perform side effects inside it. MVUX is stateless and lockless: the updater is applied against the state's current cached value, so a function that depends on anything other than `current` is not guaranteed to produce a stable result. The `state.md` example declares its updater as a `static` local function, which the compiler prevents from capturing enclosing state:
 

@@ -1,6 +1,6 @@
 # Uno Toolkit FlexPanel
 
-> **Availability:** `FlexPanel` is not in Uno.Toolkit 10.0 (uno.toolkit.ui PR #1639 is still open, checked 2026-09-28) and is absent from every published package. Before using it, confirm `utu:FlexPanel` resolves in the installed Toolkit version (search the Toolkit assembly or try the type in XAML). If it does not, use `AutoLayout` or `Grid` instead (there is no `WrapPanel` in the Toolkit or WinUI; the CommunityToolkit ships one).
+> **Availability:** `FlexPanel` ships in Uno.Toolkit 11.0.0-dev.142 (Uno.Sdk 7.0.0-dev.77) and is absent from Toolkit 9.1.3 (Uno.Sdk 6.7.x). On an older Toolkit, confirm `utu:FlexPanel` resolves before using it. If it does not, use `AutoLayout` or `Grid` instead (there is no `WrapPanel` in the Toolkit or WinUI; the CommunityToolkit ships one).
 
 ## Workflow
 
@@ -10,7 +10,7 @@
 uno_platform_docs_search("Uno Toolkit FlexPanel flexbox grow shrink basis wrap gap")
 ```
 
-A `FlexPanel` doc page will exist once PR #1639 ships; until then the search returns nothing and the notes below are the reference.
+Primary documentation pages: **FlexPanel**: `external/uno.toolkit.ui/doc/controls/FlexPanel.md`; **FlexPanel How-To**: `external/uno.toolkit.ui/doc/controls/walkthroughs/FlexPanel.howto.md`. Fetch with `uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/FlexPanel.md")`; the notes below are the checked surface.
 
 ## Key Principles (Stable)
 
@@ -53,17 +53,13 @@ A `FlexPanel` doc page will exist once PR #1639 ships; until then the search ret
   </utu:FlexPanel>
   ```
 
-- **Rows can overflow — that is correct flexbox.** A flex item does not shrink below its min-content size by default (CSS Flexbox 4.5). Set `FlexMinWidth="0"` (or `FlexMinHeight="0"` in a column) to opt out. `ScrollViewer` and `ScrollView` children already floor at `0`, matching CSS `overflow: scroll`.
+- **Children can be crushed to `0` — that is Yoga, not CSS.** There is no min-content floor (WinUI cannot report one), so a `TextBlock` can shrink to nothing. Set `Shrink="0"` to keep a child at its natural size, or `FlexMinWidth` / `FlexMinHeight` for an explicit floor.
 
 - **`FlexMinWidth` / `FlexMinHeight` are NOT `FrameworkElement.MinWidth` / `MinHeight`.** The framework properties force `Measure` to return at least *X*; these clamp the flex-resolved slot to at least *X*. The `Flex` prefix is deliberate — both can sit on the same element meaning different things.
-
-- **`LayoutDirection` is the only right-to-left input.** `FlowDirection` is ignored. Setting **both** `FlowDirection="RightToLeft"` and `LayoutDirection="RightToLeft"` mirrors the layout **twice**, which cancels out. Set `LayoutDirection` only.
 
 - **`Visibility="Collapsed"` maps to `display: none`** — the child contributes no size **and no gap slot**.
 
 - **A gap is a floor, not the final separation.** `JustifyContent="SpaceBetween"` distributes whatever is left over *on top of* `ColumnGap` / `RowGap`. A negative gap is clamped to `0` — use a negative child `Margin` for overlap.
-
-- **`Direction` defaults to `Row`**, which is *not* the zero value of the `FlexDirection` enum: the enum preserves Yoga's numbering, in which `Column = 0`.
 
 ### Container properties
 
@@ -79,7 +75,6 @@ Set on the `<utu:FlexPanel>` element itself.
 | `ColumnGap` | `double` | `0` | `column-gap` |
 | `RowGap` | `double` | `0` | `row-gap` |
 | `Padding` | `Thickness` | `0` | `padding` |
-| `LayoutDirection` | `FlexLayoutDirection` (`Inherit`, `LeftToRight`, `RightToLeft`) | `LeftToRight` | `direction` |
 
 `JustifyContent` applies to the **main** axis, `AlignItems` to the **cross** axis; changing `Direction` swaps which is which. `AlignContent` positions the wrapped **lines** as a group and only does anything when the content actually wraps.
 
@@ -95,7 +90,7 @@ Set on the *children* of a `FlexPanel`.
 | `utu:FlexPanel.FlexMinWidth` | `double` | `NaN` (= `auto`) | `min-width` |
 | `utu:FlexPanel.FlexMinHeight` | `double` | `NaN` (= `auto`) | `min-height` |
 | `utu:FlexPanel.AlignSelf` | `FlexAlign` | `Auto` | `align-self` |
-| `utu:FlexPanel.Position` | `FlexPositionType` (`Static`, `Relative`, `Absolute`) | `Relative` | `position` |
+| `utu:FlexPanel.Position` | `FlexPositionType` (`Relative`, `Absolute`) | `Relative` | `position` |
 | `utu:FlexPanel.Left` / `.Top` / `.Right` / `.Bottom` | `double` | `NaN` | inset properties |
 
 `Grow` and `Shrink` are **ratios**, not lengths: a child with `Shrink="1"` beside a child with `Shrink="0"` absorbs the whole overflow. `Position="Absolute"` removes the child from the flex line and places it against the panel's own edges with the insets, so the panel needs a resolved size.
@@ -106,7 +101,7 @@ No attached property needed — `Margin`, `Width`, `Height` and `Visibility` par
 
 ### Enum members that silently do nothing
 
-`FlexAlign` and `FlexJustify` are shared with the underlying engine and carry more members than any one property honours. Do not bind a picker to `Enum.GetValues`.
+`FlexAlign` is shared by three properties and carries more members than any one of them honours. Do not bind a picker to `Enum.GetValues`.
 
 | Property | Meaningful members |
 |---|---|
@@ -115,11 +110,9 @@ No attached property needed — `Margin`, `Width`, `Height` and `Visibility` par
 | `AlignContent` | `FlexStart`, `Center`, `FlexEnd`, `Stretch`, `SpaceBetween`, `SpaceAround`, `SpaceEvenly` |
 | `AlignSelf` | `Auto` plus everything valid for `AlignItems` |
 
-The remaining `FlexJustify` members (`Auto`, `Stretch`, `Start`, `End`) collapse onto `FlexStart` or `FlexEnd`.
-
 ### Members that do NOT exist — do not invent CSS names
 
-There is **no** `FlexPanel.Order` (CSS `order` is not supported and not planned — reorder the children instead), no `FlexPanel.Flex` shorthand, no `FlexPanel.Gap` (it is `ColumnGap` / `RowGap`), no `FlexPanel.AlignContent` attached property (`AlignContent` is container-only; the per-child one is `AlignSelf`), and no `FlexMaxWidth` / `FlexMaxHeight`, `AspectRatio`, `Overflow` or `BoxSizing`. `Basis` is points only — percentages are not supported. If unsure, the canonical surface is the tables above — do not invent member names.
+There is **no** `FlexPanel.Order` (CSS `order` is not supported and not planned — reorder the children instead), no `FlexPanel.Flex` shorthand, no `FlexPanel.Gap` (it is `ColumnGap` / `RowGap`), no `FlexPanel.AlignContent` attached property (`AlignContent` is container-only; the per-child one is `AlignSelf`), and no `FlexMaxWidth` / `FlexMaxHeight`, `LayoutDirection`, `AspectRatio`, `Overflow` or `BoxSizing`. `Basis` is points only — percentages are not supported. If unsure, the canonical surface is the tables above — do not invent member names.
 
 `FlexPanel` derives from `Panel`, which exposes only `Background`: there is **no** `BorderBrush` or `CornerRadius`. Wrap it in a `Border` if you need a plain visual border — for a card-like surface, use `CardContentControl` instead (see `references/card.md`).
 

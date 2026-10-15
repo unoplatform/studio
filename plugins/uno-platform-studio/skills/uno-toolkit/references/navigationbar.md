@@ -33,8 +33,8 @@ uno_platform_docs_search("NavigationBar Chefs app example navigation back")
 - `MainCommand` — the back-button slot; an `AppBarButton` instance. `MainCommandMode` is `Back` (default, the bar navigates back itself) or `Action` (your `Command` runs instead)
 - `PrimaryCommands` — action `ICommandBarElement`s displayed on the right
 - `SecondaryCommands` — overflow `ICommandBarElement`s in the overflow menu
-- Two rendering modes: `Windows` (XAML drawn) and `Native` (platform AppBar on iOS/Android)
-- Content property is the title
+- XAML-drawn on every platform, look set by the theme's `NavigationBarStyle` / `MaterialNavigationBarStyle` family of keys; the native iOS/Android bar is gone in Uno.Toolkit 11 (Uno Platform 7)
+- `Content` is the title; set it as an attribute (`Content="Title"`). The XAML content property is `PrimaryCommands`, so child elements become primary commands
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills

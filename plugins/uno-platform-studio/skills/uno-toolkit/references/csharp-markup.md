@@ -21,8 +21,8 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Markup/How
 
 ## Key Principles (Stable)
 
-- Add `Uno.Toolkit.WinUI.Markup` NuGet package, then in `App.cs`: `using Uno.Toolkit.UI.Markup;` and `this.Build(r => r.UseToolkit());`
-- For Material: add `Uno.Toolkit.WinUI.Material.Markup` NuGet package (it includes the base Markup package)
+- `<UnoFeatures>Toolkit;CSharpMarkup</UnoFeatures>` brings in the `Uno.Toolkit.WinUI.Markup` package; then in `App.xaml.cs`: `using Uno.Toolkit.UI.Markup;` and `Resources.Build(r => r.UseToolkit());` (`Build` extends `ResourceDictionary`, not `Application`)
+- For Material: adding `Material` brings in `Uno.Toolkit.WinUI.Material.Markup` (it includes the base Markup package); merge with `Resources.Build(r => r.UseMaterialToolkit())` (`using Uno.Toolkit.UI.Material.Markup;`)
 - Fluent API: `new CardContentControl().Style(ToolkitTheme.CardContentControl.Styles.Elevated)` (`Uno.Toolkit.UI.Markup.ToolkitTheme`)
 - Same controls and helpers, expressed in C# instead of XAML
 

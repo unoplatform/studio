@@ -107,6 +107,15 @@ try {
         if (-not $markdownValue -or $markdownValue -cne $tomlValue) { $errors.Add("uno-dev: Markdown and Codex agent $field differ or are missing") }
     }
 
+    # --- The plugin version tracks the Uno.Sdk major.minor it is built for (plugin 7.0.x targets Uno.Sdk 7.0),
+    # so version.json must name a line that exists on NuGet. On main that line may have only -dev builds;
+    # the Release workflow refuses to ship until it has a stable one.
+    $line = [regex]::Match((Get-Content version.json -Raw | ConvertFrom-Json).version, '^\d+\.\d+').Value
+    $unoSdkVersions = (Invoke-RestMethod 'https://api.nuget.org/v3-flatcontainer/uno.sdk/index.json').versions
+    if (-not ($unoSdkVersions | Where-Object { $_ -like "$line.*" })) {
+        $errors.Add("version.json: '$line' is not an Uno.Sdk major.minor published on NuGet (the plugin version tracks the Uno.Sdk it is built for)")
+    }
+
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"

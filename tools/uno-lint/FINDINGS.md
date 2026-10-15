@@ -5,7 +5,7 @@ Date: 2026-09-30. Prototype state; see the spec in specs/001-uno-linter for the 
 ## What was built
 
 A netstandard2.0 rule library (`Uno.Lint.Core`) with a `dotnet tool`-style CLI on top (`uno-lint`).
-All nine rules from the PowerShell prototype are ported, plus BINDVALUE. XAML is read with `XDocument` (line info
+All nine rules from the PowerShell prototype are ported, plus BINDVALUE. XAML was first read with `XDocument` (line info
 preserved), C# with Roslyn syntax trees, so comments and strings can no longer trigger rules.
 
 | Piece | State |
@@ -209,3 +209,10 @@ dotnet run --project src/Uno.Lint.Cli -c Release -- <path-to-app> --profile stri
 dotnet run --project src/Uno.Lint.Cli -c Release -- <path-to-app> --json
 dotnet test
 ```
+
+## XAML rules moved onto Uno.XamlParser (2026-10-15)
+
+All six XAML rules now run inside Uno.XamlParser as Stage-1 fixers; the XDocument reader is gone. Corpus findings are
+identical except 6 false positives removed (`<SolidColorBrush x:Key="Red">` flagged on its key). Malformed agent
+markup is linted instead of skipped (8 of 8 fixtures). Details, measurements and the issues found in the parser are
+in [XAMLPARSER.md](XAMLPARSER.md).

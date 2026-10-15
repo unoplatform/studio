@@ -10,10 +10,7 @@ public class CalibrationTests
 
     private static List<Finding> LintXaml(string xaml, string fileName = "MainPage.xaml")
     {
-        Assert.True(XamlFile.TryParse(fileName, xaml, out var file));
-        var ctx = new ProjectContext { HasToolkit = true };
-        var options = new LintOptions { Profile = Profile.Strict };
-        return XamlAnalyzer.Analyze(file!, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).Where(f => !f.Suppressed).ToList();
+        return XamlTestHost.Lint(xaml, fileName, new ProjectContext { HasToolkit = true }, new LintOptions { Profile = Profile.Strict }, includeSuppressed: false);
     }
 
     private static List<Finding> LintCs(string code, string fileName = "MainPage.xaml.cs")

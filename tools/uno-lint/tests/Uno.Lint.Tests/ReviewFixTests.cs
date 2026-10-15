@@ -29,10 +29,7 @@ public class ReviewFixTests : IDisposable
 
     private static List<Finding> LintXaml(string xaml, string fileName = "MainPage.xaml", bool toolkit = true, bool mvux = false, bool includeSuppressed = false)
     {
-        Assert.True(XamlFile.TryParse(fileName, xaml, out var file), "test XAML must parse");
-        var ctx = new ProjectContext { HasToolkit = toolkit, HasMvux = mvux };
-        var options = new LintOptions { Profile = Profile.Strict };
-        return XamlAnalyzer.Analyze(file!, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).Where(f => includeSuppressed || !f.Suppressed).ToList();
+        return XamlTestHost.Lint(xaml, fileName, new ProjectContext { HasToolkit = toolkit, HasMvux = mvux }, new LintOptions { Profile = Profile.Strict }, includeSuppressed);
     }
 
     private static List<Finding> LintCs(string code, string fileName = "MainPage.xaml.cs")

@@ -9,11 +9,8 @@ public class XamlRuleTests
 
     private static List<Finding> Lint(string xaml, string fileName = "MainPage.xaml", bool toolkit = true, Profile profile = Profile.Strict)
     {
-        Assert.True(XamlFile.TryParse(fileName, xaml, out var file), "test XAML must parse");
-        var ctx = new ProjectContext { HasToolkit = toolkit };
-        var options = new LintOptions { Profile = profile };
-        // Analyzers return suppressed hits flagged so the Linter can count them; these tests look at active findings.
-        return XamlAnalyzer.Analyze(file!, ctx, r => Rules.Resolve(r, options, ctx) != Severity.None).Where(f => !f.Suppressed).ToList();
+        // The engine returns suppressed hits flagged so the Linter can count them; these tests look at active findings.
+        return XamlTestHost.Lint(xaml, fileName, new ProjectContext { HasToolkit = toolkit }, new LintOptions { Profile = profile }, includeSuppressed: false);
     }
 
     // ------------------------------------------------------------ HEX
@@ -229,8 +226,10 @@ public class XamlRuleTests
     // ------------------------------------------------------------ parsing
 
     [Fact]
-    public void Malformed_xaml_is_reported_not_thrown()
+    public void Malformed_xaml_is_repaired_not_thrown()
     {
-        Assert.False(XamlFile.TryParse("Bad.xaml", "<Page><Border></Page>", out _));
+        var result = XamlTestHost.Engine.Analyze("Bad.xaml", "<Page><Border></Page>", new ProjectContext(), _ => true);
+        Assert.True(result.Parsed);
+        Assert.True(result.Repaired);
     }
 }

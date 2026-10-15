@@ -291,7 +291,7 @@ public static class CSharpAnalyzer
             }
 
             var color = access.Name.Identifier.Text;
-            if (color == "Transparent" || !XamlAnalyzer.IsColorLiteral(color))
+            if (color == "Transparent" || !RuleLogic.IsColorLiteral(color))
             {
                 continue;
             }

@@ -25,7 +25,7 @@ Drop the Mac Catalyst guard when the app has no Catalyst target. The `name` is a
 
 ```json
 "MsalAuthentication": {
-  "ClientId": "161a9fb5-3b16-487a-81a2-ac45dcc0ad3b",
+  "ClientId": "<client-id>",
   "Scopes": [ "User.Read" ]
 }
 ```
@@ -38,7 +38,7 @@ The same settings in code, where `Builder` configures MSAL's `PublicClientApplic
 
 ```csharp
 auth.AddMsal(window, msal => msal
-    .Builder(app => app.WithClientId("161a9fb5-3b16-487a-81a2-ac45dcc0ad3b"))
+    .Builder(app => app.WithClientId("<client-id>"))
     .Scopes(["User.Read"]));
 ```
 

@@ -27,7 +27,7 @@ A client from `services.AddHttpClient(...)` or `new HttpClient()` does not get t
 
 The base address comes from a configuration section in `appsettings.json` (`Url`, and `UseNativeHandler`, default `true`) unless you pass `options: new EndpointOptions { Url = "..." }`.
 
-- **Refit**: the section is the interface name without its leading `I`: `IAuthApi` reads `"AuthApi": { "Url": "https://api.example.com" }`.
+- **Refit**: the section is the interface name with every leading `I` or `i` removed: `IAuthApi` reads `"AuthApi": { "Url": "https://api.example.com" }`, but `IIdentityApi` reads `"dentityApi"`. When the name after the `I` starts with another `I`, pass `name: "IdentityApi"` to `AddRefitClient`.
 - **Kiota**: the section is the `name` argument, which defaults to the client's full type name. Pass `name` to bind a section, for example the template's `ApiClient`: `services.AddKiotaClient<MyApiClient>(context, name: "ApiClient")`.
 
 ## How the handler behaves

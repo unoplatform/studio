@@ -10,9 +10,6 @@ How a signed-in or signed-out user moves through the app: the start route, the l
 async Task InitialNavigate(IServiceProvider services, INavigator navigator)
 {
     var auth = services.GetRequiredService<IAuthenticationService>();
-    auth.LoggedOut += async (_, _) =>
-        await navigator.NavigateViewModelAsync<LoginModel>(this, qualifier: Qualifiers.ClearBackStack);
-
     if (await auth.RefreshAsync())
     {
         await navigator.NavigateViewModelAsync<MainModel>(this, qualifier: Qualifiers.ClearBackStack);
@@ -21,6 +18,11 @@ async Task InitialNavigate(IServiceProvider services, INavigator navigator)
     {
         await navigator.NavigateViewModelAsync<LoginModel>(this, qualifier: Qualifiers.ClearBackStack);
     }
+
+    // Subscribe after the first navigation: a RefreshAsync that cannot renew stored tokens
+    // clears them and raises LoggedOut, and the else branch above already goes to login.
+    auth.LoggedOut += async (_, _) =>
+        await navigator.NavigateViewModelAsync<LoginModel>(this, qualifier: Qualifiers.ClearBackStack);
 }
 
 Host = await MainWindow.InitializeNavigationAsync(

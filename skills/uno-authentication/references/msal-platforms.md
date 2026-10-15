@@ -28,7 +28,7 @@ Without these, the browser sign-in succeeds but `LoginAsync` never completes. Th
 [IntentFilter(
     [Intent.ActionView],
     Categories = [Intent.CategoryBrowsable, Intent.CategoryDefault],
-    DataScheme = "msal161a9fb5-3b16-487a-81a2-ac45dcc0ad3b", // msal{ClientId}, a literal: keep in sync with appsettings
+    DataScheme = "msal<client-id>", // msal{ClientId}, a literal: keep in sync with appsettings
     DataHost = "auth")]
 public class MsalActivity : BrowserTabActivity
 {

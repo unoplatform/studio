@@ -5,7 +5,6 @@ compatibility: The Uno App MCP server (the uno_app_* tools, provided by the Uno 
 metadata:
   author: uno-platform
   category: testing
-  uno-sdk: "7.0.0-dev.77"
 ---
 
 # Uno Testing

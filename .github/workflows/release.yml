@@ -43,6 +43,11 @@ jobs:
             echo "::error::Release branches must be named release/stable/<major>.<minor>, got $GITHUB_REF_NAME"
             exit 1
           fi
+          # The plugin version tracks the Uno.Sdk major.minor it is built for, so a release waits for that SDK to be stable.
+          if ! curl -fsSL https://api.nuget.org/v3-flatcontainer/uno.sdk/index.json | jq -e --arg line "$minor." '.versions | any(startswith($line) and (contains("-") | not))' > /dev/null; then
+            echo "::error::Uno.Sdk $minor has no stable release on NuGet yet, so plugin $minor cannot ship (the plugin version tracks the Uno.Sdk it is built for)"
+            exit 1
+          fi
           last=$(git tag -l "$minor.*" | grep -E "^${minor//./\\.}\.[0-9]+$" | sort -V | tail -1 || true)
           if [ -z "$last" ]; then patch=0; else patch=$(( ${last##*.} + 1 )); fi
           echo "version=$minor.$patch" >> "$GITHUB_OUTPUT"
@@ -55,7 +60,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           pwsh .github/scripts/Set-PluginVersion.ps1 -Version "$VERSION"
-          pwsh .github/scripts/Set-UnoSdkVersion.ps1
           pwsh .github/scripts/Test-Plugin.ps1
           if ! git diff --quiet; then
             git commit -am "chore(release): $VERSION"

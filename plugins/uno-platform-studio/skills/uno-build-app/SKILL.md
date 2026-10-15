@@ -6,7 +6,6 @@ metadata:
   author: uno-platform
   version: "1.0"
   category: workflow
-  uno-sdk: "7.0.0-dev.77"
 ---
 
 # Uno Platform App-Building Workflow

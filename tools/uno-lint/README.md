@@ -8,15 +8,28 @@ Skills tell the agent what to do. This checks what it actually did, deterministi
 ## Layout
 
 ```
-src/Uno.Lint.Core   netstandard2.0 rule library (XDocument for XAML, Roslyn 4.8 for C#). The rules are host-agnostic:
-                    they take a parsed document or SyntaxTree plus a ProjectContext. Linter.cs is the file-system host;
-                    a Roslyn analyzer would be a second host over the same rules.
-src/Uno.Lint.Xaml   experimental XAML host on Uno.XamlParser (net10.0), plugged in through IXamlEngine; see XAMLPARSER-SPIKE.md
-src/Uno.Lint.Cli    uno-lint command: path mode, --json, --hook, --xaml-engine
+src/Uno.Lint.Xaml   the XAML rules, written as Uno.XamlParser Stage-1 fixers (net10.0). XamlParser reads and repairs
+                    the markup; the rules report UNOL diagnostics. Any XamlParser host (Studio Live, Uno.AI) can add
+                    them with UnoLintXamlRules.AddTo(options). XamlParserEngine adapts them to the uno-lint host.
+src/Uno.Lint.Core   netstandard2.0: the C# rules (Roslyn 4.8) and everything XamlParser does not do: .editorconfig
+                    severities, profiles, project context, suppression comments and counts, the file walk (Linter).
+                    RuleLogic holds the color, key and geometry predicates both sides share.
+src/Uno.Lint.Cli    uno-lint command: path mode, --json, --hook. Registers XamlParserEngine as the XAML host.
 tests/Uno.Lint.Tests xunit
-hooks/              Claude Code PostToolUse hook snippet
-FINDINGS.md         results of the first corpus run and per-rule verdicts
+hooks/              Claude Code PostToolUse hook snippets
+FINDINGS.md         corpus runs and per-rule verdicts
+XAMLPARSER.md       how the XAML rules run on Uno.XamlParser, measurements, and issues found in the parser
 ```
+
+### Who does what
+
+| Concern | Lives in |
+|---|---|
+| Reading XAML, repairing malformed markup | Uno.XamlParser (Stage 0/1) |
+| XAML rules: HEX, TOKENTHEME, ICON, CARD, BACKBAR, BINDVALUE | `Uno.Lint.Xaml`, as XamlParser fixers |
+| C# rules: CODEBEHIND, OVERLAY, RESPONSIVE, BUILTIN, colors in code | `Uno.Lint.Core`, on Roslyn |
+| `.editorconfig`, profiles, Toolkit/MVUX/Themes gates, suppressions, fix text | `Uno.Lint.Core` |
+| Agent hook, exit codes, JSON, text report | `Uno.Lint.Cli` |
 
 ## Build and run
 

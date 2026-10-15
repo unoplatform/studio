@@ -92,44 +92,33 @@ public sealed class Linter
 
             if (path.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase))
             {
-                // With an engine, it runs the rules it owns (on markup it may have repaired) and the built-in XDocument
-                // path runs the rest. A file XDocument rejects still gets the engine's rules instead of being skipped.
-                var engine = _options.XamlEngine;
-                var builtInParsed = XamlFile.TryParse(relative, text, out var xaml);
-                var engineParsed = false;
-                if (engine != null)
+                // XAML rules run inside Uno.XamlParser, which repairs the broken markup agents write instead of
+                // rejecting the file.
+                var engine = _options.XamlEngine ?? XamlEngines.Default
+                    ?? throw new InvalidOperationException("No XAML engine is registered. Set LintOptions.XamlEngine or XamlEngines.DefaultFactory.");
+                var engineResult = engine.Analyze(relative, text, result.Context, enabled);
+                if (!engineResult.Parsed)
                 {
-                    var engineResult = engine.Analyze(relative, text, result.Context, enabled);
-                    engineParsed = engineResult.Parsed;
-                    raw.AddRange(engineResult.Findings.Select(f => WithSeverity(f, path, result.Context)));
-                    if (!builtInParsed && engineResult.Parsed)
-                    {
-                        result.RepairedXamlFiles++;
-                        if (engineResult.LinesShifted)
-                        {
-                            result.LineShiftedXamlFiles++;
-                        }
-
-                        if (engineResult.Partial)
-                        {
-                            result.PartialXamlFiles++;
-                        }
-                    }
-                }
-
-                if (!builtInParsed)
-                {
-                    if (!engineParsed)
-                    {
-                        result.UnparsedXamlFiles++;
-                    }
-
+                    result.UnparsedXamlFiles++;
                     continue;
                 }
 
-                Func<RuleDescriptor, bool>? owned = engine == null ? null : rule => engine.OwnedRules.Contains(rule);
-                raw.AddRange(XamlAnalyzer.Analyze(xaml!, result.Context, enabled, owned).Select(f => WithSeverity(f, path, result.Context)));
-                XamlAnalyzer.CollectInfo(xaml!, result.Info, definedBrushKeys, referencedBrushKeys);
+                if (engineResult.Repaired)
+                {
+                    result.RepairedXamlFiles++;
+                    result.LineShiftedXamlFiles += engineResult.LinesShifted ? 1 : 0;
+                    result.PartialXamlFiles += engineResult.Partial ? 1 : 0;
+                }
+
+                raw.AddRange(engineResult.Findings.Select(f => WithSeverity(f, path, result.Context)));
+
+                var info = engineResult.Info;
+                result.Info.AdaptiveTriggers += info.AdaptiveTriggers;
+                result.Info.ControlTemplates += info.ControlTemplates;
+                result.Info.ResponsiveExtensions += info.ResponsiveExtensions;
+                result.Info.TokenReferences += info.TokenReferences;
+                definedBrushKeys.UnionWith(info.DefinedBrushKeys);
+                referencedBrushKeys.UnionWith(info.ReferencedBrushKeys);
             }
             else
             {

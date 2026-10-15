@@ -100,7 +100,7 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 
 ### Edge Cases
 
-- A XAML file that does not parse as XML is counted as unparsed and skipped; the run continues and the count is reported.
+- A XAML file that is not well-formed (an unclosed tag, a close tag with the wrong casing, an unquoted attribute, a stray ampersand, truncated output) is repaired by Uno.XamlParser and linted, and counted as repaired; if the reader still stops, the elements read before the stop are linted and the file is counted as partial. Only a file the parser cannot read at all is counted as unparsed.
 - An edit whose text cannot be located in the saved file (concurrent change, different path), or appears more than once, produces no findings rather than blaming the agent for lines it did not write.
 - An agent copies an existing block that carries a suppression comment to a new place; the new copy is reported, because the added lines come from the patch, not from searching for the text.
 - Line endings differ between the edit payload and the saved file (CRLF vs LF); the edit is still located.
@@ -158,7 +158,7 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 - **FR-019**: The hook MUST take the added lines from the payload's `tool_response.structuredPatch` when present (every line for a Write that created the file). Without one, it MUST diff `old_string` against `new_string` so unchanged context lines are not reported, locate `new_string` in the saved file regardless of CRLF/LF differences and re-indentation, and report nothing when the text is not found or is found more than once without `replace_all`
 - **FR-020**: System MUST expose the same rules as an MCP tool on the Uno dev server returning the same JSON shape as the CLI (phase 2)
 - **FR-021**: System MUST expose the same rules as a Roslyn analyzer package honoring the same `.editorconfig` keys (phase 3)
-- **FR-022**: The rule functions MUST be host-agnostic: they take a parsed XAML document or a Roslyn `SyntaxTree` plus the project context and return findings, and never read the disk, parse files or load configuration themselves. Each surface supplies a host layer: the CLI's `Linter` walks folders and reads `.editorconfig`; an analyzer host hands over the compiler's trees, additional files and `AnalyzerConfigOptions`. The rule library targets netstandard2.0 and the lowest Roslyn the analyzer must load in (currently 4.8), so the same assembly can be referenced from all three hosts
+- **FR-022**: The rule functions MUST be host-agnostic and never read the disk, parse files or load configuration themselves. XAML rules MUST run inside Uno.XamlParser as Stage-1 semantic fixers that only report, registrable on any XamlParser pipeline with one call, with Stage-0 repairs applied only to files that are not well-formed. C# rules take a Roslyn `SyntaxTree` plus the project context; their library targets netstandard2.0 and the lowest Roslyn the analyzer must load in (currently 4.8). Each surface supplies a host layer: the CLI's `Linter` walks folders, reads `.editorconfig` and applies severities, gates and suppressions to both kinds of rule; an analyzer host would hand the C# rules the compiler's trees and `AnalyzerConfigOptions`
 
 ### UX Requirements *(mandatory for UI features)*
 
@@ -253,23 +253,25 @@ BrewHouse had SimpleTheme, Toolkit and MVUX enabled and still hard-coded 93 colo
 
 ## Architecture and Delivery
 
-One C# rule library, and every surface is a thin host around it. Rules, profiles, severities and suppressions are written once and behave the same whether the caller is an agent hook, an MCP client or the compiler.
+XAML is read and its rules run inside Uno.XamlParser, the pipeline Studio Live and Uno.AI already run after every agent XAML write. uno-lint keeps what the parser does not do: the C# rules on Roslyn, and the host layer that applies `.editorconfig` severities, profiles, project gates, suppressions and output to both. Rules, profiles, severities and suppressions behave the same whether the caller is the agent hook, an MCP client or, for C#, the compiler.
 
 ```
-XAML files ──(XDocument)──┐                      ┌── uno-lint CLI + hook ── agents via plugin, CI   (phase 1)
-C# files ───(Roslyn)──────┼── Uno.Lint.Core ─────┼── MCP tool on uno.devserver ── any MCP agent     (phase 2)
-csproj, xmlns ─(gate)─────┘   netstandard2.0     └── Roslyn analyzer ── VS, Rider, dotnet build    (phase 3)
+XAML files ─► Uno.XamlParser (repair, Stage 1) ─► Uno.Lint.Xaml rules ─┐                 ┌── uno-lint CLI + hook ── agents, CI      (phase 1)
+C# files ───► Roslyn ──────────────────────────► Uno.Lint.Core rules ─┼─► host layer ────┼── MCP tool on uno.devserver            (phase 2)
+csproj, Directory.Build.props, .editorconfig ─► project gates, config ─┘   (Core)         └── Roslyn analyzer, C# rules only       (phase 3)
 ```
 
-**Why C#, not PowerShell.** PowerShell cannot ship in the SDK, is Windows-first in practice, and regex misfires: comments and strings trigger C# rules, and context such as "is this Border inside a ControlTemplate" is approximated. `XDocument` makes ancestry exact; Roslyn makes only real syntax count; netstandard2.0 lets a Roslyn analyzer load the same assembly later.
+**Why C#, not PowerShell.** PowerShell cannot ship in the SDK, is Windows-first in practice, and regex misfires: comments and strings trigger C# rules, and context such as "is this Border inside a ControlTemplate" is approximated. Uno.XamlParser makes XAML ancestry exact and repairs malformed markup; Roslyn makes only real syntax count.
 
-**What is shared and what is not.** Only the rule functions are shared. A Roslyn analyzer cannot do file IO (RS1035) and receives syntax trees, additional files and `AnalyzerConfigOptions` from the compiler, so the CLI's folder walk, `.editorconfig` reader, project-context detection and `CSharpSyntaxTree.ParseText` call all belong to the CLI host, not to the rules. The rules take a parsed document or tree plus a `ProjectContext` and return findings; `CSharpFile` already accepts a compiler-provided `SyntaxTree`. The analyzer in phase 3 is a second host over the same rule assembly, not a port, and `.editorconfig` section handling is implemented in the CLI host the way the compiler does it so the two hosts agree.
+**XAML on Uno.XamlParser (decided 2026-10-15).** The six XAML rules are `IXamlSemanticFixer` implementations that only report, registered through the parser's `SemanticFixerTypes` list, plus one stream visitor for element text. `UnoLintXamlRules.AddTo(options)` adds them to any XamlParser pipeline, so Studio Live and Uno.AI can enable them with one call. Against the earlier XDocument reader: identical findings on the five-app corpus except six false positives removed, malformed agent markup linted instead of skipped (8 of 8 fixtures), hook 227 ms with JIT and 185 ms with ReadyToRun. Details and the issues found in the parser are in [`tools/uno-lint/XAMLPARSER.md`](../../tools/uno-lint/XAMLPARSER.md).
 
-**Surface 1, plugin hook and CLI (phase 1).** A `dotnet tool` named `uno-lint`. The `uno-platform-studio` plugin already installs into Claude Code, Copilot CLI and Codex CLI; adding a hooks manifest that calls `uno-lint --hook` ships the linter to all three in one plugin release. This is the Studio plugin route.
+**What is shared and what is not.** The C# rules take a Roslyn `SyntaxTree` plus a `ProjectContext` and never read the disk; `CSharpFile` accepts a compiler-provided tree, so a Roslyn analyzer can host them later (RS1035 forbids file IO in analyzers). The XAML rules take XamlParser nodes. Shared predicates (colors, keys, corner radii) live in `RuleLogic` so both sides mean the same thing. The CLI's folder walk, `.editorconfig` reader and project-context detection belong to the host, implemented the way the compiler reads `.editorconfig` so a future analyzer agrees.
+
+**Surface 1, plugin hook and CLI (phase 1).** A `dotnet tool` named `uno-lint`. The `uno-platform-studio` plugin already installs into Claude Code, Copilot CLI and Codex CLI; adding a hooks manifest that calls `uno-lint --hook` ships the linter to all three in one plugin release. This is the Studio plugin route. Inside Studio Live itself, the XAML rules can run in its existing XamlParser pass instead.
 
 **Surface 2, MCP tool (phase 2).** `uno.devserver --mcp-app` already registers the Uno MCP server Studio users have. A `lint_project` / `lint_file` tool on it lets any agent call the linter on demand and lets skills say "run the linter before you report done".
 
-**Surface 3, Roslyn analyzer (phase 3).** Uno.UI already ships `Uno000x` analyzers and the XAML generator emits `UXAML` diagnostics, so there is an established home. XAML rules need the analyzer to read `.xaml` as additional files, which the Uno XAML generator already does.
+**Surface 3, Roslyn analyzer (phase 3).** For the C# rules. Uno.UI already ships `Uno000x` analyzers, so there is an established home. The XAML rules leave this goal: Uno.XamlParser is net9.0 and cannot load in an analyzer, and the Uno XAML generator's `UXAML` diagnostics already cover XAML in build and IDE.
 
 ### Rollout
 
@@ -313,7 +315,8 @@ csproj, xmlns ─(gate)─────┘   netstandard2.0     └── Roslyn 
 - [x] **TOKENTHEME severity**: `suggestion` by default (review); implemented.
 - [ ] **Where the code lives**: keep `tools/uno-lint` in this repository with its own CI job (added), or move the prototype to its own repository once the plugin hook ships? The spec stays here either way.
 - [ ] **ShadowContainer**: a Border with Background and CornerRadius inside `utu:ShadowContainer` is the Toolkit's documented pattern and still reports CARD. Exempt it, or change the message to point at `ElevatedCardContentControlStyle`?
-- [ ] **Uno.XamlParser as the XAML host** (review, 2026-10-13): it already runs after every agent XAML write in Studio Live and Uno.AI, repairs the unbalanced markup agents write instead of skipping the file, and its Stage 1 element model would replace the `XDocument` helpers; the rules would become `IXamlSemanticVisitor` implementations and the XAML side would leave the netstandard2.0 analyzer goal (the Uno XAML generator's `UXAML` diagnostics cover build and IDE). To settle before adopting: hook latency with the parser loaded against the 250 ms budget, an owner for the prerelease package (0.10.0-dev), and one pipeline per worker in directory mode since it is not thread-safe. No rule-level overlap: its codes are correctness and normalization. **Spike (2026-10-14, `tools/uno-lint/XAMLPARSER-SPIKE.md`):** HEX and CARD ported; identical findings on the five-app corpus (489 of 489); 7 of 7 broken-markup fixtures linted where the built-in host skips them; hook 273 ms with JIT, 194 ms with ReadyToRun. Recommendation: adopt, ship ReadyToRun, raise the visitor and repaired-text API gaps upstream.
+- [x] **Uno.XamlParser as the XAML host** (review 2026-10-13, meeting 2026-10-14, done 2026-10-15): all XAML rules run inside Uno.XamlParser as Stage-1 fixers; the XDocument reader is removed; C# rules and the host stay in uno-lint. Corpus identical except six false positives removed; malformed markup linted; hook 227 ms JIT, 185 ms ReadyToRun. See the architecture section and tools/uno-lint/XAMLPARSER.md.
+- [ ] **Uno.XamlParser ownership and upstream fixes**: the hook now depends on a prerelease package whose repository has been idle since May 2026. Ten issues are listed in XAMLPARSER.md; the first (the quote-repair sanitizer corrupting valid XAML that contains :/ in element text) affects every consumer. Who files and fixes them, and who owns releases while the hook depends on the package?
 
 ## Out of Scope
 

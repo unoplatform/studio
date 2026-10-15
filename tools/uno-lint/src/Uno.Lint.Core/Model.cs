@@ -147,6 +147,6 @@ public sealed class LintOptions
     /// <summary>Force the Toolkit gate open or closed instead of detecting it from the project.</summary>
     public bool? AssumeToolkit { get; set; }
 
-    /// <summary>Optional XAML host that owns some XAML rules (experimental: Uno.XamlParser).</summary>
+    /// <summary>The XAML host for this run; defaults to <see cref="XamlEngines.Default"/> (Uno.XamlParser).</summary>
     public IXamlEngine? XamlEngine { get; set; }
 }

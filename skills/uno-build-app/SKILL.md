@@ -41,13 +41,13 @@ Classify the request before doing anything else. Only New app mode writes a blue
 | "Make this card match the design" | Scoped visual | Inspect the card and theme; check the changed states; no service refactor |
 | A typo, a resource value, a one-line fix | Trivial edit | Make the edit and build; no blueprint, no checkpoint, no report template |
 
-Feature, Repair and Scoped visual modes follow [references/existing-app.md](references/existing-app.md). Every mode starts with [references/discovery.md](references/discovery.md), scaled to the request.
+Feature, Repair and Scoped visual modes follow [references/existing-app.md](references/existing-app.md). Every mode but New app starts with [references/discovery.md](references/discovery.md), scaled to the request; a new app has nothing to discover yet, and [references/new-app.md](references/new-app.md) has its own baseline step.
 
 ## Step 2: the phases
 
 Agent guidance, not a state machine. Scale each phase to the request.
 
-1. **Inspect and scope.** Discovery per [references/discovery.md](references/discovery.md). Output: target project, mode, applicable instructions, target matrix, and the build and test failures that already exist before you change anything.
+1. **Inspect and scope.** Discovery per [references/discovery.md](references/discovery.md); in New app mode, the brief and assets, then [references/new-app.md](references/new-app.md). Output: target project, mode, applicable instructions, target matrix, and the build and test failures that already exist before you change anything.
 2. **Blueprint** (New app only). Fill in [assets/blueprint.template.md](assets/blueprint.template.md) after scaffolding and before writing any app source, following [references/new-app.md](references/new-app.md) and [references/architecture-baseline.md](references/architecture-baseline.md). Keep it current when decisions change. Before filling it in, load `uno-mvux` (`references/overview.md`) and `uno-navigation` (`references/setup.md`, `references/routes.md`): the default stack's models and routes are written with them.
 3. **Feature contract.** For each meaningful feature, write down: trigger and result; who owns the state and the service; navigation in and out, with payload; data source and persistence; loading, empty and error states; theme, responsive and accessibility states affected; the checks that will prove it. Identify entity identity, invariants and invalid operations from the requirements; never invent missing business rules. "Use `IState<bool>`" is not a contract. "Toggling persists through the settings service, shows a recoverable save failure, and is restored after relaunch" is.
 4. **Select a recipe and skills.** Match the contract to [references/recipes.md](references/recipes.md). Load only the domain skills this feature needs, and within each only the references it names. An incompatible recipe still lends its acceptance checks.
@@ -72,7 +72,7 @@ Substantial work (a new app, several features, or anything likely to span sessio
 
 | File | Read when |
 |---|---|
-| [references/discovery.md](references/discovery.md) | Every mode, at the start |
+| [references/discovery.md](references/discovery.md) | Every mode but New app, at the start |
 | [references/new-app.md](references/new-app.md) | New app mode: template command, default stack, targets, blueprint |
 | [references/architecture-baseline.md](references/architecture-baseline.md) | Designing a new app or a substantive feature |
 | [references/existing-app.md](references/existing-app.md) | Feature, Repair and Scoped visual modes |

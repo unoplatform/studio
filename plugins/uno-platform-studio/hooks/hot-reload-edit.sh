@@ -6,11 +6,11 @@
 # Without the CLI, a running DevServer, or the status tool, it falls back to the reminder that Hot Reload
 # applies the edit. Reads the hook JSON on stdin; prints nothing for other files.
 input=$(cat)
-file=$(printf '%s' "$input" | sed -n 's/.*"file_path" *: *"\([^"]*\.\(xaml\|cs\)\)".*/\1/p' | sed 's/\\\\/\\/g')
+file=$(printf '%s' "$input" | sed -En 's/.*"file_path" *: *"([^"]*\.(xaml|cs))".*/\1/p' | sed 's/\\\\/\\/g')
 [ -n "$file" ] || exit 0
 
 cli=${UNO_DEVSERVER_CLI:-uno-devserver}
-json_escape() { printf '%s' "$1" | tr -d '\r' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' | sed -e ':a' -e 'N' -e '$!ba' -e 's/\n/\\n/g'; }
+json_escape() { printf '%s' "$1" | tr -d '\r' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' | sed -e ':a' -e '$!N' -e '$!ba' -e 's/\n/\\n/g'; }
 remind() {
 	printf '%s' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"An Uno app source file changed. If the app is running under the App MCP, Hot Reload applies this edit within a few seconds (a C# edit recreates the current page): confirm it with uno_app_hot_reload_status(file, waitForMs: 10000) when that tool is available, then assert with uno_app_find_elements(waitForMs). Do not dotnet build, uno_app_close or uno_app_start for it, and not to be safe either: the status result carries the compiler diagnostics and says RudeEdit when a start is really needed. Start again only for launch arguments, platform, app data, a Release build, a .csproj or package change, code that already ran at startup, or a reported RudeEdit."}}'
 	exit 0

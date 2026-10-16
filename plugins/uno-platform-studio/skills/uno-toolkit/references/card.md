@@ -43,32 +43,6 @@ That's a card. `<Border CornerRadius="8" Background="..." Padding="16">…</Bord
 
 `Border` is the right choice for: simple background fills with no rounded corners, image/content clipping with `CornerRadius` alone (no `Background`/`Padding`/`BorderBrush+BorderThickness`), and layout primitives **inside** a `ControlTemplate`. Separator lines are `utu:Divider` (see `references/divider.md`), not `<Border Height="1"/>`. The rule targets the *card-shaped* combination above; plain layout borders are unaffected.
 
-## Workflow
-
-### Step 1: Fetch the CardContentControl Documentation
-
-```
-uno_platform_docs_search("Uno Toolkit CardContentControl elevated filled outlined")
-```
-
-Primary documentation page:
-- **Card & CardContentControl**: `external/uno.toolkit.ui/doc/controls/CardAndCardContentControl.md`
-
-Fetch the page:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/CardAndCardContentControl.md")
-```
-
-### Step 2: For How-To / Walkthrough
-
-```
-uno_platform_docs_search("CardContentControl howto walkthrough custom template")
-```
-
-Key page:
-- **Card How-To**: `external/uno.toolkit.ui/doc/controls/walkthroughs/Card-and-CardContentControl.howto.md`
-
 ## Key Principles (Stable)
 
 - **`CardContentControl`** — fully custom layout via `ContentTemplate`. This is the only card control you should use.
@@ -154,6 +128,34 @@ Setting `Width`/`Height` on the inner content of the `ContentTemplate` will not 
 | `ElevatedCardContentControlStyle` | Subtle z-axis elevation; default choice for surfaced content |
 | `FilledCardContentControlStyle` | Background tint, no elevation; use on busy backgrounds |
 | `OutlinedCardContentControlStyle` | Stroke instead of fill/elevation; secondary content |
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the CardContentControl Documentation
+
+```
+uno_platform_docs_search("Uno Toolkit CardContentControl elevated filled outlined")
+```
+
+Primary documentation page:
+- **Card & CardContentControl**: `external/uno.toolkit.ui/doc/controls/CardAndCardContentControl.md`
+
+Fetch the page:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/CardAndCardContentControl.md", anchor="…")
+```
+
+### For How-To / Walkthrough
+
+```
+uno_platform_docs_search("CardContentControl howto walkthrough custom template")
+```
+
+Key page:
+- **Card How-To**: `external/uno.toolkit.ui/doc/controls/walkthroughs/Card-and-CardContentControl.howto.md`
 
 ## Related Skills
 

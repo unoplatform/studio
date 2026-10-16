@@ -42,6 +42,14 @@ A page opens a modal editor or filter. Apply returns a typed result and updates 
 
 Accept when: the dialog opens with the current values as a draft; apply updates the caller exactly once; cancel leaves the caller unchanged; back, Escape or tapping outside behave as documented cancel; an invalid draft keeps the dialog open with an accessible error; reopening starts from committed values; rapid repeated opening does not stack dialogs; keyboard focus stays in the dialog and returns to the caller.
 
+### `attach-file`
+
+The user picks a photo or file to attach to a record. The attachment is still there after the app restarts.
+
+Accept when: the system picker opens on every target and cancelling it changes nothing; the picked file is copied into app storage and the record keeps that copy, not the picker's path; the attachment shows after a relaunch; a failed copy shows an error and attaches nothing.
+
+`Windows.Storage.Pickers.FileOpenPicker` works on Desktop, Android, iOS and WebAssembly. Add at least one `FileTypeFilter` entry (`"*"` allows any file) and set `SuggestedStartLocation`, or WinUI throws. On the Windows App SDK head only, initialise it with the window handle: `WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindow))`. Show it from the UI thread: MVUX commands run on a background thread, so call it through a service that dispatches to the window's `DispatcherQueue` (the `uno-mvux` skill, `references/commands.md`). Docs: `features/windows-storage-pickers.md`.
+
 ## Choosing and adapting
 
 1. Match the requested behaviour to a contract above. Most real features combine two or three.

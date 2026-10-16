@@ -1,28 +1,5 @@
 # Uno Toolkit AutoLayout
 
-## Workflow
-
-### Step 1: Fetch the AutoLayout Documentation
-
-```
-uno_platform_docs_search("Uno Toolkit AutoLayout panel Figma spacing alignment")
-```
-
-Primary documentation page:
-- **AutoLayout Control**: `external/uno.toolkit.ui/doc/controls/AutoLayoutControl.md`
-
-Fetch the page:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/AutoLayoutControl.md")
-```
-
-### Step 2: For How-To Walkthroughs
-
-```
-uno_platform_docs_search("AutoLayout howto walkthrough example Figma")
-```
-
 ## Key Principles (Stable)
 
 **Container properties** (set on the `<utu:AutoLayout>` element itself):
@@ -47,6 +24,31 @@ There is **no** `AutoLayout.Counterpart`, no `AutoLayout.SetCounterAxisAlignment
 **XAML namespace:** `xmlns:utu="using:Uno.Toolkit.UI"`
 
 **Not AutoLayout's job:** if the layout is described in CSS terms (`flex-grow` / `flex-shrink` / `flex-basis`, `justify-content`, `align-items`) or the children must **wrap** onto multiple lines — which `AutoLayout` cannot do — use `FlexPanel` instead.
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the AutoLayout Documentation
+
+```
+uno_platform_docs_search("Uno Toolkit AutoLayout panel Figma spacing alignment")
+```
+
+Primary documentation page:
+- **AutoLayout Control**: `external/uno.toolkit.ui/doc/controls/AutoLayoutControl.md`
+
+Fetch the page:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/AutoLayoutControl.md", anchor="…")
+```
+
+### For How-To Walkthroughs
+
+```
+uno_platform_docs_search("AutoLayout howto walkthrough example Figma")
+```
 
 ## Related Skills
 

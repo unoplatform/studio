@@ -1,53 +1,5 @@
 # MVUX ListState
 
-## Workflow
-
-### Step 1: Fetch the ListState Documentation
-
-```
-uno_platform_docs_search("MVUX ListState mutable collection add remove update selection")
-```
-
-Primary documentation page:
-- **ListStates**: `external/uno.extensions/doc/Learn/Mvux/ListStates.md` (creation, `Add`/`Insert`/`Update`/`Remove`/`ForEach` operators, `TrySelectAsync`/`ClearSelection`)
-
-Supporting pages:
-- **ListFeed Reference**: `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
-- **State Reference**: `external/uno.extensions/doc/Reference/Reactive/state.md`
-- **Usage in Apps**: `external/uno.extensions/doc/Reference/Reactive/in-apps.md`
-
-Fetch the ListStates page:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/ListStates.md")
-```
-
-### Step 2: For ListState Creation
-
-- `ListState<T>.Empty(this)` — starts with no items
-- `ListState.Async(this, asyncFunc)` — loads initial data from async source
-- Can add `.Selection(...)` to track selected items
-
-### Step 3: For ListState Mutations
-
-Search for mutation operations:
-
-```
-uno_platform_docs_search("MVUX ListState add remove update items operation")
-```
-
-Key operations: `AddAsync`, `InsertAsync`, `RemoveAllAsync(predicate)`, `UpdateAllAsync(predicate, updater)`, `UpdateItemAsync(item, updater)`, and `UpdateAsync(list => ...)` (the single-delegate overload receives the whole `IImmutableList<T>`).
-
-### Step 4: For Messaging Integration
-
-If the user needs list updates from service CRUD operations:
-
-```
-uno_platform_docs_search("MVUX messaging EntityMessage ListState observe")
-```
-
-See the `references/messaging.md` for full details.
-
 ## Key Principles (Stable)
 
 - `IListState<T>` is **mutable** — supports add/remove/update
@@ -124,6 +76,56 @@ await Items.UpdateAllAsync(item => item.Id == id, _ => _externalItem, ct);
 
 // Note: Items.UpdateAsync(list => ...) receives the whole IImmutableList<T>, not one item.
 ```
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the ListState Documentation
+
+```
+uno_platform_docs_search("MVUX ListState mutable collection add remove update selection")
+```
+
+Primary documentation page:
+- **ListStates**: `external/uno.extensions/doc/Learn/Mvux/ListStates.md` (creation, `Add`/`Insert`/`Update`/`Remove`/`ForEach` operators, `TrySelectAsync`/`ClearSelection`)
+
+Supporting pages:
+- **ListFeed Reference**: `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
+- **State Reference**: `external/uno.extensions/doc/Reference/Reactive/state.md`
+- **Usage in Apps**: `external/uno.extensions/doc/Reference/Reactive/in-apps.md`
+
+Fetch the ListStates page:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/ListStates.md", anchor="…")
+```
+
+### For ListState Creation
+
+- `ListState<T>.Empty(this)` — starts with no items
+- `ListState.Async(this, asyncFunc)` — loads initial data from async source
+- Can add `.Selection(...)` to track selected items
+
+### For ListState Mutations
+
+Search for mutation operations:
+
+```
+uno_platform_docs_search("MVUX ListState add remove update items operation")
+```
+
+Key operations: `AddAsync`, `InsertAsync`, `RemoveAllAsync(predicate)`, `UpdateAllAsync(predicate, updater)`, `UpdateItemAsync(item, updater)`, and `UpdateAsync(list => ...)` (the single-delegate overload receives the whole `IImmutableList<T>`).
+
+### For Messaging Integration
+
+If the user needs list updates from service CRUD operations:
+
+```
+uno_platform_docs_search("MVUX messaging EntityMessage ListState observe")
+```
+
+See the `references/messaging.md` for full details.
 
 ## Related Skills
 

@@ -1,8 +1,18 @@
 # Uno Toolkit Input Extensions
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the InputExtensions Documentation
+- `utu:InputExtensions.AutoFocusNext="True"` — moves focus to the next field on Enter (`AutoFocusNextElement` names an explicit target)
+- `utu:InputExtensions.AutoDismiss="True"` — dismisses the keyboard on Enter for whichever `TextBox`/`PasswordBox` carries it (typically the last field); a `CommandExtensions.Command` on the field dismisses it too
+- `utu:InputExtensions.ReturnType="Default|Next|Done|Search|Send|Go"` — mobile keyboard button
+- Essential for login forms and any multi-field input
+- XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the InputExtensions Documentation
 
 ```
 uno_platform_docs_search("Uno Toolkit InputExtensions auto focus next dismiss keyboard return type")
@@ -15,22 +25,14 @@ Primary documentation pages:
 Fetch the helper reference:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/Input-extensions.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/Input-extensions.md", anchor="…")
 ```
 
-### Step 2: For Login Form Example
+### For Login Form Example
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/walkthroughs/input-extensions.howto.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/walkthroughs/input-extensions.howto.md", anchor="…")
 ```
-
-## Key Principles (Stable)
-
-- `utu:InputExtensions.AutoFocusNext="True"` — moves focus to the next field on Enter (`AutoFocusNextElement` names an explicit target)
-- `utu:InputExtensions.AutoDismiss="True"` — dismisses the keyboard on Enter for whichever `TextBox`/`PasswordBox` carries it (typically the last field); a `CommandExtensions.Command` on the field dismisses it too
-- `utu:InputExtensions.ReturnType="Default|Next|Done|Search|Send|Go"` — mobile keyboard button
-- Essential for login forms and any multi-field input
-- XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills
 

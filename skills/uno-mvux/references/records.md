@@ -1,38 +1,5 @@
 # Working with Records in MVUX
 
-## Workflow
-
-### Step 1: Fetch the Records Documentation
-
-```
-uno_platform_docs_search("MVUX immutable records data model code generation")
-```
-
-Primary documentation pages:
-- **Working with Records**: `external/uno.extensions/doc/Learn/Mvux/WorkingWithRecords.md`
-- **MVUX Overview** ("Model" and "Creating your own" sections): `external/uno.extensions/doc/Learn/Mvux/Overview.md`
-
-Fetch the records page:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/WorkingWithRecords.md")
-```
-
-### Step 2: For Key Equality in Messaging/Selection
-
-If the user needs key equality for entity matching (messaging, selection), search for:
-
-```
-uno_platform_docs_search("MVUX key equality entity matching record identifier")
-```
-
-The messaging reference covers how entity messages are matched by a key selector:
-- **Messaging Reference**: `external/uno.extensions/doc/Learn/Mvux/Advanced/Messaging.md`
-
-### Step 3: For General C# Records
-
-If the user needs help with C# record syntax itself, this is standard C# language knowledge — records provide immutability, value equality, `with` expressions, and deconstruction.
-
 ## Key Equality Requirement (Critical)
 
 **Record types used as items in MVUX collections (`IListFeed<T>`, `IListState<T>`) MUST support key equality via `Uno.Extensions.Equality.IKeyEquatable<T>`.** Without it, MVUX cannot distinguish a modified entity from a different one — unchanged items still match by value equality, but every edited item becomes a remove plus an add (lost selection, broken animations), and `UpdateAsync(T item)`/`UpdateItemAsync` do not compile (CS0311, or CS0453 for `UpdateItemAsync`; constrained `where T : IKeyEquatable<T>`). Messaging (`Observe`) matches by its own key selector, not by `IKeyEquatable<T>`.
@@ -94,6 +61,41 @@ The interface is exactly **`Uno.Extensions.Equality.IKeyEquatable<T>`**. Do not 
 - Value equality means two records with the same data are considered equal
 - Positional records: `public record Person(string Name, int Age);` — concise syntax
 - Models inject services via constructor: `public partial record MainModel(IMyService Service)`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Records Documentation
+
+```
+uno_platform_docs_search("MVUX immutable records data model code generation")
+```
+
+Primary documentation pages:
+- **Working with Records**: `external/uno.extensions/doc/Learn/Mvux/WorkingWithRecords.md`
+- **MVUX Overview** ("Model" and "Creating your own" sections): `external/uno.extensions/doc/Learn/Mvux/Overview.md`
+
+Fetch the records page:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/WorkingWithRecords.md", anchor="…")
+```
+
+### For Key Equality in Messaging/Selection
+
+If the user needs key equality for entity matching (messaging, selection), search for:
+
+```
+uno_platform_docs_search("MVUX key equality entity matching record identifier")
+```
+
+The messaging reference covers how entity messages are matched by a key selector:
+- **Messaging Reference**: `external/uno.extensions/doc/Learn/Mvux/Advanced/Messaging.md`
+
+### For General C# Records
+
+If the user needs help with C# record syntax itself, this is standard C# language knowledge — records provide immutability, value equality, `with` expressions, and deconstruction.
 
 ## Related Skills
 

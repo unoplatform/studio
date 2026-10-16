@@ -1,8 +1,19 @@
 # Uno Navigation Regions
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the Regions Documentation
+- `uen:Region.Attached="True"` — enables region-based navigation on a container
+- `uen:Region.Name="RouteName"` — identifies which route this region represents
+- `uen:Region.Navigator="Visibility"` — switches content by toggling visibility
+- **CRITICAL**: Never use `Region.Attached="True"` inside Shell.xaml content — the navigation host isn't ready yet
+- Regions mirror the navigation control hierarchy
+- Navigation controls (TabBar, NavigationView) and content areas must share a common parent with `Region.Attached="True"`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Regions Documentation
 
 ```
 uno_platform_docs_search("Uno Navigation regions Region.Attached Region.Name navigator")
@@ -16,37 +27,28 @@ Primary documentation pages:
 Fetch the walkthrough:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md", anchor="…")
 ```
 
-### Step 2: For Common Pitfalls
+### For Common Pitfalls
 
 Fetch the how-to page for important warnings:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/HowTo-Regions.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/HowTo-Regions.md", anchor="…")
 ```
 
 Critical warning: Do NOT use `Region.Attached="True"` inside Shell.xaml or ExtendedSplashScreen content.
 
-### Step 3: For NavigationView with Regions
+### For NavigationView with Regions
 
 The walkthrough includes a section on "Using Regions with NavigationView".
 
-### Step 4: For Visibility-Based Navigation  
+### For Visibility-Based Navigation  
 
 If the user needs visibility-based content switching:
 
 See the `references/panel-visibility.md`.
-
-## Key Principles (Stable)
-
-- `uen:Region.Attached="True"` — enables region-based navigation on a container
-- `uen:Region.Name="RouteName"` — identifies which route this region represents
-- `uen:Region.Navigator="Visibility"` — switches content by toggling visibility
-- **CRITICAL**: Never use `Region.Attached="True"` inside Shell.xaml content — the navigation host isn't ready yet
-- Regions mirror the navigation control hierarchy
-- Navigation controls (TabBar, NavigationView) and content areas must share a common parent with `Region.Attached="True"`
 
 ## Related Skills
 

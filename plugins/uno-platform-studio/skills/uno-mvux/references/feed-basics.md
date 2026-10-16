@@ -1,61 +1,31 @@
 # MVUX Feed Basics
 
-## Workflow
+## Create a feed
 
-### Step 1: Fetch the Feed Reference Documentation
+The `Feed` static class has three factories:
 
-Search for and fetch the feed documentation:
-
-```
-uno_platform_docs_search("MVUX Feed IFeed async data creation")
-```
-
-Primary documentation pages:
-- **Feed Reference**: `external/uno.extensions/doc/Reference/Reactive/feed.md`
-- **Simple Feed How-To**: `external/uno.extensions/doc/Learn/Mvux/Walkthrough/SimpleFeed.howto.md`
-
-Fetch the reference page for complete API details:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reactive/feed.md")
-```
-
-### Step 2: Learn Feed Creation Methods
-
-From the fetched docs, the key factory methods on the `Feed` static class are:
 - `Feed.Async(...)` — from an `AsyncFunc<T>` (`ValueTask<T>(CancellationToken)`); a `ValueTask<T>` method group passes directly, a `Task<T>` method needs `async ct => await ...`
 - `Feed.AsyncEnumerable(...)` — from a factory `Func<CancellationToken, IAsyncEnumerable<T>>`, not an enumerable instance
 - `Feed.Create(...)` — from a factory returning an `IAsyncEnumerable<Message<T>>` stream (low level; rarely needed)
 
-### Step 3: For Feed Operators (Select, Where)
+## Refresh a feed
 
-If the user needs to transform feed data, search for operators:
+- **From the Model**, for example after a save changes what the feed loads: pass a `Signal` as the `refresh:` argument and raise it.
 
-```
-uno_platform_docs_search("MVUX feed operators Select Where transform")
-```
+  ```csharp
+  private readonly Signal _changed = new();
 
-The feed reference page covers all operators in the "Operators" section.
+  public IListFeed<Asset> Assets => ListFeed.Async(_store.GetAssetsAsync, _changed);
 
-### Step 4: For Feed Refresh / Signal
+  public async ValueTask Save(CancellationToken ct)
+  {
+      await _store.SaveAsync(ct);
+      _changed.Raise();
+  }
+  ```
 
-If the user needs to trigger a feed refresh:
-
-```
-uno_platform_docs_search("MVUX feed refresh Signal trigger reload")
-```
-
-The feed reference page has no `Signal` section. Refresh from the view with the `FeedView`'s `Refresh` command, documented in `external/uno.extensions/doc/Reference/Reactive/in-apps.md` (anchor `refreshing-a-data`). To refresh from the Model, pass a `Signal` as the `refresh:` parameter of `Feed.Async`, `ListFeed.Async`, or `State.Async` and call `signal.Raise()`.
-
-### Step 5: For How-To Walkthroughs
-
-For step-by-step examples of showing feed data on the UI:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Walkthrough/SimpleFeed.howto.md")
-```
-
-This covers binding feed data, showing errors, and using feeds inside DataTemplates.
+  `Feed.Async`, `ListFeed.Async` and `State.Async` all take it. Several feeds that read the same store can share one `Signal`, which the store can expose so every Model that reads it refreshes after any write.
+- **From the view**: the `FeedView`'s `Refresh` command, for example a button in its template bound to `{Binding Refresh}` (see `references/feedview.md`).
 
 ## Key Principles (Stable)
 
@@ -65,6 +35,14 @@ This covers binding feed data, showing errors, and using feeds inside DataTempla
 - The service method should accept a `CancellationToken` parameter for proper cancellation
 - Service return types should use `ValueTask<T>` (a `Task<T>` method must be wrapped in a lambda for `Feed.Async`)
 - For collections, use `IListFeed<T>` instead (see `references/listfeed.md`)
+
+## Docs, for what this page does not cover
+
+Search with `uno_platform_docs_search("MVUX feed operators Select Where")` (or your question) and fetch the section by `anchor`. The pages:
+
+- **Feed reference**: `external/uno.extensions/doc/Reference/Reactive/feed.md` (factories, operators such as `Select` and `Where`; it has no `Signal` section)
+- **Refreshing from the view**: `external/uno.extensions/doc/Reference/Reactive/in-apps.md`, anchor `refreshing-a-data`
+- **Simple feed how-to**: `external/uno.extensions/doc/Learn/Mvux/Walkthrough/SimpleFeed.howto.md` (binding feed data, errors, feeds inside DataTemplates)
 
 ## Related Skills
 

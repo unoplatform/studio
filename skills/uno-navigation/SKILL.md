@@ -13,7 +13,7 @@ Uno.Extensions.Navigation is route-based: pages and ViewModels are registered on
 ## Workflow
 
 1. Pick a shell (below) if the app has no navigation yet, then find each task in the topic map and read the matching `references/*.md` before writing code. Shell references point to complete, compilable templates with placeholders; copy those rather than composing shell XAML from memory.
-2. Ground details in the official docs: call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result (a relative `.md` path). Never pass a URL, `.html` link, or hand-built path.
+2. The reference answers the common case; the docs pages it names are for what it leaves out. Then search with `uno_platform_docs_search(...)` and fetch only the section you need: `uno_platform_docs_fetch(sourcePath="…", anchor="…")`, both values from a search result. A whole page is 2,000 to 6,000 tokens that stay in context for the rest of the session. Never pass a URL, `.html` link, or hand-built path.
 3. Check the generated XAML and route registration against the critical rules below before finishing. Most navigation bugs are a mismatch between a route name and a `Region.Name`/`Navigation.Request` value, or a container that is not empty.
 
 ## Choose a shell

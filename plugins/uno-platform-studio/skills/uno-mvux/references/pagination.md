@@ -1,8 +1,23 @@
 # MVUX Pagination
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the Pagination Documentation
+- Use `ListFeed.PaginatedAsync(...)` to create a paginated list feed
+- The callback receives a `PageRequest`; skip `CurrentCount` items and take `DesiredSize` (nullable on the first page)
+- `ListView` supports incremental loading automatically when bound to a paginated feed
+- For `ItemsRepeater`, use the Toolkit's `ItemsRepeaterExtensions` for incremental loading support
+- Pagination works with both index-based and cursor-based APIs
+
+## Understand Pagination Types
+
+- **Index-based**: `ListFeed.PaginatedAsync(async (request, ct) => ...)`; the delegate is `AsyncFunc<PageRequest, IImmutableList<T>>`, so it takes the request and a `CancellationToken`, and a one-parameter lambda does not compile. `PageRequest` has `uint Index`, `uint CurrentCount`, and `uint? DesiredSize` (null on the first page, so fall back to a default). Slice with `Skip((int)request.CurrentCount).Take((int)(request.DesiredSize ?? DefaultPageSize))`, not `Index * DesiredSize`.
+- **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Pagination Documentation
 
 Search for and fetch the pagination documentation:
 
@@ -18,24 +33,18 @@ Primary documentation pages:
 Fetch the reference page:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Advanced/Pagination.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Advanced/Pagination.md", anchor="…")
 ```
 
-### Step 2: For Practical Examples
+### For Practical Examples
 
 Fetch the Chefs app example for a real-world implementation:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/mvux/Pagination.md")
+uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/mvux/Pagination.md", anchor="…")
 ```
 
-### Step 3: Understand Pagination Types
-
-From the fetched docs:
-- **Index-based**: `ListFeed.PaginatedAsync(async (request, ct) => ...)`; the delegate is `AsyncFunc<PageRequest, IImmutableList<T>>`, so it takes the request and a `CancellationToken`, and a one-parameter lambda does not compile. `PageRequest` has `uint Index`, `uint CurrentCount`, and `uint? DesiredSize` (null on the first page, so fall back to a default). Slice with `Skip((int)request.CurrentCount).Take((int)(request.DesiredSize ?? DefaultPageSize))`, not `Index * DesiredSize`.
-- **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`
-
-### Step 4: For ItemsRepeater Integration
+### For ItemsRepeater Integration
 
 If the user is using `ItemsRepeater` for incremental loading:
 
@@ -45,14 +54,6 @@ uno_platform_docs_search("ItemsRepeater MVUX pagination incremental loading")
 
 Key page:
 - **ItemsRepeater Extensions**: `external/uno.toolkit.ui/doc/helpers/walkthroughs/itemsrepeater-extensions.howto.md`
-
-## Key Principles (Stable)
-
-- Use `ListFeed.PaginatedAsync(...)` to create a paginated list feed
-- The callback receives a `PageRequest`; skip `CurrentCount` items and take `DesiredSize` (nullable on the first page)
-- `ListView` supports incremental loading automatically when bound to a paginated feed
-- For `ItemsRepeater`, use the Toolkit's `ItemsRepeaterExtensions` for incremental loading support
-- Pagination works with both index-based and cursor-based APIs
 
 ## Related Skills
 

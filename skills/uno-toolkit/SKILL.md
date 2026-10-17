@@ -13,7 +13,7 @@ Uno Toolkit is the control and helper library that ships with Uno Platform proje
 ## Workflow
 
 1. Find the need in the topic map and read the matching `references/*.md` before writing XAML. Each reference is short and names the exact properties; do not guess member names from CSS, WPF, or MAUI memory.
-2. Ground details in the official docs: call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result (a relative `.md` path). Never pass a URL, `.html` link, or hand-built path.
+2. The reference answers the common case; the docs pages it names are for what it leaves out. Then search with `uno_platform_docs_search(...)` and fetch only the section you need: `uno_platform_docs_fetch(sourcePath="…", anchor="…")`, both values from a search result. A whole page is 2,000 to 6,000 tokens that stay in context for the rest of the session. Never pass a URL, `.html` link, or hand-built path.
 3. Check the generated XAML against the critical rules below; most are compile-clean but render wrong or empty at runtime.
 
 ## Topic map

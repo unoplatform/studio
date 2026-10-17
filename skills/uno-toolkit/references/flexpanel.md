@@ -2,16 +2,6 @@
 
 > **Availability:** `FlexPanel` ships in Uno.Toolkit 11.0.0-dev.142 (Uno.Sdk 7.0.0-dev.77) and is absent from Toolkit 9.1.3 (Uno.Sdk 6.7.x). On an older Toolkit, confirm `utu:FlexPanel` resolves before using it. If it does not, use `AutoLayout` or `Grid` instead (there is no `WrapPanel` in the Toolkit or WinUI; the CommunityToolkit ships one).
 
-## Workflow
-
-### Step 1: Fetch the FlexPanel Documentation
-
-```
-uno_platform_docs_search("Uno Toolkit FlexPanel flexbox grow shrink basis wrap gap")
-```
-
-Primary documentation pages: **FlexPanel**: `external/uno.toolkit.ui/doc/controls/FlexPanel.md`; **FlexPanel How-To**: `external/uno.toolkit.ui/doc/controls/walkthroughs/FlexPanel.howto.md`. Fetch with `uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/FlexPanel.md")`; the notes below are the checked surface.
-
 ## Key Principles (Stable)
 
 `FlexPanel` arranges its children using CSS Flexbox semantics. Layout is computed by a vendored C# port of Meta's Yoga engine, so sizing, wrapping and distribution follow the CSS specification rather than an approximation of it.
@@ -131,6 +121,18 @@ Two capability differences worth knowing before choosing:
 
 - `FlexPanel` wraps onto multiple lines; `AutoLayout` does not.
 - `AutoLayout` supports negative `Spacing` (for deliberately overlapping items such as stacked avatars). `FlexPanel` cannot — the engine clamps a negative gap to `0`. Use a negative child `Margin` instead.
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the FlexPanel Documentation
+
+```
+uno_platform_docs_search("Uno Toolkit FlexPanel flexbox grow shrink basis wrap gap")
+```
+
+Primary documentation pages: **FlexPanel**: `external/uno.toolkit.ui/doc/controls/FlexPanel.md`; **FlexPanel How-To**: `external/uno.toolkit.ui/doc/controls/walkthroughs/FlexPanel.howto.md`. Fetch with `uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/FlexPanel.md", anchor="…")`; the notes below are the checked surface.
 
 ## Related Skills
 

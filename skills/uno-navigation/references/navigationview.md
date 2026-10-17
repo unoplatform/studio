@@ -14,32 +14,6 @@ For complete, compilable shell XAML with parameterized placeholders, see:
 - Substitution rules
 - Localization template (Resources.resw)
 
-## Workflow
-
-### Step 1: Fetch the NavigationView Navigation Documentation
-
-```
-uno_platform_docs_search("Uno Navigation NavigationView sidebar hamburger region")
-```
-
-Primary documentation pages:
-- **Define Regions (NavigationView section)**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md`
-- **Responsive Shell**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md`
-
-Fetch the define regions page:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md")
-```
-
-Focus on the "Using Regions with NavigationView" section.
-
-### Step 2: For Responsive Navigation
-
-If the user needs adaptive navigation (NavigationView on desktop, TabBar on mobile):
-
-See the `references/responsive-shell.md`.
-
 ## Key Principles (Stable)
 
 - NavigationView uses region-based navigation to link menu items to content
@@ -59,6 +33,34 @@ See the `references/responsive-shell.md`.
 - Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
 - Page routes are nested under the `"Main"` route so only the content area updates, not the entire page
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the NavigationView Navigation Documentation
+
+```
+uno_platform_docs_search("Uno Navigation NavigationView sidebar hamburger region")
+```
+
+Primary documentation pages:
+- **Define Regions (NavigationView section)**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md`
+- **Responsive Shell**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md`
+
+Fetch the define regions page:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md", anchor="…")
+```
+
+Focus on the "Using Regions with NavigationView" section.
+
+### For Responsive Navigation
+
+If the user needs adaptive navigation (NavigationView on desktop, TabBar on mobile):
+
+See the `references/responsive-shell.md`.
 
 ## Related Skills
 

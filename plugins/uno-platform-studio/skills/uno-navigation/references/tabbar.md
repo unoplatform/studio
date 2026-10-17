@@ -12,41 +12,6 @@ For complete, compilable shell XAML with parameterized placeholders, see:
 - Substitution rules
 - Localization template (Resources.resw)
 
-## Workflow
-
-### Step 1: Fetch the TabBar Navigation Documentation
-
-```
-uno_platform_docs_search("Uno Navigation TabBar bottom tab region navigation")
-```
-
-Primary documentation pages:
-- **Use TabBar (walkthrough)**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md`
-- **Define Regions**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md`
-- **TabBar Navigation (Chefs recipe, thinner)**: `external/uno.chefs/doc/toolkit/NavigateTabBar.md`
-
-Fetch the TabBar walkthrough:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md")
-```
-
-### Step 2: For TabBar Control Reference
-
-For TabBar control properties and styling:
-
-```
-uno_platform_docs_search("Uno Toolkit TabBar TabBarItem styles badges")
-```
-
-See also the `uno-toolkit` skill (`references/tabbar.md`) for the control itself.
-
-### Step 3: For Responsive Navigation
-
-If combining TabBar (mobile) with NavigationView (desktop):
-
-See the `references/responsive-shell.md`.
-
 ## Key Principles (Stable)
 
 - TabBar uses region-based navigation similarly to NavigationView
@@ -65,6 +30,43 @@ See the `references/responsive-shell.md`.
 - Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
 - Tab page routes are nested under the `"Main"` route so only the content area updates, not the entire page
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the TabBar Navigation Documentation
+
+```
+uno_platform_docs_search("Uno Navigation TabBar bottom tab region navigation")
+```
+
+Primary documentation pages:
+- **Use TabBar (walkthrough)**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md`
+- **Define Regions**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md`
+- **TabBar Navigation (Chefs recipe, thinner)**: `external/uno.chefs/doc/toolkit/NavigateTabBar.md`
+
+Fetch the TabBar walkthrough:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md", anchor="…")
+```
+
+### For TabBar Control Reference
+
+For TabBar control properties and styling:
+
+```
+uno_platform_docs_search("Uno Toolkit TabBar TabBarItem styles badges")
+```
+
+See also the `uno-toolkit` skill (`references/tabbar.md`) for the control itself.
+
+### For Responsive Navigation
+
+If combining TabBar (mobile) with NavigationView (desktop):
+
+See the `references/responsive-shell.md`.
 
 ## Related Skills
 

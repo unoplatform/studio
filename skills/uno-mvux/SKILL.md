@@ -21,7 +21,7 @@ Look at `<UnoFeatures>` in the app's project file before writing any presentatio
 ## Workflow
 
 1. Find the task in the topic map below and read the matching `references/*.md` file before writing code. Each reference is short and self-contained.
-2. Ground details in the official docs: call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result (a relative `.md` path). Never pass a URL, `.html` link, or hand-built path.
+2. The reference answers the common case; the docs pages it names are for what it leaves out. Then search with `uno_platform_docs_search(...)` and fetch only the section you need: `uno_platform_docs_fetch(sourcePath="…", anchor="…")`, both values from a search result. A whole page is 2,000 to 6,000 tokens that stay in context for the rest of the session. Never pass a URL, `.html` link, or hand-built path.
 3. Apply the critical rules below. They are the mistakes that compile-fail or silently break UI, so check the generated code against them before finishing.
 
 ## Topic map

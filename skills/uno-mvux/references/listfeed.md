@@ -1,50 +1,5 @@
 # MVUX ListFeed
 
-## Workflow
-
-### Step 1: Fetch the ListFeed Reference Documentation
-
-Search for and fetch the documentation:
-
-```
-uno_platform_docs_search("MVUX ListFeed reactive collection IListFeed")
-```
-
-Primary documentation pages:
-- **ListFeed Reference**: `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
-- **ListFeed How-To**: `external/uno.extensions/doc/Learn/Mvux/Walkthrough/ListFeed.howto.md`
-
-Fetch the full reference:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reactive/listfeed.md")
-```
-
-### Step 2: Learn ListFeed Creation Methods
-
-From the fetched docs, the key factory methods on the `ListFeed` static class:
-- `ListFeed.Async(...)` — from an `AsyncFunc<IImmutableList<T>>`, i.e. a `ValueTask<IImmutableList<T>>(CancellationToken)` method group; wrap a `Task`-returning method in a lambda
-- `ListFeed.AsyncEnumerable(...)` — from a factory `Func<CancellationToken, IAsyncEnumerable<IImmutableList<T>>>`, not an enumerable instance
-- `ListFeed.PaginatedAsync(...)` — for paginated/infinite scroll (see `references/pagination.md`)
-
-### Step 3: For ListFeed Operators
-
-The reference page covers `PaginatedAsync`, `Where`, `AsFeed`, and `AsListFeed`. `Where` filters individual items. There is no `Select` or `SelectAsync` on `IListFeed<T>` (both are `IFeed<T>` operators); to project, use `.AsFeed().Select(...)` or `.AsFeed().SelectAsync(...)`. `Selection` is documented in `external/uno.extensions/doc/Reference/Reactive/in-apps.md` (anchor `selection`) and `external/uno.extensions/doc/Learn/Mvux/Advanced/Selection.md`.
-
-### Step 4: For How-To Walkthroughs
-
-For step-by-step examples:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Walkthrough/ListFeed.howto.md")
-```
-
-This covers loading a list, showing it with FeedView, filtering with `Where`, and when to use feeds vs states.
-
-### Step 5: For Displaying Lists in XAML
-
-The how-to page shows how to bind `IListFeed<T>` to `ListView` via `FeedView` and access items through `{Binding Data}`.
-
 ## Key Principles (Stable)
 
 - `IListFeed<T>` is **read-only** — use `IListState<T>` for add/remove/update
@@ -104,6 +59,53 @@ public partial record MyItem(Guid Id, string Name);
 - At least one key property is required — without it, every edited item is removed and re-added in the UI
 - Key properties define **identity** (same entity); non-key properties define **state** (changed data)
 - `KeyEquals` returns `true` when two instances represent the same entity, even if other properties differ
+
+## Learn ListFeed Creation Methods
+
+The key factory methods on the `ListFeed` static class:
+- `ListFeed.Async(...)` — from an `AsyncFunc<IImmutableList<T>>`, i.e. a `ValueTask<IImmutableList<T>>(CancellationToken)` method group; wrap a `Task`-returning method in a lambda
+- `ListFeed.AsyncEnumerable(...)` — from a factory `Func<CancellationToken, IAsyncEnumerable<IImmutableList<T>>>`, not an enumerable instance
+- `ListFeed.PaginatedAsync(...)` — for paginated/infinite scroll (see `references/pagination.md`)
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the ListFeed Reference Documentation
+
+Search for and fetch the documentation:
+
+```
+uno_platform_docs_search("MVUX ListFeed reactive collection IListFeed")
+```
+
+Primary documentation pages:
+- **ListFeed Reference**: `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
+- **ListFeed How-To**: `external/uno.extensions/doc/Learn/Mvux/Walkthrough/ListFeed.howto.md`
+
+Fetch the full reference:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reactive/listfeed.md", anchor="…")
+```
+
+### For ListFeed Operators
+
+The reference page covers `PaginatedAsync`, `Where`, `AsFeed`, and `AsListFeed`. `Where` filters individual items. There is no `Select` or `SelectAsync` on `IListFeed<T>` (both are `IFeed<T>` operators); to project, use `.AsFeed().Select(...)` or `.AsFeed().SelectAsync(...)`. `Selection` is documented in `external/uno.extensions/doc/Reference/Reactive/in-apps.md` (anchor `selection`) and `external/uno.extensions/doc/Learn/Mvux/Advanced/Selection.md`.
+
+### For How-To Walkthroughs
+
+For step-by-step examples:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Walkthrough/ListFeed.howto.md", anchor="…")
+```
+
+This covers loading a list, showing it with FeedView, filtering with `Where`, and when to use feeds vs states.
+
+### For Displaying Lists in XAML
+
+The how-to page shows how to bind `IListFeed<T>` to `ListView` via `FeedView` and access items through `{Binding Data}`.
 
 ## Related Skills
 

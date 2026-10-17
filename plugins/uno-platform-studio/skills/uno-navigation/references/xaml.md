@@ -11,39 +11,6 @@ For a complete, compilable Frame-based shell with parameterized placeholders, se
 - Route registration template
 - Substitution rules
 
-## Workflow
-
-### Step 1: Fetch the XAML Navigation Documentation
-
-```
-uno_platform_docs_search("Uno Navigation XAML Navigation.Request Navigation.Data attached properties declarative")
-```
-
-Primary documentation pages:
-- **Navigate Using Attached Properties in XAML**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/NavigateUsingAttachedPropertiesInXAML.md`
-- **XAML Navigation in Chefs**: `external/uno.chefs/doc/navigation/XamlNavigation.md`
-- **Navigation Overview (XAML section)**: `external/uno.extensions/doc/Learn/Navigation/NavigationOverview.md`
-
-Fetch the main walkthrough:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/NavigateUsingAttachedPropertiesInXAML.md")
-```
-
-### Step 2: For Chefs App Examples
-
-For real-world XAML navigation patterns:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/navigation/XamlNavigation.md")
-```
-
-### Step 3: For Qualifiers in XAML
-
-If the user needs back-stack manipulation in XAML (like `-/` to clear):
-
-See the `references/qualifiers.md`.
-
 ## Key Principles (Stable)
 
 - XAML namespace: `xmlns:uen="using:Uno.Extensions.Navigation.UI"`
@@ -70,6 +37,41 @@ See the `references/qualifiers.md`.
 - Route names in `RouteMap` MUST match the `uen:Navigation.Request` values used in XAML
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
 - On secondary pages, always include a back button with `uen:Navigation.Request="-"`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the XAML Navigation Documentation
+
+```
+uno_platform_docs_search("Uno Navigation XAML Navigation.Request Navigation.Data attached properties declarative")
+```
+
+Primary documentation pages:
+- **Navigate Using Attached Properties in XAML**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/NavigateUsingAttachedPropertiesInXAML.md`
+- **XAML Navigation in Chefs**: `external/uno.chefs/doc/navigation/XamlNavigation.md`
+- **Navigation Overview (XAML section)**: `external/uno.extensions/doc/Learn/Navigation/NavigationOverview.md`
+
+Fetch the main walkthrough:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/NavigateUsingAttachedPropertiesInXAML.md", anchor="…")
+```
+
+### For Chefs App Examples
+
+For real-world XAML navigation patterns:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/navigation/XamlNavigation.md", anchor="…")
+```
+
+### For Qualifiers in XAML
+
+If the user needs back-stack manipulation in XAML (like `-/` to clear):
+
+See the `references/qualifiers.md`.
 
 ## Related Skills
 

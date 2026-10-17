@@ -69,6 +69,21 @@ jobs:
             fi
           fi
 
+  # The hook is POSIX sh run by the user's shell tools: GNU sed on Linux, BSD sed on macOS.
+  hooks:
+    name: Hooks on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run the hooks against canned input
+        shell: pwsh
+        run: ./.github/scripts/Test-Hooks.ps1
+
   agents:
     name: Install in Copilot CLI and Codex
     runs-on: ubuntu-latest

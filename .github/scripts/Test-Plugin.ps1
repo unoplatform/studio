@@ -151,8 +151,9 @@ try {
     # --- Size report. Every file an agent reads stays in its context and is re-read on each later
     # call, so references get a budget. Larger files are split by task; templates and lookup tables
     # that should not be split are exempt but need a table of contents (an `](#` link near the top).
-    # ponytail: 4 chars/token is a fixed estimate; recalibrate against the real tokenizer if it drifts.
-    $charsPerToken = 4
+    # 2.4 chars/token was measured from billed context in 2026-10 sessions (each reference's growth of the next call's
+    # input, Claude Opus 5.5): these files are dense with code, tables and identifiers. Recalibrate if the model changes.
+    $charsPerToken = 2.4
     $referenceBudget = 6000
     $exempt = @{
         'uno-navigation/references/shell-navigationview-template.md' = 'complete template'

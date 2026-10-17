@@ -1,8 +1,25 @@
 # MVUX Messaging
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the Messaging Documentation
+- Register `IMessenger` as a singleton in DI: `services.AddSingleton<IMessenger, WeakReferenceMessenger>()`
+- `EntityMessage<T>` carries an entity change type (Created, Updated, Deleted) and the entity
+- `.Observe(messenger, e => e.Id)` on a `ListState` auto-applies incoming entity changes; every overload takes a key selector
+- Matching uses the key selector, not `IKeyEquatable<T>`; key equality still matters for list diffing, item updates, and selection (see `references/records.md`)
+- Namespace: `Uno.Extensions.Reactive.Messaging`
+
+## Understand the Architecture
+
+The messaging pattern involves:
+1. **Service** sends `EntityMessage<T>` via `IMessenger.Send(...)`
+2. **Model** uses `.Observe(messenger, e => e.Id)` on a `ListState` (or `messenger.Observe(state, e => e.Id)`) to auto-apply changes; the key selector is required
+3. **Entity changes** (Created/Updated/Deleted) are matched to items by the key selector and applied to the state
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Messaging Documentation
 
 Search for and fetch the messaging documentation:
 
@@ -17,37 +34,22 @@ Primary documentation pages:
 Fetch the reference page:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Advanced/Messaging.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Advanced/Messaging.md", anchor="…")
 ```
 
-### Step 2: For How-To Walkthroughs
+### For How-To Walkthroughs
 
 For step-by-step implementation:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Walkthrough/Messaging.howto.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Walkthrough/Messaging.howto.md", anchor="…")
 ```
 
 This covers when to use messaging, sending entity messages from services, observing changes in models, and manual message handling.
 
-### Step 3: Understand the Architecture
-
-From the fetched docs, the messaging pattern involves:
-1. **Service** sends `EntityMessage<T>` via `IMessenger.Send(...)`
-2. **Model** uses `.Observe(messenger, e => e.Id)` on a `ListState` (or `messenger.Observe(state, e => e.Id)`) to auto-apply changes; the key selector is required
-3. **Entity changes** (Created/Updated/Deleted) are matched to items by the key selector and applied to the state
-
-### Step 4: For Manual Message Handling
+### For Manual Message Handling
 
 If the user needs custom logic when messages arrive, the reference page covers the `Update` extension methods that allow manual application of `EntityMessage<T>` to states. This messaging API is genuinely named `Update(state, EntityMessage<T>, keySelector, ct)` (namespace `Uno.Extensions.Reactive.Messaging`); it is not the deprecated `IState<T>.Update` alias, so the "always `UpdateAsync`" rule does not apply here.
-
-## Key Principles (Stable)
-
-- Register `IMessenger` as a singleton in DI: `services.AddSingleton<IMessenger, WeakReferenceMessenger>()`
-- `EntityMessage<T>` carries an entity change type (Created, Updated, Deleted) and the entity
-- `.Observe(messenger, e => e.Id)` on a `ListState` auto-applies incoming entity changes; every overload takes a key selector
-- Matching uses the key selector, not `IKeyEquatable<T>`; key equality still matters for list diffing, item updates, and selection (see `references/records.md`)
-- Namespace: `Uno.Extensions.Reactive.Messaging`
 
 ## Related Skills
 

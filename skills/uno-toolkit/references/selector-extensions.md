@@ -1,8 +1,19 @@
 # Uno Toolkit Selector Extensions
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the SelectorExtensions Documentation
+- One user-facing attached property: `utu:SelectorExtensions.PipsPager`. `SelectionOffset` also exists but is an output written by `TabBar` internals; do not set it
+- The property must be set on the **Selector control** (FlipView, ListView), **NOT** on the PipsPager
+- Automatically syncs `NumberOfPages` and `SelectedIndex` bidirectionally
+- Swiping the Selector updates the pip; clicking a pip navigates the Selector
+- Do not manually set `NumberOfPages` on the PipsPager — it is auto-managed
+- XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the SelectorExtensions Documentation
 
 ```
 uno_platform_docs_search("Uno Toolkit SelectorExtensions PipsPager Selector sync FlipView")
@@ -14,17 +25,8 @@ Primary documentation page:
 Fetch the page:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/Selector-extensions.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/helpers/Selector-extensions.md", anchor="…")
 ```
-
-## Key Principles (Stable)
-
-- One user-facing attached property: `utu:SelectorExtensions.PipsPager`. `SelectionOffset` also exists but is an output written by `TabBar` internals; do not set it
-- The property must be set on the **Selector control** (FlipView, ListView), **NOT** on the PipsPager
-- Automatically syncs `NumberOfPages` and `SelectedIndex` bidirectionally
-- Swiping the Selector updates the pip; clicking a pip navigates the Selector
-- Do not manually set `NumberOfPages` on the PipsPager — it is auto-managed
-- XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills
 

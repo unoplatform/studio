@@ -1,8 +1,19 @@
 # Uno Navigation Dialogs
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the Dialog Navigation Documentation
+- Message dialogs are the simplest dialog type — title, message, and buttons via `navigator.ShowMessageDialogAsync<TResult>(this, ...)`, no route registration required; only the generic overload returns the choice
+- Use the `!` qualifier prefix (`uen:Navigation.Request="!Filter"`) or `Qualifiers.Dialog` from code to open a `Page`-based dialog via navigation
+- If the target is a `Page`, it displays as a flyout; `!` is what turns a `Page` into a flyout
+- If the target is a `ContentDialog`, it displays as a modal, with or without `!`
+- Dialog results can be returned via `NavigateBackWithResultAsync(this, data: value)` (or directly from `ShowMessageDialogAsync<TResult>` for the simple case)
+- Dialogs participate in the navigation system — they have proper back-stack handling
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Dialog Navigation Documentation
 
 ```
 uno_platform_docs_search("Uno Navigation dialogs flyouts ContentDialog modal ShowMessageDialogAsync confirmation alert")
@@ -15,10 +26,10 @@ Primary documentation pages:
 Fetch the walkthrough:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/ShowDialog.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/ShowDialog.md", anchor="…")
 ```
 
-### Step 2: For Simple Message Dialogs
+### For Simple Message Dialogs
 
 Use the generic `ShowMessageDialogAsync<TResult>` for the simplest case — a title, message, and buttons that return the user's choice. No route registration needed. The non-generic `ShowMessageDialogAsync(sender, ...)` returns plain `Task` and discards the choice.
 
@@ -32,25 +43,16 @@ if (choice == "delete") { ... }
 
 The result is the chosen `DialogAction.Id`, or its `Label` when `Id` is null.
 
-### Step 3: For Flyout vs Modal
+### For Flyout vs Modal
 
 - **Flyout**: navigation target is a `Page` → displayed as flyout (needs the `!` qualifier)
 - **Modal**: navigation target is a `ContentDialog` → displayed as modal even without `!`; the resolver applies `Qualifiers.Dialog` to any `ContentDialog` route
 
-### Step 4: For Dialog Results
+### For Dialog Results
 
 If the user needs to return data from a dialog:
 
 See the `references/data.md` for `NavigateBackWithResultAsync`.
-
-## Key Principles (Stable)
-
-- Message dialogs are the simplest dialog type — title, message, and buttons via `navigator.ShowMessageDialogAsync<TResult>(this, ...)`, no route registration required; only the generic overload returns the choice
-- Use the `!` qualifier prefix (`uen:Navigation.Request="!Filter"`) or `Qualifiers.Dialog` from code to open a `Page`-based dialog via navigation
-- If the target is a `Page`, it displays as a flyout; `!` is what turns a `Page` into a flyout
-- If the target is a `ContentDialog`, it displays as a modal, with or without `!`
-- Dialog results can be returned via `NavigateBackWithResultAsync(this, data: value)` (or directly from `ShowMessageDialogAsync<TResult>` for the simple case)
-- Dialogs participate in the navigation system — they have proper back-stack handling
 
 ## Related Skills
 

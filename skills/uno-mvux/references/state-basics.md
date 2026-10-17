@@ -1,50 +1,5 @@
 # MVUX State Basics
 
-## Workflow
-
-### Step 1: Fetch the State Reference Documentation
-
-Search for and fetch the state documentation:
-
-```
-uno_platform_docs_search("MVUX State IState mutable two-way binding")
-```
-
-Primary documentation page:
-- **State Reference**: `external/uno.extensions/doc/Reference/Reactive/state.md`
-
-Fetch the full reference:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reactive/state.md")
-```
-
-### Step 2: Learn State Creation Methods
-
-From the fetched docs, the key factory methods on the `State` and `State<T>` classes:
-- `State<T>.Empty(this)` — starts with no value
-- `State.Value(this, () => initialValue)` — starts with a sync value (the initial value is a `Func<T>`, not a raw value)
-- `State.Async(this, asyncFunc)` — initial value from async source
-- `State.FromFeed(this, feed)` — wraps a feed as mutable state
-
-### Step 3: For Updating State Programmatically
-
-The state reference page covers `UpdateAsync`, `SetAsync` (struct, nullable-struct and `string` states only; a record state uses `UpdateAsync(_ => newValue)`), and `ForEach` for subscribing to changes. Focus on the "Update: How to update a state" section.
-
-### Step 4: For Two-Way Binding Examples
-
-The state reference page includes a "Binding the View to a State" section showing how XAML two-way binding works automatically with generated ViewModels.
-
-### Step 5: For Commands with State
-
-If the user needs commands that interact with states:
-
-```
-uno_platform_docs_search("MVUX commands state update async method")
-```
-
-See also the `references/commands.md`.
-
 ## Critical Rules
 
 - **The mutation method is `UpdateAsync`** — `public static ValueTask UpdateAsync<T>(this IState<T> state, Func<T?, T?> updater, CancellationToken ct = default)`.
@@ -69,6 +24,53 @@ See also the `references/commands.md`.
 - `State<T>.Empty(this)` requires passing `this` as the owner for lifecycle management
 - Use `await state.UpdateAsync(current => newValue)` to update programmatically
 - Use `state.ForEach(async (value, ct) => { ... })` to react to changes
+
+## Learn State Creation Methods
+
+The key factory methods on the `State` and `State<T>` classes:
+- `State<T>.Empty(this)` — starts with no value
+- `State.Value(this, () => initialValue)` — starts with a sync value (the initial value is a `Func<T>`, not a raw value)
+- `State.Async(this, asyncFunc)` — initial value from async source
+- `State.FromFeed(this, feed)` — wraps a feed as mutable state
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the State Reference Documentation
+
+Search for and fetch the state documentation:
+
+```
+uno_platform_docs_search("MVUX State IState mutable two-way binding")
+```
+
+Primary documentation page:
+- **State Reference**: `external/uno.extensions/doc/Reference/Reactive/state.md`
+
+Fetch the full reference:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reactive/state.md", anchor="…")
+```
+
+### For Updating State Programmatically
+
+The state reference page covers `UpdateAsync`, `SetAsync` (struct, nullable-struct and `string` states only; a record state uses `UpdateAsync(_ => newValue)`), and `ForEach` for subscribing to changes. Focus on the "Update: How to update a state" section.
+
+### For Two-Way Binding Examples
+
+The state reference page includes a "Binding the View to a State" section showing how XAML two-way binding works automatically with generated ViewModels.
+
+### For Commands with State
+
+If the user needs commands that interact with states:
+
+```
+uno_platform_docs_search("MVUX commands state update async method")
+```
+
+See also the `references/commands.md`.
 
 ## Related Skills
 

@@ -1,55 +1,5 @@
 # MVUX Overview
 
-## Workflow
-
-### Step 1: Fetch the MVUX Overview Documentation
-
-Search for and fetch the core MVUX overview page:
-
-```
-uno_platform_docs_search("MVUX overview Model View Update eXtended architecture")
-```
-
-The primary documentation page is:
-- **MVUX Overview**: `external/uno.extensions/doc/Learn/Mvux/Overview.md`
-
-Fetch the full page for comprehensive details:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Overview.md")
-```
-
-### Step 2: Understand Key Concepts
-
-From the fetched documentation, extract and explain:
-
-1. **What MVUX is**: Model-View-Update-eXtended — an MVU variant that supports XAML data binding
-2. **How it differs from MVVM**: Unidirectional data flow, immutable records, automatic state management
-3. **Core types**: `IFeed<T>`, `IState<T>`, `IListFeed<T>`, `IListState<T>`
-4. **Code generation**: Models with `*Model` suffix generate corresponding `*ViewModel` classes
-5. **FeedView control**: The UI control that handles loading/error/value states automatically
-
-### Step 3: For Project Setup Details
-
-If the user needs to set up MVUX in a project, search for setup instructions:
-
-```
-uno_platform_docs_search("MVUX project setup UnoFeatures add MVUX existing app")
-```
-
-Key doc page for setup:
-- **How to set up an MVUX project**: `external/uno.extensions/doc/Learn/Mvux/Tutorials/HowTo-MvuxProject.md`
-
-### Step 4: For MVUX vs MVVM Comparison
-
-If the user wants a comparison, the overview page contains a detailed MVVM vs MVUX data flow section. Fetch:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Overview.md")
-```
-
-Focus on the sections: "Why MVUX?" (the MVVM and MVUX "Weather App Example" tabs), "What is MVUX?", and "eXtended" (with "MVVM vs MVUX Data Flow").
-
 ## Key Principles (Stable)
 
 - Models are `partial` types with a `Model` suffix (e.g., `MainModel`); `partial record` is the convention, and a `partial class` also generates
@@ -83,3 +33,55 @@ When unsure which MVUX reference applies, pick by intent:
 - `references/selection.md` — Selection management
 - `references/pagination.md` — Infinite scroll
 - `references/messaging.md` — Entity synchronization
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the MVUX Overview Documentation
+
+Search for and fetch the core MVUX overview page:
+
+```
+uno_platform_docs_search("MVUX overview Model View Update eXtended architecture")
+```
+
+The primary documentation page is:
+- **MVUX Overview**: `external/uno.extensions/doc/Learn/Mvux/Overview.md`
+
+Fetch the full page for comprehensive details:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Overview.md", anchor="…")
+```
+
+### Understand Key Concepts
+
+From the fetched documentation, extract and explain:
+
+1. **What MVUX is**: Model-View-Update-eXtended — an MVU variant that supports XAML data binding
+2. **How it differs from MVVM**: Unidirectional data flow, immutable records, automatic state management
+3. **Core types**: `IFeed<T>`, `IState<T>`, `IListFeed<T>`, `IListState<T>`
+4. **Code generation**: Models with `*Model` suffix generate corresponding `*ViewModel` classes
+5. **FeedView control**: The UI control that handles loading/error/value states automatically
+
+### For Project Setup Details
+
+If the user needs to set up MVUX in a project, search for setup instructions:
+
+```
+uno_platform_docs_search("MVUX project setup UnoFeatures add MVUX existing app")
+```
+
+Key doc page for setup:
+- **How to set up an MVUX project**: `external/uno.extensions/doc/Learn/Mvux/Tutorials/HowTo-MvuxProject.md`
+
+### For MVUX vs MVVM Comparison
+
+If the user wants a comparison, the overview page contains a detailed MVVM vs MVUX data flow section. Fetch:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Overview.md", anchor="…")
+```
+
+Focus on the sections: "Why MVUX?" (the MVVM and MVUX "Weather App Example" tabs), "What is MVUX?", and "eXtended" (with "MVVM vs MVUX Data Flow").

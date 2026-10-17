@@ -2,24 +2,6 @@
 
 This reference covers visibility-based navigation where the framework injects registered route views into an empty `Grid` and switches between them by toggling `Visibility`. This is the content-area pattern used inside TabBar, NavigationView, and responsive shell layouts.
 
-## Workflow
-
-### Step 1: Fetch the Visibility Navigation Documentation
-
-```
-uno_platform_docs_search("Uno Navigation visibility based panel Grid Region.Navigator content switch")
-```
-
-Primary documentation pages:
-- **Define Regions**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md`
-- **Navigation Region Reference**: `external/uno.extensions/doc/Reference/Navigation/NavigationRegion.md`
-
-Fetch the define regions walkthrough:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md")
-```
-
 ## Key Principles (Stable)
 
 - Set `uen:Region.Navigator="Visibility"` on the content container Grid
@@ -48,6 +30,26 @@ The framework creates view instances from registered `RouteMap` entries and plac
 - Keep the Grid empty, or name every pre-placed child with `uen:Region.Name`; never add unnamed collapsed children
 - Route names in `RouteMap` determine which views get injected
 - The parent navigation control (TabBar, NavigationView) drives which child becomes visible
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Visibility Navigation Documentation
+
+```
+uno_platform_docs_search("Uno Navigation visibility based panel Grid Region.Navigator content switch")
+```
+
+Primary documentation pages:
+- **Define Regions**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md`
+- **Navigation Region Reference**: `external/uno.extensions/doc/Reference/Navigation/NavigationRegion.md`
+
+Fetch the define regions walkthrough:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/DefineRegions.md", anchor="…")
+```
 
 ## Related Skills
 

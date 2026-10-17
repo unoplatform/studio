@@ -1,60 +1,5 @@
 # Uno Navigation from Code
 
-## Workflow
-
-### Step 1: Fetch the Code Navigation Documentation
-
-```
-uno_platform_docs_search("Uno Navigation code programmatic NavigateRouteAsync NavigateViewModelAsync")
-```
-
-Primary documentation pages:
-- **Navigation via Code Behind (Chefs)**: `external/uno.chefs/doc/navigation/NavigationCodeBehind.md`
-- **Navigation Overview (Code section)**: `external/uno.extensions/doc/Learn/Navigation/NavigationOverview.md`
-
-Fetch the Chefs code-behind page:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/navigation/NavigationCodeBehind.md")
-```
-
-### Step 2: For Specific Navigation Methods
-
-The documentation covers two parallel families:
-
-**Non-result overloads** — navigate to a destination, don't expect a return value:
-- `NavigateRouteAsync(this, "routeName")` — navigate by route string
-- `NavigateViewAsync<TView>(this)` — navigate to a specific view type
-- `NavigateViewModelAsync<TViewModel>(this)` — navigate to the route registered for a ViewModel type
-- `NavigateDataAsync(this, data)` — navigate with data; the destination is resolved from the data type
-- `NavigateBackAsync(this)` — pop one level off the back stack
-
-Every overload takes the `sender` (usually `this`) as its first argument.
-
-**Result overloads** — navigate AND retrieve a typed result from the destination page:
-- `NavigateRouteForResultAsync<TResult>(this, "routeName")`
-- `NavigateViewForResultAsync<TView, TResult>(this)`
-- `NavigateViewModelForResultAsync<TViewModel, TResult>(this)`
-- `NavigateDataForResultAsync<TData, TResult>(this, data)`
-- `NavigateBackWithResultAsync(this, data: value)` — used on the destination page to return data to the caller (`data` is a named argument after the optional qualifier)
-
-The result overloads return `Task<NavigationResultResponse<TResult>?>`, whose `.Result` is a `Task<Option<TResult>>`:
-
-```csharp
-var response = await navigator.NavigateViewModelForResultAsync<DetailsViewModel, Order>(this);
-var result = await response!.Result;
-if (result.IsSome(out var order)) { /* use order */ }
-```
-
-### Step 3: For Advanced Navigation Techniques
-
-```
-uno_platform_docs_search("Uno Navigation advanced back stack clear navigate techniques")
-```
-
-Key page:
-- **Advanced Page Navigation**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/AdvancedPageNavigation.md`
-
 ## Critical Rules
 
 - **Pick the correct overload for the navigation scenario.** Non-result overloads (`NavigateViewModelAsync<TViewModel>`) are for one-way navigation. Result overloads (`NavigateViewModelForResultAsync<TViewModel, TResult>`) are for request-and-await-response flows where the destination page calls `NavigateBackWithResultAsync(this, data: value)` to return a value. Using the non-result overload when a return value is needed silently throws away the result.
@@ -88,6 +33,70 @@ In XAML, prefer the `uen:Navigation.Request` attached property instead of code-b
 <Button Content="Go to Details"
         uen:Navigation.Request="Details"/>
 ```
+
+## The Android back button
+
+Android's back button and back gesture raise `SystemNavigationManager.GetForCurrentView().BackRequested`. Handle it only where the page needs a say, typically to confirm leaving a form with unsaved changes; then navigate yourself (`NavigateBackAsync(this)` once confirmed).
+
+- **Subscribe on the page's `Loaded`, unsubscribe on `Unloaded`.** From Android 16 (API 36) the subscription itself means "the app handles back" and `e.Handled` is ignored, so a handler left subscribed swallows back on every other page. Before Android 16, set `e.Handled = true` when you handled it.
+- Docs: `features/hardware-back-button.md`.
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Code Navigation Documentation
+
+```
+uno_platform_docs_search("Uno Navigation code programmatic NavigateRouteAsync NavigateViewModelAsync")
+```
+
+Primary documentation pages:
+- **Navigation via Code Behind (Chefs)**: `external/uno.chefs/doc/navigation/NavigationCodeBehind.md`
+- **Navigation Overview (Code section)**: `external/uno.extensions/doc/Learn/Navigation/NavigationOverview.md`
+
+Fetch the Chefs code-behind page:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/navigation/NavigationCodeBehind.md", anchor="…")
+```
+
+### For Specific Navigation Methods
+
+The documentation covers two parallel families:
+
+**Non-result overloads** — navigate to a destination, don't expect a return value:
+- `NavigateRouteAsync(this, "routeName")` — navigate by route string
+- `NavigateViewAsync<TView>(this)` — navigate to a specific view type
+- `NavigateViewModelAsync<TViewModel>(this)` — navigate to the route registered for a ViewModel type
+- `NavigateDataAsync(this, data)` — navigate with data; the destination is resolved from the data type
+- `NavigateBackAsync(this)` — pop one level off the back stack
+
+Every overload takes the `sender` (usually `this`) as its first argument.
+
+**Result overloads** — navigate AND retrieve a typed result from the destination page:
+- `NavigateRouteForResultAsync<TResult>(this, "routeName")`
+- `NavigateViewForResultAsync<TView, TResult>(this)`
+- `NavigateViewModelForResultAsync<TViewModel, TResult>(this)`
+- `NavigateDataForResultAsync<TData, TResult>(this, data)`
+- `NavigateBackWithResultAsync(this, data: value)` — used on the destination page to return data to the caller (`data` is a named argument after the optional qualifier)
+
+The result overloads return `Task<NavigationResultResponse<TResult>?>`, whose `.Result` is a `Task<Option<TResult>>`:
+
+```csharp
+var response = await navigator.NavigateViewModelForResultAsync<DetailsViewModel, Order>(this);
+var result = await response!.Result;
+if (result.IsSome(out var order)) { /* use order */ }
+```
+
+### For Advanced Navigation Techniques
+
+```
+uno_platform_docs_search("Uno Navigation advanced back stack clear navigate techniques")
+```
+
+Key page:
+- **Advanced Page Navigation**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/AdvancedPageNavigation.md`
 
 ## Related Skills
 

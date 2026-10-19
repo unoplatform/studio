@@ -112,7 +112,7 @@ Look for `#Name`:
 Button ^5k #SaveButton :41:10 [i]  "Save"
 ```
 
-`AutomationProperties.AutomationId` is not shown; set `AutomationProperties.Name` (or `x:Name`) on elements a test must find.
+`AutomationProperties.AutomationId` is not shown in the tree, but it is the first selector: pass it as `automationId` to any element tool and it is resolved live, with no snapshot. `#Name` is the `name` selector. Set both on elements a test must find.
 
 ### By text
 
@@ -201,8 +201,8 @@ For large trees:
 ## Best Practices Summary
 
 1. **Use `detail: "normal"`** when you will act on elements; `"full"` only for coordinates and diagnosis
-2. **Name the elements a test needs** with `x:Name` or `AutomationProperties.Name`
-3. **Refresh the tree after UI changes** before interacting
-4. **Prefer handles over coordinates**
+2. **Give the elements a test needs** an `AutomationProperties.AutomationId` and an `x:Name` or `AutomationProperties.Name`
+3. **Act by `automationId` or `name`** and skip the snapshot; refresh the tree only when you act by handle
+4. **Prefer selectors over handles, and handles over coordinates**
 5. **Read values from the DataContext**, not from binding hints
 6. **Handle dynamic content** with fresh snapshots

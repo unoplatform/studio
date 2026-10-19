@@ -29,7 +29,7 @@ The Uno App MCP server exposes tools that let an agent:
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
 6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
 7. **Validate results** → screenshots, the visual tree, and DataContext
-8. **Fix in the running app** → edit the file, wait a few seconds, re-snapshot; if the change is missing, `uno_app_start` again (it terminates the instance, rebuilds, and reports compile errors)
+8. **Fix in the running app** → edit the file, wait a few seconds, re-snapshot; if the change is missing, `uno_app_start` again (it terminates the instance and rebuilds, and reports a failed build with its output)
 9. **Close the app** → `uno_app_close`, always before a `dotnet build`
 
 ## Available MCP Tools
@@ -89,7 +89,7 @@ Each call terminates any app the tool already started. After it returns, confirm
 
 **Studio's UI over the app:** the template's `MainWindow.UseStudio();` (in `App.xaml.cs`, under `#if DEBUG`) shows the Hot Reload indicator and the Hot Design button over the app, and opens Hot Design by itself on the app's first launch, and whenever it was active in the previous session. Its designer and introduction overlay cover the app, and the visual tree does not include them, so the tree looks normal while screenshots and clicks hit the designer. Before starting the app, the call should be `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);`: change it yourself in an app you created, and ask the developer first in an existing app. `showHotReloadIndicator: false` removes the overlay (Hot Reload and the App MCP are unaffected); for `launchHotDesignOnStart`, `true` always opens Hot Design and `null` (the default) restores the last session's state. The `UNO_HOTDESIGN_LAUNCH` environment variable and the `UnoHotDesignLaunch` MSBuild property override the argument.
 
-**Before rebuilding:** first ask whether a rebuild is needed at all: an edit to an existing `.xaml` or `.cs` file reaches the running app through Hot Reload, and a fresh snapshot shows it. This App MCP has no tool that reports a Hot Reload outcome or its compiler diagnostics. When a build is needed (a new file, the `.csproj` or packages, startup code, launch arguments, or a change that never showed up), `uno_app_start` again: it terminates the running instance first and its result carries the build errors. Before a `dotnet build` of your own, call `uno_app_close`: a running app locks its `bin` folder and the build fails with `MSB3026`/`MSB3027` copy errors.
+**Before rebuilding:** first ask whether a rebuild is needed at all: an edit to an existing `.xaml` or `.cs` file reaches the running app through Hot Reload, and a fresh snapshot shows it. This App MCP has no tool that reports a Hot Reload outcome or its compiler diagnostics. When a build is needed (a new file, the `.csproj` or packages, startup code, launch arguments, or a change that never showed up), `uno_app_start` again: it terminates the running instance first and reports a failed build with its output. Before a `dotnet build` of your own, call `uno_app_close`: a running app locks its `bin` folder and the build fails with `MSB3026`/`MSB3027` copy errors.
 
 ### Inspecting the Visual Tree
 

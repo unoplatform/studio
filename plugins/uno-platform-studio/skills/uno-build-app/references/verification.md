@@ -49,7 +49,7 @@ Use available browser or desktop automation, or the project's runtime tests, whe
 ## Practical traps
 
 - **`uno_app_start` builds before launching.** A build-time configuration change must be in place at launch time, not reverted before it.
-- **A fix to an existing file does not need a build or a start.** With the app running under the App MCP, edit the file, wait a few seconds, and confirm with a fresh `uno_app_visualtree_snapshot` (the `uno-testing` skill, workflow step 8). If the change is still missing after about 10 s, or the edit added a file, changed the `.csproj` or packages, or touched startup code, call `uno_app_start` again: it terminates the running instance, rebuilds, and returns the compiler errors.
+- **A fix to an existing file does not need a build or a start.** With the app running under the App MCP, edit the file, wait a few seconds, and confirm with a fresh `uno_app_visualtree_snapshot` (the `uno-testing` skill, workflow step 8). If the change is still missing after about 10 s, or the edit added a file, changed the `.csproj` or packages, or touched startup code, call `uno_app_start` again: it terminates the running instance and rebuilds, and reports a failed build with its output.
 - **A running app locks its output.** Build errors `MSB3027` or `MSB3021` usually mean an earlier instance is still running. Close it (`uno_app_close`) before building again.
 - **Stop what you start.** Close every app instance, emulator session or server your checks launched.
 

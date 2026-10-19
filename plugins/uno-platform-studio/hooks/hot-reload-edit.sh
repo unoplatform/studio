@@ -12,7 +12,7 @@ file=$(printf '%s' "$input" | sed -En 's/.*"file_path" *: *"([^"]*\.(xaml|cs))".
 cli=${UNO_DEVSERVER_CLI:-uno-devserver}
 json_escape() { printf '%s' "$1" | tr -d '\r' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' | sed -e ':a' -e '$!N' -e '$!ba' -e 's/\n/\\n/g'; }
 remind() {
-	printf '%s' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"An Uno app source file changed. If the app is running under the App MCP, Hot Reload applies this edit within a few seconds (a C# edit recreates the current page): wait, then confirm with a fresh uno_app_visualtree_snapshot and assert on it. Do not dotnet build or uno_app_close for it. Call uno_app_start again (it terminates the running instance, rebuilds, and reports compile errors) only when the change is still missing after about 10 s, or for a new file, a .csproj or package change, launch arguments, platform, app data, a Release build, or code that already ran at startup."}}'
+	printf '%s' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"An Uno app source file changed. If the app is running under the App MCP, Hot Reload applies this edit within a few seconds (a C# edit recreates the current page): wait, then confirm with a fresh uno_app_visualtree_snapshot and assert on it. Do not dotnet build or uno_app_close for it. Call uno_app_start again (it terminates the running instance and rebuilds, and reports a failed build with its output) only when the change is still missing after about 10 s, or for a new file, a .csproj or package change, launch arguments, platform, app data, a Release build, or code that already ran at startup."}}'
 	exit 0
 }
 

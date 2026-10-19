@@ -2,9 +2,9 @@ name: Release
 
 # Releases ship from release/stable/<major>.<minor> branches, like the other Uno Platform repos,
 # and wait for approval on the plugin-release environment. Each approved push releases the next
-# <major>.<minor>.<patch>: the version is stamped into every manifest on the release branch, that
-# commit is tagged and published, and a PR moves the marketplaces on main (the ones agents read)
-# to the new tag.
+# <major>.<minor>.<patch>: the version is stamped into every manifest in a commit on top of the branch
+# head, that commit is tagged and published (the branch itself requires pull requests, so it is not
+# pushed there), and a PR moves the marketplaces on main (the ones agents read) to the new tag.
 on:
   push:
     branches:
@@ -53,7 +53,11 @@ jobs:
           echo "version=$minor.$patch" >> "$GITHUB_OUTPUT"
           echo "Releasing $minor.$patch" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Stamp the version on the release branch
+      # The release branches require pull requests, like main, so the stamped commit is not pushed to the
+      # branch: only the tag points at it. The next release stamps the branch head again.
+      # `git tag` without -a is a lightweight tag. Keep it that way: Codex compares `git ls-remote` output
+      # with the checked-out commit, which never matches an annotated tag's object id.
+      - name: Stamp the version and tag it
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -63,17 +67,15 @@ jobs:
           pwsh .github/scripts/Test-Plugin.ps1
           if ! git diff --quiet; then
             git commit -am "chore(release): $VERSION"
-            # Pushes made with GITHUB_TOKEN don't trigger workflows, so this doesn't start another release.
-            git push origin "HEAD:$GITHUB_REF_NAME"
           fi
+          git tag "$VERSION"
+          git push origin "refs/tags/$VERSION"
 
-      # gh creates a lightweight tag. Keep it that way: Codex compares `git ls-remote` output
-      # with the checked-out commit, which never matches an annotated tag's object id.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
-        run: gh release create "$VERSION" --target "$(git rev-parse HEAD)" --title "$VERSION" --generate-notes
+        run: gh release create "$VERSION" --title "$VERSION" --generate-notes
 
       # main is protected, so the marketplaces agents read move to the new tag through a PR.
       # A patch release on an older line never moves main backwards.

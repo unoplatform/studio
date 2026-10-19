@@ -1,6 +1,6 @@
 # Uno Platform UI Testing
 
-> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Confirm the `uno_app_*` tools are available first (through `uno_discover_tools` when the client only lists the proxy tools); if they are not, follow the fallbacks in SKILL.md (the platform accessibility tree, then a static review labelled as unverified) rather than testing blind.
+> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Confirm the `uno_app_*` tools are available first (through `uno_discover_tools` when the client only lists the proxy tools); if they are not, stop and tell the user to sign in to Uno Platform and enable the Uno tooling rather than attempting to test without them.
 
 This reference covers launching apps, inspecting UI elements, simulating user interactions, and validating visual output with the Uno App MCP tools.
 
@@ -17,20 +17,20 @@ The Uno App MCP server exposes tools that let an agent:
 ## Prerequisites
 
 1. The Uno App MCP server is configured, its host is connected, a solution is selected, and its app tools are licensed (`uno_health` reports a non-zero `toolCount`; a zero with `HostUnreachable`, `NoSolutionFound`, or `WorkspaceAmbiguous` in `issues` is a connection or workspace problem, not a licence problem). A Community licence also reports a non-zero `toolCount` but lacks the tools marked Pro or Business below; `uno_discover_tools` shows which ones this machine has
-2. The target application is an Uno Platform project (Uno.Sdk 6.x or 7.0) under the App MCP's workspace folder
+2. The target application is an Uno Platform project (Uno.Sdk 6.x) under the App MCP's workspace folder
 3. The project has a target framework the tools can launch: `netX.0-desktop` for desktop, `netX.0-browserwasm` for WebAssembly. Read the exact monikers from `<TargetFrameworks>` in the `.csproj`
 
 ## Quick Start Workflow
 
 1. **Build once** → `dotnet build <app>.csproj -f net10.0-desktop`, so compile errors surface as build output
-2. **Start the app once** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`; its result ends with a `Hot Reload:` line
+2. **Start the app** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`
 3. **Verify it is connected** → `uno_app_get_runtime_info` (poll it; never call `uno_app_start` again to "retry")
 4. **Capture the initial screenshot** → `uno_app_get_screenshot(fileType: "png")`
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
 6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
-7. **Validate results** → `uno_app_find_elements`, DataContext, screenshots
-8. **Fix in the running app** → edit the file, `uno_app_hot_reload_status(file, waitForMs: 10000)`, then back to step 6; `NOT applied` returns the compiler diagnostics (no `dotnet build`), `RudeEdit`, an `InternalError`, or a file still not covered after a second save are the reasons for `uno_app_restart`; act on the sentence the status returns
-9. **Close the app** → `uno_app_close` at the end, or before a start the skill's rules allow
+7. **Validate results** → screenshots, the visual tree, and DataContext
+8. **Fix in the running app** → edit the file, wait a few seconds, re-snapshot; if the change is missing, `uno_app_start` again (it terminates the instance, rebuilds, and reports compile errors)
+9. **Close the app** → `uno_app_close`, always before a `dotnet build`
 
 ## Available MCP Tools
 
@@ -38,9 +38,8 @@ The Uno App MCP server exposes tools that let an agent:
 
 | Tool | Description |
 |------|-------------|
-| `uno_app_start` | Builds and starts the application in debug mode with Hot Reload; does not stop a running instance |
-| `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) and its Hot Reload state |
-| `uno_app_hot_reload_status` | Reports the Hot Reload state and recent operations; with `file` and `waitForMs`, waits for the operation covering your edit and reports `applied`, or `NOT applied` with the compiler diagnostics, or `RudeEdit`; `waitForReady: true` waits for Hot Reload to leave `Initializing` |
+| `uno_app_start` | Builds and starts the application in debug mode with Hot Reload; kills any instance it already started |
+| `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) |
 | `uno_app_get_memory_counters` | Business licence only. Returns the running app's memory counters (for example total available memory); useful for leak checks across a flow |
 | `uno_app_close` | Terminates the running application (desktop only) |
 | `uno_devserver_diagnostics` | Reports the DevServer port, solution, instance count, and last launch outcome without changing anything |
@@ -50,7 +49,6 @@ The Uno App MCP server exposes tools that let an agent:
 | Tool | Description |
 |------|-------------|
 | `uno_app_get_screenshot` | Captures the window, or one element, as an image |
-| `uno_app_find_elements` | Returns only the elements matching `automationId`, `name`, `text` or `type`, each with its `{state}`; waits with `waitForMs`. The locate and assert tool |
 | `uno_app_visualtree_snapshot` | Returns the visual tree as an indented text outline with element handles |
 | `uno_app_get_element_datacontext` | Pro or Business licence. Returns an element's DataContext as XML |
 
@@ -83,15 +81,15 @@ Parameters:
   - display: Optional X11 display for Linux (e.g., ":0"); ignored on other platforms
 ```
 
-It does not stop a running app: `uno_app_close` it first. After it returns, confirm with `uno_app_get_runtime_info`.
+Each call terminates any app the tool already started. After it returns, confirm with `uno_app_get_runtime_info`.
 
-**When the start times out:** the process is usually still launching, and a desktop app connects on its own once it is up. Poll `uno_app_get_runtime_info` every few seconds. If it keeps reporting no instance, read `stdoutFile` and call `uno_devserver_diagnostics`. Do not call `uno_app_start` again: that launches a second instance.
+**When the start times out:** the process is usually still launching, and a desktop app connects on its own once it is up. Poll `uno_app_get_runtime_info` every few seconds. If it keeps reporting no instance, read `stdoutFile` and call `uno_devserver_diagnostics`. Do not call `uno_app_start` again: that kills the launching process and starts the wait over.
 
 **WebAssembly targets:** the tool starts the dev server and returns the app URL. A browser must open that URL before the runtime tools work; `connectionTimeoutSeconds` waits for it.
 
 **Studio's UI over the app:** the template's `MainWindow.UseStudio();` (in `App.xaml.cs`, under `#if DEBUG`) shows the Hot Reload indicator and the Hot Design button over the app, and opens Hot Design by itself on the app's first launch, and whenever it was active in the previous session. Its designer and introduction overlay cover the app, and the visual tree does not include them, so the tree looks normal while screenshots and clicks hit the designer. Before starting the app, the call should be `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);`: change it yourself in an app you created, and ask the developer first in an existing app. `showHotReloadIndicator: false` removes the overlay (Hot Reload and the App MCP are unaffected); for `launchHotDesignOnStart`, `true` always opens Hot Design and `null` (the default) restores the last session's state. The `UNO_HOTDESIGN_LAUNCH` environment variable and the `UnoHotDesignLaunch` MSBuild property override the argument.
 
-**Before rebuilding:** first ask whether a rebuild is needed at all: an edit to an existing `.xaml` or `.cs` file reaches the running app through Hot Reload, and `uno_app_hot_reload_status(file)` reports it with the compiler diagnostics when it failed. When a start is needed (launch arguments, platform, app data, a Release build, the `.csproj` or packages, startup code, or a reported `RudeEdit`), call `uno_app_close` first. A running app locks its `bin` folder, and `dotnet build` or the next `uno_app_start` then fails with `MSB3026`/`MSB3027` copy errors.
+**Before rebuilding:** first ask whether a rebuild is needed at all: an edit to an existing `.xaml` or `.cs` file reaches the running app through Hot Reload, and a fresh snapshot shows it. This App MCP has no tool that reports a Hot Reload outcome or its compiler diagnostics. When a build is needed (a new file, the `.csproj` or packages, startup code, launch arguments, or a change that never showed up), `uno_app_start` again: it terminates the running instance first and its result carries the build errors. Before a `dotnet build` of your own, call `uno_app_close`: a running app locks its `bin` folder and the build fails with `MSB3026`/`MSB3027` copy errors.
 
 ### Inspecting the Visual Tree
 
@@ -116,49 +114,15 @@ The handle is the bare token after `^` (`"5"` for `Button ^5`; a leading `^` is 
 
 **Tip:** use `detail: "normal"` when you will act on elements, and `elementRef` to keep a large page's tree small. Do not scope a snapshot you take for click coordinates: `@@` bounds are relative to the snapshot root, and clicks are relative to the window.
 
-### Finding Elements and Reading Their State
-
-```
-Tool: uno_app_find_elements
-Parameters (at least one selector; several combine with AND):
-  - automationId: AutomationProperties.AutomationId, exact and case-sensitive
-  - name: x:Name or AutomationProperties.Name (the snapshot's #Name), exact
-  - text: the element's text (TextBlock/TextBox text, string Content), exact; textContains: true for a substring
-  - type: short control type name as the snapshot prints it ("Button", "TextBox")
-  - scopeRef: handle of an element whose subtree bounds the search (one list item, one dialog)
-  - includeHidden: default true; collapsed matches carry !hidden, so false asserts absence from view
-  - detail: "normal" (default: patterns, {state}, bindings), "compact", or "full" (adds @@x,y,w,h bounds)
-  - maxResults: default 20, max 100; the header always has the total
-  - waitForMs: re-check every 100 ms until at least one element matches, max 10000; the header says (waited Ws)
-```
-
-The result is a header, `N matched <selectors>`, then one snapshot line per match with a fresh handle and a `{state}` group:
-
-```
-1 matched automationId=SubmitButton
-Button ^7 #SubmitButton :41 [i] {disabled}  "Submit"  @ Views/NewInspectionPage.xaml
-```
-
-State tokens: `disabled` (IsEnabled false), `checked|unchecked|indeterminate`, `selected`, `expanded|collapsed`, `value=<v>` (slider, progress), `items=<n>` (an `ItemsControl`'s item count), `selectedIndex=<n>`; a token that does not apply is absent, and `!hidden` marks `Visibility.Collapsed`. Zero matches is a normal result; only an invalid query, an unresolvable `scopeRef` or a lost connection is an error. The tool needs the Community licence or better, like the snapshot.
-
-This is the call after every action: `find_elements(automationId: "AssetsList", waitForMs: 2000)` and read `{items=12}`; `find_elements(text: "Saved", textContains: true, waitForMs: 3000)` for a confirmation; `find_elements(automationId: "LoadingRing", includeHidden: false)` and expect `0 matched` before asserting the content. It replaces the snapshot-and-read loop and the screenshot-and-look loop for every question the tree can answer.
-
 ### Interacting with Elements
 
-**Preferred approach:** automation peers, targeted by selector. Every element tool takes exactly one of:
-
-- `automationId`: the element's `AutomationProperties.AutomationId`, exact and case-sensitive;
-- `name`: its `x:Name` or `AutomationProperties.Name` (the tree's `#Name`), exact and case-sensitive;
-- `elementRef`: a bare handle from the latest snapshot (`"5"`, not `"^5"`), valid until the next UI change.
-
-A selector is resolved against the live tree when the call runs, so it needs no snapshot and never goes stale. `scopeRef` (a handle) limits a selector search to one container when the same id or name appears more than once on the page. 0 matches and N matches are errors: the N-match error lists the candidates as snapshot lines with fresh handles.
+**Preferred approach:** automation peers, using a handle from the latest snapshot.
 
 1. **Default action** (buttons):
    ```
    Tool: uno_app_element_peer_default_action
    Parameters:
-     - automationId | name | elementRef: The target (one of them)
-     - scopeRef: Optional handle; search for the selector under that element only
+     - elementRef: Bare handle from the snapshot ("5", not "^5")
    ```
    Always runs `invoke`, so it works only on `[i]` elements (`Button`, `HyperlinkButton`). On a `CheckBox`, `TextBox`, `ComboBox`, or list item it returns an unsupported-action failure; use the specific action below.
 
@@ -166,11 +130,11 @@ A selector is resolved against the live tree when the call runs, so it needs no 
    ```
    Tool: uno_app_element_peer_action
    Parameters:
-     - automationId | name | elementRef: The target (one of them); scopeRef as above
+     - elementRef: Bare handle from the snapshot
      - action: invoke (default), toggle, expand, collapse, select, addToSelection, removeFromSelection, setValue, setRangeValue
      - actionParameters: Optional array; for setValue/setRangeValue the first entry is the value
    ```
-   The line's pattern letters say which actions the element supports: `[t]` `toggle`, `[x]` `expand`/`collapse`, `[s]` `select`, `[v]` `setValue`, `[r]` `setRangeValue`. `setValue` fills a `TextBox` without needing keyboard focus. `ListViewItem` shows no `s` on Uno (and `[i]` only when the list has `IsItemClickEnabled="True"`, where the default action raises `ItemClick`), so select it by pointer or keyboard and read `{selected}` from `uno_app_find_elements`. This tool needs a Pro or Business licence; on Community, click the field's bounds to focus it, then `uno_app_type_text`.
+   The line's pattern letters say which actions the element supports: `[t]` `toggle`, `[x]` `expand`/`collapse`, `[s]` `select`, `[v]` `setValue`, `[r]` `setRangeValue`. `setValue` fills a `TextBox` without needing keyboard focus. `ListViewItem` shows no letters on Uno, so select it by pointer or keyboard. This tool needs a Pro or Business licence; on Community, click the field's bounds to focus it, then `uno_app_type_text`.
 
 **Fallback approach:** coordinates and keyboard, when no pattern applies.
 
@@ -201,9 +165,8 @@ A selector is resolved against the live tree when the call runs, so it needs no 
    Parameters:
      - text: String of text to type
      - intervalInMs: Delay between key presses (required; 50 is fine)
-     - automationId | name | elementRef: Optional target; that control is focused first, then typed into
    ```
-   With a target, `uno_app_type_text` focuses the control and types in one call (the target must be a `Control`, or it fails saying so). Without one, both tools raise key events in-process on the element that holds XAML focus and fail when nothing is focused, so focus the field first: click its bounds, or Tab to it. Prefer `setValue` for form fields when it is available.
+   Both tools raise key events in-process on the element that holds XAML focus and return `false` when nothing is focused, so focus the field first: click its bounds, or Tab to it. Prefer `setValue` for form fields when it is available.
 
 ### Capturing Screenshots
 
@@ -213,7 +176,7 @@ Parameters:
   - fileType: "png" or "jpeg"
   - quality: Image quality 1-100 (default: 75)
   - path: Optional file path to save to; omit to receive the image in the result
-  - automationId | name | elementRef: Optional target; captures only that element (scopeRef as for the other tools)
+  - elementRef: Optional handle; captures only that element
 ```
 
 Without `path`, the image comes back in the tool result and can be inspected directly. With `path`:
@@ -227,10 +190,10 @@ Save inside the solution, then copy the file elsewhere if the task keeps screens
 ```
 Tool: uno_app_get_element_datacontext
 Parameters:
-  - automationId | name | elementRef: The target (one of them); scopeRef as for the other tools
+  - elementRef: Bare handle from the snapshot
 ```
 
-Returns an XML representation of the element's DataContext. `uno_app_find_elements` already reports `IsEnabled`, checked, selected, expanded, value, item count and selected index in its `{state}` group; use the DataContext for the values it does not carry: ViewModel properties, computed results, the content of a bound record. It needs a Pro or Business licence; on Community, read what the screenshot and the tree's text show, and report DataContext assertions as not run.
+Returns an XML representation of the element's DataContext. Because the snapshot shows binding paths rather than current values, this is how to check ViewModel state, collection counts, computed properties, and flags such as `IsEnabled` or `IsChecked`. It needs a Pro or Business licence; on Community, read what the screenshot and the tree's text show, and report DataContext assertions as not run.
 
 ## Testing Patterns
 
@@ -247,10 +210,10 @@ Returns an XML representation of the element's DataContext. `uno_app_find_elemen
 
 1. Start the app
 2. Navigate to the form (if needed)
-3. Take the fields' automation ids from the XAML (snapshot only if they have none)
-4. For each field, `uno_app_element_peer_action(automationId, "setValue", ["value"])` or `uno_app_type_text(text, intervalInMs: 50, automationId)`; without an id or name, snapshot for a handle, or click the field's bounds to focus it and type
+3. Snapshot to find the input fields
+4. For each field, `uno_app_element_peer_action(elementRef, "setValue", ["value"])`; or click its bounds to focus it and `uno_app_type_text(text, intervalInMs: 50)`
 5. Submit the form
-6. Validate with `uno_app_find_elements(waitForMs)`: the success element present, the error text absent, the submit button's `{state}`; the DataContext for a saved value; a screenshot only for a visual check
+6. Validate through screenshot or DataContext
 
 ### Pattern 3: Navigation Test
 
@@ -271,19 +234,19 @@ Returns an XML representation of the element's DataContext. `uno_app_find_elemen
 ## Best Practices
 
 ### Element Selection
-- **Selectors first**: `automationId`, then `name`; a snapshot handle when the element has neither; coordinates last
-- Give every control a test touches an `AutomationProperties.AutomationId` (and an `x:Name` or `AutomationProperties.Name` where its text may vary); in an existing app, suggest them when a test has to fall back to text or position
+- **Prefer automation peers** over coordinate clicks
+- Look for elements with `x:Name` or `AutomationProperties.Name`, and suggest adding one when a test has to fall back to text or position
 - Act on the named element, not on the `ContentPresenter` inside its template
 
 ### Test Stability
 - Confirm the app is connected with `uno_app_get_runtime_info` before testing
-- After an action, `uno_app_find_elements` with `waitForMs` on the element that should change; do not re-snapshot
-- Poll rather than sleep: `waitForMs` does the polling, up to 10 s per call
+- Refresh the visual tree after actions that change UI state
+- Poll rather than sleep: re-snapshot until the expected element appears
 
 ### Assertions
-- `uno_app_find_elements` for presence, absence, text and state (`{disabled}`, `{checked}`, `{items=N}`)
-- `uno_app_get_element_datacontext` for values the state group does not carry
-- Screenshots for visual validation only, never to learn whether an action worked
+- Use screenshots for visual validation
+- Use `uno_app_get_element_datacontext` for values
+- Check the visual tree for presence and absence
 
 ### Cleanup
 - Call `uno_app_close` at the end of tests (desktop), and before any rebuild
@@ -303,7 +266,7 @@ Returns an XML representation of the element's DataContext. `uno_app_find_elemen
 ### Build fails with MSB3026/MSB3027 (file in use)
 - The previous instance is still running: `uno_app_close`, then build again
 
-### Screenshot "Security error: path must be within ..." or "Could not find a part of the path"
+### Screenshot "path must be within the current working directory" or "Could not find a part of the path"
 - Save inside the workspace directory, into a folder that exists, or omit `path`
 
 ### Element not found in visual tree

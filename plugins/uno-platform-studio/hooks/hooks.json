@@ -1,5 +1,5 @@
 {
-  "description": "After a .xaml or .cs edit, ask the DevServer (uno-devserver app hot-reload-status) whether the running Uno app applied it through Hot Reload and tell the agent the result, so it asserts with uno_app_find_elements, fixes the reported compile errors, or restarts only for a rude edit or a DevServer internal error. Without the CLI or the status tool, remind it that Hot Reload applies the edit.",
+  "description": "After a .xaml or .cs edit, ask the DevServer (uno-devserver app hot-reload-status) whether the running Uno app applied it through Hot Reload and tell the agent the result. The App MCP that Uno.Sdk 6.7 pins (1.3.x) has no status tool, so on this line the hook reminds the agent that Hot Reload applies the edit and that a fresh snapshot, or uno_app_start again, confirms it.",
   "hooks": {
     "PostToolUse": [
       {

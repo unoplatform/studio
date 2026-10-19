@@ -153,7 +153,7 @@ The `uno-testing` skill additionally requires the **Uno App MCP**, which drives 
 
 ## Migrating from the per-topic skills
 
-Versions before 7.0 shipped one skill per topic (`uno-mvux-feed-basics`, `uno-toolkit-card`, and so on). Every one of them still exists as a reference file inside its hub, at `skills/uno-<domain>/references/<topic>.md`; only the `uno-<domain>-` prefix was dropped. For example `uno-toolkit-card` is now `skills/uno-toolkit/references/card.md`, `uno-navigation-tabbar` is `skills/uno-navigation/references/tabbar.md`, and `uno-mvux-overview` is `skills/uno-mvux/references/overview.md`. The two testing skills became `uno-testing/references/ui.md` and `uno-testing/references/assertions.md`. If you copied individual skill folders into an agent that does not use plugins, replace them with the hub folder.
+Versions before 6.7 (the 1.x releases) shipped one skill per topic (`uno-mvux-feed-basics`, `uno-toolkit-card`, and so on). Every one of them still exists as a reference file inside its hub, at `skills/uno-<domain>/references/<topic>.md`; only the `uno-<domain>-` prefix was dropped. For example `uno-toolkit-card` is now `skills/uno-toolkit/references/card.md`, `uno-navigation-tabbar` is `skills/uno-navigation/references/tabbar.md`, and `uno-mvux-overview` is `skills/uno-mvux/references/overview.md`. The two testing skills became `uno-testing/references/ui.md` and `uno-testing/references/assertions.md`. If you copied individual skill folders into an agent that does not use plugins, replace them with the hub folder.
 
 ## Manifests
 
@@ -167,13 +167,13 @@ Versions before 7.0 shipped one skill per topic (`uno-mvux-feed-basics`, `uno-to
 
 `main` is staging. Every marketplace pins the plugin to a release tag through its `source.ref`, so agents only install what has been released.
 
-The plugin version tracks the Uno.Sdk it is built for: plugin `7.0.<patch>` targets Uno.Sdk `7.0`, and the `release/stable/7.0` branch is the 7.0 line. `main` targets the next Uno.Sdk minor, which may only have `-dev` builds yet, so skills can cover APIs that haven't shipped. CI checks that the `major.minor` in `version.json` is an Uno.Sdk line published on NuGet, and the **Release** workflow refuses to ship until that line has a stable release, so a release never targets an SDK users can't install. The patch number is the plugin's own; it doesn't track Uno.Sdk patches.
+The plugin version tracks the Uno.Sdk it is built for: plugin `6.7.<patch>` targets Uno.Sdk `6.7`, and the `release/stable/6.7` branch is the 6.7 line. `main` targets the next Uno.Sdk minor, which may only have `-dev` builds yet, so skills can cover APIs that haven't shipped. CI checks that the `major.minor` in `version.json` is an Uno.Sdk line published on NuGet, and the **Release** workflow refuses to ship until that line has a stable release, so a release never targets an SDK users can't install. The patch number is the plugin's own; it doesn't track Uno.Sdk patches.
 
 Releases ship from `release/stable/<major>.<minor>` branches, like the other Uno Platform repos:
 
-1. Comment `/unobot prepare-release --commit-message-pattern "ci: Set version to '{0}'"` on a merged PR. The bot cuts `release/stable/<major>.<minor>` from `main`, using the version in `version.json`, and opens a PR bumping `main` to the next `-dev` version. For a patch release, merge fixes into an existing release branch instead, for example with `/unobot backport release/stable/7.0`.
+1. Comment `/unobot prepare-release --commit-message-pattern "ci: Set version to '{0}'"` on a merged PR. The bot cuts `release/stable/<major>.<minor>` from `main`, using the version in `version.json`, and opens a PR bumping `main` to the next `-dev` version. For a patch release, merge fixes into an existing release branch instead, for example with `/unobot backport release/stable/6.7`.
 2. The **Release** workflow validates the branch, then waits for approval on the `plugin-release` environment.
-3. Once approved, it releases the next `7.0.<patch>` (starting at `7.0.0`). It stamps that version into every manifest on the release branch, tags the commit, publishes a GitHub Release, and opens a PR that moves the marketplaces on `main` to the new tag.
+3. Once approved, it releases the next `6.7.<patch>` (starting at `6.7.0`). It stamps that version into every manifest on the release branch, tags the commit, publishes a GitHub Release, and opens a PR that moves the marketplaces on `main` to the new tag.
 4. Merge that PR. Agents start installing the release once `main` points at it.
 
 Don't edit versions or `source.ref` by hand. On `main` they always show the latest release, and `version.json` holds the next one. The workflow sets them with `.github/scripts/Set-PluginVersion.ps1`, and CI checks that they all agree.

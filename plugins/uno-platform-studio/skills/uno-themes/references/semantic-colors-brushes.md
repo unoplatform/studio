@@ -33,7 +33,7 @@ This reference is the definitive reference for the **Semantic Design Language** 
 
 ### How It Works
 
-Each design-theme's `SemanticStyles.xaml` defines `<StaticResource>` aliases that map the shared semantic key to the theme's concrete style (e.g. `FilledButtonStyle` -> `{ThemePrefix}FilledButtonStyle`).
+Each design-theme's `_Resources.xaml` defines `<StaticResource>` aliases that map the shared semantic key to the theme's concrete style (e.g. `FilledButtonStyle` -> `{ThemePrefix}FilledButtonStyle`).
 
 Use semantic keys in XAML for portable, theme-agnostic styling:
 
@@ -320,7 +320,7 @@ Every Color key generates **9 SolidColorBrush variants** at different opacity le
 
 ### Method 1: Override Color Palette (Full Cascade)
 
-Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in a ResourceDictionary referenced by the theme's `Colors` (`ThemeColors.OverrideSource`). All 280 brushes and controls update automatically, except that a seed leaves the four `Error*` colours at their base values.
+Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in a ResourceDictionary referenced by the theme's `Colors` (`ThemeColors.OverrideSource`). All 280 brushes and controls update automatically.
 
 **Always provide both** `Light` and `Default` (Dark) theme values.
 

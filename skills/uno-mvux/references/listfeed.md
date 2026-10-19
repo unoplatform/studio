@@ -4,7 +4,7 @@
 
 - `IListFeed<T>` is **read-only** — use `IListState<T>` for add/remove/update
 - Service methods should return `ValueTask<IImmutableList<T>>` (from `System.Collections.Immutable`)
-- `Where` filters individual items; `IListFeed<T>` has no `Select` or `SelectAsync`; project via `.AsFeed().Select(...)`
+- `Where` filters individual items; `IListFeed<T>` has no `Select` (`SelectAsync` returns an `IFeed<TResult>`; project via `.AsFeed().Select(...)`)
 - ListFeed automatically handles loading/error/empty states
 - Use `IListFeed<T>` when data is pulled from a service and is read-only
 - Use `IListState<T>` when you need to edit the collection client-side
@@ -91,7 +91,7 @@ uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Reacti
 
 ### For ListFeed Operators
 
-The reference page covers `PaginatedAsync`, `Where`, `AsFeed`, and `AsListFeed`. `Where` filters individual items. There is no `Select` or `SelectAsync` on `IListFeed<T>` (both are `IFeed<T>` operators); to project, use `.AsFeed().Select(...)` or `.AsFeed().SelectAsync(...)`. `Selection` is documented in `external/uno.extensions/doc/Reference/Reactive/in-apps.md` (anchor `selection`) and `external/uno.extensions/doc/Learn/Mvux/Advanced/Selection.md`.
+The reference page covers `PaginatedAsync`, `Where`, `AsFeed`, and `AsListFeed`. `Where` filters individual items. There is no `Select` on `IListFeed<T>` (`SelectAsync` exists but returns an `IFeed<TResult>`, not a list feed); to project, use `.AsFeed().Select(...)`. `Selection` is documented in `external/uno.extensions/doc/Reference/Reactive/in-apps.md` (anchor `selection`) and `external/uno.extensions/doc/Learn/Mvux/Advanced/Selection.md`.
 
 ### For How-To Walkthroughs
 

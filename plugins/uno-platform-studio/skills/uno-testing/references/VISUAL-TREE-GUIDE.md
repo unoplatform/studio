@@ -57,7 +57,7 @@ Scopes the snapshot to one element's subtree. Pass the bare handle of a containe
 | `@@x,y,w,h` | Arranged bounds relative to the snapshot root (`full` only); `uno_app_pointer_click` takes window coordinates, so take the snapshot without `elementRef` |
 | `!hidden` / `!offscreen` / `!code` | Collapsed (with `includeHidden`), outside the snapshot root, which is the window when unscoped (`full`), or created in code |
 
-The tree shows binding paths, not values. For `IsEnabled`, `IsChecked`, selection or item count, read the `{state}` that `uno_app_find_elements` returns; for other values, `uno_app_get_element_datacontext`.
+The tree shows binding paths, not values. To read `IsEnabled`, `IsChecked`, or a bound `Text` at this moment, use `uno_app_get_element_datacontext` on the element or a nearby container, or check a screenshot.
 
 ### With bounds
 
@@ -86,7 +86,7 @@ The centre point for `uno_app_pointer_click` is `x + w/2, y + h/2`: here `175, 2
 - `RadioButton` - Exclusive selection (`[st]`: `select` or `toggle`)
 - `Slider`, `NumberBox` - Range value (`[r]`: `setRangeValue`)
 - `ToggleSwitch` - On/off toggle (`[t]`: `toggle`)
-- `ListViewItem` - No `s` letter on Uno (`[i]` only with `IsItemClickEnabled="True"`); select by pointer click or arrow keys
+- `ListViewItem` - No pattern letters on Uno; select by pointer click or arrow keys
 
 The default action is `invoke` and only `[i]` elements accept it.
 
@@ -112,7 +112,7 @@ Look for `#Name`:
 Button ^5k #SaveButton :41:10 [i]  "Save"
 ```
 
-`AutomationProperties.AutomationId` is not shown in the tree, but it is the first selector: pass it as `automationId` to any element tool and it is resolved live, with no snapshot. `#Name` is the `name` selector. Set both on elements a test must find.
+`AutomationProperties.AutomationId` is not shown; set `AutomationProperties.Name` (or `x:Name`) on elements a test must find.
 
 ### By text
 
@@ -201,8 +201,8 @@ For large trees:
 ## Best Practices Summary
 
 1. **Use `detail: "normal"`** when you will act on elements; `"full"` only for coordinates and diagnosis
-2. **Give the elements a test needs** an `AutomationProperties.AutomationId` and an `x:Name` or `AutomationProperties.Name`
-3. **Act by `automationId` or `name`** and skip the snapshot; refresh the tree only when you act by handle
-4. **Prefer selectors over handles, and handles over coordinates**
+2. **Name the elements a test needs** with `x:Name` or `AutomationProperties.Name`
+3. **Refresh the tree after UI changes** before interacting
+4. **Prefer handles over coordinates**
 5. **Read values from the DataContext**, not from binding hints
 6. **Handle dynamic content** with fresh snapshots

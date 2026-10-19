@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.RegularExpressions;
 using Uno.XamlParser.Stage0;
 using Uno.XamlParser.Stage1;
 using Uno.XamlParser.Stage1.Nodes;
@@ -10,7 +9,10 @@ namespace Uno.Lint.Xaml;
 /// Captures each element's direct text content. Stage-1 fixers never see text (only folded property-element values),
 /// so <c>&lt;Color&gt;#7A67F8&lt;/Color&gt;</c> would be invisible to the rules. Registered through
 /// <c>XamlStreamPipelineOptions.VisitorTypes</c>, which run before the semantic collector, so the text of an element
-/// is known by the time the rules see its end tag. State is reset per stream; only the open-element path is kept.
+/// is known by the time the rules see its end tag. Only the open-element path is kept.
+/// Like the parser's own semantic collector, it is a singleton that keeps the current document's state on the instance
+/// (reset when a stream starts), so one pipeline processes one document at a time. A host that shares a pipeline
+/// across threads serializes <c>ProcessAsync</c>, as <see cref="XamlLintEngine"/> does.
 /// </summary>
 public sealed class ElementTextCapture : IXamlStreamVisitor
 {
@@ -132,7 +134,6 @@ internal sealed class LintDocument
 /// </summary>
 public sealed class DocumentTracker : IXamlSemanticFixer
 {
-    private static readonly Regex ThemeResourceRef = new(@"\{\s*ThemeResource\b", RegexOptions.Compiled);
     private static readonly HashSet<string> Shapes = new(StringComparer.Ordinal) { "Ellipse", "Rectangle", "Line", "Polyline", "Polygon" };
 
     private readonly ElementTextCapture _text;
@@ -155,11 +156,11 @@ public sealed class DocumentTracker : IXamlSemanticFixer
             document.IsRefix = !document.Started.Add((element.LineInfo.LineNumber, element.LineInfo.LinePosition));
             if (document.IsRefix)
             {
-                return ValueTask.FromResult(SemanticFixResult.None);
+                return UnoLintXaml.None;
             }
 
             var name = XamlNodes.LocalName(element);
-            var referencesTheme = element.Properties.Any(p => p.RawValue != null && ThemeResourceRef.IsMatch(p.RawValue));
+            var referencesTheme = element.Properties.Any(p => p.RawValue is { } raw && UnoLintXaml.ReferencesThemeResource(raw));
             foreach (var ancestor in document.Open)
             {
                 ancestor.ThemeResourceBelow |= referencesTheme;
@@ -188,6 +189,6 @@ public sealed class DocumentTracker : IXamlSemanticFixer
             }
         }
 
-        return ValueTask.FromResult(SemanticFixResult.None);
+        return UnoLintXaml.None;
     }
 }

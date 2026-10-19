@@ -26,9 +26,9 @@
 - [x] All functional requirements have clear acceptance criteria
 - [x] User scenarios cover primary flows
 - [x] Feature meets measurable outcomes defined in Success Criteria
-- [x] Open questions on tiering, first surface, ownership and TOKENTHEME severity resolved in the 2026-10-06 review
-- [ ] Open questions on the ShadowContainer exemption, IDE results and where the code lives
+- [x] Open questions on tiering, first surface, ownership and TOKENTHEME severity resolved in review
+- [ ] Open questions remain; see the unchecked items under Open Questions in spec.md
 
 ## Outstanding Clarifications
 
-**Status**: 🚧 Three open questions remain in spec.md (ShadowContainer exemption, IDE results, repository home for the prototype). The 2026-10-06 review resolved the rest: CARD stays strict until measured, plugin hook first with the installed tool (dnx measured at 400 to 570 ms), skill owners own fix text, TOKENTHEME at `suggestion`.
+**Status**: 🚧 Open questions remain; the unchecked items under Open Questions in spec.md are the current list. The review rounds resolved the rest: CARD stays strict until measured, plugin hook first with the installed tool, skill owners own fix text, TOKENTHEME at `suggestion`, XAML rules on Uno.XamlParser.

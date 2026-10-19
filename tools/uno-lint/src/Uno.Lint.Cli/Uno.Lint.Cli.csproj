@@ -18,8 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Uno.Lint.Core\Uno.Lint.Core.csproj" />
-    <ProjectReference Include="..\Uno.Lint.Xaml\Uno.Lint.Xaml.csproj" />
+    <!-- Repl.Core is the dependency-free command runtime (routing, binding, help, output formats, exit codes). The 0.12
+         previews map usage and binding errors to exit code 2, which keeps 1 for findings. -->
+    <PackageReference Include="Repl.Core" Version="0.12.0-dev.148" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Uno.Lint.Host\Uno.Lint.Host.csproj" />
   </ItemGroup>
 
 </Project>

@@ -9,15 +9,15 @@
 
 Skills advise, but nothing verifies. The `uno-platform-studio` plugin ships skills that tell an agent how to use MVUX, navigation, the Toolkit and theming, and agents still drift: context fills up, a skill is not invoked, or the model reasons its way back to a shortcut. Every sample built with the plugin so far came back with hard-coded hex colors, cards drawn as rounded Borders and icons drawn from shapes, despite skills saying otherwise.
 
-The Uno Linter closes the loop. It reads XAML with a real XML parser and C# with Roslyn, applies a small set of semantic rules, and reports each hit as file, line, rule id, what was found and what to use instead. It runs in about a tenth of a second after each edit so the agent fixes the problem in the same turn, never blocks an edit, and only reports the lines the edit added.
+The Uno Linter closes the loop. It reads XAML with a real XML parser and C# with Roslyn, applies a small set of semantic rules, and reports each hit as file, line, rule id, what was found and what to use instead. It runs right after each edit, within the hook budget (SC-001), so the agent fixes the problem in the same turn, never blocks an edit, and only reports the lines the edit added.
 
-A working C# prototype exists under [`tools/uno-lint`](../../tools/uno-lint/) with 110 passing tests and a first run across five real apps. The decisions this spec asks for are the rule tiers, the first shipping surface and who owns the rule list; the first review round (2026-10-06) answered most of them, see Open Questions.
+A working C# prototype exists under [`tools/uno-lint`](../../tools/uno-lint/), with unit tests for every rule and runs across real apps. The decisions this spec asks for are the rule tiers, the first shipping surface and who owns the rule list; the review rounds answered most of them, see Open Questions.
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Agent gets corrected in the same turn (Priority: P1)
 
-A developer is building an Uno app with the Studio plugin in Claude Code, Copilot or Codex. The agent edits `CartPage.xaml` and adds a `Border` with `Background="#FFF5EFE6"` and `CornerRadius="16"`. Immediately after the edit, the linter runs on the saved file and hands the agent two findings: a hex literal where a theme brush belongs, and a Border drawn as a card where `utu:CardContentControl` belongs. The agent fixes both before moving to the next file. The developer never sees the shortcut.
+A developer is building an Uno app with the Studio plugin in Claude Code or Codex. The agent edits `CartPage.xaml` and adds a `Border` with `Background="#FFF5EFE6"` and `CornerRadius="16"`. Immediately after the edit, the linter runs on the saved file and hands the agent two findings: a hex literal where a theme brush belongs, and a Border drawn as a card where `utu:CardContentControl` belongs. The agent fixes both before moving to the next file. The developer never sees the shortcut.
 
 **Why this priority**: This is the whole reason the product exists. Catching the pattern at the first edit stops it from being copied to every later screen, which is how one workaround becomes the app's architecture.
 
@@ -29,7 +29,8 @@ A developer is building an Uno app with the Studio plugin in Claude Code, Copilo
 2. **Given** an edit adds a hex literal and a hand-drawn card on the same line, **When** the hook runs, **Then** both findings are reported with the line number, the rule id and the replacement to use
 3. **Given** an edit touches a file that already contains 40 older findings, **When** the hook runs, **Then** only findings inside the lines the edit added are reported
 4. **Given** the linter finds problems, **When** the hook returns, **Then** the edit is never rejected or rolled back and the hook exits successfully
-5. **Given** a file fails to parse or the linter itself throws, **When** the hook runs, **Then** the agent sees nothing and the edit proceeds unchanged
+5. **Given** a file fails to parse or the linter itself throws, **When** the hook runs, **Then** the agent sees nothing, the edit proceeds unchanged, and one line naming the failure goes to standard error for whoever debugs the hook
+6. **Given** the hook command passes an option the installed tool does not know, **When** the hook runs, **Then** it ignores the option with a note on standard error, still lints, and exits successfully
 
 ---
 
@@ -37,7 +38,7 @@ A developer is building an Uno app with the Studio plugin in Claude Code, Copilo
 
 A team builds MVVM apps with event handlers in code-behind and no Uno.Toolkit. They run the linter and see hundreds of CODEBEHIND hits and suggestions to use Toolkit controls they do not reference. They set one line in `.editorconfig` to turn CODEBEHIND off, and the Toolkit-only rules were already off because the project has no Toolkit reference. The remaining findings are ones they agree with.
 
-**Why this priority**: Without this, half the rules produce noise for anyone not on MVUX + Extensions navigation + Toolkit, and the tool gets disabled. The Toolkit sample app alone produced 129 CODEBEHIND hits.
+**Why this priority**: Without this, half the rules produce noise for anyone not on MVUX + Extensions navigation + Toolkit, and the tool gets disabled. The Toolkit sample app alone produces well over a hundred CODEBEHIND hits.
 
 **Independent Test**: Can be fully tested by running the linter on an app without Toolkit in strict mode and verifying CARD and BACKBAR report as off, then adding `dotnet_diagnostic.UNOL103.severity = none` and verifying CODEBEHIND disappears.
 
@@ -45,8 +46,8 @@ A team builds MVVM apps with event handlers in code-behind and no Uno.Toolkit. T
 
 1. **Given** a project with no Uno.Toolkit reference in `UnoFeatures`, `PackageReference` or XAML namespaces, **When** the linter runs in any profile, **Then** CARD, BACKBAR and Toolkit-specific BUILTIN suggestions are disabled and reported as off
 2. **Given** a `.editorconfig` with `dotnet_diagnostic.UNOL103.severity = none`, **When** the linter runs, **Then** CODEBEHIND findings are not reported
-3. **Given** a `.editorconfig` with `uno_lint.profile = strict`, **When** the linter runs without a `--profile` switch, **Then** all ten rules are evaluated
-4. **Given** no configuration, **When** the linter runs from the command line, **Then** the recommended profile applies and only the five universal rules report
+3. **Given** a `.editorconfig` with `uno_lint.profile = strict`, **When** the linter runs without a `--profile` switch, **Then** every rule is evaluated
+4. **Given** no configuration, **When** the linter runs from the command line, **Then** the recommended profile applies and only the recommended rules (FR-012) report
 5. **Given** a deliberate exception with a reason comment within three lines above the hit, **When** the linter runs, **Then** that hit is suppressed; **Given** the same comment without a reason, **Then** the hit is still reported
 
 ---
@@ -57,13 +58,13 @@ A sample-gallery maintainer runs the linter on a whole project before publishing
 
 **Why this priority**: Counts make the problem measurable. They tell us whether a new skill version reduced hard-coded colors, and they give CI a gate.
 
-**Independent Test**: Can be fully tested by running `uno-lint <path>` on an app, verifying the per-rule table and exit code 1, fixing the hits, and verifying exit code 0.
+**Independent Test**: Can be fully tested by running `uno-lint lint <path>` on an app, verifying the per-rule table and exit code 1, fixing the hits, and verifying exit code 0.
 
 **Acceptance Scenarios**:
 
-1. **Given** a project folder, **When** the linter runs in path mode, **Then** it prints a count per rule, the top files per rule with sample findings, and the four info counters
-2. **Given** findings at warning severity exist, **When** the run ends, **Then** the exit code is 1; **Given** none exist, **Then** it is 0; **Given** the path does not exist, **Then** it is 2
-3. **Given** the `--json` switch, **When** the run ends, **Then** output is machine-readable with root, profile, Toolkit detection, counts, info and one entry per finding
+1. **Given** a project folder, **When** the linter runs in path mode, **Then** it prints a count per rule, each rule's fix once, the top files per rule with sample findings (and how many more each file has), and the four info counters
+2. **Given** findings at warning severity exist, **When** the run ends, **Then** the exit code is 1; **Given** none exist, **Then** it is 0; **Given** the path does not exist or an option is unknown or malformed, **Then** it is 2
+3. **Given** the `--json` switch, **When** the run ends, **Then** output is the report (FR-020): root, profile, project references, file counts, whether it gates, a summary per rule, info counters, and one entry per finding and per suppressed finding
 4. **Given** files under `bin`, `obj`, `.git`, or generated `*.g.cs`, **When** the linter runs, **Then** they are skipped; **Given** a folder named Dev, Harness, Probe(s) or Test(s), or ending in one (`MyApp.Tests`), **Then** its files are skipped unless `--include-dev` is passed
 
 ---
@@ -121,6 +122,13 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 - `<StaticResource x:Key="AccentAliasBrush" ResourceKey="PrimaryBrush"/>` follows whatever its target does and is not a TOKENTHEME finding.
 - An `.editorconfig` section `[App/Tests/**]` turning HEX off applies to files under that folder only, exactly as a Roslyn analyzer would read it.
 - `{Binding Pair.Value}` inside a `DataTemplate` is left alone: the item may really have a `Value` property. Outside templates, in an MVUX project, `X.Value` is the state trap.
+- A file whose lines end in a lone CR (or a mix of CR, LF and CRLF) puts findings and allow comments on the same lines XmlReader and Roslyn use.
+- A file outside any project (no `.csproj`, `.sln` or `.slnx` above it) is linted with no project references and only the `.editorconfig` files above it; its folder is not walked.
+- A folder containing a symbolic link or junction back up the tree is scanned once; links are not followed.
+- A XAML file with a document type declaration is not read: XAML has none, and no entity is ever expanded into a message.
+- A message never echoes an `x:Name` or `x:Key` that is not shaped like an identifier.
+- A malformed XAML file whose repair changes its line count is reported as such in the hook, without attributing its findings to the edit.
+- A Codex patch that adds one file and updates another is linted file by file; a path or edit with non-ASCII characters is read as UTF-8 whatever the console code page.
 
 ## Requirements *(mandatory)*
 
@@ -147,18 +155,18 @@ A developer opening the project in Visual Studio, Rider or running `dotnet build
 
 - **FR-012**: System MUST provide a `recommended` profile enabling HEX, TOKENTHEME, ICON, BUILTIN, RESPONSIVE and BINDVALUE, and a `strict` profile enabling all ten rules
 - **FR-013**: System MUST default to `recommended` in path mode and to `strict` in hook mode unless a profile is given explicitly
-- **FR-014**: System MUST read `dotnet_diagnostic.UNOLnnn.severity = none|suggestion|warning|error` from every `.editorconfig` that governs a file: the chain above the project root (stopping at `root = true`) and, in directory mode, the files below it, so a nested `App/.editorconfig` applies whether the run starts at the repository root or at the file and the CLI and the hook agree. Section globs are honored per file with EditorConfig semantics (`[*.xaml]`, `[App/Tests/**]`, `[*.{xaml,cs}]`), nearest file and last matching section winning. A severity key above any section header is ignored and reported, since a Roslyn analyzer does not read it there. `uno_lint.profile = recommended|strict` is project-wide
+- **FR-014**: System MUST read `dotnet_diagnostic.UNOLnnn.severity = default|none|silent|suggestion|warning|error` from every `.editorconfig` that governs a file: for a file, the chain above it (stopping at `root = true`); for a folder, the chain above it and the files below it, so a nested `App/.editorconfig` applies whether the run starts at the repository root or at the file and the CLI and the hook agree. `default` restores the rule's default severity for the active profile, as it does for the compiler. Section globs are honored per file with EditorConfig semantics (`[*.xaml]`, `[App/Tests/**]`, `[*.{xaml,cs}]`), nearest file and last matching section winning. A severity key above any section header is ignored and reported, since a Roslyn analyzer does not read it there. `uno_lint.profile = recommended|strict` is project-wide
 - **FR-015**: System MUST disable rules whose fix is a Toolkit control when the project has no Uno.Toolkit reference, detected from `UnoFeatures` or `PackageReference` in the project's csproj files and in every `Directory.Build.props` / `Directory.Packages.props` above the project root (where the Uno template puts `UnoFeatures`), or from the `using:Uno.Toolkit.UI` xmlns, with `--toolkit` and `--no-toolkit` overrides; the same sources feed the MVUX and Uno.Themes gates
 - **FR-016**: System MUST suppress a single finding when a comment on the same line, or in the comment lines directly above it (up to three, stopping at the first line that is not a comment so a comment never reaches past another element or statement), reads `uno-lint: allow <rule> - <reason>`; for a finding on an attribute of a multi-line element the element's start line counts as the anchor too; `allow all - <reason>` covers every rule at that anchor; the reason is mandatory; the legacy `xaml-lint:` prefix MUST be accepted
 
 #### Surfaces
 
-- **FR-017**: System MUST provide a command-line entry point taking a folder or a `.xaml`/`.cs` file path with `--profile`, `--json`, `--top`, `--include-dev`, `--list-rules` switches, exiting 0 when clean, 1 when findings at warning or above remain, 2 on bad input including a file of any other type. A single file is linted with the same project root, dev-path skip and `.editorconfig` chain a directory run would give it, so the CLI and the hook agree on every file
-- **FR-018**: System MUST provide a `--hook` mode that reads the Claude Code PostToolUse payload on standard input, lints the saved file for full context, keeps only findings on the lines the edit added, returns them as `additionalContext` leading with the fix and without offering suppression, notes any allow comments the edit itself added, and always exits 0
-- **FR-019**: The hook MUST take the added lines from the payload's `tool_response.structuredPatch` when present (every line for a Write that created the file). Without one, it MUST diff `old_string` against `new_string` so unchanged context lines are not reported, locate `new_string` in the saved file regardless of CRLF/LF differences and re-indentation, and report nothing when the text is not found or is found more than once without `replace_all`
-- **FR-020**: System MUST expose the same rules as an MCP tool on the Uno dev server returning the same JSON shape as the CLI (phase 2)
+- **FR-017**: System MUST provide a command-line tool with three commands built on one command framework, so help, option binding, structured output and exit codes come from one definition: `lint [path]` (a folder or a `.xaml`/`.cs` file, with `--profile`, `--top`, `--include-dev`, `--toolkit`/`--no-toolkit`, `--no-cache`, and `--json` or another structured format), `rules` (the catalog: id, name, category, lowest profile, project gate, default severity) and `hook`. `lint` exits 0 when clean, 1 when findings at warning or above remain, 2 when the run cannot complete (unknown or malformed option, missing path, a file of any other type). A single file is linted with the same project root, dev-path skip and `.editorconfig` chain a directory run would give it, so the CLI and the hook agree on every file
+- **FR-018**: System MUST provide a `hook` command that reads an agent harness's PostToolUse payload on standard input as UTF-8, lints each edited file for full context, keeps only findings on the lines the edit added, and replies with `systemMessage` and `hookSpecificOutput.additionalContext`, leading with bugs (correctness rules) before patterns the platform covers, naming each rule's fix, without offering suppression, and noting any allow comments the edit itself added. One adapter per harness turns the payload into the edited files and their added lines: Claude Code (Edit, MultiEdit, Write) and Codex (`apply_patch`, possibly several files, paths relative to the payload's `cwd`). The hook always exits 0: an unknown option is ignored with a note on standard error, and any failure is one line on standard error and nothing on standard output. A file whose XAML repair shifted its lines is named as malformed instead of having findings attributed to the edit
+- **FR-019**: The Claude Code adapter MUST take the added lines from `tool_response.structuredPatch` when present (every line for a Write that created the file). Without one, it MUST diff `old_string` against `new_string` so unchanged context lines are not reported, locate `new_string` in the saved file regardless of CRLF/LF differences and re-indentation, and report nothing when the text is not found or is found more than once without `replace_all`. The Codex adapter MUST treat every line of an added file as added, locate each update hunk's new text in the saved file the same way, and skip deleted files
+- **FR-020**: Every surface MUST render one immutable report built once per run (the CLI's text and JSON output now, the MCP tool on the Uno dev server in phase 2), so the shapes cannot drift; a test pins the JSON shape
 - **FR-021**: System MUST expose the same rules as a Roslyn analyzer package honoring the same `.editorconfig` keys (phase 3)
-- **FR-022**: The rule functions MUST be host-agnostic and never read the disk, parse files or load configuration themselves. XAML rules MUST run inside Uno.XamlParser as Stage-1 semantic fixers that only report, registrable on any XamlParser pipeline with one call, with Stage-0 repairs applied only to files that are not well-formed. C# rules take a Roslyn `SyntaxTree` plus the project context; their library targets netstandard2.0 and the lowest Roslyn the analyzer must load in (currently 4.8). Each surface supplies a host layer: the CLI's `Linter` walks folders, reads `.editorconfig` and applies severities, gates and suppressions to both kinds of rule; an analyzer host would hand the C# rules the compiler's trees and `AnalyzerConfigOptions`
+- **FR-022**: The rule functions MUST be host-agnostic and never read the disk, parse files or load configuration themselves. Three layers: a rules-only library (the C# rules on a Roslyn `SyntaxTree`, the shared predicates, suppression parsing, the catalog and the model) targeting netstandard2.0 and the lowest Roslyn the analyzer must load in (currently 4.8); the XAML rules as Uno.XamlParser Stage-1 fixers that only report (net9.0, like the parser); and a net10.0 host that walks folders, reads `.editorconfig`, detects the project context, builds the report and adapts hook payloads. Another Uno.XamlParser host (Studio Live, Uno.AI) runs the XAML rules with three public steps: register them on its pipeline, run Stage-0 repairs only when the text is not well-formed, and pass the result through the same post-processing uno-lint uses (rule gating, the HEX/TOKENTHEME hand-off, suppression comments, line order). A pipeline processes one document at a time; a host that shares one across threads serializes its calls, as uno-lint does, and every call can be cancelled
 
 ### UX Requirements *(mandatory for UI features)*
 
@@ -171,8 +179,10 @@ This feature has no graphical UI. Its user-facing surface is text consumed by ag
 
 ### Key Entities *(include if feature involves data)*
 
-- **Rule**: an id (UNOLnnn), a short name used in reports and suppressions, a title, fix text, a minimum profile, and whether it requires Toolkit
-- **Finding**: a rule, a file, a line, a message, and an effective severity after profile, `.editorconfig` and Toolkit gating are applied
+- **Rule**: an id (UNOLnnn), a short name used in reports and suppressions, a title, fix text, a category (a bug, or a pattern the platform covers), a minimum profile, and whether it requires Toolkit or MVUX
+- **Finding**: a rule, a file, a line, a message, and an effective severity after profile, `.editorconfig` and project gating are applied; immutable
+- **Report**: one run's outcome as one immutable value that every output renders
+- **Hook request**: the files an agent edit wrote and the lines it added, produced by one adapter per harness
 - **Profile**: the default rule set; `recommended` or `strict`
 - **Project context**: whether Uno.Toolkit, Uno.Extensions.Navigation, MVUX (Uno.Extensions.Reactive) and Uno.Themes (Material, Cupertino, SimpleTheme) are referenced, detected from the csproj files, the `Directory.Build.props` / `Directory.Packages.props` chain above the project, and XAML namespaces
 - **Info counters**: non-gating measurements reported alongside findings
@@ -181,13 +191,13 @@ This feature has no graphical UI. Its user-facing surface is text consumed by ag
 
 ### Measurable Outcomes
 
-- **SC-001**: A hook invocation on a single edit completes in under 250 ms on a developer laptop (measured: about 130 ms)
-- **SC-002**: A full scan of a 175-file app completes in under 2 seconds (measured: 0.48 s)
+- **SC-001**: A hook invocation on a single edit completes in under 250 ms on a developer machine (see [Performance](#performance))
+- **SC-002**: A full scan of a 200-file app completes in under 2 seconds (see [Performance](#performance))
 - **SC-003**: The recommended rules stay under 5% false positives when hits are reviewed by hand across at least eight apps, including the prototype author's samples
 - **SC-004**: Zero edits are blocked or rolled back by the hook across all runs
 - **SC-005**: On agent-built sample apps, the HEX count per app drops to zero within one agent turn after the hook is installed, with suppressions under 10% of the original hits; a zero reached by allow comments does not count
 - **SC-006**: The hook, the CLI and the MCP tool report identical counts on the same corpus, including under sectioned `.editorconfig` files
-- **SC-007**: Every rule has at least one positive and one negative unit test and one regression test per false positive found in the field (currently 110 tests)
+- **SC-007**: Every rule has at least one positive and one negative unit test and one regression test per false positive found in the field
 
 ### Qualitative Outcomes
 
@@ -197,79 +207,96 @@ This feature has no graphical UI. Its user-facing surface is text consumed by ag
 
 ## Evidence from the prototypes
 
-Two implementations exist. The first is a PowerShell 7 script (368 lines, regex over raw text, wired as a Claude Code PostToolUse hook) in daily use on sample apps. The second is the C# port in [`tools/uno-lint`](../../tools/uno-lint/), built on 2026-09-30, which reproduces the script's counts exactly on every app except where it removes a false positive, and runs four times faster. Its [FINDINGS.md](../../tools/uno-lint/FINDINGS.md) has the full run.
+Two implementations exist. The first was a PowerShell script, a regex pass over raw text wired as a Claude Code PostToolUse hook; it is not in this repository. The second is the C# tool in [`tools/uno-lint`](../../tools/uno-lint/). On the apps both were run on, the C# tool reproduced the script's counts except where it removed a false positive (listed below). [FINDINGS.md](../../tools/uno-lint/FINDINGS.md) has the corpus results and the per-rule verdicts.
 
 ### Corpus
 
-| App | Files | Toolkit | Author |
+Two public apps anyone can re-run, and three agent-built Studio sample apps that are not public.
+
+| App | Revision | Files | References |
 |---|---|---|---|
-| uno.toolkit.ui Uno.Toolkit.Samples | 175 | yes | Uno team, gallery app |
-| Uno.Themes ThemesSampleApp | 14 | no | Uno team |
-| BrewHouse (coffee shop sample) | 28 | yes, SimpleTheme + Toolkit + MVUX | agent |
-| GridWatch (utility dashboard sample) | 28 | yes | agent |
-| TestApp (counter template) | 6 | no | agent |
+| [uno.toolkit.ui](https://github.com/unoplatform/uno.toolkit.ui) `samples/` | `c4c8f887` | 203 | Toolkit, Uno.Themes |
+| [Uno.Themes](https://github.com/unoplatform/Uno.Themes) `src/samples/` | `27fb1a61` | 192 | Uno.Themes |
+| Three agent-built samples (a coffee shop, a utility dashboard, the counter template) | internal | 6 to 28 each | two with Toolkit and MVUX |
 
-### Results, strict profile
+### Results, strict profile, public apps
 
-| Rule | Toolkit samples | Themes | BrewHouse | GridWatch | TestApp |
-|---|---|---|---|---|---|
-| HEX | 17 | 0 | 93 | 0 | 0 |
-| TOKENTHEME | 4 | 0 | 0 | 18 | 0 |
-| ICON | 5 | 0 | 0 | 0 | 0 |
-| BUILTIN | 0 | 0 | 0 | 0 | 0 |
-| RESPONSIVE | 0 | 0 | 0 | 0 | 0 |
-| CARD | 5 | off | 16 | 17 | off |
-| BACKBAR | 0 | off | 0 | 0 | off |
-| CODEBEHIND | 129 | 5 | 0 | 16 | 1 |
-| OVERLAY | 0 | 0 | 0 | 0 | 0 |
+`uno-lint lint <folder> --profile strict`; "off" means a project gate turns the rule off.
 
-BrewHouse had SimpleTheme, Toolkit and MVUX enabled and still hard-coded 93 colors across four pages. This is the failure the linter exists for. The 129 CODEBEHIND hits on Uno's own Toolkit gallery are why the architectural rules are strict-only.
-
-### False positives removed by the C# port
-
-| Rule | Prototype | Port | Cause |
-|---|---|---|---|
-| TOKENTHEME, Toolkit | 7 | 4 | a brush with `Color="{ThemeResource ...}"` follows the theme |
-| CARD, Toolkit | 9 | 5 | `CornerRadius="8,0,0,0"` is a color swatch, not a card |
-| RESPONSIVE, Toolkit | 1 | 0 | `ActualHeight > 0` asks whether layout ran |
-| HEX + TOKENTHEME, GridWatch | 18 + 18 | 0 + 18 | one brush defined once with a hex literal is one problem |
-| Suppression | reason-less `allow` accepted | rejected | `-->` matched as the reason |
-
-### Performance, same machine
-
-| Run | PowerShell | C# |
+| Rule | Toolkit samples | Uno.Themes samples |
 |---|---|---|
-| Full scan, 175-file Toolkit samples | 2.8 s | 0.48 s |
-| Hook, one edit | 460 to 490 ms | 127 to 135 ms |
+| HEX | 287 | 23 |
+| TOKENTHEME | 4 | 4 |
+| ICON | 5 | 46 |
+| BUILTIN | 0 | 0 |
+| RESPONSIVE | 0 | 0 |
+| CARD | 4 | off |
+| BACKBAR | 0 | off |
+| CODEBEHIND | 145 | 30 |
+| OVERLAY | 0 | 0 |
+| BINDVALUE | off | off |
+
+Most Toolkit HEX hits are named colors used as demo fills in gallery pages, correct by the rule; a gallery would turn HEX off for its samples folder in `.editorconfig`. The CODEBEHIND count on Uno's own gallery is why the architectural rules are strict-only.
+
+On the agent-built samples, an app with SimpleTheme, Toolkit and MVUX enabled still hard-coded its whole palette on every page: HEX was by far its largest count. This is the failure the linter exists for.
+
+### False positives removed by the C# tool
+
+| Rule | Cause |
+|---|---|
+| TOKENTHEME | a brush with `Color="{ThemeResource ...}"` follows the theme |
+| CARD | `CornerRadius="8,0,0,0"` is a color swatch, not a card |
+| RESPONSIVE | `ActualHeight > 0` asks whether layout ran |
+| HEX + TOKENTHEME | one brush defined once with a literal color is one problem, reported once |
+| HEX | `<SolidColorBrush x:Key="Red">` names a resource; the key is not a color |
+| Suppression | a reason-less `allow` was accepted because `-->` matched as the reason |
+
+### Performance
+
+Measured once, on 2026-10-19: Windows 11 on an Intel Xeon E-2288G (8 cores, 3.7 GHz), the Release build on the .NET 10 runtime with JIT (no ReadyToRun). Each figure is the median of repeated runs after one warm-up run, timed from process start to exit.
+
+| Run | Median |
+|---|---|
+| Hook, one Write of a 340-line page with 45 findings, project context cached (15 runs) | 158 ms |
+| Full scan, Toolkit samples above, 203 files, strict (7 runs) | 888 ms |
+
+The build before the command-framework and host rework took 468 ms and 879 ms on the same machine and method. Every other latency figure in the repository points here.
 
 ### Per-rule verdict from reading the hits
 
-- **HEX** (110 hits): no false positives found. Keep in recommended.
-- **TOKENTHEME** (22 hits): survivors are brand and status brushes defined once; correct by the rule but often fixed by a rename. Keep in recommended, consider `suggestion` severity.
-- **ICON** (5 hits): inline Material Design Icons path data. Correct.
-- **CARD** (38 hits): still misfires on the Toolkit's documented ShadowContainer pattern and calls pills (`CornerRadius="20" Padding="12,6"`) cards when the fix is `utu:Chip`. Keep in strict until fixed.
-- **CODEBEHIND** (151 hits): every hit is a real handler; whether that is a defect is architecture. Strict only.
-- **BUILTIN, RESPONSIVE, BACKBAR, OVERLAY**: zero hits on this corpus; unit-tested only. Need more apps to calibrate.
+- **HEX**: no false positives found. Keep in recommended.
+- **TOKENTHEME**: survivors are brand and status brushes defined once; correct by the rule but often fixed by a rename. Recommended, at `suggestion` severity.
+- **ICON**: inline icon path data. Correct.
+- **CARD**: calls the Toolkit's documented ShadowContainer pattern a card (open question). Strict only.
+- **CODEBEHIND**: every hit is a real handler; whether that is a defect is architecture. Strict only.
+- **BINDVALUE**: no hits; the MVUX samples bind states correctly. Unit-tested only.
+- **BUILTIN, RESPONSIVE, BACKBAR, OVERLAY**: no hits on this corpus; unit-tested only. Need more apps to calibrate.
 
 ## Architecture and Delivery
 
-XAML is read and its rules run inside Uno.XamlParser, the pipeline Studio Live and Uno.AI already run after every agent XAML write. uno-lint keeps what the parser does not do: the C# rules on Roslyn, and the host layer that applies `.editorconfig` severities, profiles, project gates, suppressions and output to both. Rules, profiles, severities and suppressions behave the same whether the caller is the agent hook, an MCP client or, for C#, the compiler.
+XAML is read and its rules run inside Uno.XamlParser, the pipeline Studio Live and Uno.AI already run after every agent XAML write. uno-lint keeps what the parser does not do: the C# rules on Roslyn, and the host that applies `.editorconfig` severities, profiles, project gates and suppressions to both and builds one report. Rules, profiles, severities and suppressions behave the same whether the caller is the agent hook, an MCP client or, for C#, the compiler.
 
 ```
-XAML files ─► Uno.XamlParser (repair, Stage 1) ─► Uno.Lint.Xaml rules ─┐                 ┌── uno-lint CLI + hook ── agents, CI      (phase 1)
-C# files ───► Roslyn ──────────────────────────► Uno.Lint.Core rules ─┼─► host layer ────┼── MCP tool on uno.devserver            (phase 2)
-csproj, Directory.Build.props, .editorconfig ─► project gates, config ─┘   (Core)         └── Roslyn analyzer, C# rules only       (phase 3)
+                         Uno.Lint.Xaml (net9.0)
+XAML ─► Uno.XamlParser ─► XAML rules (Stage-1 fixers) ─► post-processing ─┐
+                                                                           │  Uno.Lint.Host (net10.0)            Uno.Lint.Cli
+C# ──► Roslyn ─────────► C# rules ─────────────────────────────────────────┼─► Linter ─► LintReport ─┬─► text, JSON  (lint, rules)
+                         Uno.Lint.Core (netstandard2.0):                   │  .editorconfig,          └─► hook reply  (hook)
+                         rules, catalog, suppression, model                │  project context              ▲
+csproj, Directory.Build.props, .editorconfig ──────────────────────────────┘  hook adapters ───────────────┘  Claude Code, Codex
 ```
 
 **Why C#, not PowerShell.** PowerShell cannot ship in the SDK, is Windows-first in practice, and regex misfires: comments and strings trigger C# rules, and context such as "is this Border inside a ControlTemplate" is approximated. Uno.XamlParser makes XAML ancestry exact and repairs malformed markup; Roslyn makes only real syntax count.
 
-**XAML on Uno.XamlParser (decided 2026-10-15).** The six XAML rules are `IXamlSemanticFixer` implementations that only report, registered through the parser's `SemanticFixerTypes` list, plus one stream visitor for element text. `UnoLintXamlRules.AddTo(options)` adds them to any XamlParser pipeline, so Studio Live and Uno.AI can enable them with one call. Against the earlier XDocument reader: identical findings on the five-app corpus except six false positives removed, malformed agent markup linted instead of skipped (8 of 8 fixtures), hook 227 ms with JIT and 185 ms with ReadyToRun. Details and the issues found in the parser are in [`tools/uno-lint/XAMLPARSER.md`](../../tools/uno-lint/XAMLPARSER.md).
+**XAML on Uno.XamlParser.** The six XAML rules are `IXamlSemanticFixer` implementations that only report, registered through the parser's `SemanticFixerTypes` list, plus one stream visitor for element text. `UnoLintXaml` gives any XamlParser host the three steps of FR-022: `AddTo(options)` registers the rules, `IsWellFormed(text)` decides whether to run the Stage-0 sanitizers (in Uno.XamlParser 0.10.0-dev.74 a sanitizer rewrites valid markup whose element text contains `:/`), and `Collect(result, ...)` produces the findings uno-lint itself reports. Against the earlier XDocument reader: identical findings on the corpus except six false positives removed, and malformed agent markup linted instead of skipped. [`tools/uno-lint/XAMLPARSER.md`](../../tools/uno-lint/XAMLPARSER.md) describes how the rules use the package.
 
-**What is shared and what is not.** The C# rules take a Roslyn `SyntaxTree` plus a `ProjectContext` and never read the disk; `CSharpFile` accepts a compiler-provided tree, so a Roslyn analyzer can host them later (RS1035 forbids file IO in analyzers). The XAML rules take XamlParser nodes. Shared predicates (colors, keys, corner radii) live in `RuleLogic` so both sides mean the same thing. The CLI's folder walk, `.editorconfig` reader and project-context detection belong to the host, implemented the way the compiler reads `.editorconfig` so a future analyzer agrees.
+**What is shared and what is not.** The C# rules take a Roslyn `SyntaxTree` plus a `ProjectContext` and never read the disk; `CSharpFile` accepts a compiler-provided tree, so a Roslyn analyzer can host them later (RS1035 forbids file IO in analyzers). The rules-only library holds them with the catalog, the shared predicates (`RuleLogic`), suppression parsing and the immutable model, so an analyzer package ships no file-system code. The XAML rules take XamlParser nodes. The folder walk, `.editorconfig` reader, project-context detection and its cache, the report and the hook adapters belong to the net10.0 host, implemented the way the compiler reads `.editorconfig` so a future analyzer agrees.
 
-**Surface 1, plugin hook and CLI (phase 1).** A `dotnet tool` named `uno-lint`. The `uno-platform-studio` plugin already installs into Claude Code, Copilot CLI and Codex CLI; adding a hooks manifest that calls `uno-lint --hook` ships the linter to all three in one plugin release. This is the Studio plugin route. Inside Studio Live itself, the XAML rules can run in its existing XamlParser pass instead.
+**Command surface.** The CLI is a thin layer on a command framework ([Repl Toolkit](https://github.com/yllibed/repl), dependency-free core): one command graph gives typed option binding with typo suggestions, generated help, structured output (`--json`, `--output:yaml`...), the 0/1/2 exit codes, and an in-memory test harness; the same graph can be exposed as MCP tools later. Handlers return the host's immutable `LintReport`; the hook command reads standard input as raw UTF-8.
 
-**Surface 2, MCP tool (phase 2).** `uno.devserver --mcp-app` already registers the Uno MCP server Studio users have. A `lint_project` / `lint_file` tool on it lets any agent call the linter on demand and lets skills say "run the linter before you report done".
+**Surface 1, plugin hook and CLI (phase 1).** A `dotnet tool` named `uno-lint`. The `uno-platform-studio` plugin already installs into Claude Code and Codex CLI; a hooks manifest that runs `uno-lint hook` through a small shell shim (silent when the tool is not installed, with a `UNO_LINT_CLI` override) ships the linter to both in one plugin release. Copilot CLI and Gemini CLI post-edit hooks use other tool names (`edit`, `create`), a top-level `additionalContext`, and, for Gemini, a timeout in milliseconds; each needs its own adapter and snippet before it is supported. Inside Studio Live itself, the XAML rules can run in its existing XamlParser pass instead.
+
+**Surface 2, MCP tool (phase 2).** `uno.devserver --mcp-app` already registers the Uno MCP server Studio users have. A `lint_project` / `lint_file` tool on it returns the same `LintReport`, lets any agent call the linter on demand and lets skills say "run the linter before you report done".
 
 **Surface 3, Roslyn analyzer (phase 3).** For the C# rules. Uno.UI already ships `Uno000x` analyzers, so there is an established home. The XAML rules leave this goal: Uno.XamlParser is net9.0 and cannot load in an analyzer, and the Uno XAML generator's `UXAML` diagnostics already cover XAML in build and IDE.
 
@@ -277,46 +304,47 @@ csproj, Directory.Build.props, .editorconfig ─► project gates, config ─┘
 
 | Phase | Scope | Exit criteria |
 |---|---|---|
-| 1, now | Calibrate on more real apps; CARD chip/avatar/zero-radius heuristics (done), ShadowContainer decision; BINDVALUE correctness rule (done); suppression counts (done); ship hook via the Studio plugin with the global tool and a PATH check; `dotnet tool` for CI | recommended rules under 5% false positives on 8+ apps; suppressions under 10% of hits on agent-built apps; hook in a plugin release |
+| 1, now | Calibrate on more real apps; CARD chip/avatar/zero-radius heuristics (done), ShadowContainer decision; BINDVALUE correctness rule (done); suppression counts (done); Claude Code and Codex hook adapters (done); publish `Uno.Lint.Tool` to nuget.org and ship the hook through the Studio plugin with the shim; `dotnet tool` for CI | recommended rules under 5% false positives on 8+ apps; suppressions under 10% of hits on agent-built apps; hook in a plugin release |
 | 2, next | MCP tool on `uno.devserver`; two more correctness rules (`x:Bind` against an MVUX ViewModel, Uno0001 members in framework handlers); skills call the linter before reporting done; track counts and suppression rates across sample apps | hook and MCP tool agree on every count; each correctness rule has a repro |
 | 3, later | Roslyn analyzer NuGet; same rules, same `.editorconfig`; warnings in VS, Rider and `dotnet build`; opt-in from the Uno templates | rule list stable for one release cycle before starting |
 
 ## Assumptions
 
-1. **Hook availability**: Claude Code, Copilot CLI and Codex CLI plugins can declare post-edit hooks that receive the edited file path and the added text. Verified for Claude Code; to confirm for the other two before phase 1 ships.
-2. **Binary distribution**: measured on 2026-10-13 against a local feed: `dotnet dnx Uno.Lint.Tool -- --hook` takes about 570 ms on first use and 400 to 450 ms warm; the installed tool takes about 100 ms warm. `dnx` therefore misses the 250 ms hook budget (SC-001) but still beats the PowerShell prototype. Decision: the plugin README installs the global tool (`dotnet tool install -g Uno.Lint.Tool`) and ships `hooks/settings.hooks.json` calling `uno-lint --hook`; `hooks/settings.hooks.dnx.json` is the zero-install alternative. Once a global tool is installed, a hook that calls a missing `uno-lint` surfaces an error on every edit, so the plugin's install check must verify the tool is on PATH.
+1. **Hook availability**: Claude Code and Codex plugins can declare post-edit hooks that receive the edited files and enough of the edit to find the added lines. Verified end to end for Claude Code; the Codex adapter is built and tested from the payload the Codex hooks documentation describes (`apply_patch` in `tool_input.command`, `cwd` at the top level) and needs one live run before phase 1 ships. Copilot CLI and Gemini CLI are out of phase 1 (see Surface 1).
+2. **Binary distribution**: the plugin installs the global tool (`dotnet tool install -g Uno.Lint.Tool`) and its hook calls `uno-lint hook` through the shim. `Uno.Lint.Tool` is not on nuget.org yet: CI packs it but does not publish it, so publishing is a phase 1 task. A zero-install `dotnet dnx` variant is not offered: without a pinned version and a feed the user owns, it resolves the package through the `nuget.config` of whatever project the agent is editing, so a cloned repository could substitute its own build and have it run on the first edit; it is also several times slower per call.
 3. **Theme vocabulary**: role brush keys (`PrimaryBrush`, `SurfaceBrush`, `OutlineBrush`) resolve the same under SimpleTheme, Material and Cupertino, but do not exist in a Fluent-only app without Uno.Themes. Fix text is therefore gated on an Uno.Themes reference (FR-025); a Fluent-only app is pointed at WinUI theme brushes instead.
 4. **Fix text ownership**: fix wording mirrors the skills in this repository and changes with them.
 5. **Corpus access**: more agent-built apps will be made available to calibrate the four rules with zero hits so far.
 
 ## Design Decisions
 
-1. **Two tiers, data-driven.** The recommended/strict split follows flutter_lints and Roslyn conventions and is justified by the 129 CODEBEHIND hits on Uno's own sample app, not by taste.
+1. **Two tiers, data-driven.** The recommended/strict split follows flutter_lints and Roslyn conventions and is justified by the CODEBEHIND count on Uno's own Toolkit gallery, not by taste.
 2. **Gate on project references, not a global switch.** A rule whose fix is a Toolkit control is off when the project has no Toolkit. This answers "should checks only run when the app uses Toolkit" per rule rather than globally.
 3. **Report only the edited lines in hook mode.** Full-file context is used for evaluation; only findings inside the added text are returned. This keeps hook output short and avoids blaming the agent for old code.
 4. **Never block.** The hook always exits 0. CI gates through the CLI exit code instead.
-5. **One correctness rule ships in phase 1.** `{Binding State.Value}` (BINDVALUE) is in the prototype now; `x:Bind` against an MVUX ViewModel and Uno0001 members in framework handlers follow in phase 2. Launching with only style rules invited pushback; catching a bug on day one earns the trust that lets the style rules ride along.
+5. **One correctness rule ships in phase 1.** `{Binding State.Value}` (BINDVALUE) is in the prototype now; `x:Bind` against an MVUX ViewModel and Uno0001 members in framework handlers follow in phase 2. Launching with only style rules invited pushback; catching a bug on day one earns the trust that lets the style rules ride along. The hook lists bugs before patterns so the agent fixes the bug first.
 6. **`.editorconfig` over a custom config file.** It is what every .NET analyzer uses and carries over unchanged to the analyzer surface, including section globs.
-7. **Suppression is a metric, and the agent is not offered it.** Field transcripts showed an agent answering 15 of 32 hits with an `allow` comment when the hook mentioned it. The hook now leads with the fix and says nothing about suppression; suppressions the agent writes anyway are counted per rule in every report.
+7. **Suppression is a metric, and the agent is not offered it.** In early use, a hook that mentioned allow comments saw agents answer a large share of hits with one instead of a fix. The hook leads with the fix and says nothing about suppression; suppressions the agent writes anyway are counted per rule in every report.
 
 ## Dependencies
 
-- `uno-platform-studio` plugin manifests for the three agent hosts (this repository)
+- `uno-platform-studio` plugin manifests for Claude Code and Codex (this repository)
 - `uno.devserver` MCP server for the phase 2 tool
 - Microsoft.CodeAnalysis.CSharp 4.x for the C# rules
+- Uno.XamlParser for the XAML rules; Repl Toolkit for the command surface
 - Uno.UI analyzer infrastructure for phase 3
 
 ## Open Questions
 
-- [x] **Tiering**: CARD stays strict until the chip, avatar and zero-radius cases are proven on more apps (review, 2026-10-06). The heuristics are in; the measurement is pending.
-- [x] **First surface**: plugin hook first, gated on measured `dnx` cold start (review). Measured 2026-10-13; see Assumption 2.
+- [x] **Tiering**: CARD stays strict until the chip, avatar and zero-radius cases are proven on more apps. The heuristics are in; the measurement is pending.
+- [x] **First surface**: plugin hook first, with the installed tool (Assumption 2).
 - [ ] **Results to the IDE**: yes via phase 3; confirm nothing extra is wanted before then.
-- [x] **Rule list ownership**: skill owners own the fix text (UX-004); the rule list sits with the plugin team, the runtime-gotchas list is the intake queue (review).
-- [x] **TOKENTHEME severity**: `suggestion` by default (review); implemented.
-- [ ] **Where the code lives**: keep `tools/uno-lint` in this repository with its own CI job (added), or move the prototype to its own repository once the plugin hook ships? The spec stays here either way.
+- [x] **Rule list ownership**: skill owners own the fix text (UX-004); the rule list sits with the plugin team, the runtime-gotchas list is the intake queue.
+- [x] **TOKENTHEME severity**: `suggestion` by default; implemented.
+- [ ] **Where the code lives**: keep `tools/uno-lint` in this repository with its own CI job, or move it to its own repository once the plugin hook ships? The spec stays here either way.
 - [ ] **ShadowContainer**: a Border with Background and CornerRadius inside `utu:ShadowContainer` is the Toolkit's documented pattern and still reports CARD. Exempt it, or change the message to point at `ElevatedCardContentControlStyle`?
-- [x] **Uno.XamlParser as the XAML host** (review 2026-10-13, meeting 2026-10-14, done 2026-10-15): all XAML rules run inside Uno.XamlParser as Stage-1 fixers; the XDocument reader is removed; C# rules and the host stay in uno-lint. Corpus identical except six false positives removed; malformed markup linted; hook 227 ms JIT, 185 ms ReadyToRun. See the architecture section and tools/uno-lint/XAMLPARSER.md.
-- [ ] **Uno.XamlParser ownership and upstream fixes**: the hook now depends on a prerelease package whose repository has been idle since May 2026. Ten issues are listed in XAMLPARSER.md; the first (the quote-repair sanitizer corrupting valid XAML that contains :/ in element text) affects every consumer. Who files and fixes them, and who owns releases while the hook depends on the package?
+- [x] **Uno.XamlParser as the XAML host**: all XAML rules run inside Uno.XamlParser as Stage-1 fixers; the XDocument reader is removed; C# rules and the host stay in uno-lint.
+- [ ] **Uno.XamlParser releases**: the tool depends on a prerelease package. Parser issues found while hosting the rules are filed with its maintainers; until a release carries the fixes, uno-lint keeps its workarounds (the well-formedness gate, the element-text visitor). Who owns releases while the hook depends on the package?
 
 ## Out of Scope
 

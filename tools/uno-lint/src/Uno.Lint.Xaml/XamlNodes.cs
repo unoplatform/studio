@@ -1,12 +1,13 @@
+using System.Text.RegularExpressions;
 using Uno.XamlParser.Stage1;
 using Uno.XamlParser.Stage1.Nodes;
 
 namespace Uno.Lint.Xaml;
 
 /// <summary>Reading helpers over Uno.XamlParser Stage-1 nodes, shared by the rules.</summary>
-internal static class XamlNodes
+internal static partial class XamlNodes
 {
-    // Uno.XamlParser.XmlNamespaces is internal, so the two URIs the rules need are repeated here.
+    // The parser keeps its namespace constants internal, so the two URIs the rules need are repeated here.
     public const string Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
     public const string XamlLanguage = "http://schemas.microsoft.com/winfx/2006/xaml";
 
@@ -36,7 +37,7 @@ internal static class XamlNodes
         }
 
         var colon = original.IndexOf(':');
-        return colon > 0 && owner.NamespaceScope.TryGetValue(original.Substring(0, colon), out var uri) && uri == XamlLanguage;
+        return colon > 0 && owner.NamespaceScope.TryGetValue(original[..colon], out var uri) && uri == XamlLanguage;
     }
 
     public static string? Key(XamlElementNode element) =>
@@ -44,6 +45,13 @@ internal static class XamlNodes
 
     public static string? XName(XamlElementNode element) =>
         Attributes(element).FirstOrDefault(p => p.Reference.DeclaringType == null && p.Reference.Name == "Name")?.RawValue;
+
+    /// <summary>
+    /// <paramref name="value"/> when it is shaped like a resource key or element name (letters, digits, '_', '.', '-'),
+    /// else null. Messages go into an agent's context, so a value that is not an identifier (markup, an expanded entity,
+    /// arbitrary text) is never echoed.
+    /// </summary>
+    public static string? Identifier(string? value) => value is { Length: > 0 and <= 128 } && IdentifierShape().IsMatch(value) ? value : null;
 
     public static IEnumerable<XamlElementNode> Ancestors(XamlElementNode element, XamlSemanticFixerContext context)
     {
@@ -58,4 +66,7 @@ internal static class XamlNodes
 
     private static bool HasPrefix(XamlPropertyNode property) =>
         property.Reference.DeclaringType == null && property.OriginalName is { } name && name.IndexOf(':') > 0;
+
+    [GeneratedRegex(@"^[A-Za-z_][A-Za-z0-9_.\-]*$")]
+    private static partial Regex IdentifierShape();
 }

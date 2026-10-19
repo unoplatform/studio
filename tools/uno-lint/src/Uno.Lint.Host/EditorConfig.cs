@@ -7,39 +7,39 @@ namespace Uno.Lint;
 /// The .editorconfig settings that apply to a lint run, with section globs honored per file the way a Roslyn
 /// analyzer honors them, so the CLI, the hook and a future analyzer agree on every count.
 ///   [*.xaml]
-///   dotnet_diagnostic.UNOL001.severity = none | silent | suggestion | warning | error
+///   dotnet_diagnostic.UNOL001.severity = default | none | silent | suggestion | warning | error
 ///   uno_lint.profile = recommended | strict
 /// Severity keys count only inside a [section]; EditorConfig allows only "root" in the preamble and the compiler
 /// does not read severities there, so a preamble severity is recorded in <see cref="IgnoredPreambleKeys"/> and
 /// otherwise ignored. The profile is project-wide: the last one read wins wherever it sits.
-/// Files are loaded from the lint root upward (nearest last) and, in directory mode, downward too, so a nested
-/// <c>App/.editorconfig</c> applies whether the run starts at the repo root or at the file.
+/// For a folder, files are loaded from the folder upward (nearest last) and downward, so a nested
+/// <c>App/.editorconfig</c> applies whether the run starts at the repo root or at the file. For a file, only its
+/// ancestors are read: a sibling folder's .editorconfig can never match it.
 /// </summary>
-public sealed class EditorConfigSet
+public sealed partial class EditorConfigSet
 {
-    private readonly List<Section> _sections = new List<Section>();
-    private readonly List<string> _ignoredPreambleKeys = new List<string>();
+    private readonly List<Section> _sections = new();
+    private readonly List<string> _ignoredPreambleKeys = new();
 
     public Profile? Profile { get; private set; }
 
     /// <summary>Severity keys found above any section header, which a Roslyn analyzer would not honor.</summary>
     public IReadOnlyList<string> IgnoredPreambleKeys => _ignoredPreambleKeys;
 
-    /// <summary>Severity for a rule id on a file. Sections are applied in load order, nearest .editorconfig last; the last match wins.</summary>
-    public bool TryGetSeverity(string ruleId, string? filePath, out Severity severity)
+    /// <summary>
+    /// Severity configured for a rule id on a file. Sections are applied in load order, nearest .editorconfig last; the
+    /// last match wins. <paramref name="severity"/> is null when the winning value is <c>default</c>: the rule keeps
+    /// its default severity for the active profile.
+    /// </summary>
+    public bool TryGetSeverity(string ruleId, string filePath, out Severity? severity)
     {
-        severity = Severity.None;
+        severity = null;
         var found = false;
-        var normalizedPath = filePath == null ? null : Path.GetFullPath(filePath).Replace('\\', '/');
+        var normalizedPath = Path.GetFullPath(filePath).Replace('\\', '/');
 
         foreach (var section in _sections)
         {
-            if (!section.Severities.TryGetValue(ruleId, out var value))
-            {
-                continue;
-            }
-
-            if (section.Matches(normalizedPath))
+            if (section.Severities.TryGetValue(ruleId, out var value) && section.Matches(normalizedPath))
             {
                 severity = value;
                 found = true;
@@ -49,9 +49,9 @@ public sealed class EditorConfigSet
         return found;
     }
 
-    /// <summary>Rule ids that have a severity only inside a glob section, which a global-only reader would misapply.</summary>
+    /// <summary>Rule ids that have a severity inside a glob section.</summary>
     public IEnumerable<string> SectionedRuleIds() =>
-        _sections.Where(s => s.Glob != null).SelectMany(s => s.Severities.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
+        _sections.SelectMany(s => s.Severities.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// Loads the chain for a folder or file: ancestors first (farthest to nearest, stopping at <c>root = true</c>),
@@ -88,11 +88,7 @@ public sealed class EditorConfigSet
         {
             lines = File.ReadAllLines(path);
         }
-        catch (IOException)
-        {
-            return;
-        }
-        catch (UnauthorizedAccessException)
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return;
         }
@@ -113,57 +109,64 @@ public sealed class EditorConfigSet
                 continue;
             }
 
-            if (line[0] == '[' && line[line.Length - 1] == ']')
+            if (line[0] == '[' && line[^1] == ']')
             {
-                current = new Section(directory, line.Substring(1, line.Length - 2).Trim());
+                current = new Section(directory, line[1..^1].Trim());
                 _sections.Add(current);
                 continue;
             }
 
-            var d = DiagnosticLine.Match(line);
-            if (d.Success && TryParseSeverity(d.Groups[2].Value, out var severity))
+            var diagnostic = DiagnosticLine().Match(line);
+            if (diagnostic.Success && TryParseSeverity(diagnostic.Groups[2].Value, out var severity))
             {
+                var id = diagnostic.Groups[1].Value.ToUpperInvariant();
                 if (current == null)
                 {
-                    _ignoredPreambleKeys.Add(d.Groups[1].Value.ToUpperInvariant());
+                    _ignoredPreambleKeys.Add(id);
                 }
                 else
                 {
-                    current.Severities[d.Groups[1].Value.ToUpperInvariant()] = severity;
+                    current.Severities[id] = severity;
                 }
 
                 continue;
             }
 
-            var p = ProfileLine.Match(line);
-            if (p.Success && Enum.TryParse<Profile>(p.Groups[1].Value, ignoreCase: true, out var profile))
+            var profile = ProfileLine().Match(line);
+            if (profile.Success && Enum.TryParse<Profile>(profile.Groups[1].Value, ignoreCase: true, out var value))
             {
-                Profile = profile;
+                Profile = value;
             }
         }
     }
 
-    private static readonly Regex DiagnosticLine = new Regex(@"^dotnet_diagnostic\.(UNOL\d{3})\.severity\s*=\s*(\w+)", RegexOptions.IgnoreCase);
-    private static readonly Regex ProfileLine = new Regex(@"^uno_lint\.profile\s*=\s*(\w+)", RegexOptions.IgnoreCase);
+    [GeneratedRegex(@"^dotnet_diagnostic\.(UNOL\d{3})\.severity\s*=\s*(\w+)", RegexOptions.IgnoreCase)]
+    private static partial Regex DiagnosticLine();
+
+    [GeneratedRegex(@"^uno_lint\.profile\s*=\s*(\w+)", RegexOptions.IgnoreCase)]
+    private static partial Regex ProfileLine();
+
+    [GeneratedRegex(@"^\s*root\s*=\s*true", RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    private static partial Regex RootLine();
 
     private static string StripComment(string line)
     {
-        var cut = line.IndexOfAny(new[] { '#', ';' });
-        return cut >= 0 ? line.Substring(0, cut) : line;
+        var cut = line.IndexOfAny(['#', ';']);
+        return cut >= 0 ? line[..cut] : line;
     }
 
     /// <summary>The .editorconfig files from the root upward, farthest first so the nearest file's sections are applied last.</summary>
-    private static IEnumerable<string> FindAncestors(string rootOrFile)
+    private static List<string> FindAncestors(string rootOrFile)
     {
         var found = new List<string>();
         var dir = Directory.Exists(rootOrFile) ? rootOrFile : Path.GetDirectoryName(rootOrFile);
-        while (!string.IsNullOrEmpty(dir))
+        while (dir is { Length: > 0 })
         {
-            var candidate = Path.Combine(dir!, ".editorconfig");
+            var candidate = Path.Combine(dir, ".editorconfig");
             if (File.Exists(candidate))
             {
                 found.Add(candidate);
-                if (Regex.IsMatch(File.ReadAllText(candidate), @"^\s*root\s*=\s*true", RegexOptions.IgnoreCase | RegexOptions.Multiline))
+                if (IsRoot(candidate))
                 {
                     break;
                 }
@@ -176,10 +179,26 @@ public sealed class EditorConfigSet
         return found;
     }
 
-    private static bool TryParseSeverity(string text, out Severity severity)
+    private static bool IsRoot(string path)
+    {
+        try
+        {
+            return RootLine().IsMatch(File.ReadAllText(path));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
+
+    /// <summary><c>default</c> parses to null: the rule's default severity for the active profile, as for the compiler.</summary>
+    private static bool TryParseSeverity(string text, out Severity? severity)
     {
         switch (text.ToLowerInvariant())
         {
+            case "default":
+                severity = null;
+                return true;
             case "none":
             case "silent":
                 severity = Severity.None;
@@ -194,7 +213,7 @@ public sealed class EditorConfigSet
                 severity = Severity.Error;
                 return true;
             default:
-                severity = Severity.None;
+                severity = null;
                 return false;
         }
     }
@@ -207,42 +226,34 @@ public sealed class EditorConfigSet
         public Section(string directory, string glob)
         {
             _directory = directory.Replace('\\', '/').TrimEnd('/');
-            Glob = glob;
             _pattern = GlobToRegex(glob);
         }
 
-        public string Glob { get; }
+        public Dictionary<string, Severity?> Severities { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-        public Dictionary<string, Severity> Severities { get; } = new Dictionary<string, Severity>(StringComparer.OrdinalIgnoreCase);
-
-        public bool Matches(string? normalizedFilePath)
+        public bool Matches(string normalizedFilePath)
         {
-            if (normalizedFilePath == null)
-            {
-                return false; // a sectioned severity needs a file to match against
-            }
-
             if (!normalizedFilePath.StartsWith(_directory + "/", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }
 
-            var relative = normalizedFilePath.Substring(_directory.Length + 1);
-            return _pattern.IsMatch(relative);
+            return _pattern.IsMatch(normalizedFilePath[(_directory.Length + 1)..]);
         }
 
         /// <summary>
         /// EditorConfig glob semantics: a pattern without '/' matches the file name in any folder; one with '/' is
         /// relative to the .editorconfig folder. '*' stays within a segment, '**' crosses segments, '{a,b}' alternates.
+        /// Interpreted rather than compiled: each section's pattern is used a handful of times per run.
         /// </summary>
         private static Regex GlobToRegex(string glob)
         {
             var pattern = glob.Replace('\\', '/');
-            if (pattern.StartsWith("/", StringComparison.Ordinal))
+            if (pattern.StartsWith('/'))
             {
-                pattern = pattern.Substring(1);
+                pattern = pattern[1..];
             }
-            else if (pattern.IndexOf('/') < 0)
+            else if (!pattern.Contains('/'))
             {
                 pattern = "**/" + pattern;
             }
@@ -289,7 +300,7 @@ public sealed class EditorConfigSet
                         continue;
                     }
 
-                    var alternatives = pattern.Substring(i + 1, close - i - 1).Split(',').Select(a => Regex.Escape(a.Trim()).Replace(@"\*", "[^/]*"));
+                    var alternatives = pattern[(i + 1)..close].Split(',').Select(a => Regex.Escape(a.Trim()).Replace(@"\*", "[^/]*"));
                     sb.Append("(?:").Append(string.Join("|", alternatives)).Append(')');
                     i = close + 1;
                 }
@@ -303,8 +314,8 @@ public sealed class EditorConfigSet
                         continue;
                     }
 
-                    var cls = pattern.Substring(i, close - i + 1);
-                    sb.Append(cls.StartsWith("[!", StringComparison.Ordinal) ? "[^" + cls.Substring(2) : cls);
+                    var cls = pattern[i..(close + 1)];
+                    sb.Append(cls.StartsWith("[!", StringComparison.Ordinal) ? "[^" + cls[2..] : cls);
                     i = close + 1;
                 }
                 else
@@ -315,22 +326,7 @@ public sealed class EditorConfigSet
             }
 
             sb.Append('$');
-            return new Regex(sb.ToString(), RegexOptions.IgnoreCase | RegexOptions.Compiled);
-        }
-    }
-}
-
-/// <summary>Convenience entry points over <see cref="EditorConfigSet"/>.</summary>
-public static class EditorConfig
-{
-    /// <summary>Loads the .editorconfig chain for <paramref name="root"/> into the options and applies its profile unless one was given explicitly.</summary>
-    public static void Apply(string root, LintOptions options, bool profileExplicit)
-    {
-        var set = EditorConfigSet.Load(root);
-        options.EditorConfig = set;
-        if (!profileExplicit && set.Profile.HasValue)
-        {
-            options.Profile = set.Profile.Value;
+            return new Regex(sb.ToString(), RegexOptions.IgnoreCase);
         }
     }
 }

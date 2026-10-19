@@ -3,53 +3,59 @@
 Semantic lint for Uno Platform XAML and C#. It catches places where code, usually written by an AI agent,
 hand-builds something the platform already provides, and names the control or resource to use instead.
 
-Skills tell the agent what to do. This checks what it actually did, deterministically, in about a tenth of a second.
+Skills tell the agent what to do. This checks what it actually did, deterministically, right after each edit.
 
 ## Layout
 
 ```
-src/Uno.Lint.Xaml   the XAML rules, written as Uno.XamlParser Stage-1 fixers (net10.0). XamlParser reads and repairs
-                    the markup; the rules report UNOL diagnostics. Any XamlParser host (Studio Live, Uno.AI) can add
-                    them with UnoLintXamlRules.AddTo(options). XamlParserEngine adapts them to the uno-lint host.
-src/Uno.Lint.Core   netstandard2.0: the C# rules (Roslyn 4.8) and everything XamlParser does not do: .editorconfig
-                    severities, profiles, project context, suppression comments and counts, the file walk (Linter).
-                    RuleLogic holds the color, key and geometry predicates both sides share.
-src/Uno.Lint.Cli    uno-lint command: path mode, --json, --hook. Registers XamlParserEngine as the XAML host.
-tests/Uno.Lint.Tests xunit
-hooks/              Claude Code PostToolUse hook snippets
-FINDINGS.md         corpus runs and per-rule verdicts
-XAMLPARSER.md       how the XAML rules run on Uno.XamlParser, measurements, and issues found in the parser
+src/Uno.Lint.Core    netstandard2.0, rules only: the C# rules (Roslyn 4.8), the rule catalog, the shared predicates
+                     (RuleLogic), suppression comments and the immutable model. No file system, so a future Roslyn
+                     analyzer package can ship it as is.
+src/Uno.Lint.Xaml    net9.0 like Uno.XamlParser: the XAML rules as Stage-1 fixers, and UnoLintXaml, the three steps
+                     any XamlParser host calls (AddTo, IsWellFormed, Collect). XamlLintEngine runs them for uno-lint.
+src/Uno.Lint.Host    net10.0: the Linter (folder walk, project context and its cache, .editorconfig), the immutable
+                     LintReport with its text rendering, and the agent-hook adapters (Claude Code, Codex).
+src/Uno.Lint.Cli     the uno-lint command: lint, rules, hook, on Repl Toolkit.
+tests/Uno.Lint.Tests xunit, grouped by subject; CliTests drive the command graph in memory, HookProcessTests run the
+                     built tool with raw UTF-8 on stdin.
+hooks/               the hook shim and settings snippet
+FINDINGS.md          corpus results and per-rule verdicts
+XAMLPARSER.md        how the XAML rules use the Uno.XamlParser package
 ```
-
-### Who does what
-
-| Concern | Lives in |
-|---|---|
-| Reading XAML, repairing malformed markup | Uno.XamlParser (Stage 0/1) |
-| XAML rules: HEX, TOKENTHEME, ICON, CARD, BACKBAR, BINDVALUE | `Uno.Lint.Xaml`, as XamlParser fixers |
-| C# rules: CODEBEHIND, OVERLAY, RESPONSIVE, BUILTIN, colors in code | `Uno.Lint.Core`, on Roslyn |
-| `.editorconfig`, profiles, Toolkit/MVUX/Themes gates, suppressions, fix text | `Uno.Lint.Core` |
-| Agent hook, exit codes, JSON, text report | `Uno.Lint.Cli` |
 
 ## Build and run
 
 ```bash
 dotnet build -c Release
-dotnet test
+dotnet test -c Release
 ```
 
 ```bash
-dotnet run --project src/Uno.Lint.Cli -c Release -- path/to/app
-dotnet run --project src/Uno.Lint.Cli -c Release -- path/to/app --profile strict --json
-dotnet run --project src/Uno.Lint.Cli -c Release -- --list-rules
+dotnet run --project src/Uno.Lint.Cli -c Release -- lint path/to/app
+dotnet run --project src/Uno.Lint.Cli -c Release -- lint path/to/app --profile strict --json
+dotnet run --project src/Uno.Lint.Cli -c Release -- rules
+dotnet run --project src/Uno.Lint.Cli -c Release -- lint --help
 ```
 
-Exit codes: `0` clean, `1` findings at warning or above, `2` bad input.
+| Option of `lint` | Meaning |
+|---|---|
+| `[path]` | a project folder or one `.xaml`/`.cs` file; default the current folder |
+| `--profile recommended\|strict` | rule set; default `uno_lint.profile` from `.editorconfig`, else `recommended` |
+| `--top <n>` | files listed per rule in the text report (default 12) |
+| `--include-dev` | also lint `Dev`, `Harness`, `Probe(s)` and `Test(s)` folders |
+| `--toolkit` / `--no-toolkit` | force the Uno.Toolkit gate instead of detecting it |
+| `--no-cache` | detect the project context again instead of reading the cached one |
+| `--json`, `--output:yaml`... | structured output of the same report |
 
-To install as a global tool locally: `dotnet pack src/Uno.Lint.Cli -c Release` then
-`dotnet tool install -g --add-source src/Uno.Lint.Cli/bin/Release Uno.Lint.Tool`.
+Exit codes: `0` no finding at warning or above, `1` at least one, `2` the run could not complete (unknown or
+malformed option, missing path, a file that is not `.xaml` or `.cs`).
+
+To install as a global tool from a local build: `dotnet pack src/Uno.Lint.Cli -c Release -o artifacts` then
+`dotnet tool install -g --add-source artifacts Uno.Lint.Tool`. The package is not on nuget.org yet.
 
 ## Rules
+
+`uno-lint rules` prints this catalog; `uno-lint rules --json` gives it to scripts.
 
 | Id | Name | Profile | Catches | Use instead |
 |---|---|---|---|---|
@@ -62,15 +68,16 @@ To install as a global tool locally: `dotnet pack src/Uno.Lint.Cli -c Release` t
 | UNOL102 | BACKBAR | strict, Toolkit only | `Navigation.Request="-"` on a page with no NavigationBar | `utu:NavigationBar` MainCommand |
 | UNOL103 | CODEBEHIND | strict | event handlers and `.Visibility =` in `*.xaml.cs` | commands, VisualStateManagerExtensions, regions |
 | UNOL104 | OVERLAY | strict | `*Overlay/*Sheet/*Drawer.Visibility =` in code-behind | `Navigation.Request="!Route"` flyout |
-| UNOL201 | BINDVALUE | recommended, MVUX only | `{Binding State.Value}` outside a DataTemplate; shows empty, writes nothing | `{Binding State, Mode=TwoWay}`; `{Binding Data.X}` inside FeedView |
+| UNOL201 | BINDVALUE | recommended, MVUX only, a bug | `{Binding State.Value}` outside a DataTemplate; shows empty, writes nothing | `{Binding State, Mode=TwoWay}`; `{Binding Data.X}` inside FeedView |
 
 Info counters (never gating): TOKEN, ADAPTIVE vs `utu:Responsive`, TEMPLATE, WORKAROUND. A `Supp` column counts
 hits covered by an allow comment, per rule, so suppression is visible rather than a silent escape hatch.
 
 Rules whose suggestion is a Toolkit control switch off automatically when the project references no Uno.Toolkit
-(detected from `UnoFeatures`, `PackageReference` or the `using:Uno.Toolkit.UI` xmlns). Force it with `--toolkit` /
-`--no-toolkit`. BINDVALUE switches on only when MVUX is referenced. Fix text adapts the same way: HEX names Uno.Themes
-role brushes when Material, Cupertino or SimpleTheme is referenced, and WinUI theme brushes in a Fluent-only app.
+(detected from `UnoFeatures`, `PackageReference` or the `using:Uno.Toolkit.UI` xmlns). BINDVALUE switches on only
+when MVUX is referenced. Fix text adapts the same way: HEX names Uno.Themes role brushes when Material, Cupertino or
+SimpleTheme is referenced, and WinUI theme brushes in a Fluent-only app. A file outside any project (no `.csproj`,
+`.sln` or `.slnx` above it) is linted with no references.
 
 CARD does not count a `Border` that is a circle (equal explicit Width/Height with radius at least half), a pill (radius
 at least half an explicit Height), a chip (radius 12+ around a single TextBlock or icon), a zero radius, or a radius on
@@ -89,10 +96,14 @@ dotnet_diagnostic.UNOL002.severity = warning     # TOKENTHEME gates here (defaul
 
 [Samples/**]
 dotnet_diagnostic.UNOL001.severity = none        # demo pages may show literal colors
+
+[Samples/Brand/**]
+dotnet_diagnostic.UNOL001.severity = default     # back to the profile's severity here
 ```
 
-A severity key above any `[section]` is ignored (and reported), as a Roslyn analyzer would ignore it; nested
-`.editorconfig` files below the lint root are loaded too, so `uno-lint .` and `uno-lint App/MainPage.xaml` agree.
+Values: `default`, `none`, `silent`, `suggestion`, `warning`, `error`. A severity key above any `[section]` is ignored
+(and reported), as a Roslyn analyzer would ignore it. A file is governed by the `.editorconfig` files above it; a
+folder run also loads those below it, so `uno-lint lint .` and `uno-lint lint App/MainPage.xaml` agree.
 
 One deliberate exception, reason required, in a comment directly above the hit (consecutive comment lines count, the
 first non-comment line stops the search) or on the same line. For an attribute on a multi-line element the comment
@@ -109,30 +120,44 @@ private void OnPositionChanged(object sender, RoutedEventArgs e) { }
 ```
 
 The `xaml-lint:` prefix from the PowerShell prototype is accepted too. Every suppression is counted per rule in the
-report and in `--json` (`suppressed`, `suppressedFindings`); keep them for framework failures with a recorded repro.
+report and in `--json` (`rules[].suppressed`, `suppressedFindings`); keep them for framework failures with a recorded
+repro.
 
-## Claude Code hook
+## Agent hook
 
-Install the tool once, then merge `hooks/settings.hooks.json` into your Claude Code settings:
+`uno-lint hook` is a PostToolUse hook for Claude Code (Edit, MultiEdit, Write) and Codex (`apply_patch`). It reads the
+payload on stdin as UTF-8, lints each edited file with full context, reports only findings on the lines the edit
+added, bugs before patterns, defaults to the strict profile so the agent sees every hint, leads with the fix (it does
+not offer suppression; allow comments the edit added are noted and counted), and always exits 0.
+
+To wire it, install the tool and copy `hooks/uno-lint.sh` next to your hook settings; `hooks/hooks.json` is the
+snippet, in the form the Studio plugin uses (`${CLAUDE_PLUGIN_ROOT}`). For a project's own `.claude/settings.json`,
+point the command at the script's path instead. The shim exits quietly when `uno-lint` is not on PATH, so a machine
+without the tool sees no hook error on every edit; set `UNO_LINT_CLI` to use another build.
+
+How each harness's edit becomes added lines:
+
+- **Claude Code**: `tool_response.structuredPatch` when present (every line for a Write that created the file);
+  otherwise `new_string` is diffed against `old_string` and located in the saved file. When that text is missing or
+  appears more than once, the hook says nothing rather than guess.
+- **Codex**: the patch in `tool_input.command`, paths relative to the payload's `cwd`. Every line of an added file
+  counts; each update hunk's new text is located in the saved file; deleted files are skipped.
+
+Copilot CLI and Gemini CLI are not supported yet: their payloads and replies differ (`edit`/`create` tool names, a
+top-level `additionalContext`, a timeout in milliseconds for Gemini).
+
+Debugging: the hook writes nothing to stdout when there is nothing to say. When the payload is not JSON, an option is
+unknown, or the lint fails, it writes one `uno-lint:` line to stderr and still exits 0; harnesses do not show an
+exit-0 hook's stderr to the agent, so run it by hand to see it:
 
 ```bash
-dotnet tool install -g Uno.Lint.Tool
+uno-lint hook < payload.json
 ```
 
-The hook runs `uno-lint --hook` after every Edit or Write. It reads the tool payload on stdin, lints the saved file
-with full context, reports only findings on the lines the edit added, defaults to the strict profile so the agent
-sees every hint, leads with the fix (it does not offer suppression; any allow comments the edit added are noted and
-counted), and always exits 0 so it never blocks an edit.
+In single-file runs the project context (Toolkit, MVUX, Uno.Themes) is cached per project, keyed by the project files'
+paths and timestamps, in `uno-lint/context` under the user's local application data (`UNO_LINT_CACHE_DIR` overrides
+the folder). `--no-cache` or `UNO_LINT_NO_CACHE=1` bypasses it. A reference first used only in XAML shows up after the
+next project-file change.
 
-`hooks/settings.hooks.dnx.json` is the zero-install alternative using `dotnet dnx Uno.Lint.Tool`. Measured on a
-developer laptop: installed tool about 100 ms per hook call, `dnx` about 400 to 450 ms warm and 570 ms on first use.
-A hook that calls a missing `uno-lint` shows an error on every edit, so check `uno-lint --list-rules` works before
-enabling it.
-
-In single-file (hook) mode the project context (Toolkit, MVUX, Uno.Themes) is cached under the temp folder, keyed by
-the project files' timestamps, so a hook call on a large solution does not re-read every XAML file; `bin` and `obj` are
-never walked.
-
-The added lines come from `tool_response.structuredPatch`, which Claude Code sends for Edit and Write. Hosts without
-it fall back to diffing `old_string` against `new_string` and finding `new_string` in the file; when that text is
-missing or appears more than once, the hook says nothing rather than guess.
+Hook and scan times, with the machine and method, are in the spec's
+[Performance](../../specs/001-uno-linter/spec.md#performance) section.

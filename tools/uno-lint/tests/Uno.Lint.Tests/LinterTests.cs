@@ -1,80 +1,104 @@
-using Uno.Lint;
 using Xunit;
+using static Uno.Lint.Tests.TestHost;
 
 namespace Uno.Lint.Tests;
 
+/// <summary>The file-system host: which files are linted, how the project context is found, and single-file runs.</summary>
 public class LinterTests : IDisposable
 {
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "uno-lint-tests", Guid.NewGuid().ToString("N"));
+    private const string ToolkitProject = "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>";
 
-    public LinterTests()
-    {
-        Directory.CreateDirectory(_root);
-    }
+    private readonly TempProject _project = new();
 
-    public void Dispose()
-    {
-        try { Directory.Delete(_root, recursive: true); } catch { }
-    }
+    public void Dispose() => _project.Dispose();
 
-    private void Write(string relative, string content)
-    {
-        var path = Path.Combine(_root, relative);
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, content);
-    }
+    // ------------------------------------------------------------ project context
 
     [Fact]
     public void Detects_toolkit_from_UnoFeatures_and_enables_card_rule()
     {
-        Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Material;Toolkit;Mvux</UnoFeatures></PropertyGroup></Project>");
-        Write("MainPage.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border CornerRadius=\"8\" Background=\"Red\"/></Page>");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Material;Toolkit;Mvux</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("MainPage.xaml", $"{Page}<Border CornerRadius=\"8\" Background=\"Red\"/></Page>");
 
-        var strict = new Linter(new LintOptions { Profile = Profile.Strict }).Run(_root);
+        var strict = _project.Lint(options: new LintOptions { Profile = Profile.Strict });
         Assert.True(strict.Context.HasToolkit);
         Assert.Single(strict.Findings, f => f.Rule == Rules.Card);
-
-        var recommended = new Linter(new LintOptions()).Run(_root);
-        Assert.DoesNotContain(recommended.Findings, f => f.Rule == Rules.Card);
+        Assert.DoesNotContain(_project.Lint().Findings, f => f.Rule == Rules.Card);
     }
 
     [Fact]
     public void Without_toolkit_card_rule_stays_off_even_in_strict()
     {
-        Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Mvux</UnoFeatures></PropertyGroup></Project>");
-        Write("MainPage.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border CornerRadius=\"8\" Background=\"#FF0000\"/></Page>");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Mvux</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("MainPage.xaml", $"{Page}<Border CornerRadius=\"8\" Background=\"#FF0000\"/></Page>");
 
-        var result = new Linter(new LintOptions { Profile = Profile.Strict }).Run(_root);
+        var result = _project.Lint(options: new LintOptions { Profile = Profile.Strict });
         Assert.False(result.Context.HasToolkit);
         Assert.DoesNotContain(result.Findings, f => f.Rule == Rules.Card);
         Assert.Single(result.Findings, f => f.Rule == Rules.Hex);
+
+        Assert.Single(_project.Lint(options: new LintOptions { Profile = Profile.Strict, AssumeToolkit = true }).Findings, f => f.Rule == Rules.Card);
+    }
+
+    [Theory]
+    [InlineData("<UnoFeatures>Material;Toolkit</UnoFeatures>", true, true, false)]
+    [InlineData("<UnoFeatures>SimpleTheme;Mvux</UnoFeatures>", true, false, true)]
+    [InlineData("<UnoFeatures>MaterialToolkit</UnoFeatures>", true, true, false)]
+    [InlineData("<UnoFeatures>Hosting</UnoFeatures>", false, false, false)]
+    [InlineData("<PackageReference Include=\"Uno.Material.WinUI\" /><PackageReference Include=\"Uno.Extensions.Reactive.WinUI\" />", true, false, true)]
+    public void Context_detects_themes_toolkit_and_mvux(string projectXml, bool themes, bool toolkit, bool mvux)
+    {
+        var context = ProjectContext.Detect([$"<Project>{projectXml}</Project>"], []);
+        Assert.Equal(themes, context.HasUnoThemes);
+        Assert.Equal(toolkit, context.HasToolkit);
+        Assert.Equal(mvux, context.HasMvux);
     }
 
     [Fact]
-    public void Editorconfig_overrides_severity_and_profile()
+    public void Context_falls_back_to_xaml_namespaces()
     {
-        Write(".editorconfig", "root = true\n[*]\nuno_lint.profile = strict\ndotnet_diagnostic.UNOL001.severity = none\n");
-        Write("App.csproj", "<Project><ItemGroup><PackageReference Include=\"Uno.Toolkit.WinUI\" /></ItemGroup></Project>");
-        Write("MainPage.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border CornerRadius=\"8\" Background=\"#FF0000\"/></Page>");
-
-        var options = new LintOptions();
-        EditorConfig.Apply(_root, options, profileExplicit: false);
-        Assert.Equal(Profile.Strict, options.Profile);
-
-        var result = new Linter(options).Run(_root);
-        Assert.DoesNotContain(result.Findings, f => f.Rule == Rules.Hex);
-        Assert.Single(result.Findings, f => f.Rule == Rules.Card);
+        var context = ProjectContext.Detect([], ["<Page xmlns:um=\"using:Uno.Material\" xmlns:mvux=\"using:Uno.Extensions.Reactive.UI\"/>"]);
+        Assert.True(context.HasUnoThemes);
+        Assert.True(context.HasMvux);
+        Assert.False(context.HasToolkit);
     }
+
+    [Fact]
+    public void Directory_build_props_above_the_project_is_read_in_every_mode()
+    {
+        _project.Write("Directory.Build.props", "<Project><PropertyGroup><UnoFeatures>Toolkit;Material</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("src/App/App.csproj", "<Project Sdk=\"Uno.Sdk\"/>");
+        _project.Write("src/App/MainPage.xaml", $"{Page}<Border CornerRadius=\"8\" Background=\"White\"><Grid/></Border></Page>");
+
+        foreach (var target in new[] { null, "src/App", "src/App/MainPage.xaml" })
+        {
+            var result = _project.Lint(target, new LintOptions { Profile = Profile.Strict });
+            Assert.True(result.Context.HasToolkit, target);
+            Assert.True(result.Context.HasUnoThemes, target);
+            Assert.Single(result.Findings, f => f.Rule == Rules.Card);
+            Assert.Contains("PrimaryBrush", result.Findings.Single(f => f.Rule == Rules.Hex).Fix);
+        }
+    }
+
+    [Fact]
+    public void Findings_carry_the_project_specific_fix()
+    {
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Hosting</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("MainPage.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+        Assert.Contains("TextFillColorPrimaryBrush", Assert.Single(_project.Lint().Findings).Fix);
+    }
+
+    // ------------------------------------------------------------ which files
 
     [Fact]
     public void Skips_dev_paths_bin_obj_and_generated_files()
     {
-        Write("App.csproj", "<Project/>");
-        Write("Tests/Sample.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border Background=\"#FF0000\"/></Page>");
-        Write("obj/MainPage.g.cs", "class X { void H(object sender, EventArgs e) { } }");
-        Write("MainPage.xaml.cs", "partial class MainPage { void H(object sender, EventArgs e) { } }");
+        _project.Write("App.csproj", "<Project/>");
+        _project.Write("Tests/Sample.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+        _project.Write("obj/MainPage.g.cs", "class X { void H(object sender, EventArgs e) { } }");
+        _project.Write("MainPage.xaml.cs", "partial class MainPage { void H(object sender, EventArgs e) { } }");
 
-        var result = new Linter(new LintOptions { Profile = Profile.Strict }).Run(_root);
+        var result = _project.Lint(options: new LintOptions { Profile = Profile.Strict });
         Assert.Equal(1, result.FileCount);
         Assert.Equal(1, result.SkippedDevFiles);
         Assert.Single(result.Findings);
@@ -92,30 +116,133 @@ public class LinterTests : IDisposable
     [InlineData("Tests.xaml", false)]
     public void Dev_paths_match_whole_folder_names_only(string relative, bool isDev)
     {
-        Assert.Equal(isDev, Linter.IsDevPath(relative));
+        Assert.Equal(isDev, ProjectLocator.IsDevPath(relative));
     }
 
     [Fact]
-    public void Skips_a_top_level_tests_folder_but_not_a_probe_named_page()
+    public void Dev_path_skip_applies_to_single_files_too()
     {
-        Write("App.csproj", "<Project/>");
-        Write("Tests/Foo.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border Background=\"#FF0000\"/></Page>");
-        Write("Views/ProbeResultsPage.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border Background=\"#FF0000\"/></Page>");
+        _project.Write("App.csproj", "<Project/>");
+        _project.Write("Tests/Probe.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
 
-        var result = new Linter(new LintOptions()).Run(_root);
-        Assert.Equal(1, result.SkippedDevFiles);
-        var hit = Assert.Single(result.Findings);
-        Assert.Equal(Path.Combine("Views", "ProbeResultsPage.xaml"), hit.File);
+        var skipped = _project.Lint("Tests/Probe.xaml");
+        Assert.Equal(0, skipped.FileCount);
+        Assert.Equal(1, skipped.SkippedDevFiles);
+        Assert.Empty(skipped.Findings);
+
+        var hit = Assert.Single(_project.Lint("Tests/Probe.xaml", new LintOptions { IncludeDev = true }).Findings);
+        Assert.Equal(Path.Combine("Tests", "Probe.xaml"), hit.File);
     }
+
+    [Fact]
+    public void Non_source_files_are_rejected_not_parsed_as_csharp()
+    {
+        _project.Write("notes.txt", "void H(object sender, EventArgs e) { }");
+        Assert.False(FileKinds.IsSourceFile("notes.txt"));
+        Assert.Throws<ArgumentException>(() => _project.Lint("notes.txt"));
+    }
+
+    [Fact]
+    public void Findings_are_in_file_and_line_order()
+    {
+        _project.Write("App.csproj", "<Project/>");
+        _project.Write("B.xaml", $"{Page}\n<Border Background=\"#00FF00\"/>\n<Border Background=\"#FF0000\"/>\n</Page>");
+        _project.Write("A.xaml", $"{Page}\n<Border Background=\"#0000FF\"/>\n</Page>");
+
+        Assert.Equal(["A.xaml:2", "B.xaml:2", "B.xaml:3"], _project.Lint().Findings.Select(f => $"{f.File}:{f.Line}"));
+    }
+
+    [Fact]
+    public void A_crafted_symlink_loop_does_not_hang_the_walk()
+    {
+        _project.Write("App.csproj", "<Project/>");
+        _project.Write("Views/MainPage.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+        try
+        {
+            Directory.CreateSymbolicLink(_project.Path("Views/Up"), _project.Root);
+            Directory.CreateSymbolicLink(_project.Path("Views/Self"), _project.Path("Views"));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return; // creating links needs Developer Mode or elevation on Windows; Linux CI runs this
+        }
+
+        var result = _project.Lint();
+        Assert.Equal(1, result.FileCount);
+        Assert.Single(result.Findings);
+    }
+
+    // ------------------------------------------------------------ single files
 
     [Fact]
     public void Single_file_mode_detects_context_from_nearest_csproj()
     {
-        Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>");
-        Write("Views/Detail.xaml", "<Page xmlns=\"http://schemas.microsoft.com/winfx/2006/xaml/presentation\"><Border CornerRadius=\"8\" Background=\"Red\"/></Page>");
+        _project.Write("App.csproj", ToolkitProject);
+        _project.Write("Views/Detail.xaml", $"{Page}<Border CornerRadius=\"8\" Background=\"Red\"/></Page>");
 
-        var result = new Linter(new LintOptions { Profile = Profile.Strict }).RunSingleFile(Path.Combine(_root, "Views", "Detail.xaml"));
+        var result = _project.Lint("Views/Detail.xaml", new LintOptions { Profile = Profile.Strict });
         Assert.True(result.Context.HasToolkit);
         Assert.Single(result.Findings, f => f.Rule == Rules.Card);
+    }
+
+    [Fact]
+    public void A_file_outside_any_project_gets_an_empty_context_and_its_ancestors_editorconfig()
+    {
+        // No .csproj anywhere above: the folder is not walked for project files or XAML namespaces.
+        _project.Write(".editorconfig", "root = true\n[*.xaml]\ndotnet_diagnostic.UNOL003.severity = none\n");
+        _project.Write("big/deep/Other.xaml", $"<Page {Ns}><utu:Card/></Page>");
+        _project.Write("Scratch.xaml", $"{Page}<Border Background=\"#FF0000\"/><Path Data=\"M0,0 L1,1\"/></Page>");
+        if (ProjectLocator.FindProjectRoot(_project.Root) is { } above)
+        {
+            Assert.Fail($"the temp folder sits inside a project ({above}); this test needs a folder outside any project");
+        }
+
+
+        var result = _project.Lint("Scratch.xaml", new LintOptions { Profile = Profile.Strict });
+        Assert.False(result.Context.HasToolkit, "the sibling folder's Toolkit namespace is not read");
+        Assert.Equal(["HEX"], result.Findings.Select(f => f.Rule.Name));
+    }
+
+    [Fact]
+    public async Task Single_file_context_is_cached_per_project_and_bin_obj_are_never_walked()
+    {
+        // The cache folder is outside the project: a folder inside it would change the key's entry count.
+        var cache = _project.Root + ".cache";
+        try
+        {
+            _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Hosting</UnoFeatures></PropertyGroup></Project>");
+            _project.Write("Views/Main.xaml", $"{Page.Replace(">", " xmlns:utu=\"using:Uno.Toolkit.UI\">")}<Border CornerRadius=\"8\" Background=\"White\"><Grid/></Border></Page>");
+            _project.Write("obj/Debug/Generated.xaml", "<Page xmlns:mvux=\"using:Uno.Extensions.Reactive.UI\"/>");
+            var linter = new Linter(new LintOptions { Profile = Profile.Strict, ContextCacheDirectory = cache }, Engine);
+            var file = _project.Path("Views/Main.xaml");
+
+            var first = await linter.RunAsync(file);
+            Assert.True(first.Context.HasToolkit, "Toolkit detected from the XAML namespace");
+            Assert.False(first.Context.HasMvux, "obj/ is not walked");
+            var entry = Assert.Single(Directory.GetFiles(cache));
+            Assert.Equal("T---", File.ReadAllText(entry));
+
+            // The cached entry is what the next call reads: edit it and the context follows.
+            File.WriteAllText(entry, "T-M-");
+            Assert.True((await linter.RunAsync(file)).Context.HasMvux);
+
+            // --no-cache detects again.
+            Assert.False((await new Linter(new LintOptions { UseContextCache = false }, Engine).RunAsync(file)).Context.HasMvux);
+        }
+        finally
+        {
+            if (Directory.Exists(cache))
+            {
+                Directory.Delete(cache, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void Workaround_markers_are_counted()
+    {
+        _project.Write("App.csproj", "<Project/>");
+        _project.Write("MainPage.xaml.cs", "partial class P { // WORKAROUND(#1) a\n // WORKAROUND(#2) b WORKAROUND(\n }");
+        Assert.Equal(3, _project.Lint().Info.WorkaroundMarkers);
     }
 }

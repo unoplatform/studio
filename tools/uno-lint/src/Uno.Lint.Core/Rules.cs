@@ -1,6 +1,6 @@
 namespace Uno.Lint;
 
-/// <summary>The catalog. Ids 0xx are recommended style rules, 1xx are strict-only, 2xx are recommended correctness rules.</summary>
+/// <summary>The catalog. Ids 0xx are recommended style rules, 1xx are strict-only, 2xx are correctness rules.</summary>
 public static class Rules
 {
     public static readonly RuleDescriptor Hex = new RuleDescriptor(
@@ -63,7 +63,7 @@ public static class Rules
         "UNOL201", "BINDVALUE",
         "Binding to State.Value instead of the state",
         "Bind the state itself: {Binding Name, Mode=TwoWay}. The MVUX generated ViewModel exposes IState<T>/IFeed<T> as plain properties, so '.Value' resolves to nothing: the control shows empty and writes nothing back. Inside a FeedView use {Binding Data.Name}.",
-        Profile.Recommended, requiresMvux: true);
+        Profile.Recommended, requiresMvux: true, category: RuleCategory.Correctness);
 
     public static readonly IReadOnlyList<RuleDescriptor> All = new[]
     {
@@ -75,15 +75,17 @@ public static class Rules
             string.Equals(r.Id, idOrName, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(r.Name, idOrName, StringComparison.OrdinalIgnoreCase));
 
-    /// <summary>Effective severity for a rule under the given options and project context; None means disabled.</summary>
-    public static Severity Resolve(RuleDescriptor rule, LintOptions options, ProjectContext context) =>
-        Resolve(rule, options, context, filePath: null);
+    /// <summary>The severity a rule has under a profile when nothing configures it: its default, or None outside the profile.</summary>
+    public static Severity DefaultFor(RuleDescriptor rule, Profile profile) =>
+        rule.MinimumProfile <= profile ? rule.DefaultSeverity : Severity.None;
 
     /// <summary>
-    /// Effective severity for a rule on one file. Order: project gates (Toolkit, MVUX), explicit overrides,
-    /// .editorconfig sections that match the file, then the profile default.
+    /// Effective severity for a rule on one file; None means disabled. Order: project gates (Toolkit, MVUX), then the
+    /// severity configured for the file (.editorconfig in the CLI and hook, AnalyzerConfigOptions in an analyzer),
+    /// then the profile default. A null <paramref name="configured"/> means not configured, or configured as
+    /// <c>default</c>.
     /// </summary>
-    public static Severity Resolve(RuleDescriptor rule, LintOptions options, ProjectContext context, string? filePath)
+    public static Severity Resolve(RuleDescriptor rule, Profile profile, ProjectContext context, Severity? configured = null)
     {
         if (rule.RequiresToolkit && !context.HasToolkit)
         {
@@ -95,22 +97,7 @@ public static class Rules
             return Severity.None;
         }
 
-        if (options.SeverityOverrides.TryGetValue(rule.Id, out var byId))
-        {
-            return byId;
-        }
-
-        if (options.SeverityOverrides.TryGetValue(rule.Name, out var byName))
-        {
-            return byName;
-        }
-
-        if (options.EditorConfig != null && options.EditorConfig.TryGetSeverity(rule.Id, filePath, out var fromConfig))
-        {
-            return fromConfig;
-        }
-
-        return rule.MinimumProfile <= options.Profile ? rule.DefaultSeverity : Severity.None;
+        return configured ?? DefaultFor(rule, profile);
     }
 
     /// <summary>

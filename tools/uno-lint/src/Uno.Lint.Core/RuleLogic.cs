@@ -4,18 +4,18 @@ using System.Text.RegularExpressions;
 namespace Uno.Lint;
 
 /// <summary>
-/// The rule predicates, independent of any document model. Every XAML host (the built-in XDocument path, the
-/// Uno.XamlParser engine, a future analyzer) calls these, so a rule means the same thing whichever host runs it.
-/// Hosts only differ in how they walk the tree and read attributes.
+/// The rule predicates, independent of any document model: the XAML rules on Uno.XamlParser and the C# rules call
+/// these, and so would a future analyzer, so a rule means the same thing whichever host runs it. The regular
+/// expressions are interpreted, not compiled: compiling costs more startup than a hook call saves.
 /// </summary>
 public static class RuleLogic
 {
-    private static readonly Regex HexLiteral = new Regex(@"^\s*#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})\s*$", RegexOptions.Compiled);
+    private static readonly Regex HexLiteral = new Regex(@"^\s*#(?:[0-9A-Fa-f]{8}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3,4})\s*$");
 
     // A property, or an element, that holds a color: Background, BorderBrush, Fill, Stroke, Tint, Color, SolidColorBrush,
     // GradientStop, ColorAnimation... Text="#404" and Tag="#123" are text that happens to look like hex.
-    private static readonly Regex ColorName = new Regex(@"(?i)colou?r|brush|background|foreground|fill|stroke|tint|gradientstop", RegexOptions.Compiled);
-    private static readonly Regex InvariantKey = new Regex(@"(?i)invariant|ondark|onlight|fixed", RegexOptions.Compiled);
+    private static readonly Regex ColorName = new Regex(@"(?i)colou?r|brush|background|foreground|fill|stroke|tint|gradientstop");
+    private static readonly Regex InvariantKey = new Regex(@"(?i)invariant|ondark|onlight|fixed");
     private static readonly HashSet<string> ChipContent = new HashSet<string>(StringComparer.Ordinal) { "TextBlock", "FontIcon", "SymbolIcon", "PathIcon", "Run" };
 
     /// <summary>The WinUI named colors (Microsoft.UI.Colors), minus Transparent, which is a legitimate "no color".</summary>

@@ -22,7 +22,7 @@ public sealed class CSharpFile
         RelativePath = relativePath;
         Tree = tree;
         Text = tree.GetText().ToString();
-        Lines = Suppression.SplitLines(Text);
+        Lines = TextLines.Split(Text);
         IsCodeBehind = relativePath.EndsWith(".xaml.cs", StringComparison.OrdinalIgnoreCase);
         IsAppCodeBehind = string.Equals(Path.GetFileName(relativePath), "App.xaml.cs", StringComparison.OrdinalIgnoreCase);
         IsPaletteFile = FileKinds.IsPaletteFile(relativePath);
@@ -47,8 +47,8 @@ public sealed class CSharpFile
 public static class CSharpAnalyzer
 {
     // "Panel" is the most common suffix for a plain layout container (RootPanel, ContentPanel), so it is not an overlay signal.
-    private static readonly Regex OverlayName = new Regex(@"(?i)(overlay|sheet|scrim|drawer|popup)$", RegexOptions.Compiled);
-    private static readonly Regex SizeMember = new Regex(@"(?:^|\.)(NewSize\.(?:Width|Height)|ActualWidth|ActualHeight|Bounds\.(?:Width|Height))$", RegexOptions.Compiled);
+    private static readonly Regex OverlayName = new Regex(@"(?i)(overlay|sheet|scrim|drawer|popup)$");
+    private static readonly Regex SizeMember = new Regex(@"(?:^|\.)(NewSize\.(?:Width|Height)|ActualWidth|ActualHeight|Bounds\.(?:Width|Height))$");
 
     private static readonly HashSet<string> ControlBaseTypes = new HashSet<string>(StringComparer.Ordinal)
     {
@@ -60,7 +60,7 @@ public static class CSharpAnalyzer
     {
         public BuiltinEntry(string namePattern, string suggestion, string alreadyUsedToken, bool toolkit)
         {
-            NamePattern = new Regex(namePattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            NamePattern = new Regex(namePattern, RegexOptions.IgnoreCase);
             Suggestion = suggestion;
             AlreadyUsedToken = alreadyUsedToken;
             Toolkit = toolkit;
@@ -91,7 +91,7 @@ public static class CSharpAnalyzer
     };
 
     // Word boundaries inside a PascalCase identifier: "StarRating" -> "Star Rating", "UIToggle" -> "UI Toggle".
-    private static readonly Regex WordBoundary = new Regex(@"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|_", RegexOptions.Compiled);
+    private static readonly Regex WordBoundary = new Regex(@"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|_");
 
     public static string SplitWords(string identifier) => WordBoundary.Replace(identifier, " ").Trim();
 
@@ -323,7 +323,7 @@ public static class CSharpAnalyzer
         cls.BaseList?.Types.Select(t => LastIdentifier(t.Type)).Any(n => n == "Application") == true;
 
     private static Finding New(RuleDescriptor rule, CSharpFile file, int line, string message) =>
-        new Finding(rule, file.RelativePath, line, message, Suppression.IsSuppressed(file.Lines, line, rule));
+        new Finding(rule, file.RelativePath, line, message, Suppression.IsSuppressed(file.Lines, rule, line));
 
     private static bool IsObjectType(TypeSyntax? type)
     {

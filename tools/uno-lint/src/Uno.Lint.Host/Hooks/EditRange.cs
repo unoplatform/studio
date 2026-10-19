@@ -13,7 +13,10 @@ public sealed class PatchHunk
     public IReadOnlyList<string> Lines { get; }
 }
 
-/// <summary>Finds the lines an edit added in the saved file, so a hook reports only what the agent just wrote.</summary>
+/// <summary>
+/// Finds the lines an edit added in the saved file, so a hook reports only what the agent just wrote. Every line
+/// number is 1-based and counted with <see cref="TextLines"/>, so it agrees with the lines findings carry.
+/// </summary>
 public static class EditRange
 {
     // Above this many old x new line pairs the diff is skipped and every new line counts as added.
@@ -49,7 +52,7 @@ public static class EditRange
 
     /// <summary>Every line of the file, for a file the edit created or rewrote whole.</summary>
     public static HashSet<int> AllLines(string fullText) =>
-        new HashSet<int>(Enumerable.Range(1, Normalize(fullText).Split('\n').Length));
+        new HashSet<int>(Enumerable.Range(1, TextLines.Count(fullText)));
 
     /// <summary>
     /// Fallback for hosts without a structured patch: diffs <paramref name="oldString"/> against
@@ -65,10 +68,10 @@ public static class EditRange
             return false;
         }
 
-        var full = Normalize(fullText);
-        var needle = Normalize(newString);
+        var full = TextLines.Normalize(fullText);
+        var needle = TextLines.Normalize(newString);
         var newLines = needle.Split('\n');
-        var addedOffsets = AddedLineOffsets(Normalize(oldString ?? string.Empty).Split('\n'), newLines);
+        var addedOffsets = AddedLineOffsets(TextLines.Normalize(oldString ?? string.Empty).Split('\n'), newLines);
 
         var starts = AllIndexesOf(full, needle);
         if (starts.Count > 0)
@@ -96,39 +99,39 @@ public static class EditRange
     /// <summary>0-based indexes of the lines in <paramref name="newLines"/> that are not part of a longest common subsequence with <paramref name="oldLines"/>.</summary>
     private static List<int> AddedLineOffsets(string[] oldLines, string[] newLines)
     {
-        var n = oldLines.Length;
-        var m = newLines.Length;
-        if ((long)n * m > MaxDiffCells)
+        var oldCount = oldLines.Length;
+        var newCount = newLines.Length;
+        if ((long)oldCount * newCount > MaxDiffCells)
         {
-            return Enumerable.Range(0, m).ToList();
+            return Enumerable.Range(0, newCount).ToList();
         }
 
         // lcs[i, j] = LCS length of oldLines[i..] and newLines[j..]
-        var lcs = new int[n + 1, m + 1];
-        for (var i = n - 1; i >= 0; i--)
+        var lcs = new int[oldCount + 1, newCount + 1];
+        for (var i = oldCount - 1; i >= 0; i--)
         {
-            for (var j = m - 1; j >= 0; j--)
+            for (var j = newCount - 1; j >= 0; j--)
             {
                 lcs[i, j] = oldLines[i] == newLines[j] ? lcs[i + 1, j + 1] + 1 : Math.Max(lcs[i + 1, j], lcs[i, j + 1]);
             }
         }
 
         var added = new List<int>();
-        int a = 0, b = 0;
-        while (b < m)
+        int oldIndex = 0, newIndex = 0;
+        while (newIndex < newCount)
         {
-            if (a < n && oldLines[a] == newLines[b])
+            if (oldIndex < oldCount && oldLines[oldIndex] == newLines[newIndex])
             {
-                a++;
-                b++;
+                oldIndex++;
+                newIndex++;
             }
-            else if (a < n && lcs[a + 1, b] >= lcs[a, b + 1])
+            else if (oldIndex < oldCount && lcs[oldIndex + 1, newIndex] >= lcs[oldIndex, newIndex + 1])
             {
-                a++;
+                oldIndex++;
             }
             else
             {
-                added.Add(b++);
+                added.Add(newIndex++);
             }
         }
 
@@ -194,8 +197,6 @@ public static class EditRange
 
         return found;
     }
-
-    private static string Normalize(string text) => text.Replace("\r\n", "\n").Replace('\r', '\n');
 
     private static int LineAt(string text, int index)
     {

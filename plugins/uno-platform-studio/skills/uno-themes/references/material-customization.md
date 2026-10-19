@@ -12,7 +12,7 @@ Three escalating scopes:
 2. **Specific brush override (targeted)** — drop a `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` into App.xaml or scoped resources.
 3. **Per-instance override (scoped)** — wrap the override in the control's `Resources` block.
 
-Font override: set `DefaultFontFamily` on the theme (`<MaterialTheme DefaultFontFamily="ms-appx:///Fonts/MyFont.ttf#MyFont" />`, a variable font or one with a font manifest); it generates the root token and every type-scale `*FontFamily` key. Use `FontOverrideSource` / `FontOverrideDictionary` only to override individual font keys. The `MaterialRegularFontFamily` / `MaterialMediumFontFamily` / `MaterialLightFontFamily` keys still exist but are legacy, and the `TypefacePlain` / `TypefaceBrand` pair introduced in 7.1.1 is removed in 8.0 (an override that still defines them is silently ignored).0 (an override that defines them is silently ignored).
+Font override: point `FontOverrideSource` at a ResourceDictionary (or inline one in `FontOverrideDictionary`, as the template's commented block shows) that redefines `MaterialLightFontFamily`, `MaterialMediumFontFamily` and `MaterialRegularFontFamily`, or the root typeface tokens `TypefacePlain` / `TypefaceBrand` that the type scales derive from. Define the keys under both `Light` and `Default` theme dictionaries. There is no `DefaultFontFamily` property in Uno.Themes 7.1.1.
 
 ## Migration
 
@@ -22,4 +22,4 @@ Between major versions, resource keys, converters, and style names can change. F
 uno_platform_docs_fetch(sourcePath="external/uno.themes/doc/material-migration.md")
 ```
 
-Key checks: renamed resource keys, removed converters, NuGet package renames, `UnoFeatures` flag changes. Uno.Themes 8.0 removes `SimpleFontFamily` and the per-weight font keys (root token `DefaultFontFamily`) and reworks seed generation (`SeedColorMode`).
+Key checks: renamed resource keys, removed converters, NuGet package renames, `UnoFeatures` flag changes. This reference targets Uno.Themes 7.1.1 (Uno.Sdk 6.7); a newer major may rename the font keys and the seed options, so check the migration page before using a key the docs show.

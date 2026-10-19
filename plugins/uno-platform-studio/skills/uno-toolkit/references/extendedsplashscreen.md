@@ -6,7 +6,7 @@
 - Requires `Uno.Toolkit.UI.ExtendedSplashScreen.Init(this);` on Android in `MainActivity.OnCreate` (the signature is `Init(Activity activity)`)
 - For navigation regions and splash content, see the `uno-navigation` skill (`references/setup.md`)
 - Does not require a native splash screen; `Platforms` (flags: `Android,iOS,Windows,WebAssembly,Skia`, default `All`) picks where it shows
-- Loading screen visuals (splash image, background color) are primarily controlled by **Resizetizer** configuration: the `UnoSplashScreen` build action (`BaseSize`, `BackgroundColor`; Uno.Resizetizer 2.0 ignores the old `Color` metadata with warning `Uno.Resizetizer0001`); see `uno_platform_docs_fetch(sourcePath="external/uno.resizetizer/doc/using-uno-resizetizer.md")`, section `UnoSplashScreen`
+- Loading screen visuals (splash image, background color) are primarily controlled by **Resizetizer** configuration: the `UnoSplashScreen` build action (`BaseSize`, `Color`); see `uno_platform_docs_fetch(sourcePath="external/uno.resizetizer/doc/using-uno-resizetizer.md")`, section `UnoSplashScreen`
 
 ## Docs, for what this page does not cover
 

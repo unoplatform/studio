@@ -8,9 +8,6 @@
 input=$(cat)
 file=$(printf '%s' "$input" | sed -En 's/.*"file_path" *: *"([^"]*\.(xaml|cs))".*/\1/p' | sed 's/\\\\/\\/g')
 [ -n "$file" ] || exit 0
-# The restart gate (app-restart-gate.sh) reads the last edited file and the class of its verdict.
-. "$(dirname "$0")/hook-state.sh"
-state_set file "$file"
 
 cli=${UNO_DEVSERVER_CLI:-uno-devserver}
 json_escape() { printf '%s' "$1" | tr -d '\r' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' | sed -e ':a' -e '$!N' -e '$!ba' -e 's/\n/\\n/g'; }
@@ -52,17 +49,6 @@ context() { printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUs
 startup=
 case $file in *App.xaml.cs) startup=" If the edit changed code that already ran at startup (OnLaunched, host configuration, DI registrations), the app runs it only after a restart: $restart." ;; esac
 
-case $code:$verdict in
-	0:*"': applied"*|*"': no changes"*|*"': superseded"*) state_set verdict applied ;;
-	*"': ignored"*) state_set verdict ignored ;;
-	1:*" Failed in "*) state_set verdict failed ;;
-	1:*InternalError*) state_set verdict internal ;;
-	3:*) state_set verdict rude ;;
-	# Not applied for a reason outside the file, or still on its way: the hook tells the agent to confirm with
-	# uno_app_hot_reload_status, and only that confirmation unlocks a restart (the first A/B with the gate saw
-	# "no Hot Reload operation covered" from a 5 s wait unlock restarts that a later status would have refused).
-	1:*|4:*) state_set verdict pending ;;
-esac
 # Exit code 0 is applied, no changes, superseded or ignored (the verdict word tells them apart); 4 is still on its
 # way; 3 is a rude edit; 1 covers every other verdict, and only a compile failure is the file's to fix.
 case $code:$verdict in

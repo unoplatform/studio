@@ -212,11 +212,13 @@ Tool: uno_app_get_screenshot
 Parameters:
   - fileType: "png" or "jpeg"
   - quality: Image quality 1-100 (default: 75)
-  - path: Optional file path to save to; omit to receive the image in the result
+  - path: File to save to; the result is then `saved <path> (<w>x<h>, <bytes>)` with no image
+  - returnImage: With path, also return the image inline (default: false). Leave it unset: the image would stay in context for every later call
+  - maxWidth: Scale down to at most this many pixels wide, aspect preserved; 412 is enough to check a layout
   - automationId | name | elementRef: Optional target; captures only that element (scopeRef as for the other tools)
 ```
 
-Without `path`, the image comes back in the tool result and can be inspected directly. With `path`:
+Omit `path` only for a visual assertion you must make now, with `maxWidth` set; the image then comes back in the tool result and stays in context. With `path`:
 - the path must be inside the App MCP's workspace directory (the selected solution's folder; `uno_health` reports it as `effectiveWorkspaceDirectory`), or the call fails with a security error;
 - if the save fails with "Could not find a part of the path", the folder is missing: create it and retry.
 

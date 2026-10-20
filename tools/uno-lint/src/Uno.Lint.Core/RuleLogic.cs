@@ -45,6 +45,16 @@ public static class RuleLogic
     /// <summary>A property or element name that holds a color (Background, BorderBrush, SolidColorBrush, GradientStop...).</summary>
     public static bool IsColorName(string name) => ColorName.IsMatch(name);
 
+    /// <summary>Properties of a color animation or keyframe that hold a color, though their names do not say so.</summary>
+    private static readonly HashSet<string> ColorElementSlots = new HashSet<string>(StringComparer.Ordinal) { "To", "From", "By", "Value" };
+
+    /// <summary>
+    /// A property that holds a color: one named for a color (Background, BorderBrush, Fill, TintColor...), or the value of a
+    /// color animation or keyframe (<c>&lt;ColorAnimation To="..."/&gt;</c>).
+    /// </summary>
+    public static bool IsColorProperty(string elementLocalName, string propertyName) =>
+        IsColorName(propertyName) || (ColorElementSlots.Contains(propertyName) && IsColorName(elementLocalName));
+
     /// <summary>A brush key that declares its ground fixed on purpose (*Invariant, *OnDark, *OnLight, *Fixed).</summary>
     public static bool IsInvariantKey(string key) => InvariantKey.IsMatch(key);
 

@@ -121,12 +121,14 @@ public sealed class HexRule : IXamlSemanticFixer
 
     private static bool IsColorSlot(XamlElementNode element, string property, XamlSemanticFixerContext context)
     {
-        if (property == "Value")
+        if (property == "Value" && ColorScopes.TargetPropertyOf(element, context) is { } target && RuleLogic.IsColorName(target))
         {
-            return ColorScopes.TargetPropertyOf(element, context) is { } target && RuleLogic.IsColorName(target);
+            return true;
         }
 
-        return RuleLogic.IsColorName(RuleLogic.LastSegment(property)) || RuleLogic.IsColorName(XamlNodes.LocalName(element));
+        // A color-named property, or the To/From/By/Value of a color animation or keyframe. Any other property of a
+        // color-named control is text: <ColorPicker Header="Red"/> is a label.
+        return RuleLogic.IsColorProperty(XamlNodes.LocalName(element), RuleLogic.LastSegment(property));
     }
 
     private static bool IsColorElement(XamlElementNode element, XamlSemanticFixerContext context)
@@ -163,8 +165,8 @@ public sealed class TokenThemeRule : IXamlSemanticFixer
             return UnoLintXaml.None;
         }
 
-        // Color="{ThemeResource ...}" on the brush, or a ThemeResource anywhere below it, follows the theme.
-        if ((XamlNodes.Attribute(start, "Color") is { } color && UnoLintXaml.ReferencesThemeResource(color)) || frame.ThemeResourceBelow)
+        // A {ThemeResource} on any attribute of the brush (Color, TintColor, FallbackColor...) or anywhere below it follows the theme.
+        if (XamlNodes.Attributes(start).Any(p => p.RawValue is { } raw && UnoLintXaml.ReferencesThemeResource(raw)) || frame.ThemeResourceBelow)
         {
             return UnoLintXaml.None;
         }

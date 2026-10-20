@@ -74,6 +74,14 @@ public class XamlRuleTests
         Assert.DoesNotContain(LintXaml(xaml), x => x.Rule == Rules.Hex);
     }
 
+    [Theory]
+    [InlineData("<ColorPicker Header=\"Red\"/>")]
+    [InlineData("<local:ColorSwatch xmlns:local=\"using:MyApp\" Label=\"White\"/>")]
+    public void Hex_ignores_color_words_in_text_properties_of_color_named_controls(string element)
+    {
+        Assert.DoesNotContain(LintXaml($"<Page {Ns}>{element}</Page>"), x => x.Rule == Rules.Hex);
+    }
+
     [Fact]
     public void Hex_flags_color_slots_in_setters_animations_and_gradients()
     {
@@ -193,6 +201,13 @@ public class XamlRuleTests
     public void TokenTheme_skips_brush_whose_color_is_a_theme_resource()
     {
         var findings = LintXaml($"<ResourceDictionary {Ns}><SolidColorBrush x:Key=\"DividerBrush\" Color=\"{{ThemeResource OnSurfaceColor}}\" Opacity=\"0.13\"/></ResourceDictionary>", "Colors.xaml");
+        Assert.DoesNotContain(findings, x => x.Rule == Rules.TokenTheme);
+    }
+
+    [Fact]
+    public void TokenTheme_skips_a_brush_with_a_theme_resource_on_any_attribute()
+    {
+        var findings = LintXaml($"<ResourceDictionary {Ns}><AcrylicBrush x:Key=\"PaneBrush\" TintColor=\"{{ThemeResource SurfaceColor}}\" TintOpacity=\"0.8\"/></ResourceDictionary>", "App.xaml");
         Assert.DoesNotContain(findings, x => x.Rule == Rules.TokenTheme);
     }
 

@@ -11,7 +11,7 @@ case $tool in
 	*uno_execute_tool) name=$(printf '%s' "$input" | sed -En 's/.*"toolName" *: *"([^"]*)".*/\1/p') ;;
 	*) name=${tool##*__} ;;
 esac
-[ "$name" = "uno_app_restart" ] || exit 0
+case $name in uno_app_restart|uno_app_start) ;; *) exit 0 ;; esac
 
 . "$(dirname "$0")/hook-state.sh"
 [ -f "$state_file" ] || exit 0
@@ -21,6 +21,15 @@ case $verdict in
 	rude|internal|uncovered|ignored|'') exit 0 ;;
 esac
 [ -n "$file" ] && is_startup_file "$file" && exit 0
+# A start is a restart by another name only when it repeats the last successful launch; a start with another
+# target or other arguments (a data mode, a window size) is a new launch, and so is one after a failed start.
+if [ "$name" = uno_app_start ]; then
+	last=$(state_get launch)
+	[ -n "$last" ] && [ "$(launch_key "$input")" = "$last" ] || exit 0
+	what='No restart by close and start: this start repeats the last launch (same target framework and arguments)'
+else
+	what='No restart'
+fi
 
-printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"No restart: the last Hot Reload verdict for this session was '$verdict', so the running app already runs the current code, and a restart only costs the build, the launch and Hot Reload's readiness. Get back to the state under test by navigating or through the app's own refresh, then assert with uno_app_find_elements(waitForMs). If the app really lacks an edit, call uno_app_hot_reload_status(file) on it: a RudeEdit, InternalError or 'not covered' result unlocks the restart. An edit to startup code (App.xaml.cs, Program.cs, the .csproj) unlocks it too.\"}}"
+printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"$what: the last Hot Reload verdict for this session was '$verdict', so the running app already runs the current code, and a relaunch only costs the build, the launch and Hot Reload's readiness. Get back to the state under test by navigating or through the app's own refresh, then assert with uno_app_find_elements(waitForMs). If the app really lacks an edit, call uno_app_hot_reload_status(file) on it: a RudeEdit, InternalError or 'not covered' result unlocks a restart. An edit to startup code (App.xaml.cs, Program.cs, the .csproj) unlocks it too, and so does a launch with other arguments or another target.\"}}"
 exit 0

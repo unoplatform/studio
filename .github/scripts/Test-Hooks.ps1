@@ -85,6 +85,19 @@ try {
     Assert-Allowed 'restart gate: status reported RudeEdit' (Invoke-Gate 'app-restart-gate.sh' $restart)
     Edit-Recorded "$tmp/App/App.xaml.cs" $applied
     Assert-Allowed 'restart gate: after an App.xaml.cs edit' (Invoke-Gate 'app-restart-gate.sh' $restart)
+
+    # Close and start again is the restart's other spelling: a start that repeats the last launch is gated too.
+    function Start-Call([string]$session, [hashtable]$arguments) { @{ session_id = $session; tool_name = 'mcp__uno-app__uno_execute_tool'; tool_input = @{ toolName = 'uno_app_start'; arguments = $arguments } } }
+    $desktop = @{ projectPath = 'X:\app\App.csproj'; targetFramework = 'net10.0-desktop'; connectionTimeoutSeconds = 120 }
+    $null = Invoke-Gate 'app-tool-record.sh' ((Start-Call 's3' $desktop) + @{ tool_response = @{ content = @(@{ type = 'text'; text = 'App started successfully. Process ID: 2' }); isError = $false } })
+    Edit-Recorded $cs $applied   # session s2 in the helper; record for s3 as well
+    $null = (@{ session_id = 's3'; tool_name = 'Edit'; tool_input = @{ file_path = $cs } } | ConvertTo-Json -Compress) | sh $hook
+    Assert-Denied 'start gate: same launch after an applied edit' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's3' $desktop))
+    Assert-Allowed 'start gate: other arguments' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's3' ($desktop + @{ args = @('--data=slow') })))
+    Assert-Allowed 'start gate: other target' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's3' @{ projectPath = 'X:\app\App.csproj'; targetFramework = 'net10.0-android' }))
+    $null = Invoke-Gate 'app-tool-record.sh' ((Start-Call 's3' ($desktop + @{ args = @('--data=slow') })) + @{ tool_response = @{ content = @(@{ type = 'text'; text = 'The app exited with code 1' }); isError = $true } })
+    Assert-Allowed 'start gate: retry after a failed start' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's3' ($desktop + @{ args = @('--data=slow') })))
+    Assert-Allowed 'start gate: no launch recorded' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's4' $desktop))
 }
 finally {
     Remove-Item $tmp -Recurse -Force

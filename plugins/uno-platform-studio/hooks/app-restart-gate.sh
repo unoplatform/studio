@@ -21,12 +21,12 @@ case $verdict in
 	rude|internal|uncovered|ignored|'') exit 0 ;;
 esac
 [ -n "$file" ] && is_startup_file "$file" && exit 0
-# A start is a restart by another name only when it repeats the last successful launch; a start with another
-# target or other arguments (a data mode, a window size) is a new launch, and so is one after a failed start.
+# A start is a restart by another name when it repeats a launch this session already made (the first A/B with
+# the gate saw the agent alternate two argument sets to get past a last-launch check); a target or arguments
+# never launched yet (a data mode, a window size) is a new launch, and a failed start is never recorded.
 if [ "$name" = uno_app_start ]; then
-	last=$(state_get launch)
-	[ -n "$last" ] && [ "$(launch_key "$input")" = "$last" ] || exit 0
-	what='No restart by close and start: this start repeats the last launch (same target framework and arguments)'
+	state_has launched "$(launch_key "$input")" || exit 0
+	what='No restart by close and start: this start repeats a launch this session already made (same target framework and arguments)'
 else
 	what='No restart'
 fi

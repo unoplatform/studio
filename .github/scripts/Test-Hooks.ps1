@@ -98,6 +98,15 @@ try {
     $null = Invoke-Gate 'app-tool-record.sh' ((Start-Call 's3' ($desktop + @{ args = @('--data=slow') })) + @{ tool_response = @{ content = @(@{ type = 'text'; text = 'The app exited with code 1' }); isError = $true } })
     Assert-Allowed 'start gate: retry after a failed start' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's3' ($desktop + @{ args = @('--data=slow') })))
     Assert-Allowed 'start gate: no launch recorded' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's4' $desktop))
+    # Alternating two argument sets must not pass: every launch of the session counts, not only the last.
+    $slow = $desktop + @{ args = @('--data=slow') }
+    $null = Invoke-Gate 'app-tool-record.sh' ((Start-Call 's3' $slow) + @{ tool_response = @{ content = @(@{ type = 'text'; text = 'App started successfully. Process ID: 3' }); isError = $false } })
+    Assert-Denied 'start gate: back to an earlier launch' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's3' $desktop))
+    Assert-Denied 'start gate: the latest launch again' (Invoke-Gate 'app-restart-gate.sh' (Start-Call 's3' $slow))
+    # An edit the DevServer did not cover within the hook's wait is pending, not an unlock.
+    $uncovered = New-Cli 'uncovered' @("edit to 'Presentation/MainModel.cs': no Hot Reload operation covered the file") 1
+    Edit-Recorded $cs $uncovered
+    Assert-Denied 'restart gate: after an uncovered edit' (Invoke-Gate 'app-restart-gate.sh' $restart)
 }
 finally {
     Remove-Item $tmp -Recurse -Force

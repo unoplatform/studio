@@ -15,8 +15,8 @@ case $name in
 		case $response in *'"isError":true'*|*'"isError": true'*) exit 0 ;; esac
 		state_set started 1
 		state_set verdict started
-		# The launch this start repeats later: target and arguments. A restart repeats the last recorded one.
-		[ "$name" = uno_app_start ] && state_set launch "$(launch_key "$input")" ;;
+		# Every launch of the session, by target and arguments: a start that repeats any of them is a restart.
+		[ "$name" = uno_app_start ] && state_add launched "$(launch_key "$input")" ;;
 	uno_app_hot_reload_status)
 		case $response in
 			*RudeEdit*) state_set verdict rude ;;

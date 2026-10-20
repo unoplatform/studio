@@ -13,6 +13,9 @@ state_set() {
 	{ [ -f "$state_file" ] && grep -v "^$1=" "$state_file"; printf '%s=%s\n' "$1" "$2"; } > "$tmp" 2>/dev/null
 	mv -f "$tmp" "$state_file" 2>/dev/null || rm -f "$tmp"
 }
+# state_add key value / state_has key value: a key that keeps every value it was given (the session's launches).
+state_add() { printf '%s=%s\n' "$1" "$2" >> "$state_file" 2>/dev/null; }
+state_has() { [ -f "$state_file" ] && grep -Fxq "$1=$2" "$state_file"; }
 # What identifies a launch: the target framework and the app arguments of a uno_app_start, whitespace removed.
 # A start that repeats both after an applied edit is a restart by another name; one that changes either
 # (another platform, a data mode, a window size) is a new launch.

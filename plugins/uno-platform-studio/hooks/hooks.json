@@ -1,5 +1,5 @@
 {
-  "description": "After a .xaml or .cs edit, ask the DevServer (uno-devserver app hot-reload-status) whether the running Uno app applied it through Hot Reload and tell the agent the result, so it asserts with uno_app_find_elements, fixes the reported compile errors, or restarts only for a rude edit or a DevServer internal error. Without the CLI or the status tool, remind it that Hot Reload applies the edit. Before a shell dotnet build, deny it when the App MCP route is available: uno_app_start is the build. Before uno_app_restart, or a uno_app_start that repeats a launch the session already made, deny it when the last Hot Reload verdict was applied and the last edit was not startup code: the app already runs the current code.",
+  "description": "After a .xaml or .cs edit, ask the DevServer (uno-devserver app hot-reload-status) whether the running Uno app applied it through Hot Reload and tell the agent the result, so it asserts with uno_app_find_elements, fixes the reported compile errors, or restarts only for a rude edit or a DevServer internal error. Without the CLI or the status tool, remind it that Hot Reload applies the edit. Before a shell dotnet build, deny it when the App MCP route is available: uno_app_start is the build.",
   "hooks": {
     "PreToolUse": [
       {
@@ -8,16 +8,6 @@
           {
             "type": "command",
             "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/shell-build-gate.sh\"",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__.*__(uno_execute_tool|uno_app_restart)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/app-restart-gate.sh\"",
             "timeout": 5
           }
         ]
@@ -31,16 +21,6 @@
             "type": "command",
             "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hot-reload-edit.sh\"",
             "timeout": 15
-          }
-        ]
-      },
-      {
-        "matcher": "mcp__.*__(uno_execute_tool|uno_app_start|uno_app_restart|uno_app_hot_reload_status)",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/app-tool-record.sh\"",
-            "timeout": 5
           }
         ]
       }

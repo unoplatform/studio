@@ -34,7 +34,7 @@ dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests un
 
 `-tests unit` also adds a plain `net10.0` target, which is not a platform: it lets the test project reference the app. Keep it. Check what the template generated rather than assuming a target or feature list; the features it sets up are the default stack above.
 
-**Baseline.** Before writing app source, build each target in scope once and run the template's tests. Record what already fails or warns as pre-existing, for example a sample test that fails on this template version. Attribute later failures against that record, and do not drop a target or change build properties to hide one.
+**Baseline.** Before writing app source, start the template app once on the primary target through the App MCP (`uno_app_start` builds it and launches it; `uno-testing` step 1) and run the template's tests. Do not `dotnet build` it first, and do not build the other targets now: each is built by the start that exercises it later (see [verification.md](verification.md)). Without the App MCP, `dotnet build` the primary target once. Record what already fails or warns as pre-existing, for example a sample test that fails on this template version. Attribute later failures against that record, and do not drop a target or change build properties to hide one.
 
 Start from these features. Add another `UnoFeatures` entry or package only when a concrete feature needs it, say why in the report, and follow the approval policy. Once the developer has approved a kind of addition, do not ask again for the same kind.
 

@@ -13,12 +13,14 @@ Every check ends in exactly one of four states. Use these words in the checkpoin
 
 Task-relevant targets are the declared targets the change can affect. Shared code, XAML, models and services affect all of them. Build and exercise every task-relevant target that can run on this machine, and report each remaining one as **not run** with the reason. Never remove a target from the project to make the list shorter.
 
-| Target | Build | Runtime |
+With the Uno App MCP, **the start is the build**: `uno_app_start(projectPath, targetFramework, stdoutFile)` builds that target and launches it, a compile error fails the start with its diagnostics, and `stdoutFile` holds the full log. Never `dotnet build` a target and then start it: that is the same build twice, and the shell output stays in context for the rest of the session. Run `dotnet build` yourself only for a target that cannot run on this machine (build-only evidence) or when there is no App MCP.
+
+| Target | Build and run | Runtime evidence |
 |---|---|---|
-| Skia Desktop | `dotnet build -f net10.0-desktop` | The Uno App MCP, or the app's runtime tests |
-| WebAssembly | `dotnet build -f net10.0-browserwasm` | The Uno App MCP with a browser |
-| Android | `dotnet build -f net10.0-android` (needs the Android workload and SDK) | An emulator or device through the Uno App MCP |
-| iOS | `dotnet build -f net10.0-ios` (needs macOS and Xcode) | A simulator or device through the Uno App MCP |
+| Skia Desktop | `uno_app_start` with `net10.0-desktop` | The Uno App MCP, or the app's runtime tests |
+| WebAssembly | `uno_app_start` with `net10.0-browserwasm` | The Uno App MCP with a browser |
+| Android | `uno_app_start` with `net10.0-android` (needs the Android workload, SDK and an emulator or device) | An emulator or device through the Uno App MCP |
+| iOS | `uno_app_start` with `net10.0-ios` (needs macOS and Xcode) | A simulator or device through the Uno App MCP |
 
 Use the target framework monikers the project actually declares; the table shows the .NET 10 names. A shared Skia renderer does not make one platform's pass count for another. Record which device, emulator or browser actually ran; a simulator run is not device coverage.
 

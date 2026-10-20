@@ -50,10 +50,45 @@ try {
 
     $out = Invoke-Hook "$tmp/App/README.md" $applied
     if ($out) { $errors.Add("other file types: expected no output, got $out") }
+
+    # The gates. A state directory per test run, so cases never share /tmp with a real session.
+    $gates = (Resolve-Path "$PSScriptRoot/../../plugins/uno-platform-studio/hooks").Path
+    $env:UNO_HOOK_STATE_DIR = "$tmp/state"; New-Item -ItemType Directory "$tmp/state" -Force | Out-Null
+    function Invoke-Gate([string]$script, [hashtable]$payload) { (($payload | ConvertTo-Json -Compress -Depth 6) | sh "$gates/$script") -join "`n" }
+    function Assert-Denied([string]$case, [string]$out) {
+        if (-not $out) { $errors.Add("${case}: expected a deny, got no output"); return }
+        try { $p = $out | ConvertFrom-Json } catch { $errors.Add("${case}: output is not JSON: $out"); return }
+        if ($p.hookSpecificOutput.permissionDecision -ne 'deny' -or -not $p.hookSpecificOutput.permissionDecisionReason) { $errors.Add("${case}: expected a deny with a reason: $out") }
+    }
+    function Assert-Allowed([string]$case, [string]$out) { if ($out) { $errors.Add("${case}: expected no output, got $out") } }
+    function Edit-Recorded([string]$file, [string]$cli) { $env:UNO_DEVSERVER_CLI = $cli; $null = (@{ session_id = 's2'; tool_name = 'Edit'; tool_input = @{ file_path = $file } } | ConvertTo-Json -Compress) | sh $hook }
+
+    $build = @{ session_id = 's1'; tool_name = 'Bash'; tool_input = @{ command = 'dotnet build app/App.csproj -f net10.0-desktop 2>&1 | tail -5' } }
+    $env:UNO_DEVSERVER_CLI = $applied   # the build gate only asks whether the CLI exists
+    Assert-Denied 'build gate: dotnet build with the CLI' (Invoke-Gate 'shell-build-gate.sh' $build)
+    Assert-Allowed 'build gate: build-only marker' (Invoke-Gate 'shell-build-gate.sh' @{ session_id = 's1'; tool_name = 'PowerShell'; tool_input = @{ command = 'dotnet build app/App.csproj -f net10.0-ios # build-only' } })
+    Assert-Allowed 'build gate: dotnet new' (Invoke-Gate 'shell-build-gate.sh' @{ session_id = 's1'; tool_name = 'Bash'; tool_input = @{ command = 'dotnet new unoapp -o app; dotnet test app' } })
+    $env:UNO_DEVSERVER_CLI = "$tmp/missing"
+    Assert-Allowed 'build gate: no CLI' (Invoke-Gate 'shell-build-gate.sh' $build)
+
+    $restart = @{ session_id = 's2'; tool_name = 'mcp__uno-app__uno_execute_tool'; tool_input = @{ toolName = 'uno_app_restart'; arguments = @{} } }
+    $find = @{ session_id = 's2'; tool_name = 'mcp__uno-app__uno_execute_tool'; tool_input = @{ toolName = 'uno_app_find_elements'; arguments = @{ automationId = 'x' } } }
+    Assert-Allowed 'restart gate: no state' (Invoke-Gate 'app-restart-gate.sh' $restart)
+    Edit-Recorded $cs $applied
+    Assert-Denied 'restart gate: after an applied edit' (Invoke-Gate 'app-restart-gate.sh' $restart)
+    Assert-Allowed 'restart gate: another tool' (Invoke-Gate 'app-restart-gate.sh' $find)
+    Edit-Recorded $cs $rude
+    Assert-Allowed 'restart gate: after a rude edit' (Invoke-Gate 'app-restart-gate.sh' $restart)
+    $null = Invoke-Gate 'app-tool-record.sh' @{ session_id = 's2'; tool_name = 'mcp__uno-app__uno_execute_tool'; tool_input = @{ toolName = 'uno_app_restart' }; tool_response = @{ content = @(@{ type = 'text'; text = 'App started successfully. Process ID: 1' }); isError = $false } }
+    Assert-Denied 'restart gate: after a restart' (Invoke-Gate 'app-restart-gate.sh' $restart)
+    $null = Invoke-Gate 'app-tool-record.sh' @{ session_id = 's2'; tool_name = 'mcp__uno-app__uno_execute_tool'; tool_input = @{ toolName = 'uno_app_hot_reload_status'; arguments = @{ file = 'x.cs' } }; tool_response = @{ content = @(@{ type = 'text'; text = "edit to 'x.cs': RudeEdit" }) } }
+    Assert-Allowed 'restart gate: status reported RudeEdit' (Invoke-Gate 'app-restart-gate.sh' $restart)
+    Edit-Recorded "$tmp/App/App.xaml.cs" $applied
+    Assert-Allowed 'restart gate: after an App.xaml.cs edit' (Invoke-Gate 'app-restart-gate.sh' $restart)
 }
 finally {
     Remove-Item $tmp -Recurse -Force
-    Remove-Item Env:UNO_DEVSERVER_CLI -ErrorAction SilentlyContinue
+    Remove-Item Env:UNO_DEVSERVER_CLI, Env:UNO_HOOK_STATE_DIR -ErrorAction SilentlyContinue
 }
 
 $prefix = $env:GITHUB_ACTIONS ? '::error::' : 'ERROR: '

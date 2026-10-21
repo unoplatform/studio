@@ -3,8 +3,8 @@
 # running Uno app applied it through Hot Reload (`uno-devserver app hot-reload-status`), and tell the agent the
 # result: applied -> assert; compile failure -> block with the diagnostics; rude edit or DevServer internal error ->
 # restart the app after the related edits; still processing, no changes and the like -> what the DevServer says.
-# Without the CLI, a running DevServer, or the status tool, it falls back to the reminder that Hot Reload
-# applies the edit. Reads the hook JSON on stdin; prints nothing for other files.
+# Without the CLI it falls back to the reminder that Hot Reload applies the edit; with the CLI but no connected app
+# (before the first start) it prints nothing. Reads the hook JSON on stdin; prints nothing for other files.
 input=$(cat)
 file=$(printf '%s' "$input" | sed -En 's/.*"file_path" *: *"([^"]*\.(xaml|cs))".*/\1/p' | sed 's/\\\\/\\/g')
 [ -n "$file" ] || exit 0
@@ -37,8 +37,10 @@ done
 out=$("$cli" --solution-dir "$sln_dir" app hot-reload-status --no-start --file "$file" --waitForMs 5000 2>/dev/null)
 code=$?
 verdict=$(printf '%s' "$out" | tr -d '\r' | grep '^edit to ' | head -1)
-# A host with no connected app answers without a verdict (and exit code 0): nothing ran the edit.
-[ -n "$verdict" ] || remind
+# A host with no connected app answers without a verdict (and exit code 0): nothing ran the edit, so there is nothing
+# to say. Before the first start every scaffolding edit lands here (14 to 20 a session), and a reminder each time only
+# taught the agent to skim the hook's notes.
+[ -n "$verdict" ] || exit 0
 
 # After a rude edit, or an internal error in the DevServer, no later edit applies until the app is rebuilt
 # (fieldcheck-20261012-180709: 11 internal errors, each run of them ended only by a restart), so the restart

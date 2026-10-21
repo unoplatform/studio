@@ -135,6 +135,15 @@ public class LinterTests : IDisposable
     }
 
     [Fact]
+    public void Generated_files_are_skipped_in_single_file_runs_too()
+    {
+        _project.Write("App.csproj", "<Project/>");
+        _project.Write("Views/MainPage.g.cs", "partial class MainPage { void H(object sender, EventArgs e) { } }");
+
+        Assert.Equal(0, _project.Lint("Views/MainPage.g.cs").FileCount);
+    }
+
+    [Fact]
     public void Non_source_files_are_rejected_not_parsed_as_csharp()
     {
         _project.Write("notes.txt", "void H(object sender, EventArgs e) { }");
@@ -244,5 +253,48 @@ public class LinterTests : IDisposable
         _project.Write("App.csproj", "<Project/>");
         _project.Write("MainPage.xaml.cs", "partial class P { // WORKAROUND(#1) a\n // WORKAROUND(#2) b WORKAROUND(\n }");
         Assert.Equal(3, _project.Lint().Info.WorkaroundMarkers);
+    }
+
+    // ------------------------------------------------------------ folder and file runs agree
+
+    [Fact]
+    public void A_subfolder_run_uses_the_project_above_it()
+    {
+        _project.Write("App/App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit;MVUX;Material</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("App/Views/MainPage.xaml", $"{Page}<Border CornerRadius=\"8\" Background=\"White\"><Grid/></Border><TextBlock Text=\"{{Binding Name.Value}}\"/></Page>");
+
+        foreach (var target in new[] { null, "App", "App/Views", "App/Views/MainPage.xaml" })
+        {
+            var result = _project.Lint(target, new LintOptions { Profile = Profile.Strict });
+            Assert.True(result.Context.HasToolkit, target);
+            Assert.Equal(["BINDVALUE", "CARD", "HEX"], result.Findings.Select(f => f.Rule.Name).Order());
+            Assert.Contains("PrimaryBrush", result.Findings.Single(f => f.Rule == Rules.Hex).Fix);
+        }
+    }
+
+    [Fact]
+    public void A_project_folder_named_like_a_test_project_is_skipped_from_any_start()
+    {
+        _project.Write("p.sln", "");
+        _project.Write("App.Tests/App.Tests.csproj", "<Project/>");
+        _project.Write("App.Tests/Views/TestPage.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+
+        foreach (var target in new[] { null, "App.Tests", "App.Tests/Views/TestPage.xaml" })
+        {
+            var result = _project.Lint(target);
+            Assert.Equal(0, result.FileCount);
+            Assert.Equal(1, result.SkippedDevFiles);
+        }
+    }
+
+    [Fact]
+    public void A_dev_folder_above_the_project_counts_up_to_the_solution()
+    {
+        _project.Write("p.sln", "");
+        _project.Write("tests/UnitTests/UnitTests.csproj", "<Project/>");
+        _project.Write("tests/UnitTests/Page.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+
+        Assert.Equal(1, _project.Lint().SkippedDevFiles);
+        Assert.Equal(1, _project.Lint("tests/UnitTests/Page.xaml").SkippedDevFiles);
     }
 }

@@ -29,7 +29,8 @@ public static class FileWalker
             {
                 if (entry is DirectoryInfo directory)
                 {
-                    if ((directory.Attributes & FileAttributes.ReparsePoint) == 0 && !ExcludedDirNames.Contains(directory.Name))
+                    // Links only: OneDrive and other cloud placeholders are reparse points too, and hold real files.
+                    if (directory.LinkTarget == null && !ExcludedDirNames.Contains(directory.Name))
                     {
                         pending.Push(directory.FullName);
                     }

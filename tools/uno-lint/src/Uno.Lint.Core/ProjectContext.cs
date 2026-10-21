@@ -42,6 +42,10 @@ public sealed class ProjectContext
 
     public ProjectContext WithToolkit(bool hasToolkit) => new ProjectContext(hasToolkit, HasExtensionsNavigation, HasMvux, HasUnoThemes);
 
+    /// <summary>What either context references: a run over several projects reports the libraries any of them uses.</summary>
+    public ProjectContext Union(ProjectContext other) =>
+        new ProjectContext(HasToolkit || other.HasToolkit, HasExtensionsNavigation || other.HasExtensionsNavigation, HasMvux || other.HasMvux, HasUnoThemes || other.HasUnoThemes);
+
     /// <summary>Detects the context from project files (csproj, Directory.Build.props...) and XAML texts.</summary>
     public static ProjectContext Detect(IEnumerable<string> projectFileTexts, IEnumerable<string> xamlTexts) =>
         FromProjectFiles(projectFileTexts).AddXaml(xamlTexts);

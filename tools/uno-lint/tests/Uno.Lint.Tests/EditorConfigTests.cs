@@ -134,4 +134,33 @@ public class EditorConfigTests : IDisposable
         _project.Write(".editorconfig", "root = true\n[*]\ndotnet_diagnostic.UNOL002.severity = warning\n");
         Assert.True(_project.Lint().HasGatingFindings);
     }
+
+    [Fact]
+    public void A_nested_root_editorconfig_stops_the_chain_in_folder_runs_too()
+    {
+        _project.Write(".editorconfig", "root = true\n[*.xaml]\ndotnet_diagnostic.UNOL001.severity = none\n");
+        _project.Write("App/.editorconfig", "root = true\n");
+        _project.Write("App/App.csproj", "<Project/>");
+        _project.Write("App/Views/MainPage.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+
+        Assert.Single(_project.Lint().Findings, f => f.Rule == Rules.Hex);
+        Assert.Single(_project.Lint("App/Views/MainPage.xaml").Findings, f => f.Rule == Rules.Hex);
+    }
+
+    [Fact]
+    public void A_nested_profile_applies_only_below_its_editorconfig()
+    {
+        _project.Write(".editorconfig", "root = true\n");
+        _project.Write("Samples/.editorconfig", "[*]\nuno_lint.profile = strict\n");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>");
+        var card = $"{Page}<Border CornerRadius=\"8\" Background=\"{{ThemeResource SurfaceBrush}}\"><Grid/></Border></Page>";
+        _project.Write("App/Views/MainPage.xaml", card);
+        _project.Write("Samples/SamplePage.xaml", card);
+
+        var result = _project.Lint();
+        Assert.Equal(Profile.Recommended, result.Profile);
+        Assert.Equal([Path.Combine("Samples", "SamplePage.xaml")], result.Findings.Where(f => f.Rule == Rules.Card).Select(f => f.File));
+        Assert.Empty(_project.Lint("App/Views/MainPage.xaml").Findings);
+        Assert.Equal(Profile.Strict, _project.Lint("Samples/SamplePage.xaml").Profile);
+    }
 }

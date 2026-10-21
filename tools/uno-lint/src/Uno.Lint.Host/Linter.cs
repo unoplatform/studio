@@ -120,10 +120,11 @@ public sealed class Linter
     }
 
     /// <summary>
-    /// Lint every .xaml and .cs file under <paramref name="path"/>, or the single file it names. A single file is
-    /// linted with the same project root, dev-path skip and configuration a directory run would give it, so the hook
-    /// and the CLI agree on every file. A file outside any project is linted with an empty project context and only
-    /// the .editorconfig files above it, without walking its folder.
+    /// Lint every .xaml and .cs file under <paramref name="path"/>, or the single file it names. Every file is linted
+    /// with its own project (the nearest folder at or above it holding a .csproj or solution), dev-path skip and
+    /// .editorconfig chain, whether the run starts at the file or at a folder above it, so the hook and the CLI agree
+    /// on every file. A file outside any project is linted with an empty project context and only the .editorconfig
+    /// files above it, without walking its folder; in a folder run, such files share the folder's context.
     /// </summary>
     /// <exception cref="ArgumentException">A file that is not .xaml or .cs.</exception>
     public async Task<LintResult> RunAsync(string path, CancellationToken cancellationToken = default)
@@ -136,20 +137,54 @@ public sealed class Linter
         }
 
         var fileDirectory = Path.GetDirectoryName(fullRoot) ?? fullRoot;
-        var projectRoot = isDirectory ? fullRoot : ProjectLocator.FindProjectRoot(fileDirectory);
-        var baseDir = projectRoot ?? fileDirectory;
+        var startDirectory = isDirectory ? fullRoot : fileDirectory;
         var config = EditorConfigSet.Load(fullRoot);
-        var profile = _options.Profile ?? config.Profile ?? _options.DefaultProfile;
+        var runProfile = _options.Profile ?? config.Profile ?? _options.DefaultProfile;
+
+        // Findings are shown relative to the folder linted, or to a single file's project.
+        var baseDir = isDirectory ? fullRoot : ProjectLocator.FindProjectRoot(fileDirectory) ?? fileDirectory;
+
+        // Project roots per folder and dev boundaries per project: a folder run asks once per folder, not per file.
+        var projectRoots = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var devBoundaries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        string? ProjectRootOf(string file)
+        {
+            var directory = Path.GetDirectoryName(file) ?? file;
+            if (!projectRoots.TryGetValue(directory, out var root))
+            {
+                root = ProjectLocator.FindProjectRoot(directory);
+                projectRoots[directory] = root;
+            }
+
+            return root;
+        }
+
+        bool IsDev(string file)
+        {
+            var root = ProjectRootOf(file);
+            string boundary;
+            if (root == null)
+            {
+                boundary = startDirectory;
+            }
+            else if (!devBoundaries.TryGetValue(root, out boundary!))
+            {
+                boundary = ProjectLocator.DevBoundary(root);
+                devBoundaries[root] = boundary;
+            }
+
+            return ProjectLocator.IsDevPath(Relative(boundary, file));
+        }
 
         var candidates = isDirectory
-            ? FileWalker.Enumerate(fullRoot, FileKinds.IsSourceFile).Where(f => !ProjectLocator.IsGeneratedCode(f)).ToList()
+            ? FileWalker.Enumerate(fullRoot, FileKinds.IsSourceFile).ToList()
             : [fullRoot];
 
         var files = new List<string>();
         var skippedDev = 0;
-        foreach (var file in candidates)
+        foreach (var file in candidates.Where(f => !ProjectLocator.IsGeneratedCode(f)))
         {
-            if (!_options.IncludeDev && ProjectLocator.IsDevPath(Relative(baseDir, file)))
+            if (!_options.IncludeDev && IsDev(file))
             {
                 skippedDev++;
             }
@@ -172,15 +207,35 @@ public sealed class Linter
             return text;
         }
 
+        // One context per project. Files outside any project share the folder's context in a folder run; a lone file
+        // gets the empty context. The on-disk cache serves single-file runs, which the hook makes once per edit.
         var cacheDirectory = !isDirectory && _options.UseContextCache && !ContextCache.IsDisabledByEnvironment ? _options.ContextCacheDirectory ?? ContextCache.DefaultDirectory : null;
-        var context = DetectContext(projectRoot, cacheDirectory, ReadCached);
-        if (_options.AssumeToolkit is bool assumeToolkit)
+        var contexts = new Dictionary<string, ProjectContext>(StringComparer.OrdinalIgnoreCase);
+        ProjectContext? runContext = null;
+        ProjectContext ContextFor(string? contextRoot)
         {
-            context = context.WithToolkit(assumeToolkit);
+            var key = contextRoot ?? string.Empty;
+            if (!contexts.TryGetValue(key, out var context))
+            {
+                context = DetectContext(contextRoot, cacheDirectory, ReadCached);
+                if (_options.AssumeToolkit is bool assumeToolkit)
+                {
+                    context = context.WithToolkit(assumeToolkit);
+                }
+
+                contexts[key] = context;
+                runContext = runContext?.Union(context) ?? context;
+            }
+
+            return context;
         }
 
+        ProjectContext ContextOf(string file) => ContextFor(ProjectRootOf(file) ?? (isDirectory ? fullRoot : null));
+
+        Profile ProfileOf(string file) => _options.Profile ?? config.ProfileFor(file) ?? _options.DefaultProfile;
+
         Severity SeverityFor(RuleDescriptor rule, string file) =>
-            Rules.Resolve(rule, profile, context, config.TryGetSeverity(rule.Id, file, out var configured) ? configured : null);
+            Rules.Resolve(rule, ProfileOf(file), ContextOf(file), config.TryGetSeverity(rule.Id, file, out var configured) ? configured : null);
 
         var definedBrushKeys = new HashSet<string>(StringComparer.Ordinal);
         var referencedBrushKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -235,7 +290,7 @@ public sealed class Linter
             {
                 var companionPath = file.EndsWith(".xaml.cs", StringComparison.OrdinalIgnoreCase) ? file[..^3] : null;
                 var companion = companionPath != null && File.Exists(companionPath) ? ReadCached(companionPath) : null;
-                raw = CSharpAnalyzer.Analyze(new CSharpFile(relative, text, companion), context, IsEnabled);
+                raw = CSharpAnalyzer.Analyze(new CSharpFile(relative, text, companion), ContextOf(file), IsEnabled);
             }
 
             foreach (var finding in raw)
@@ -246,7 +301,7 @@ public sealed class Linter
                     continue;
                 }
 
-                var resolved = finding.WithResolution(severity, Rules.FixFor(finding.Rule, context));
+                var resolved = finding.WithResolution(severity, Rules.FixFor(finding.Rule, ContextOf(file)));
                 (resolved.Suppressed ? suppressed : findings).Add(resolved);
             }
 
@@ -258,7 +313,7 @@ public sealed class Linter
         var info = new InfoStats(tokenReferences, referencedBrushKeys.Count, adaptiveTriggers, responsive, templates, workarounds);
 
         return new LintResult(
-            fullRoot, profile, context, files.Count, skippedDev, unparsed, repaired, partial, lineShifted,
+            fullRoot, runProfile, runContext ?? ContextFor(ProjectLocator.FindProjectRoot(startDirectory) ?? (isDirectory ? fullRoot : null)), files.Count, skippedDev, unparsed, repaired, partial, lineShifted,
             InFileOrder(findings), InFileOrder(suppressed), info, config.IgnoredPreambleKeys.Distinct().ToList());
     }
 

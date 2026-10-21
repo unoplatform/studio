@@ -11,94 +11,131 @@ namespace Uno.Lint;
 ///   uno_lint.profile = recommended | strict
 /// Severity keys count only inside a [section]; EditorConfig allows only "root" in the preamble and the compiler
 /// does not read severities there, so a preamble severity is recorded in <see cref="IgnoredPreambleKeys"/> and
-/// otherwise ignored. The profile is project-wide: the last one read wins wherever it sits.
-/// For a folder, files are loaded from the folder upward (nearest last) and downward, so a nested
-/// <c>App/.editorconfig</c> applies whether the run starts at the repo root or at the file. For a file, only its
-/// ancestors are read: a sibling folder's .editorconfig can never match it.
+/// otherwise ignored. Every file is governed by its own chain: the .editorconfig files from its folder upward,
+/// stopping at <c>root = true</c>, read once per folder whether the run starts at the file or at a folder above it.
+/// The profile follows the same chain, wherever it sits in a file: the nearest one wins.
 /// </summary>
 public sealed partial class EditorConfigSet
 {
-    private readonly List<Section> _sections = new();
-    private readonly List<string> _ignoredPreambleKeys = new();
+    private readonly Dictionary<string, IReadOnlyList<ConfigFile>> _chains = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<ConfigFile> _loaded = new();
+    private readonly List<ConfigFile> _added = new();
+    private readonly string? _start;
 
-    public Profile? Profile { get; private set; }
+    public EditorConfigSet()
+    {
+    }
 
-    /// <summary>Severity keys found above any section header, which a Roslyn analyzer would not honor.</summary>
-    public IReadOnlyList<string> IgnoredPreambleKeys => _ignoredPreambleKeys;
+    private EditorConfigSet(string start)
+    {
+        _start = start;
+    }
+
+    /// <summary>The profile where the run starts: the folder linted, or the file's folder.</summary>
+    public Profile? Profile => _start == null ? LastProfile(_added) : ProfileFor(_start);
+
+    /// <summary>Severity keys found above any section header in the files read so far, which a Roslyn analyzer would not honor.</summary>
+    public IReadOnlyList<string> IgnoredPreambleKeys => _loaded.Concat(_added).SelectMany(f => f.PreambleKeys).ToList();
+
+    /// <summary>The profile governing a file, or a folder's own files: the nearest uno_lint.profile in its chain.</summary>
+    public Profile? ProfileFor(string path)
+    {
+        var full = Path.GetFullPath(path);
+        return LastProfile(ChainFor(Directory.Exists(full) ? full : Path.GetDirectoryName(full)).Concat(_added));
+    }
 
     /// <summary>
-    /// Severity configured for a rule id on a file. Sections are applied in load order, nearest .editorconfig last; the
-    /// last match wins. <paramref name="severity"/> is null when the winning value is <c>default</c>: the rule keeps
-    /// its default severity for the active profile.
+    /// Severity configured for a rule id on a file. The file's chain is applied farthest first, nearest last; the last
+    /// matching section wins. <paramref name="severity"/> is null when the winning value is <c>default</c>: the rule
+    /// keeps its default severity for the active profile.
     /// </summary>
     public bool TryGetSeverity(string ruleId, string filePath, out Severity? severity)
     {
         severity = null;
         var found = false;
-        var normalizedPath = Path.GetFullPath(filePath).Replace('\\', '/');
+        var full = Path.GetFullPath(filePath);
+        var normalizedPath = full.Replace('\\', '/');
 
-        foreach (var section in _sections)
+        foreach (var file in ChainFor(Path.GetDirectoryName(full)).Concat(_added))
         {
-            if (section.Severities.TryGetValue(ruleId, out var value) && section.Matches(normalizedPath))
+            foreach (var section in file.Sections)
             {
-                severity = value;
-                found = true;
+                if (section.Severities.TryGetValue(ruleId, out var value) && section.Matches(normalizedPath))
+                {
+                    severity = value;
+                    found = true;
+                }
             }
         }
 
         return found;
     }
 
-    /// <summary>Rule ids that have a severity inside a glob section.</summary>
+    /// <summary>Rule ids that have a severity inside a glob section, in the files read so far.</summary>
     public IEnumerable<string> SectionedRuleIds() =>
-        _sections.SelectMany(s => s.Severities.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
+        _loaded.Concat(_added).SelectMany(f => f.Sections).SelectMany(s => s.Severities.Keys).Distinct(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>
-    /// Loads the chain for a folder or file: ancestors first (farthest to nearest, stopping at <c>root = true</c>),
-    /// then, for a folder, every .editorconfig below it in path order so deeper files are applied last.
-    /// </summary>
-    public static EditorConfigSet Load(string rootOrFile)
+    /// <summary>The settings for a run starting at a folder or file. Each folder's chain is read on first use, once.</summary>
+    public static EditorConfigSet Load(string rootOrFile) => new EditorConfigSet(Path.GetFullPath(rootOrFile));
+
+    /// <summary>Parses .editorconfig text whose section globs are relative to <paramref name="directory"/>; it applies to every file, after its chain.</summary>
+    public void AddText(IEnumerable<string> lines, string directory) => _added.Add(Parse(lines, directory));
+
+    private static Profile? LastProfile(IEnumerable<ConfigFile> files) => files.LastOrDefault(f => f.Profile != null)?.Profile;
+
+    /// <summary>A folder's chain, farthest first: its parent's chain plus its own file, or its own file alone when that is a root.</summary>
+    private IReadOnlyList<ConfigFile> ChainFor(string? directory)
     {
-        var set = new EditorConfigSet();
-        var full = Path.GetFullPath(rootOrFile);
-        foreach (var path in FindAncestors(full))
+        if (directory is not { Length: > 0 })
         {
-            set.AddFile(path);
+            return [];
         }
 
-        if (Directory.Exists(full))
+        if (_chains.TryGetValue(directory, out var chain))
         {
-            var nested = FileWalker.Enumerate(full, f => string.Equals(Path.GetFileName(f), ".editorconfig", StringComparison.OrdinalIgnoreCase))
-                .Where(f => !string.Equals(Path.GetDirectoryName(f), full, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(f => f.Count(c => c == '\\' || c == '/'))
-                .ThenBy(f => f, StringComparer.OrdinalIgnoreCase);
-            foreach (var path in nested)
-            {
-                set.AddFile(path);
-            }
+            return chain;
         }
 
-        return set;
+        var own = Read(Path.Combine(directory, ".editorconfig"));
+        if (own is { IsRoot: true })
+        {
+            chain = [own];
+        }
+        else
+        {
+            var parent = ChainFor(Path.GetDirectoryName(directory));
+            chain = own == null ? parent : [.. parent, own];
+        }
+
+        _chains[directory] = chain;
+        return chain;
     }
 
-    public void AddFile(string path)
+    private ConfigFile? Read(string path)
     {
         string[] lines;
         try
         {
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
             lines = File.ReadAllLines(path);
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return;
+            return null;
         }
 
-        AddText(lines, Path.GetDirectoryName(Path.GetFullPath(path)) ?? string.Empty);
+        var file = Parse(lines, Path.GetDirectoryName(path) ?? string.Empty);
+        _loaded.Add(file);
+        return file;
     }
 
-    /// <summary>Parses .editorconfig text whose section globs are relative to <paramref name="directory"/>.</summary>
-    public void AddText(IEnumerable<string> lines, string directory)
+    private static ConfigFile Parse(IEnumerable<string> lines, string directory)
     {
+        var file = new ConfigFile();
         Section? current = null;
 
         foreach (var raw in lines)
@@ -112,7 +149,13 @@ public sealed partial class EditorConfigSet
             if (line[0] == '[' && line[^1] == ']')
             {
                 current = new Section(directory, line[1..^1].Trim());
-                _sections.Add(current);
+                file.Sections.Add(current);
+                continue;
+            }
+
+            if (current == null && RootLine().IsMatch(line))
+            {
+                file.IsRoot = true;
                 continue;
             }
 
@@ -122,7 +165,7 @@ public sealed partial class EditorConfigSet
                 var id = diagnostic.Groups[1].Value.ToUpperInvariant();
                 if (current == null)
                 {
-                    _ignoredPreambleKeys.Add(id);
+                    file.PreambleKeys.Add(id);
                 }
                 else
                 {
@@ -135,9 +178,11 @@ public sealed partial class EditorConfigSet
             var profile = ProfileLine().Match(line);
             if (profile.Success && Enum.TryParse<Profile>(profile.Groups[1].Value, ignoreCase: true, out var value))
             {
-                Profile = value;
+                file.Profile = value;
             }
         }
+
+        return file;
     }
 
     [GeneratedRegex(@"^dotnet_diagnostic\.(UNOL\d{3})\.severity\s*=\s*(\w+)", RegexOptions.IgnoreCase)]
@@ -146,49 +191,13 @@ public sealed partial class EditorConfigSet
     [GeneratedRegex(@"^uno_lint\.profile\s*=\s*(\w+)", RegexOptions.IgnoreCase)]
     private static partial Regex ProfileLine();
 
-    [GeneratedRegex(@"^\s*root\s*=\s*true", RegexOptions.IgnoreCase | RegexOptions.Multiline)]
+    [GeneratedRegex(@"^root\s*=\s*true$", RegexOptions.IgnoreCase)]
     private static partial Regex RootLine();
 
     private static string StripComment(string line)
     {
         var cut = line.IndexOfAny(['#', ';']);
         return cut >= 0 ? line[..cut] : line;
-    }
-
-    /// <summary>The .editorconfig files from the root upward, farthest first so the nearest file's sections are applied last.</summary>
-    private static List<string> FindAncestors(string rootOrFile)
-    {
-        var found = new List<string>();
-        var dir = Directory.Exists(rootOrFile) ? rootOrFile : Path.GetDirectoryName(rootOrFile);
-        while (dir is { Length: > 0 })
-        {
-            var candidate = Path.Combine(dir, ".editorconfig");
-            if (File.Exists(candidate))
-            {
-                found.Add(candidate);
-                if (IsRoot(candidate))
-                {
-                    break;
-                }
-            }
-
-            dir = Path.GetDirectoryName(dir);
-        }
-
-        found.Reverse();
-        return found;
-    }
-
-    private static bool IsRoot(string path)
-    {
-        try
-        {
-            return RootLine().IsMatch(File.ReadAllText(path));
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return false;
-        }
     }
 
     /// <summary><c>default</c> parses to null: the rule's default severity for the active profile, as for the compiler.</summary>
@@ -216,6 +225,18 @@ public sealed partial class EditorConfigSet
                 severity = null;
                 return false;
         }
+    }
+
+    /// <summary>One parsed .editorconfig file.</summary>
+    private sealed class ConfigFile
+    {
+        public List<Section> Sections { get; } = new();
+
+        public List<string> PreambleKeys { get; } = new();
+
+        public bool IsRoot { get; set; }
+
+        public Profile? Profile { get; set; }
     }
 
     private sealed class Section

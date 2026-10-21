@@ -56,7 +56,43 @@ public static partial class ProjectLocator
         return segments.Take(segments.Length - 1).Any(DevSegment().IsMatch);
     }
 
+    /// <summary>
+    /// The folder a project's dev-path segments are counted from: the project root when it holds the solution or the
+    /// repository, else the nearest folder above it that does, else its parent. The project folder's own name
+    /// (MyApp.Tests) and the folders between it and the solution (tests/) count whether the run starts at a file or
+    /// at a folder above it.
+    /// </summary>
+    public static string DevBoundary(string projectRoot)
+    {
+        if (IsSolutionRoot(projectRoot))
+        {
+            return projectRoot;
+        }
+
+        for (var dir = Path.GetDirectoryName(projectRoot); dir is { Length: > 0 }; dir = Path.GetDirectoryName(dir))
+        {
+            if (IsSolutionRoot(dir))
+            {
+                return dir;
+            }
+        }
+
+        return Path.GetDirectoryName(projectRoot) ?? projectRoot;
+    }
+
     public static bool IsGeneratedCode(string path) => GeneratedCs().IsMatch(path);
+
+    private static bool IsSolutionRoot(string dir)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(dir, "*.sln").Any() || Directory.EnumerateFiles(dir, "*.slnx").Any() || Path.Exists(Path.Combine(dir, ".git"));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
+    }
 
     private static bool IsProjectFile(string path)
     {

@@ -45,7 +45,8 @@ dotnet run --project src/Uno.Lint.Cli -c Release -- lint --help
 | `--include-dev` | also lint `Dev`, `Harness`, `Probe(s)` and `Test(s)` folders |
 | `--toolkit` / `--no-toolkit` | force the Uno.Toolkit gate instead of detecting it |
 | `--no-cache` | detect the project context again instead of reading the cached one |
-| `--json`, `--output:yaml`... | structured output of the same report |
+| `--json`, `--output:yaml`... | structured output of the same report; the last format flag wins |
+| `--markdown` | the text report in a Markdown code block |
 
 Exit codes: `0` no finding at warning or above, `1` at least one, `2` the run could not complete (unknown or
 malformed option, missing path, a file that is not `.xaml` or `.cs`).
@@ -88,7 +89,7 @@ only some corners.
 `.editorconfig`, same syntax and semantics as Roslyn analyzers, including section globs per path:
 
 ```ini
-uno_lint.profile = strict                        # project-wide
+uno_lint.profile = strict                        # this folder and below
 
 [*]
 dotnet_diagnostic.UNOL103.severity = none        # we are MVVM, handlers are fine
@@ -102,12 +103,14 @@ dotnet_diagnostic.UNOL001.severity = default     # back to the profile's severit
 ```
 
 Values: `default`, `none`, `silent`, `suggestion`, `warning`, `error`. A severity key above any `[section]` is ignored
-(and reported), as a Roslyn analyzer would ignore it. A file is governed by the `.editorconfig` files above it; a
-folder run also loads those below it, so `uno-lint lint .` and `uno-lint lint App/MainPage.xaml` agree.
+(and reported), as a Roslyn analyzer would ignore it. Every file is governed by the `.editorconfig` files from its
+folder up to the nearest `root = true`, wherever the run starts, so `uno-lint lint .` and
+`uno-lint lint App/MainPage.xaml` agree. The same goes for the project: each file uses the nearest folder above it
+that holds a project or solution.
 
-One deliberate exception, reason required, in a comment directly above the hit (consecutive comment lines count, the
-first non-comment line stops the search) or on the same line. For an attribute on a multi-line element the comment
-goes above the element's start tag. `uno-lint: allow all - reason` covers every rule at that spot:
+One deliberate exception, reason required, in a comment directly above the hit (up to three comment lines, including
+the lines of a multi-line comment; the first line that holds anything else stops the search) or on the same line. For
+an attribute on a multi-line element the comment goes above the element's start tag. `uno-lint: allow all - reason` covers every rule at that spot:
 
 ```xml
 <!-- uno-lint: allow hex - chart series colour, no role covers it -->

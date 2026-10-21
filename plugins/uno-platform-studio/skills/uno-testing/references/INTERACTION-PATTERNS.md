@@ -279,4 +279,4 @@ Wait until these are no longer present before continuing.
 
 1. Capture screenshot for debugging
 2. Get visual tree for analysis
-3. Consider restarting the app and test
+3. Call `uno_app_hot_reload_status(file, waitForMs: 10000)` for the last edited file; a restart is right only for the `RudeEdit`, `InternalError` or uncovered edit it reports

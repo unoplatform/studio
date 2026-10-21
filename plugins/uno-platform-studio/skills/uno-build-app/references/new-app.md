@@ -63,7 +63,7 @@ The blueprint must name the owner and the observation and mutation path of every
 
 ## First feature
 
-Choose a first journey that crosses the app's risky boundaries: persistence, a shared entity edited on two pages, an integration. Not the easiest static page. Implement it through view, state, rules, service, persistence and a test, build and exercise it, and only then repeat its pattern.
+Choose a first journey that crosses the app's risky boundaries: persistence, a shared entity edited on two pages, an integration. Not the easiest static page. Implement it through view, state, rules, service, persistence and a test, build once, start the app and exercise it (later edits go through Hot Reload status, the running-app rule), and only then repeat its pattern.
 
 ## Prototypes
 

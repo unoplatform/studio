@@ -9,7 +9,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
 | `skills/` | The `uno-build-app` workflow skill and six domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 | `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
-| `hooks/` | Claude Code hooks. After an edit to a `.xaml` or `.cs` file, `PostToolUse` asks the DevServer whether the running app applied it through Hot Reload (`uno-devserver app hot-reload-status --no-start`) and tells the agent the result: assert, fix the reported errors, or restart only for a rude edit. Without the `uno-devserver` tool or the status tool it reminds the agent that Hot Reload applies the edit. |
+| `hooks/` | Claude Code hooks. In an Uno app project, `SessionStart` (also after a compaction) tells the agent that a running app is edited through Hot Reload status, not rebuilt, and to look for a running app before the first build; elsewhere it prints nothing. After an edit to a `.xaml` or `.cs` file, `PostToolUse` asks the DevServer whether the running app applied it through Hot Reload (`uno-devserver app hot-reload-status --no-start`) and tells the agent the result: assert, fix the reported errors, or restart only for a rude edit. Without the `uno-devserver` tool or a solution file above the edited file, it reminds the agent that Hot Reload applies the edit; with no app connected yet, it says nothing. |
 
 | Skill | Covers | References |
 |---|---|---|

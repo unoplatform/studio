@@ -1,5 +1,5 @@
 {
-  "description": "After a .xaml or .cs edit, ask the DevServer (uno-devserver app hot-reload-status) whether the running Uno app applied it through Hot Reload and tell the agent the result, so it asserts with uno_app_find_elements, fixes the reported compile errors, or restarts only for a rude edit or a DevServer internal error. Without the CLI, remind it that Hot Reload applies the edit; with no app connected yet, say nothing. Before a uno_app_restart, deny it while every edit since the last start was applied and none touched startup code: the running app already has them.",
+  "description": "After a .xaml or .cs edit, ask the DevServer (uno-devserver app hot-reload-status) whether the running Uno app applied it through Hot Reload and tell the agent the result, so it asserts with uno_app_find_elements, fixes the reported compile errors, or restarts only for a rude edit or a DevServer internal error. Without the CLI, remind it that Hot Reload applies the edit; with no app connected yet, say nothing. Before a uno_app_restart, deny it while every edit since the last start was applied and none touched startup code: the running app already has them; a uno_app_close in that state is denied once with the same reason, and the same call again goes through.",
   "hooks": {
     "PostToolUse": [
       {

@@ -4,8 +4,10 @@
 # the restart is denied with the reason: the running app already has the edits, and a restart proves nothing.
 # After a RudeEdit, an InternalError, a compile failure, an edit the DevServer ignored, an edit to App.xaml.cs,
 # Program.cs, a project, props, appsettings or manifest file, or with no edit since the last start, it is allowed.
-# Only uno_app_restart is guarded: uno_app_close then uno_app_start is the way to relaunch with other arguments,
-# data or platform, and stays open. `post`: PostToolUse on the same tool; a start or restart clears the state.
+# uno_app_close then uno_app_start is the way to relaunch with other arguments, data or platform, so it stays open;
+# but a close in the same state is denied once, with the reason, since a denied restart went that way every time
+# (catalog-20261020-213956): the same call again goes through. `post`: PostToolUse on the same tool; a start or
+# restart clears the state.
 # Reads the hook JSON on stdin; the state lives in ${TMPDIR:-/tmp}/uno-studio-hooks/<session_id>.state.
 mode=$1
 input=$(cat)
@@ -18,12 +20,18 @@ post)
 	case $tool in uno_app_start|uno_app_restart) rm -f "$state" ;; esac
 	exit 0 ;;
 pre)
-	[ "$tool" = uno_app_restart ] || exit 0
+	case $tool in uno_app_restart|uno_app_close) ;; *) exit 0 ;; esac
 	[ -f "$state" ] || exit 0
 	verdict=$(sed -n 's/^verdict=//p' "$state" | tail -1)
 	startup=$(sed -n 's/^startup=//p' "$state" | tail -1)
 	last=$(sed -n 's/^last=//p' "$state" | tail -1)
 	[ "$startup" = 1 ] && exit 0
+	if [ "$tool" = uno_app_close ]; then
+		case $verdict in applied|nochanges|superseded) ;; *) exit 0 ;; esac
+		grep -q '^closedenied=1$' "$state" && exit 0
+		printf 'closedenied=1\n' >>"$state"
+		why="Hot Reload applied every edit since the last start (last: $last), and none touched code that runs at startup: the running app already has them. If this close is the first half of a relaunch to be sure, there is nothing for the relaunch to pick up, and it costs a launch and the state under test: keep the app, re-enter that state and assert with uno_app_find_elements(waitForMs). If it is a real close (testing is done, or the next start needs other arguments, data or platform), call uno_app_close again and it goes through."
+	else
 	case $verdict in
 	applied|nochanges|superseded)
 		why="Hot Reload applied every edit since the last start (last: $last), and none touched code that runs at startup. The running app already has them, so a restart proves nothing here, and it costs a launch and the state under test: re-enter that state and assert with uno_app_find_elements(waitForMs). A restart is allowed after a RudeEdit or InternalError verdict, a compile failure, or an edit to App.xaml.cs, Program.cs, a .csproj, .props, appsettings or manifest file. To relaunch with other arguments, data or platform, uno_app_close then uno_app_start with them." ;;
@@ -31,6 +39,7 @@ pre)
 		why="The last edit is still on its way through Hot Reload (last: $last): a restart now would rebuild what is about to apply. Call uno_app_hot_reload_status(file, waitForMs: 10000) first; restart only if it reports RudeEdit or an internal error." ;;
 	*) exit 0 ;;
 	esac
+	fi
 	esc=$(printf '%s' "$why" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
 	printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"$esc\"}}"
 	exit 0 ;;

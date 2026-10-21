@@ -1,6 +1,6 @@
 ---
 name: uno-mvux
-description: "MVUX state management for Uno Platform apps: feeds, states, FeedView, commands, Models. Covers IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, selection, pagination, entity messaging, and immutable partial record Models with generated ViewModels (Model-View-Update-eXtended). Use whenever an Uno Platform app that uses MVUX, or a new app with no pattern chosen yet, loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model layer. Also use when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records, or the user asks how MVUX compares with MVVM. Not for apps built on MVVM (<UnoFeatures>Mvvm</UnoFeatures>, CommunityToolkit.Mvvm, ObservableObject ViewModels): keep their pattern. Read this skill before writing any MVUX Model, feed, state, or command code."
+description: "MVUX state management for Uno Platform apps: feeds, states, FeedView, commands, Models. Covers IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, selection, pagination, entity messaging, and immutable partial record Models with generated ViewModels (Model-View-Update-eXtended). Use whenever an Uno Platform app that uses MVUX, or a new app with no pattern chosen yet, loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model layer. Also use when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records, or the user asks how MVUX compares with MVVM. Also use to mock a Model's feeds with Uno.HotTesting.Reactive, to show a page loading, failing, empty or with fixed data in a preview or test. Not for apps built on MVVM (<UnoFeatures>Mvvm</UnoFeatures>, CommunityToolkit.Mvvm, ObservableObject ViewModels): keep their pattern. Read this skill before writing any MVUX Model, feed, state, or command code."
 metadata:
   author: uno-platform
   category: mvux
@@ -39,6 +39,7 @@ Look at `<UnoFeatures>` in the app's project file before writing any presentatio
 | Track the selected item or items of a list | `references/selection.md` | `.Selection(state)`, `IState<T>`, `IState<IImmutableList<T>>` |
 | Infinite scroll or page-by-page loading | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PageRequest` |
 | Keep several pages in sync after create/update/delete | `references/messaging.md` | `IMessenger`, `EntityMessage<T>`, `.Observe(messenger, e => e.Id)` |
+| Show a page in any feed state without its real services, for a preview or a test; the `MOCK0001`–`MOCK0003` diagnostics | `references/mocking.md` | `Uno.HotTesting.Reactive`, `{Model}Mock`, `{Vm}Mock.Create`, `FeedMock`, `ListFeedMock` |
 
 ## Critical rules
 
@@ -60,3 +61,4 @@ These come up in nearly every MVUX task. Each reference repeats the ones it need
 - `uno-navigation` for moving between pages and passing entities; MVUX Models are registered with `ViewMap`/`DataViewMap` there.
 - `uno-toolkit` (`references/itemsrepeater-extensions.md`) when a paginated or selectable list is rendered with `ItemsRepeater` instead of `ListView`.
 - `uno-testing` to verify loading, error, and value states of a `FeedView` in a running app.
+- `uno-platform` (`references/previews.md`) to show a mocked page in a Hot Design preview.

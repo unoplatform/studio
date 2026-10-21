@@ -45,12 +45,13 @@ jobs:
       - name: Test
         run: dotnet test tests/Uno.Lint.Tests -c Release --no-build --logger "trx;LogFileName=uno-lint.trx"
 
+      # A version only this run produces, so the install below can never pick a published package instead.
       - name: Pack the tool
-        run: dotnet pack src/Uno.Lint.Cli -c Release --no-build -o artifacts
+        run: dotnet pack src/Uno.Lint.Cli -c Release --no-build -o artifacts -p:PackageVersion=0.0.0-ci.${{ github.run_id }}
 
       - name: Install the packed tool
         run: |
-          dotnet tool install Uno.Lint.Tool --tool-path "$RUNNER_TEMP/tools" --add-source artifacts --prerelease
+          dotnet tool install Uno.Lint.Tool --tool-path "$RUNNER_TEMP/tools" --add-source artifacts --version 0.0.0-ci.${{ github.run_id }}
           echo "$RUNNER_TEMP/tools" >> "$GITHUB_PATH"
 
       - name: Self-check the rule catalog

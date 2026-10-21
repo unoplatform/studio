@@ -22,9 +22,9 @@ The Uno App MCP server exposes tools that let an agent:
 
 ## Quick Start Workflow
 
-1. **Build once** → `dotnet build <app>.csproj -f net10.0-desktop`, so compile errors surface as build output
-2. **Start the app once** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`; its result ends with a `Hot Reload:` line
-3. **Verify it is connected** → `uno_app_get_runtime_info` (poll it; never call `uno_app_start` again to "retry")
+1. **Find a running app** → `uno_app_get_runtime_info`; a connected instance is the app under test: skip to step 4
+2. **Build once** → `dotnet build <app>.csproj -f net10.0-desktop`, so compile errors surface as build output
+3. **Start the app once** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`; its result ends with a `Hot Reload:` line. Confirm with `uno_app_get_runtime_info` (poll it; never call `uno_app_start` again to "retry")
 4. **Capture the initial screenshot** → `uno_app_get_screenshot(fileType: "png")`
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
 6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
@@ -286,7 +286,7 @@ Returns an XML representation of the element's DataContext. `uno_app_find_elemen
 - Screenshots for visual validation only, never to learn whether an action worked
 
 ### Cleanup
-- Call `uno_app_close` at the end of tests (desktop), and before any rebuild
+- Call `uno_app_close` at the end of tests (desktop), and before a start the skill's rules allow
 - Capture a screenshot and a `detail: "full"` tree on failure before closing
 
 ## Troubleshooting
@@ -301,7 +301,7 @@ Returns an XML representation of the element's DataContext. `uno_app_find_elemen
 - Hot Design opened over the app, or its indicator is in the screenshots. Set `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);` in `App.xaml.cs` (in an existing app, only after the developer agrees; otherwise ask them to exit Hot Design in the app window), `uno_app_close`, and start the app again
 
 ### Build fails with MSB3026/MSB3027 (file in use)
-- The previous instance is still running: `uno_app_close`, then build again
+- An instance is still running, and usually the build was not needed: an edit to a running app goes through `uno_app_hot_reload_status` (see *Before rebuilding*). When a start the skill's rules allow is really due, `uno_app_close`, then build
 
 ### Screenshot "Security error: path must be within ..." or "Could not find a part of the path"
 - Save inside the workspace directory, into a folder that exists, or omit `path`

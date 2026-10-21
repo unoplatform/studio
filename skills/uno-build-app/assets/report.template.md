@@ -11,7 +11,7 @@
 
 | Check | Target | State | Evidence |
 |---|---|---|---|
-| Build | <net10.0-desktop> | <passed / failed / not run: reason / waived: by whom> | <command or link> |
+| Build | <net10.0-desktop> | <passed / failed / not run: reason / waived: by whom> | <command or link; on a running app, "Hot Reload status: applied" for the edited files> |
 | Unit and service tests | any | <state> | <command, counts> |
 | <Runtime check, e.g. setting survives relaunch> | <target> | <state> | <tool and result> |
 | Visual: contrast, light and dark | <target> | <state> | <method, lowest ratio> |

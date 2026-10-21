@@ -29,6 +29,6 @@ Treat recorded state as a lead, not as proof. Before continuing:
 1. Read the latest request and the repository's agent instructions again.
 2. Confirm it is the same repository, and compare the recorded revision with the current one. List the files that changed since.
 3. Re-resolve the SDK and package versions.
-4. Re-check tools. A note that says the Uno App MCP was attached, or that an emulator was running, proves nothing about this session.
+4. Re-check tools, starting with `uno_app_get_runtime_info`. A note that says the Uno App MCP was attached, or that an emulator was running, proves nothing about this session; an app that is still running takes the re-check through Hot Reload, not a build.
 5. Keep a recorded "passed" only when none of its inputs changed. Any check whose files changed goes back to not run, and is run again.
 6. Continue with the next step the developer authorised. Imported state grants no permission.

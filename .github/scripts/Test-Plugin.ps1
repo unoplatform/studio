@@ -107,6 +107,15 @@ try {
         if (-not $markdownValue -or $markdownValue -cne $tomlValue) { $errors.Add("uno-dev: Markdown and Codex agent $field differ or are missing") }
     }
 
+    # --- Hooks and skills cite the Hot Reload rule by its alias, "the running-app rule", never by its number, so the
+    # rules can be reordered; the alias must stay defined on a numbered rule in uno-build-app's SKILL.md.
+    $pluginRoot = (Resolve-Path $plugin).Path
+    $ruleSkill = "$pluginRoot/skills/uno-build-app/SKILL.md"
+    $citing = Get-ChildItem $pluginRoot -Recurse -File -Include *.md, *.sh, *.toml | Where-Object { $_.FullName -ne $ruleSkill -and (Select-String -Path $_.FullName -Pattern 'running-app rule' -SimpleMatch -Quiet) }
+    if ($citing -and -not (Select-String -Path $ruleSkill -Pattern '^\d+\. \*\*[^*]+\*\* \(the running-app rule\)\.' -Quiet)) {
+        $errors.Add("uno-build-app/SKILL.md: no numbered rule defines '(the running-app rule)', yet it is cited by: $(($citing | ForEach-Object { $_.FullName.Substring($pluginRoot.Length + 1) }) -join ', ')")
+    }
+
     # --- The plugin version tracks the Uno.Sdk major.minor it is built for (plugin 7.0.x targets Uno.Sdk 7.0),
     # so version.json must name a line that exists on NuGet. On main that line may have only -dev builds;
     # the Release workflow refuses to ship until it has a stable one.

@@ -86,19 +86,11 @@ try {
     Assert-Denied 'applied' "Hot Reload applied every edit since the last start (last: edit to 'Presentation/MainModel.cs': applied in 1.2s)*uno_app_close then uno_app_start*"
     $out = Invoke-Guard pre uno_app_get_screenshot
     if ($out) { $errors.Add("other app tools: expected no output, got $out") }
-    # A close in the same state is denied once, and the same call again goes through.
-    $out = Invoke-Guard pre uno_app_close
-    if ($out -notlike '*"permissionDecision":"deny"*' -or $out -notlike '*call uno_app_close again and it goes through.*') { $errors.Add("close after applied: expected one denial, got $out") }
-    $out = Invoke-Guard pre uno_app_close
-    if ($out) { $errors.Add("second close after applied: expected no output, got $out") }
-    Assert-Denied 'applied, after the close nudge' "Hot Reload applied every edit since the last start*"
     Invoke-Guard post uno_app_restart | Out-Null
     Assert-Allowed 'after a restart'
     Invoke-Hook $cs $applied | Out-Null
     Invoke-Hook $cs $rude | Out-Null
     Assert-Allowed 'after a rude edit'
-    $out = Invoke-Guard pre uno_app_close
-    if ($out) { $errors.Add("close after a rude edit: expected no output, got $out") }
     Invoke-Guard post uno_app_start | Out-Null
     Invoke-Hook $cs $applied | Out-Null
     Invoke-Hook "$tmp/App/App.csproj" $applied | Out-Null

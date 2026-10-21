@@ -4,9 +4,26 @@
 # result: applied -> assert; compile failure -> block with the diagnostics; rude edit or DevServer internal error ->
 # restart the app after the related edits; still processing, no changes and the like -> what the DevServer says.
 # Without the CLI it falls back to the reminder that Hot Reload applies the edit; with the CLI but no connected app
-# (before the first start) it prints nothing. Reads the hook JSON on stdin; prints nothing for other files.
+# (before the first start) it prints nothing. Reads the hook JSON on stdin; prints nothing for other files. It also
+# records the verdict, and any edit to a file that runs at startup, for app-restart-guard.sh.
 input=$(cat)
+anyfile=$(printf '%s' "$input" | sed -En 's/.*"file_path" *: *"([^"]*)".*/\1/p' | sed 's/\\\\/\\/g')
 file=$(printf '%s' "$input" | sed -En 's/.*"file_path" *: *"([^"]*\.(xaml|cs))".*/\1/p' | sed 's/\\\\/\\/g')
+
+# What app-restart-guard.sh reads before a uno_app_restart: the last verdict of this session, and whether an edit
+# since the last start touched code that only a restart runs. A start or restart clears the file.
+session=$(printf '%s' "$input" | grep -oE '"session_id" *: *"[^"]*"' | head -1 | sed -E 's/.*"([^"]*)"$/\1/')
+state="${TMPDIR:-/tmp}/uno-studio-hooks/${session:-default}.state"
+record() {
+	mkdir -p "$(dirname "$state")" 2>/dev/null || return 0
+	startup=$(sed -n 's/^startup=//p' "$state" 2>/dev/null | tail -1)
+	[ "$2" = 1 ] && startup=1
+	printf 'verdict=%s\nstartup=%s\nlast=%s\n' "$1" "${startup:-0}" "$3" >"$state" 2>/dev/null
+}
+case $anyfile in
+	*App.xaml.cs|*Program.cs|*.csproj|*.props|*.targets|*.sln|*.slnx|*global.json|*appsettings*.json|*.appxmanifest|*.manifest|*.plist|*AndroidManifest.xml)
+		record unknown 1 "edit to '$anyfile', which runs at startup" ;;
+esac
 [ -n "$file" ] || exit 0
 
 cli=${UNO_DEVSERVER_CLI:-uno-devserver}
@@ -16,7 +33,7 @@ remind() {
 	exit 0
 }
 
-command -v "$cli" >/dev/null 2>&1 || remind
+command -v "$cli" >/dev/null 2>&1 || { record unknown 0 "edit to '$file', with no DevServer CLI to ask"; remind; }
 
 # The solution the edited file belongs to: the nearest folder above it with a .sln or .slnx.
 has_sln() { for f in "$1"/*.sln "$1"/*.slnx; do [ -e "$f" ] && return 0; done; return 1; }
@@ -53,6 +70,13 @@ case $file in *App.xaml.cs) startup=" If the edit changed code that already ran 
 
 # Exit code 0 is applied, no changes, superseded or ignored (the verdict word tells them apart); 4 is still on its
 # way; 3 is a rude edit; 1 covers every other verdict, and only a compile failure is the file's to fix.
+word=other
+case $code:$verdict in
+	0:*"': applied"*) word=applied ;; *"': no changes"*) word=nochanges ;; *"': ignored"*) word=ignored ;; *"': superseded"*) word=superseded ;;
+	1:*" Failed in "*) word=failed ;; 1:*InternalError*) word=internal ;; 3:*) word=rude ;; 4:*) word=pending ;;
+esac
+record "$word" 0 "$(printf '%s' "$verdict" | tr -d '\r')"
+
 case $code:$verdict in
 	0:*"': applied"*) context "The running app now runs this edit (a C# edit recreated the current page: navigate back to the state under test). Assert with uno_app_find_elements(waitForMs); do not dotnet build, uno_app_close or uno_app_start.$startup" ;;
 	*"': no changes"*) context "An earlier operation already compiled this file, as happens when edits follow each other within seconds: assert with uno_app_find_elements(waitForMs), and restart only if the app lacks the change." ;;

@@ -22,7 +22,8 @@ public sealed class CSharpFile
         RelativePath = relativePath;
         Tree = tree;
         Text = tree.GetText().ToString();
-        Lines = TextLines.Split(Text);
+        // Roslyn also ends a line at NEL, LS and PS; the lines must be the ones its diagnostics count.
+        Lines = tree.GetText().Lines.Select(l => l.ToString()).ToArray();
         IsCodeBehind = relativePath.EndsWith(".xaml.cs", StringComparison.OrdinalIgnoreCase);
         IsAppCodeBehind = string.Equals(Path.GetFileName(relativePath), "App.xaml.cs", StringComparison.OrdinalIgnoreCase);
         IsPaletteFile = FileKinds.IsPaletteFile(relativePath);

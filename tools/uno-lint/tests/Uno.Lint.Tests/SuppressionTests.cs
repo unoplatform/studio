@@ -136,4 +136,43 @@ public class SuppressionTests
         Assert.Empty(result.Findings);
         Assert.Empty(result.Suppressed);
     }
+
+    [Fact]
+    public void A_trailing_allow_comment_covers_its_own_line_only()
+    {
+        var xaml = $"<Page {Ns}>\n<Border Background=\"Red\"/> <!-- uno-lint: allow hex - this line only -->\n<Border Background=\"Blue\"/>\n</Page>";
+        var all = LintXaml(xaml, includeSuppressed: true).Where(f => f.Rule == Rules.Hex).ToList();
+        Assert.True(all.Single(f => f.Line == 2).Suppressed);
+        Assert.False(all.Single(f => f.Line == 3).Suppressed);
+    }
+
+    [Fact]
+    public void An_allow_comment_does_not_reach_past_an_element_with_a_trailing_comment()
+    {
+        var xaml = $"<Page {Ns}>\n<!-- uno-lint: allow hex - grid only -->\n<Grid/> <!-- note -->\n<Border Background=\"Blue\"/>\n</Page>";
+        Assert.False(Assert.Single(LintXaml(xaml, includeSuppressed: true), f => f.Rule == Rules.Hex).Suppressed);
+    }
+
+    [Fact]
+    public void An_allow_line_inside_a_multiline_comment_counts()
+    {
+        var xaml = $"<Page {Ns}>\n<!--\n  uno-lint: allow hex - brand green\n-->\n<Border Background=\"Green\"/>\n</Page>";
+        Assert.True(Assert.Single(LintXaml(xaml, includeSuppressed: true), f => f.Rule == Rules.Hex).Suppressed);
+
+        var code = "partial class P : Page {\n/*\n uno-lint: allow codebehind - glue\n*/\nvoid A(object sender, EventArgs e) { }\n}";
+        Assert.Empty(LintCs(code));
+    }
+
+    [Theory]
+    [InlineData("\u0085")]
+    [InlineData("\u2028")]
+    [InlineData("\u2029")]
+    public void Csharp_lines_end_where_roslyn_ends_them(string separator)
+    {
+        var code = $"class A {{\n // s{separator}x\n void F(){{ var c = Colors.Red; }} }}";
+        Assert.Equal(4, Assert.Single(LintCs(code, "A.cs"), f => f.Rule == Rules.Hex).Line);
+
+        var allowed = $"class A {{\n /* {separator} */\n // uno-lint: allow hex - brand\n void F(){{ var c = Colors.Red; }} }}";
+        Assert.True(Assert.Single(LintCs(allowed, "A.cs", includeSuppressed: true), f => f.Rule == Rules.Hex).Suppressed);
+    }
 }

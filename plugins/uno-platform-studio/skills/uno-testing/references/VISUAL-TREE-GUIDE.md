@@ -156,7 +156,7 @@ ListView ^40 #Books :30:8
     TextBlock ^44 :44:14  "Second Item"
 ```
 
-**Important:** Item handles change when scrolling or when the source changes. Always take a fresh snapshot before interacting. Count items by counting the `dc:` or template lines directly under the list.
+**Important:** Item handles change when scrolling or when the source changes. Always take a fresh snapshot before interacting, or reach the item with `uno_app_scroll_into_view`, which returns a fresh handle. Read the count from the list's `{items=N}` in `uno_app_find_elements` rather than counting lines.
 
 ### Conditional UI
 

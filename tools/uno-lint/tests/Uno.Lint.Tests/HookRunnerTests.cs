@@ -162,4 +162,48 @@ public class HookRunnerTests : IDisposable
         Assert.Contains("- A.xaml L2 HEX", context);
         Assert.Contains("- B.xaml L2 HEX", context);
     }
+
+    [Fact]
+    public void An_edit_that_only_adds_suppressed_hits_is_still_noted()
+    {
+        var file = _project.Write("Views/MainPage.xaml", $"<Page {Ns}>\n  <!-- uno-lint: allow hex - brand -->\n  <Border Background=\"#FF0000\"/>\n</Page>");
+
+        var reply = JsonNode.Parse(Run(EditPayload(file, 2, "  <!-- uno-lint: allow hex - brand -->", "  <Border Background=\"#FF0000\"/>")).Output)!;
+
+        Assert.Equal("uno-lint: 1 allow comment(s) added (HEX)", reply["systemMessage"]!.GetValue<string>());
+        Assert.Contains("Note: this edit added 1 allow comment(s) (HEX)", reply["hookSpecificOutput"]!["additionalContext"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void Files_with_the_same_name_are_told_apart_and_a_file_named_twice_is_linted_once()
+    {
+        _project.Write("Views/MainPage.xaml", $"<Page {Ns}>\n  <Border Background=\"#FF0000\"/>\n</Page>");
+        _project.Write("Other/MainPage.xaml", $"<Page {Ns}>\n  <Border Background=\"Red\"/>\n</Page>");
+        var payload = new JsonObject
+        {
+            ["cwd"] = _project.Root,
+            ["tool_name"] = "apply_patch",
+            ["tool_input"] = new JsonObject
+            {
+                ["command"] = "*** Begin Patch\n*** Add File: Other/MainPage.xaml\n+x\n*** Update File: Views/MainPage.xaml\n@@\n-  <Border/>\n+  <Border Background=\"#FF0000\"/>\n*** Update File: Views/MainPage.xaml\n@@\n-  <Border/>\n+  <Border Background=\"#FF0000\"/>\n*** End Patch",
+            },
+        };
+
+        var context = JsonNode.Parse(Run(payload.ToJsonString()).Output)!["hookSpecificOutput"]!["additionalContext"]!.GetValue<string>();
+
+        Assert.Contains($"- {Path.Combine("Other", "MainPage.xaml")} L2 HEX", context);
+        Assert.Contains($"- {Path.Combine("Views", "MainPage.xaml")} L2 HEX", context);
+        Assert.Equal(2, context.Split('\n').Count(l => l.StartsWith("- ", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void Csharp_added_lines_follow_roslyn_line_breaks()
+    {
+        var separator = ((char)0x2028).ToString();
+        var file = _project.Write("Views/Detail.cs", $"class A {{\n // s{separator}x\n void F(){{ var c = Colors.Red; }} }}");
+
+        // The payload counts CR/LF lines: the Colors.Red line is its third; Roslyn reports it on line 4.
+        Assert.Contains("HEX", Run(EditPayload(file, 3, " void F(){ var c = Colors.Red; } }")).Output);
+        Assert.Empty(Run(EditPayload(file, 2, " // s")).Output);
+    }
 }

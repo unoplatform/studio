@@ -71,10 +71,12 @@ public sealed class CodexHookAdapter : IHookAdapter
         return edits.Count > 0 ? new HookRequest(Harness, edits) : null;
     }
 
-    /// <summary>The patch from <c>tool_input.command</c>: a string, or an argument array whose element holds the patch.</summary>
+    /// <summary>The patch from <c>tool_input.command</c> (a string, or an argument array whose element holds the patch), or <c>tool_input</c> itself when it is the patch.</summary>
     private static string? PatchText(JsonNode payload)
     {
-        var command = payload["tool_input"]?["command"];
+        // tool_input is an object with a command, or, for a freeform apply_patch, the patch text itself.
+        var input = HookAdapters.Field(payload, "tool_input");
+        var command = input is JsonObject ? HookAdapters.Field(input, "command") : input;
         IEnumerable<string?> candidates = command is JsonArray parts ? parts.Select(HookAdapters.Str) : [HookAdapters.Str(command)];
         return candidates.FirstOrDefault(c => c != null && c.Contains(BeginPatch, StringComparison.Ordinal));
     }

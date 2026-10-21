@@ -170,6 +170,19 @@ public class HookAdapterTests
     }
 
     [Fact]
+    public void A_freeform_patch_or_a_payload_of_another_shape_is_read_without_throwing()
+    {
+        var payload = CodexPayload("unused");
+        payload["tool_input"] = "*** Begin Patch\n*** Add File: A.xaml\n+<Page/>\n*** End Patch";
+        Assert.Equal([1], Assert.Single(new CodexHookAdapter().TryRead(payload, _ => "<Page/>")!.Edits).AddedLines);
+
+        foreach (var shape in new[] { "[1,2]", "\"text\"", """{"tool_input":["a"],"tool_response":"x"}""", """{"tool_input":{"file_path":"A.xaml","edits":"x"}}""" })
+        {
+            Assert.Null(HookAdapters.Read(JsonNode.Parse(shape)!, _ => "<Page/>"));
+        }
+    }
+
+    [Fact]
     public void Codex_adapter_ignores_shell_commands()
     {
         var payload = JsonNode.Parse("""{"tool_name":"Bash","cwd":"/w","tool_input":{"command":"dotnet build"}}""")!;

@@ -10,30 +10,30 @@ namespace Uno.Lint.Cli;
 
 /// <summary>
 /// The uno-lint command graph: <c>lint</c>, <c>rules</c> and <c>hook</c>. Help, option binding, structured output
-/// (<c>--json</c>, <c>--output:yaml</c>...) and exit codes come from Repl; handlers return the host library's
+/// (<c>--json</c>, <c>--output:yaml</c>..., and <c>--markdown</c> as the fenced text report) and exit codes come from Repl; handlers return the host library's
 /// immutable reports.
 /// Exit codes: 0 no finding at warning or above; 1 at least one; 2 the run could not complete (bad option or path).
 /// The hook always exits 0.
 /// </summary>
 public sealed class UnoLintCommands : IReplModule
 {
-    private readonly bool _structuredOutput;
+    private readonly OutputFormat _format;
     private readonly XamlLintEngine _xaml;
 
-    /// <param name="structuredOutput">
-    /// True when the invocation asks for a structured format (<see cref="OutputFormats.IsStructured"/>): handlers then
-    /// return the report itself for Repl to serialize; otherwise its text rendering.
+    /// <param name="format">
+    /// The output the invocation asks for (<see cref="OutputFormats.Of"/>): for a structured format, handlers return the
+    /// report itself for Repl to serialize; otherwise its text rendering, fenced for Markdown.
     /// </param>
-    public UnoLintCommands(bool structuredOutput, XamlLintEngine xaml)
+    public UnoLintCommands(OutputFormat format, XamlLintEngine xaml)
     {
-        _structuredOutput = structuredOutput;
+        _format = format;
         _xaml = xaml;
     }
 
     public void Map(IReplMap map)
     {
         map.Map("lint", LintAsync)
-            .WithDescription("Lint a project folder or one .xaml/.cs file. Exit code 1 when a finding is at warning or above. "
+            .WithDescription("Lint [path]: a project folder (default: the current one) or one .xaml/.cs file. Exit code 1 when a finding is at warning or above. "
                 + "Severities per rule and per path come from .editorconfig (dotnet_diagnostic.UNOL001.severity in any [glob] section). "
                 + "An allow comment directly above a hit, reason required, suppresses it and is counted: <!-- uno-lint: allow hex - reason -->.");
 
@@ -104,14 +104,17 @@ public sealed class UnoLintCommands : IReplModule
         var options = new LintOptions { Profile = profile.ToProfile(), IncludeDev = includeDev, AssumeToolkit = toolkit, UseContextCache = !noCache };
         var result = await new Linter(options, _xaml).RunAsync(target, cancellationToken);
         var report = LintReport.From(result);
-        return Results.Exit(report.ExitCode, _structuredOutput ? report : TextReport.Render(report, top));
+        return Results.Exit(report.ExitCode, _format == OutputFormat.Structured ? report : Text(TextReport.Render(report, top)));
     }
 
     private object Rules()
     {
         var catalog = RuleCatalog.Create();
-        return _structuredOutput ? catalog : TextReport.Render(catalog);
+        return _format == OutputFormat.Structured ? catalog : Text(TextReport.Render(catalog));
     }
+
+    /// <summary>The text rendering, fenced when Markdown was asked for.</summary>
+    private string Text(string rendered) => _format == OutputFormat.Markdown ? $"```text\n{rendered.TrimEnd()}\n```" : rendered;
 
     private async Task<object> HookAsync(
         IReplIoContext io,
@@ -128,32 +131,50 @@ public sealed class UnoLintCommands : IReplModule
     }
 }
 
+/// <summary>What an invocation's output flags ask for.</summary>
+public enum OutputFormat
+{
+    /// <summary>The text report (the default, --human).</summary>
+    Text,
+
+    /// <summary>The text report as Markdown (--markdown): Repl's Markdown renderer only lists an object's top-level fields.</summary>
+    Markdown,
+
+    /// <summary>The report object, for Repl to serialize (--json, --xml, --yaml...).</summary>
+    Structured,
+}
+
 /// <summary>Which output an invocation asks for, decided from its arguments before Repl parses them.</summary>
 public static class OutputFormats
 {
-    private static readonly HashSet<string> StructuredFlags = new(StringComparer.OrdinalIgnoreCase) { "--json", "--xml", "--yaml", "--yml", "--markdown" };
+    private static readonly HashSet<string> FormatFlags = new(StringComparer.OrdinalIgnoreCase) { "--json", "--xml", "--yaml", "--yml", "--markdown", "--human" };
 
-    /// <summary>True for --json and the other structured formats Repl renders, including --output:json and --output json.</summary>
-    public static bool IsStructured(IReadOnlyList<string> args)
+    /// <summary>
+    /// The format of the last format flag, as Repl applies it: --json, --xml, --yaml, --markdown, --human, or
+    /// --output:FORMAT. Repl does not accept --output with a space or '='.
+    /// </summary>
+    public static OutputFormat Of(IReadOnlyList<string> args)
     {
-        for (var i = 0; i < args.Count; i++)
+        string? last = null;
+        foreach (var arg in args)
         {
-            var arg = args[i];
-            if (StructuredFlags.Contains(arg))
+            if (FormatFlags.Contains(arg))
             {
-                return true;
+                last = arg[2..];
             }
-
-            var format = arg.StartsWith("--output:", StringComparison.OrdinalIgnoreCase) || arg.StartsWith("--output=", StringComparison.OrdinalIgnoreCase)
-                ? arg["--output:".Length..]
-                : string.Equals(arg, "--output", StringComparison.OrdinalIgnoreCase) && i + 1 < args.Count ? args[i + 1] : null;
-            if (format != null && !string.Equals(format, "human", StringComparison.OrdinalIgnoreCase))
+            else if (arg.StartsWith("--output:", StringComparison.OrdinalIgnoreCase))
             {
-                return true;
+                last = arg["--output:".Length..];
             }
         }
 
-        return false;
+        return last switch
+        {
+            null => OutputFormat.Text,
+            _ when string.Equals(last, "human", StringComparison.OrdinalIgnoreCase) => OutputFormat.Text,
+            _ when string.Equals(last, "markdown", StringComparison.OrdinalIgnoreCase) => OutputFormat.Markdown,
+            _ => OutputFormat.Structured,
+        };
     }
 }
 

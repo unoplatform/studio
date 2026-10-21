@@ -14,6 +14,9 @@ namespace Uno.Lint.Hooks;
 /// </summary>
 public static class HookRunner
 {
+    private static readonly StringComparer PathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+    private static readonly StringComparison PathComparison = OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
     /// <summary>The hook's options: an explicit profile, else .editorconfig's, else strict. The agent gets every hint; the human decides what to keep.</summary>
     public static LintOptions Options(Profile? profile = null) => new() { Profile = profile, DefaultProfile = Profile.Strict };
 
@@ -51,22 +54,31 @@ public static class HookRunner
             var findings = new List<(string File, Finding Finding)>();
             var suppressed = new List<Finding>();
             var shifted = new List<string>();
-            foreach (var edit in request.Edits)
+
+            // A patch can name a file twice; it is linted once, with the lines of both hunks.
+            var edits = request.Edits
+                .GroupBy(e => Path.GetFullPath(e.FilePath), PathComparer)
+                .Select(g => (Path: g.Key, Lines: g.SelectMany(e => e.AddedLines).ToHashSet()))
+                .ToList();
+            var labels = Labels(edits.Select(e => e.Path).ToList());
+            foreach (var (path, lines) in edits)
             {
-                var result = await linter.RunAsync(edit.FilePath, cancellationToken).ConfigureAwait(false);
-                var leaf = Path.GetFileName(edit.FilePath);
+                var result = await linter.RunAsync(path, cancellationToken).ConfigureAwait(false);
+                var label = labels[path];
                 if (result.LineShiftedXamlFiles.Count > 0)
                 {
                     // The repair moved lines, so a finding's line cannot be matched to the edit's lines.
-                    shifted.Add(leaf);
+                    shifted.Add(label);
                     continue;
                 }
 
-                findings.AddRange(result.Findings.Where(f => edit.AddedLines.Contains(f.Line)).Select(f => (leaf, f)));
-                suppressed.AddRange(result.Suppressed.Where(f => edit.AddedLines.Contains(f.Line)));
+                // Payload lines are counted at CR and LF; C# findings carry Roslyn's lines, which also end at NEL, LS and PS.
+                var added = !FileKinds.IsXaml(path) && ReadFile(path) is { } saved && TextLines.HasUnicodeLineBreaks(saved) ? TextLines.ToCSharpLines(saved, lines) : lines;
+                findings.AddRange(result.Findings.Where(f => added.Contains(f.Line)).Select(f => (label, f)));
+                suppressed.AddRange(result.Suppressed.Where(f => added.Contains(f.Line)));
             }
 
-            if (findings.Count == 0 && shifted.Count == 0)
+            if (findings.Count == 0 && suppressed.Count == 0 && shifted.Count == 0)
             {
                 return;
             }
@@ -82,6 +94,34 @@ public static class HookRunner
             // A lint must never break an edit, but a broken hook must not look like a clean edit either.
             await error.WriteLineAsync($"uno-lint: the hook failed, nothing reported: {e.GetType().Name}: {e.Message}").ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// How the reply names each edited file: its file name, or, when two edited files share one, its path from the
+    /// folder all edited files share, so the agent can tell which file to fix.
+    /// </summary>
+    internal static Dictionary<string, string> Labels(IReadOnlyList<string> paths)
+    {
+        var labels = new Dictionary<string, string>(PathComparer);
+        var clashes = paths.GroupBy(Path.GetFileName, PathComparer).Any(g => g.Count() > 1);
+        var common = clashes ? CommonDirectory(paths) : null;
+        foreach (var path in paths)
+        {
+            labels[path] = common != null ? Path.GetRelativePath(common, path) : Path.GetFileName(path);
+        }
+
+        return labels;
+    }
+
+    private static string? CommonDirectory(IReadOnlyList<string> paths)
+    {
+        var common = Path.GetDirectoryName(paths[0]);
+        while (common != null && !paths.All(p => p.StartsWith(common.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, PathComparison)))
+        {
+            common = Path.GetDirectoryName(common);
+        }
+
+        return common;
     }
 
     private static string? ReadFile(string path)
@@ -149,7 +189,7 @@ public static class HookRunner
 
         if (suppressed.Count > 0)
         {
-            context.AppendLine($"Note: this edit also added {suppressed.Count} allow comment(s) ({string.Join(", ", suppressed.Select(s => s.Rule.Name).Distinct())}). Suppressions are counted in the project report; each one needs a framework failure with a recorded repro behind it.");
+            context.AppendLine($"Note: this edit {(findings.Count > 0 ? "also " : string.Empty)}added {suppressed.Count} allow comment(s) ({string.Join(", ", suppressed.Select(s => s.Rule.Name).Distinct())}). Suppressions are counted in the project report; each one needs a framework failure with a recorded repro behind it.");
         }
 
         foreach (var file in shifted)
@@ -159,7 +199,8 @@ public static class HookRunner
 
         var summary = findings.Count > 0
             ? $"uno-lint: {findings.Count} hit(s) in {string.Join(", ", files)} ({string.Join(", ", findings.Select(f => f.Finding.Rule.Name).Distinct())})" + (suppressed.Count > 0 ? $", {suppressed.Count} suppressed" : string.Empty)
-            : $"uno-lint: {string.Join(", ", shifted)} is malformed XAML";
+            : shifted.Count > 0 ? $"uno-lint: {string.Join(", ", shifted)} is malformed XAML"
+            : $"uno-lint: {suppressed.Count} allow comment(s) added ({string.Join(", ", suppressed.Select(s => s.Rule.Name).Distinct())})";
 
         return new JsonObject
         {

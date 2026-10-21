@@ -13,7 +13,7 @@ public sealed class ClaudeCodeHookAdapter : IHookAdapter
 
     public HookRequest? TryRead(JsonNode payload, Func<string, string?> readFile)
     {
-        if (HookAdapters.Str(payload["tool_input"]?["file_path"]) is not { Length: > 0 } rawPath || !FileKinds.IsSourceFile(rawPath))
+        if (HookAdapters.Str(HookAdapters.Field(HookAdapters.Field(payload, "tool_input"), "file_path")) is not { Length: > 0 } rawPath || !FileKinds.IsSourceFile(rawPath))
         {
             return null;
         }
@@ -34,13 +34,13 @@ public sealed class ClaudeCodeHookAdapter : IHookAdapter
     public static bool TryGetAddedLines(JsonNode payload, string fullText, out HashSet<int> lines)
     {
         lines = [];
-        var input = payload["tool_input"];
-        var response = payload["tool_response"];
+        var input = HookAdapters.Field(payload, "tool_input");
+        var response = HookAdapters.Field(payload, "tool_response");
 
-        if (response?["structuredPatch"] is JsonArray patch)
+        if (HookAdapters.Field(response, "structuredPatch") is JsonArray patch)
         {
             // A Write that created the file has an empty patch: every line is new.
-            if (HookAdapters.Str(response["type"]) == "create")
+            if (HookAdapters.Str(HookAdapters.Field(response, "type")) == "create")
             {
                 lines = EditRange.AllLines(fullText);
                 return true;
@@ -54,13 +54,13 @@ public sealed class ClaudeCodeHookAdapter : IHookAdapter
         }
 
         // Write without a patch replaced the whole file.
-        if (HookAdapters.Str(input?["content"]) != null)
+        if (HookAdapters.Str(HookAdapters.Field(input, "content")) != null)
         {
             lines = EditRange.AllLines(fullText);
             return true;
         }
 
-        var edits = input?["edits"] is JsonArray multi ? multi.ToList() : new List<JsonNode?> { input };
+        var edits = HookAdapters.Field(input, "edits") is JsonArray multi ? multi.ToList() : new List<JsonNode?> { input };
         var located = false;
         foreach (var edit in edits.OfType<JsonObject>())
         {

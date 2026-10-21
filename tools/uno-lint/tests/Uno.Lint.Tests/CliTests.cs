@@ -27,7 +27,7 @@ public class CliTests : IDisposable
         {
             var app = ReplApp.Create();
             app.Options(options => UnoLintCommands.Configure(options, hookMode: false));
-            app.MapModule(new UnoLintCommands(OutputFormats.IsStructured(args), Engine));
+            app.MapModule(new UnoLintCommands(OutputFormats.Of(args), Engine));
             return app;
         });
         await using var session = await host.OpenSessionAsync();
@@ -134,14 +134,28 @@ public class CliTests : IDisposable
     }
 
     [Theory]
-    [InlineData("lint --json", true)]
-    [InlineData("lint --output:yaml", true)]
-    [InlineData("lint --output json", true)]
-    [InlineData("lint --output:human", false)]
-    [InlineData("lint --human", false)]
-    [InlineData("lint", false)]
-    public void Structured_output_is_detected_from_the_arguments(string commandLine, bool structured)
+    [InlineData("lint --json", OutputFormat.Structured)]
+    [InlineData("lint --output:yaml", OutputFormat.Structured)]
+    [InlineData("lint --output:human", OutputFormat.Text)]
+    [InlineData("lint --human", OutputFormat.Text)]
+    [InlineData("lint --json --human", OutputFormat.Text)]
+    [InlineData("lint --human --json", OutputFormat.Structured)]
+    [InlineData("lint --markdown", OutputFormat.Markdown)]
+    [InlineData("lint --output:markdown", OutputFormat.Markdown)]
+    [InlineData("lint", OutputFormat.Text)]
+    public void The_last_format_flag_decides_the_output(string commandLine, OutputFormat format)
     {
-        Assert.Equal(structured, OutputFormats.IsStructured(commandLine.Split(' ')));
+        Assert.Equal(format, OutputFormats.Of(commandLine.Split(' ')));
+    }
+
+    [Fact]
+    public async Task Markdown_output_is_the_whole_text_report()
+    {
+        _project.Write("Hex.xaml", $"<Page {Ns}><Border Background=\"#FF0000\"/></Page>");
+
+        var output = (await RunAsync($"lint {Quoted()} --no-cache --markdown")).OutputText;
+
+        Assert.StartsWith("```text", output.TrimStart());
+        Assert.Contains("HEX: 1 hit(s) in 1 file(s)", output);
     }
 }

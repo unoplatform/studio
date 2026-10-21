@@ -77,6 +77,20 @@ public class HookProcessTests : IDisposable
     }
 
     [Fact]
+    public void Inline_option_values_and_repl_options_are_not_called_unknown()
+    {
+        _project.Write("App.csproj", "<Project/>");
+        foreach (var options in new[] { "--profile=strict", "--profile:strict", "--json" })
+        {
+            var (exitCode, output, error) = RunTool($"hook {options}", WritePayload("MainPage.xaml"));
+
+            Assert.Equal(0, exitCode);
+            Assert.DoesNotContain("unknown", error);
+            Assert.Contains("HEX", output);
+        }
+    }
+
+    [Fact]
     public void A_bad_hook_option_value_still_exits_0()
     {
         var (exitCode, output, _) = RunTool("hook --profile strictest", Encoding.UTF8.GetBytes("{}"));

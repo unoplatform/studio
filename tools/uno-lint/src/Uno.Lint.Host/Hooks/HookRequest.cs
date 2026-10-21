@@ -44,7 +44,10 @@ public static class HookAdapters
 
     internal static string? Str(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var s) ? s : null;
 
+    /// <summary>A member of a JSON object; null when the node is missing or not an object, so a payload of another shape reads as absent rather than throwing.</summary>
+    internal static JsonNode? Field(JsonNode? node, string name) => node is JsonObject obj ? obj[name] : null;
+
     /// <summary>An absolute path: relative ones are resolved against the payload's <c>cwd</c>, else the process's.</summary>
     internal static string Resolve(string path, JsonNode payload) =>
-        Path.IsPathRooted(path) ? Path.GetFullPath(path) : Path.GetFullPath(Path.Combine(Str(payload["cwd"]) ?? Environment.CurrentDirectory, path));
+        Path.IsPathRooted(path) ? Path.GetFullPath(path) : Path.GetFullPath(Path.Combine(Str(Field(payload, "cwd")) ?? Environment.CurrentDirectory, path));
 }

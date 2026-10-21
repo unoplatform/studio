@@ -41,6 +41,7 @@ try {
     $applied = New-Cli 'applied' @("edit to 'Presentation/MainModel.cs': applied in 1.2s") 0
     $failed = New-Cli 'failed' @("edit to 'Presentation/MainModel.cs': Failed in 0.8s", 'MainModel.cs(3,1): error CS1002: ; expected "x"') 1
     $rude = New-Cli 'rude' @("edit to 'Presentation/MainModel.cs': RudeEdit") 3
+    $noApp = New-Cli 'no-app' @('no connected app') 0
 
     Assert-Hook 'no CLI' $cs "$tmp/missing" { $args[0].hookSpecificOutput.additionalContext -like 'An Uno app source file changed.*' }
     Assert-Hook 'XAML file' "$tmp/App/Presentation/MainPage.xaml" "$tmp/missing" { $args[0].hookSpecificOutput.additionalContext -like 'An Uno app*' }
@@ -50,6 +51,8 @@ try {
 
     $out = Invoke-Hook "$tmp/App/README.md" $applied
     if ($out) { $errors.Add("other file types: expected no output, got $out") }
+    $out = Invoke-Hook $cs $noApp
+    if ($out) { $errors.Add("no app connected yet: expected no output, got $out") }
 }
 finally {
     Remove-Item $tmp -Recurse -Force

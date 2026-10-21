@@ -4,6 +4,7 @@ using Uno.XamlParser;
 using Uno.XamlParser.Configuration;
 using Uno.XamlParser.Stage0;
 using Uno.XamlParser.Stage1;
+using Uno.XamlParser.Stage1.Nodes;
 
 namespace Uno.Lint.Xaml;
 
@@ -80,14 +81,34 @@ public static partial class UnoLintXaml
         // Each attribute's element start, so a finding on an attribute can be suppressed above its element and HEX can
         // claim the element it was found on.
         var owners = new Dictionary<(int Line, int Column), (int Line, int Column)>();
+
+        // A color written as element text belongs to the element it colors: the owner of a property element
+        // (<SolidColorBrush.Color>), or the owner around a <Color> inside one. Only HEX reads this map, so a control
+        // inside a property element stays anchored on its own start tag for every other rule.
+        var textOwners = new Dictionary<(int Line, int Column), (int Line, int Column)>();
+        static (int, int) StartOf(XamlElementNode element) => (element.LineInfo.LineNumber, element.LineInfo.LinePosition);
+        XamlElementNode? ParentOf(XamlElementNode element) => element.ParentIndex is int index && index >= 0 && index < elements.Count ? elements[index] : null;
+
         int adaptiveTriggers = 0, controlTemplates = 0;
         var definedBrushKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var element in elements)
         {
-            var start = (element.LineInfo.LineNumber, element.LineInfo.LinePosition);
+            var start = StartOf(element);
             foreach (var property in element.Properties)
             {
                 owners[(property.LineInfo.LineNumber, property.LineInfo.LinePosition)] = start;
+            }
+
+            if (ParentOf(element) is { } parent)
+            {
+                if (ColorScopes.IsPropertyElement(element))
+                {
+                    textOwners[start] = StartOf(parent);
+                }
+                else if (ColorScopes.IsPropertyElement(parent) && ParentOf(parent) is { } owner)
+                {
+                    textOwners[start] = StartOf(owner);
+                }
             }
 
             switch (element.Name.LocalName)
@@ -106,12 +127,16 @@ public static partial class UnoLintXaml
         if (parsed)
         {
             var diagnostics = (result.SemanticResult?.Diagnostics ?? []).Where(d => d.Code.StartsWith("UNOL", StringComparison.Ordinal)).ToList();
-            (int, int) OwnerOf(XamlLineInfo at) => owners.TryGetValue((at.LineNumber, at.LinePosition), out var owner) ? owner : (at.LineNumber, at.LinePosition);
+            (int, int) OwnerOf(RuleDescriptor rule, XamlLineInfo at)
+            {
+                var position = (at.LineNumber, at.LinePosition);
+                return owners.TryGetValue(position, out var owner) || (rule == Rules.Hex && textOwners.TryGetValue(position, out owner)) ? owner : position;
+            }
 
             // A literal single-themed brush is one problem: HEX reports it with a theme note, so TOKENTHEME steps back
             // on any element HEX already reported while HEX is enabled for this file.
             var hexElements = isEnabled(Rules.Hex)
-                ? diagnostics.Where(d => d.Code == Rules.Hex.Id).Select(d => OwnerOf(d.LineInfo)).ToHashSet()
+                ? diagnostics.Where(d => d.Code == Rules.Hex.Id).Select(d => OwnerOf(Rules.Hex, d.LineInfo)).ToHashSet()
                 : [];
 
             var lines = TextLines.Split(text);
@@ -128,7 +153,7 @@ public static partial class UnoLintXaml
                     continue;
                 }
 
-                var ownerLine = OwnerOf(at).Item1;
+                var ownerLine = OwnerOf(rule, at).Item1;
                 var suppressed = Suppression.IsSuppressed(lines, rule, at.LineNumber, ownerLine);
                 findings.Add(new Finding(rule, relativePath, at.LineNumber, diagnostic.Message, suppressed));
             }

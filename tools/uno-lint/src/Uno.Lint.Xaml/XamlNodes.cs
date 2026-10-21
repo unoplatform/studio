@@ -28,6 +28,16 @@ internal static partial class XamlNodes
     public static string? Attribute(XamlElementNode element, string name) =>
         Attributes(element).FirstOrDefault(p => Name(p) == name && !HasPrefix(p))?.RawValue;
 
+    /// <summary>
+    /// The value of an unprefixed property set as an attribute or as the element's own property element
+    /// (<c>&lt;Border.Background&gt;</c>), read from an end-tag node, which carries the folded property elements. Null
+    /// when unset, and for a property element holding an object rather than text.
+    /// </summary>
+    public static string? Property(XamlElementNode element, string name) =>
+        Attribute(element, name) ?? element.Properties.FirstOrDefault(p =>
+            p.Kind == XamlPropertyKind.PropertyElement && p.Reference.Name == name
+            && (p.Reference.DeclaringType is not { } owner || owner.LocalName == element.Name.LocalName))?.RawValue;
+
     /// <summary>x:Key, x:Name, x:Uid...: a XAML-language attribute, resolved through the element's namespace scope.</summary>
     public static bool IsXamlLanguage(XamlPropertyNode property, XamlElementNode owner)
     {

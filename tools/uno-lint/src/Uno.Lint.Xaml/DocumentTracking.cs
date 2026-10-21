@@ -67,6 +67,15 @@ internal sealed class ElementFrame
     /// <summary>Local names of the direct child elements, property elements included.</summary>
     public List<string> Children { get; } = new();
 
+    /// <summary>
+    /// Local names of the content children: direct children that are not property elements, plus the children of a
+    /// <c>.Child</c> or <c>.Content</c> property element (<c>&lt;Border.Child&gt;&lt;StackPanel/&gt;</c>).
+    /// </summary>
+    public List<string> Content { get; } = new();
+
+    /// <summary>The element's own <c>.Background</c> property element holds an ImageBrush: the element clips an image.</summary>
+    public bool HasImageBackground { get; set; }
+
     /// <summary>Shapes (Ellipse, Rectangle...) anywhere below, in document order.</summary>
     public List<string> ShapesBelow { get; } = new();
 
@@ -75,6 +84,12 @@ internal sealed class ElementFrame
 
     /// <summary>Direct text content, known once the end tag is reached.</summary>
     public string Text { get; set; } = string.Empty;
+
+    /// <summary>
+    /// HEX hits on a brush that may be single-themed, held until its end tag: only then is it known whether the brush
+    /// follows the theme, which decides the single-theme note.
+    /// </summary>
+    public List<(string Message, XamlLineInfo At)> PendingHex { get; } = new();
 }
 
 /// <summary>
@@ -172,7 +187,19 @@ public sealed class DocumentTracker : IXamlSemanticFixer
 
             if (document.Open.Count > 0)
             {
-                document.Open.Peek().Children.Add(name);
+                var parent = document.Open.Peek();
+                parent.Children.Add(name);
+                if (!name.Contains('.', StringComparison.Ordinal))
+                {
+                    var parentName = XamlNodes.LocalName(parent.Start);
+                    var isContentProperty = parentName.EndsWith(".Child", StringComparison.Ordinal) || parentName.EndsWith(".Content", StringComparison.Ordinal);
+                    var owner = document.Open.Count > 1 ? document.Open.ElementAt(1) : null;
+                    (isContentProperty && owner != null ? owner : parent).Content.Add(name);
+                    if (owner != null && name == "ImageBrush" && parentName.EndsWith(".Background", StringComparison.Ordinal))
+                    {
+                        owner.HasImageBackground = true;
+                    }
+                }
             }
 
             document.SawNavigationBar |= name == "NavigationBar";

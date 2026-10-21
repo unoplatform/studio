@@ -161,13 +161,39 @@ public class XamlRuleTests
         var oneLine = LintXaml($"<ResourceDictionary {Ns}><SolidColorBrush x:Key=\"StatusBrush\" Color=\"#18D96A\"/></ResourceDictionary>", "App.xaml");
         var twoLines = LintXaml($"<ResourceDictionary {Ns}>\n<SolidColorBrush x:Key=\"StatusBrush\"\n    Color=\"#18D96A\"/>\n</ResourceDictionary>", "App.xaml");
         var textContent = LintXaml($"<ResourceDictionary {Ns}>\n<SolidColorBrush x:Key=\"StatusBrush\">#18D96A</SolidColorBrush>\n</ResourceDictionary>", "App.xaml");
+        var propertyElement = LintXaml($"<ResourceDictionary {Ns}>\n<SolidColorBrush x:Key=\"StatusBrush\">\n  <SolidColorBrush.Color>#18D96A</SolidColorBrush.Color>\n</SolidColorBrush>\n</ResourceDictionary>", "App.xaml");
+        var colorElement = LintXaml($"<ResourceDictionary {Ns}>\n<SolidColorBrush x:Key=\"StatusBrush\">\n  <SolidColorBrush.Color><Color>#18D96A</Color></SolidColorBrush.Color>\n</SolidColorBrush>\n</ResourceDictionary>", "App.xaml");
 
-        foreach (var findings in new[] { oneLine, twoLines, textContent })
+        foreach (var findings in new[] { oneLine, twoLines, textContent, propertyElement, colorElement })
         {
             var hit = Assert.Single(findings);
             Assert.Equal(Rules.Hex, hit.Rule);
             Assert.Contains("StatusBrush is also defined once for both themes", hit.Message);
         }
+    }
+
+    [Fact]
+    public void Allow_hex_above_the_brush_suppresses_a_property_element_color()
+    {
+        var xaml = $"<ResourceDictionary {Ns}>\n<!-- uno-lint: allow hex - status colour, fixed by design -->\n<SolidColorBrush x:Key=\"StatusBrush\">\n  <SolidColorBrush.Color>#18D96A</SolidColorBrush.Color>\n</SolidColorBrush>\n</ResourceDictionary>";
+        Assert.True(Assert.Single(LintXaml(xaml, "App.xaml", includeSuppressed: true)).Suppressed);
+    }
+
+    [Fact]
+    public void A_brush_that_follows_the_theme_gets_no_single_theme_note()
+    {
+        var xaml = $"<ResourceDictionary {Ns}><AcrylicBrush x:Key=\"PaneBrush\" TintColor=\"{{ThemeResource SurfaceColor}}\" FallbackColor=\"#FF0000\"/></ResourceDictionary>";
+        var hit = Assert.Single(LintXaml(xaml, "App.xaml"));
+        Assert.Equal(Rules.Hex, hit.Rule);
+        Assert.DoesNotContain("defined once", hit.Message);
+    }
+
+    [Theory]
+    [InlineData("<ColorPicker><ColorPicker.Header>Red</ColorPicker.Header></ColorPicker>", 0)]
+    [InlineData("<ObjectAnimationUsingKeyFrames Storyboard.TargetProperty=\"(Border.Background)\"><DiscreteObjectKeyFrame><DiscreteObjectKeyFrame.Value>Blue</DiscreteObjectKeyFrame.Value></DiscreteObjectKeyFrame></ObjectAnimationUsingKeyFrames>", 1)]
+    public void Hex_reads_property_elements_by_their_target(string element, int hits)
+    {
+        Assert.Equal(hits, LintXaml($"<Page {Ns}>{element}</Page>").Count(f => f.Rule == Rules.Hex));
     }
 
     [Fact]
@@ -371,6 +397,36 @@ public class XamlRuleTests
         Assert.DoesNotContain(LintXaml($"<Page {Ns}><Button uen:Navigation.Request=\"-\"/><utu:NavigationBar/></Page>"), x => x.Rule == Rules.BackBar);
     }
 
+    [Fact]
+    public void BackBar_is_decided_per_root_element()
+    {
+        Assert.Equal(2, LintXaml($"<Page {Ns}><Button uen:Navigation.Request=\"-\"/></Page><Page {Ns}><Button uen:Navigation.Request=\"-\"/></Page>").Count(x => x.Rule == Rules.BackBar));
+        Assert.Single(LintXaml($"<Page {Ns}><utu:NavigationBar/></Page><Page {Ns}><Button uen:Navigation.Request=\"-\"/></Page>"), x => x.Rule == Rules.BackBar);
+    }
+
+    [Theory]
+    [InlineData("<Border CornerRadius=\"8\"><Border.Background>White</Border.Background><Grid/></Border>")]
+    [InlineData("<Border CornerRadius=\"8\"><Border.Background><SolidColorBrush Color=\"{ThemeResource SurfaceColor}\"/></Border.Background><Grid/></Border>")]
+    [InlineData("<Border CornerRadius=\"16\" Background=\"White\"><Border.Child><StackPanel><TextBlock/><TextBlock/></StackPanel></Border.Child></Border>")]
+    public void Card_reads_property_elements(string border)
+    {
+        Assert.Single(LintXaml($"<Page {Ns}>{border}</Page>"), x => x.Rule == Rules.Card);
+    }
+
+    [Fact]
+    public void A_border_clipping_an_image_is_not_a_card()
+    {
+        var xaml = $"<Page {Ns}><Border CornerRadius=\"10\" Width=\"72\" Height=\"72\"><Border.Background><ImageBrush ImageSource=\"{{Binding ImageUrl}}\" Stretch=\"UniformToFill\"/></Border.Background></Border></Page>";
+        Assert.DoesNotContain(LintXaml(xaml), x => x.Rule == Rules.Card);
+    }
+
+    [Fact]
+    public void A_chip_with_a_tooltip_is_still_a_chip()
+    {
+        var xaml = $"<Page {Ns}><Border CornerRadius=\"16\" Padding=\"12,6\" Background=\"White\"><ToolTipService.ToolTip>Hint</ToolTipService.ToolTip><TextBlock Text=\"Oat milk\"/></Border></Page>";
+        Assert.DoesNotContain(LintXaml(xaml), x => x.Rule == Rules.Card);
+    }
+
     // ------------------------------------------------------------ BINDVALUE
 
     [Fact]
@@ -391,6 +447,15 @@ public class XamlRuleTests
         Assert.Contains(mvux, f => f.Line == 3 && f.Message.Contains("Profile.Address.Value"));
 
         Assert.DoesNotContain(LintXaml(xaml, mvux: false), f => f.Rule == Rules.BindValue);
+    }
+
+    [Theory]
+    [InlineData("{Binding SelectedItem.Value, ElementName=Combo}")]
+    [InlineData("{Binding Path=Header.Value, RelativeSource={RelativeSource Self}}")]
+    [InlineData("{Binding Name.Value, Source={StaticResource Settings}}")]
+    public void BindValue_skips_bindings_to_a_control_or_explicit_source(string binding)
+    {
+        Assert.DoesNotContain(LintXaml($"<Page {Ns}><TextBlock Text=\"{binding}\"/></Page>", mvux: true), f => f.Rule == Rules.BindValue);
     }
 
     [Fact]

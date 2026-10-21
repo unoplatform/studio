@@ -47,6 +47,13 @@ internal static class ColorScopes
         return key;
     }
 
+    /// <summary>A {ThemeResource} on any attribute of the element (Color, TintColor, FallbackColor...) or anywhere below it follows the theme.</summary>
+    public static bool FollowsTheme(ElementFrame frame) =>
+        XamlNodes.Attributes(frame.Start).Any(p => p.RawValue is { } raw && UnoLintXaml.ReferencesThemeResource(raw)) || frame.ThemeResourceBelow;
+
+    /// <summary>A property element such as <c>&lt;SolidColorBrush.Color&gt;</c>.</summary>
+    public static bool IsPropertyElement(XamlElementNode element) => XamlNodes.LocalName(element).Contains('.', StringComparison.Ordinal);
+
     /// <summary>The property a Setter or keyframe Value writes to: Setter.Property / Setter.Target, else the nearest Storyboard.TargetProperty.</summary>
     public static string? TargetPropertyOf(XamlElementNode element, XamlSemanticFixerContext context)
     {
@@ -85,7 +92,8 @@ public sealed class HexRule : IXamlSemanticFixer
                 return UnoLintXaml.None;
             }
 
-            var note = Note(element, context);
+            // DocumentTracker, registered first, already pushed this element's frame.
+            var brush = ColorScopes.SingleThemedBrushKey(element, context) != null && document.Open.Count > 0 ? document.Open.Peek() : null;
             foreach (var property in XamlNodes.Attributes(element))
             {
                 // x:Key="Red" names a resource; it is not a color.
@@ -97,25 +105,65 @@ public sealed class HexRule : IXamlSemanticFixer
                 var name = XamlNodes.Name(property);
                 if (IsColorSlot(element, name, context))
                 {
-                    UnoLintXaml.Report(context, Rules.Hex, $"literal {raw.Trim()} on {XamlNodes.LocalName(element)}.{name}{note}", property.LineInfo);
+                    Report(context, brush, $"literal {raw.Trim()} on {XamlNodes.LocalName(element)}.{name}", property.LineInfo);
                 }
             }
         }
-        else if (document.Closing is { } frame && frame.Children.Count == 0 && RuleLogic.IsColorLiteral(frame.Text))
+        else if (document.Closing is { } frame)
         {
             // <Color x:Key="Brand">#7A67F8</Color>, <SolidColorBrush>Red</SolidColorBrush>, <Setter.Value>#222</Setter.Value>
             var start = frame.Start;
-            if (IsColorElement(start, context) && !ColorScopes.IsThemeDictionaryToken(start, context))
+            if (frame.Children.Count == 0 && RuleLogic.IsColorLiteral(frame.Text) && IsColorElement(start, context) && !ColorScopes.IsThemeDictionaryToken(start, context))
             {
-                UnoLintXaml.Report(context, Rules.Hex, $"literal {frame.Text.Trim()} in <{XamlNodes.LocalName(start)}>{Note(start, context)}", start.LineInfo);
+                var brush = BrushOf(document);
+                Report(context, ColorScopes.SingleThemedBrushKey(brush.Start, context) != null ? brush : null, $"literal {frame.Text.Trim()} in <{XamlNodes.LocalName(start)}>", start.LineInfo);
+            }
+
+            if (frame.PendingHex.Count > 0)
+            {
+                var note = Note(frame, context);
+                foreach (var (message, at) in frame.PendingHex)
+                {
+                    UnoLintXaml.Report(context, Rules.Hex, message + note, at);
+                }
             }
         }
 
         return UnoLintXaml.None;
     }
 
-    private static string Note(XamlElementNode element, XamlSemanticFixerContext context) =>
-        ColorScopes.SingleThemedBrushKey(element, context) is not { } key ? string.Empty
+    /// <summary>Reports now, or holds the hit on the brush's frame until its end tag decides the note.</summary>
+    private static void Report(XamlSemanticFixerContext context, ElementFrame? brush, string message, XamlLineInfo at)
+    {
+        if (brush != null)
+        {
+            brush.PendingHex.Add((message, at));
+        }
+        else
+        {
+            UnoLintXaml.Report(context, Rules.Hex, message, at);
+        }
+    }
+
+    /// <summary>
+    /// The frame of the element a closing element's text colors: the element itself, the owner of a property element
+    /// (<c>&lt;SolidColorBrush.Color&gt;</c>), or the owner around a <c>&lt;Color&gt;</c> inside one. The closing frame is
+    /// still on top of the stack.
+    /// </summary>
+    private static ElementFrame BrushOf(LintDocument document)
+    {
+        var path = document.Open.Take(3).ToList();
+        if (ColorScopes.IsPropertyElement(path[0].Start) && path.Count > 1)
+        {
+            return path[1];
+        }
+
+        return path.Count > 2 && ColorScopes.IsPropertyElement(path[1].Start) ? path[2] : path[0];
+    }
+
+    /// <summary>The single-theme note, only where TOKENTHEME would report the brush: a brush that follows the theme gets none.</summary>
+    private static string Note(ElementFrame brush, XamlSemanticFixerContext context) =>
+        ColorScopes.SingleThemedBrushKey(brush.Start, context) is not { } key || ColorScopes.FollowsTheme(brush) ? string.Empty
             : XamlNodes.Identifier(key) is { } shown ? $"; {shown} is also defined once for both themes"
             : "; this brush is also defined once for both themes";
 
@@ -131,16 +179,29 @@ public sealed class HexRule : IXamlSemanticFixer
         return RuleLogic.IsColorProperty(XamlNodes.LocalName(element), RuleLogic.LastSegment(property));
     }
 
+    /// <summary>
+    /// A color element (<c>&lt;Color&gt;</c>, <c>&lt;SolidColorBrush&gt;</c>) or a property element whose property holds a
+    /// color: <c>&lt;SolidColorBrush.Color&gt;</c>, or a Setter or keyframe <c>Value</c> whose target is a color.
+    /// <c>&lt;ColorPicker.Header&gt;</c> is a label.
+    /// </summary>
     private static bool IsColorElement(XamlElementNode element, XamlSemanticFixerContext context)
     {
         var name = XamlNodes.LocalName(element);
-        if (name == "Setter.Value")
+        var dot = name.IndexOf('.', StringComparison.Ordinal);
+        if (dot < 0)
         {
-            return element.ParentIndex is int parent && context.TryGetElement(parent) is { } setter
-                && ColorScopes.TargetPropertyOf(setter, context) is { } target && RuleLogic.IsColorName(target);
+            return RuleLogic.IsColorName(name);
         }
 
-        return RuleLogic.IsColorName(name);
+        if (element.ParentIndex is not int parent || context.TryGetElement(parent) is not { } owner)
+        {
+            return false;
+        }
+
+        var property = name[(dot + 1)..];
+        return property == "Value" && ColorScopes.TargetPropertyOf(owner, context) is { } target
+            ? RuleLogic.IsColorName(target)
+            : RuleLogic.IsColorProperty(XamlNodes.LocalName(owner), property);
     }
 }
 
@@ -165,8 +226,7 @@ public sealed class TokenThemeRule : IXamlSemanticFixer
             return UnoLintXaml.None;
         }
 
-        // A {ThemeResource} on any attribute of the brush (Color, TintColor, FallbackColor...) or anywhere below it follows the theme.
-        if (XamlNodes.Attributes(start).Any(p => p.RawValue is { } raw && UnoLintXaml.ReferencesThemeResource(raw)) || frame.ThemeResourceBelow)
+        if (ColorScopes.FollowsTheme(frame))
         {
             return UnoLintXaml.None;
         }
@@ -236,13 +296,16 @@ public sealed class CardRule : IXamlSemanticFixer
             return UnoLintXaml.None;
         }
 
-        if (XamlNodes.Attribute(border, "CornerRadius") is not { } cornerRadius || !RuleLogic.TryUniformRadius(cornerRadius, out var radius) || radius == 0)
+        // Properties are read from the end-tag node, which also carries <Border.Background>-style property elements.
+        bool Has(string property) => XamlNodes.Property(element, property) != null || frame.Children.Contains("Border." + property);
+        if (XamlNodes.Property(element, "CornerRadius") is not { } cornerRadius || !RuleLogic.TryUniformRadius(cornerRadius, out var radius) || radius == 0)
         {
             return UnoLintXaml.None;
         }
 
-        var hasBackground = XamlNodes.Attribute(border, "Background") != null;
-        if (!hasBackground && XamlNodes.Attribute(border, "BorderBrush") == null && XamlNodes.Attribute(border, "Padding") == null)
+        // A Border filled with an ImageBrush clips an image; that is what a bare Border is for.
+        var hasBackground = Has("Background");
+        if (frame.HasImageBackground || (!hasBackground && !Has("BorderBrush") && !Has("Padding")))
         {
             return UnoLintXaml.None;
         }
@@ -254,15 +317,14 @@ public sealed class CardRule : IXamlSemanticFixer
 
         if (!double.IsNaN(radius))
         {
-            var width = RuleLogic.ParseNumber(XamlNodes.Attribute(border, "Width"));
-            var height = RuleLogic.ParseNumber(XamlNodes.Attribute(border, "Height"));
+            var width = RuleLogic.ParseNumber(XamlNodes.Property(element, "Width"));
+            var height = RuleLogic.ParseNumber(XamlNodes.Property(element, "Height"));
             if (RuleLogic.IsCircleOrPill(radius, width, height))
             {
                 return UnoLintXaml.None;
             }
 
-            var content = frame.Children.Where(n => !n.StartsWith("Border.", StringComparison.Ordinal)).ToList();
-            if (radius >= RuleLogic.ChipRadius && RuleLogic.IsChipContent(content))
+            if (radius >= RuleLogic.ChipRadius && RuleLogic.IsChipContent(frame.Content))
             {
                 return UnoLintXaml.None;
             }
@@ -291,12 +353,19 @@ public sealed class BackBarRule : IXamlSemanticFixer
                 }
             }
         }
-        else if (document.Closing is { } frame && frame.Start.ParentIndex == null && !document.SawNavigationBar)
+        else if (document.Closing is { } frame && frame.Start.ParentIndex == null)
         {
-            foreach (var at in document.PendingBackRequests)
+            if (!document.SawNavigationBar)
             {
-                UnoLintXaml.Report(context, Rules.BackBar, "hand-built back button; no NavigationBar on this page", at);
+                foreach (var at in document.PendingBackRequests)
+                {
+                    UnoLintXaml.Report(context, Rules.BackBar, "hand-built back button; no NavigationBar on this page", at);
+                }
             }
+
+            // A fragment can hold several roots; each is its own page.
+            document.PendingBackRequests.Clear();
+            document.SawNavigationBar = false;
         }
 
         return UnoLintXaml.None;
@@ -323,8 +392,10 @@ public sealed partial class BindValueRule : IXamlSemanticFixer
 
             foreach (Match binding in BindingMarkup().Matches(value))
             {
-                var match = ValuePath().Match(binding.Groups["body"].Value);
-                if (match.Success)
+                // ElementName, RelativeSource and Source bind to a control or an explicit object, not the page model.
+                var body = binding.Groups["body"].Value;
+                var match = ValuePath().Match(body);
+                if (match.Success && !ExplicitSource().IsMatch(body))
                 {
                     var path = match.Groups["path"].Value;
                     UnoLintXaml.Report(context, Rules.BindValue, $"{{Binding {path}.Value}} on {XamlNodes.LocalName(element)}.{XamlNodes.Name(property)}; bind {path} itself", property.LineInfo);
@@ -340,4 +411,7 @@ public sealed partial class BindValueRule : IXamlSemanticFixer
 
     [GeneratedRegex(@"^\s*(?:Path\s*=\s*)?(?<path>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.Value\b|[\s,]Path\s*=\s*(?<path>[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)\.Value\b")]
     private static partial Regex ValuePath();
+
+    [GeneratedRegex(@"\b(?:ElementName|RelativeSource|Source)\s*=")]
+    private static partial Regex ExplicitSource();
 }

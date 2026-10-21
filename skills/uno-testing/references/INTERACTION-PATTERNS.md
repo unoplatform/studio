@@ -107,7 +107,7 @@ uno_app_key_press(virtualKey: "Escape")
 
 `ListViewItem` exposes no select pattern on Uno (only `invoke`, when the list has `IsItemClickEnabled="True"`), so the `s` peer action fails on it. Use the pointer or the keyboard:
 
-1. Take an unscoped `detail: "full"` snapshot to find the item and its `@@x,y,w,h` bounds
+1. `uno_app_scroll_into_view(automationId: "<list>", index | itemText)` brings the item into view and returns its `@@x,y,w,h` bounds (or, without that tool, take an unscoped `detail: "full"` snapshot to find them)
 2. Click its centre:
    ```
    uno_app_pointer_click(x: 150, y: 200, button: "left")
@@ -207,9 +207,17 @@ uno_app_key_press(virtualKey: "Enter")   // Accept/OK
 
 ## Scroll Interactions
 
-### Scrolling with Mouse Wheel
+### Scrolling a List to an Item
 
-Not directly supported; use keyboard alternatives:
+```
+uno_app_scroll_into_view(automationId: "PartsList", itemText: "P-0061")   // or index: 60
+```
+
+It finds the item among the loaded ones and, while it is not there, scrolls to the end so the list asks its source for the next page (`ISupportIncrementalLoading`, an MVUX paginated feed), up to 10 s. The result is `scrolled to index 60 of 80 items (incremental loading: 20 → 80 items in 0.6s)`, the list's line with `{items=N}`, and the item's line with a fresh handle and bounds. `itemText` matches a substring of the item's `ToString()` (a record prints its key); use `index` for items that do not override it. Not reached is an error that says whether the source ran out or stopped loading: that is an app bug to investigate, not a reason to scroll by hand. Wait for more pages with `uno_app_find_elements(automationId: "PartsList", until: "items>=80")`.
+
+### Scrolling Other Content
+
+There is no wheel input; use the keyboard on the focused element:
 ```
 uno_app_key_press(virtualKey: "PageDown")  // Scroll down
 uno_app_key_press(virtualKey: "PageUp")    // Scroll up
@@ -252,19 +260,11 @@ This pattern is complex and may require coordinate-based interaction with carefu
 
 ### Waiting for UI Updates
 
-After actions that trigger async operations or animations:
-1. Get a fresh visual tree snapshot
-2. Check for expected state changes
-3. Retry if needed with brief delays
+After an action that starts async work, wait in one call on the element whose state should change: `uno_app_find_elements(automationId, waitForMs)` for one that appears, `until: "<state>"` for one that changes (`"enabled"`, `"items>=20"`, `"text contains Saved"`).
 
 ### Handling Loading States
 
-Look for loading indicators in the visual tree:
-- Progress rings/bars
-- Disabled states on interactive elements
-- Loading text or placeholders
-
-Wait until these are no longer present before continuing.
+Wait for the indicator (progress ring or bar, loading text) with `until: "absent"` before continuing; to capture the loading state itself, `until: "visible"`, then the screenshot.
 
 ## Error Recovery
 

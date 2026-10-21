@@ -24,7 +24,7 @@ The Uno App MCP server exposes tools that let an agent:
 
 1. **Find a running app** → `uno_app_get_runtime_info`; a connected instance is the app under test: skip to step 4
 2. **Build once** → `dotnet build <app>.csproj -f net10.0-desktop`, so compile errors surface as build output
-3. **Start the app once** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`; its result ends with a `Hot Reload:` line. Confirm with `uno_app_get_runtime_info` (poll it; never call `uno_app_start` again to "retry")
+3. **Start the app once** → `uno_app_start(projectPath, targetFramework, connectionTimeoutSeconds: 120)`, with `windowSize: "1280x800"` when a size matters; its result ends with a `Hot Reload:` line. Confirm with `uno_app_get_runtime_info` (poll it; never call `uno_app_start` again to "retry")
 4. **Capture the initial screenshot** → `uno_app_get_screenshot(fileType: "png")`
 5. **Get the visual tree** → `uno_app_visualtree_snapshot(detail: "normal")`
 6. **Interact with elements** → `uno_app_element_peer_default_action` for `[i]` elements, `uno_app_element_peer_action` for the other pattern letters, or the input tools
@@ -42,6 +42,7 @@ The Uno App MCP server exposes tools that let an agent:
 | `uno_app_get_runtime_info` | Reports whether an app instance is connected (PID, window title, uptime) and its Hot Reload state |
 | `uno_app_hot_reload_status` | Reports the Hot Reload state and recent operations; with `file` and `waitForMs`, waits for the operation covering your edit and reports `applied`, or `NOT applied` with the compiler diagnostics, or `RudeEdit`; `waitForReady: true` waits for Hot Reload to leave `Initializing` |
 | `uno_app_get_memory_counters` | Business licence only. Returns the running app's memory counters (for example total available memory); useful for leak checks across a flow |
+| `uno_app_resize` | Sets the window's client area to `width` x `height` logical pixels and returns the size applied (desktop only) |
 | `uno_app_close` | Terminates the running application (desktop only) |
 | `uno_devserver_diagnostics` | Reports the DevServer port, solution, instance count, and last launch outcome without changing anything |
 
@@ -60,6 +61,7 @@ The Uno App MCP server exposes tools that let an agent:
 |------|-------------|
 | `uno_app_element_peer_default_action` | Runs `invoke` on an element; works only on `[i]` elements |
 | `uno_app_element_peer_action` | Pro or Business licence. Invokes a specific automation pattern action (`toggle`, `setValue`, ...) |
+| `uno_app_scroll_into_view` | Scrolls a list (by `automationId`, `name` or `elementRef`) to an item (`index` or `itemText`), loading further pages; returns the list's line and the item's, with a fresh handle and bounds |
 | `uno_app_pointer_click` | Clicks at window coordinates, in the same units as the snapshot's `@@` bounds |
 | `uno_app_key_press` | Presses one key on the focused element |
 | `uno_app_type_text` | Types text into the focused element |
@@ -81,6 +83,7 @@ Parameters:
   - args: Optional command-line arguments (array)
   - stdoutFile: Optional file the app's stdout is written to
   - display: Optional X11 display for Linux (e.g., ":0"); ignored on other platforms
+  - windowSize: Optional desktop client size, "WIDTHxHEIGHT" in logical pixels; applied once the app connects (needs connectionTimeoutSeconds) and reported on a `Window:` line
 ```
 
 It does not stop a running app: `uno_app_close` it first. After it returns, confirm with `uno_app_get_runtime_info`.
@@ -130,6 +133,9 @@ Parameters (at least one selector; several combine with AND):
   - detail: "normal" (default: patterns, {state}, bindings), "compact", or "full" (adds @@x,y,w,h bounds)
   - maxResults: default 20, max 100; the header always has the total
   - waitForMs: re-check every 100 ms until at least one element matches, max 10000; the header says (waited Ws)
+  - until: a state to wait for instead of a match (waitForMs then defaults to 10000): present, absent (no visible match),
+    visible, enabled, disabled, selected, checked, unchecked, expanded, collapsed, or items|selectedIndex|value|text with
+    == != >= <= > < (value and text also take contains); the header ends `until <condition>: met` or `NOT met after Ns`
 ```
 
 The result is a header, `N matched <selectors>`, then one snapshot line per match with a fresh handle and a `{state}` group:
@@ -141,7 +147,7 @@ Button ^7 #SubmitButton :41 [i] {disabled}  "Submit"  @ Views/NewInspectionPage.
 
 State tokens: `disabled` (IsEnabled false), `checked|unchecked|indeterminate`, `selected`, `expanded|collapsed`, `value=<v>` (slider, progress), `items=<n>` (an `ItemsControl`'s item count), `selectedIndex=<n>`; a token that does not apply is absent, and `!hidden` marks `Visibility.Collapsed`. Zero matches is a normal result; only an invalid query, an unresolvable `scopeRef` or a lost connection is an error. The tool needs the Community licence or better, like the snapshot.
 
-This is the call after every action: `find_elements(automationId: "AssetsList", waitForMs: 2000)` and read `{items=12}`; `find_elements(text: "Saved", textContains: true, waitForMs: 3000)` for a confirmation; `find_elements(automationId: "LoadingRing", includeHidden: false)` and expect `0 matched` before asserting the content. It replaces the snapshot-and-read loop and the screenshot-and-look loop for every question the tree can answer.
+This is the call after every action: `find_elements(automationId: "AssetsList", waitForMs: 2000)` and read `{items=12}`; `find_elements(text: "Saved", textContains: true, waitForMs: 3000)` for a confirmation; `find_elements(automationId: "LoadingRing", includeHidden: false)` and expect `0 matched` before asserting the content; `find_elements(automationId: "PartsList", until: "items>=40")` after a scroll, and `find_elements(automationId: "LoadingRing", until: "absent")` for the loading to end. It replaces the snapshot-and-read loop and the screenshot-and-look loop for every question the tree can answer.
 
 ### Interacting with Elements
 

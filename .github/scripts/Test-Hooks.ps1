@@ -100,7 +100,10 @@ try {
     Assert-Allowed 'after an App.xaml.cs edit, applied or not'
     Invoke-Guard post uno_app_start | Out-Null
     Invoke-Hook $cs $pending | Out-Null
-    Assert-Denied 'pending' 'The last edit is still on its way*'
+    Assert-Denied 'pending' 'The last edit is still on its way*asked once*'
+    Assert-Allowed 'pending, asked once already'
+    Invoke-Hook $cs $pending | Out-Null
+    Assert-Denied 'pending again after a new edit' 'The last edit is still on its way*'
     Invoke-Guard post uno_app_start | Out-Null
     Invoke-Hook $cs "$tmp/missing" | Out-Null
     Assert-Allowed 'without the CLI'

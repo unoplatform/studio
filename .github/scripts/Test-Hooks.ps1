@@ -68,7 +68,8 @@ try {
 
     Assert-Hook 'no CLI' $cs "$tmp/missing" { $args[0].hookSpecificOutput.additionalContext -like 'An Uno app source file changed.*' }
     Assert-Hook 'XAML file' "$tmp/App/Presentation/MainPage.xaml" "$tmp/missing" { $args[0].hookSpecificOutput.additionalContext -like 'An Uno app*' }
-    Assert-Hook 'applied' $cs $applied { $args[0].hookSpecificOutput.additionalContext -clike "Hot Reload edit to 'Presentation/MainModel.cs': applied in 1.2s The running app now runs this edit*" }
+    Assert-Hook 'applied' $cs $applied { $args[0].hookSpecificOutput.additionalContext -clike "Hot Reload edit to 'Presentation/MainModel.cs': applied in 1.2s The running app now runs this edit*uno_app_start." }
+    Assert-Hook 'applied App.xaml.cs' "$tmp/App/App.xaml.cs" $applied { $args[0].hookSpecificOutput.additionalContext -clike '*uno_app_start. If the edit changed code that already ran at startup*' }
     Assert-Hook 'compile failure' $cs $failed { $args[0].decision -eq 'block' -and $args[0].reason -clike '*error CS1002: ; expected "x"' }
     Assert-Hook 'rude edit' $cs $rude { $args[0].hookSpecificOutput.additionalContext -clike "Hot Reload edit to 'Presentation/MainModel.cs': RudeEdit This is the one case*" }
 
@@ -79,6 +80,7 @@ try {
 
     # The restart guard.
     $pending = New-Cli 'pending' @("edit to 'Presentation/MainModel.cs': processing") 4
+    Invoke-Guard post uno_app_start | Out-Null
     Assert-Allowed 'no edit since the start'
     Invoke-Hook $cs $applied | Out-Null
     Assert-Denied 'applied' "Hot Reload applied every edit since the last start (last: edit to 'Presentation/MainModel.cs': applied in 1.2s)*uno_app_close then uno_app_start*"

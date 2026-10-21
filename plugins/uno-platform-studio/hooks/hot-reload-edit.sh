@@ -16,9 +16,9 @@ session=$(printf '%s' "$input" | grep -oE '"session_id" *: *"[^"]*"' | head -1 |
 state="${TMPDIR:-/tmp}/uno-studio-hooks/${session:-default}.state"
 record() {
 	mkdir -p "$(dirname "$state")" 2>/dev/null || return 0
-	startup=$(sed -n 's/^startup=//p' "$state" 2>/dev/null | tail -1)
-	[ "$2" = 1 ] && startup=1
-	printf 'verdict=%s\nstartup=%s\nlast=%s\n' "$1" "${startup:-0}" "$3" >"$state" 2>/dev/null
+	was=$(sed -n 's/^startup=//p' "$state" 2>/dev/null | tail -1)
+	[ "$2" = 1 ] && was=1
+	printf 'verdict=%s\nstartup=%s\nlast=%s\n' "$1" "${was:-0}" "$3" >"$state" 2>/dev/null
 }
 case $anyfile in
 	*App.xaml.cs|*Program.cs|*.csproj|*.props|*.targets|*.sln|*.slnx|*global.json|*appsettings*.json|*.appxmanifest|*.manifest|*.plist|*AndroidManifest.xml)

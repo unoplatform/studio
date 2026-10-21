@@ -135,8 +135,8 @@ public class XamlEngineTests
     [InlineData("see http://example.com/help")]
     public void Valid_xaml_with_urls_in_text_is_read_to_the_end(string text)
     {
-        // In Uno.XamlParser 0.10.0-dev.74 a Stage-0 sanitizer rewrites valid markup when element text contains ":/"
-        // and the reader stops there. Well-formed files go through a pipeline without sanitizers.
+        // Before Uno.XamlParser 0.10.0-dev.80 a Stage-0 sanitizer rewrote valid markup when element text contained ":/"
+        // and the reader stopped there. Well-formed files still go through a pipeline without sanitizers.
         var xaml = $"<ResourceDictionary {Ns}>\n  <x:String x:Key=\"Image\">{text}</x:String>\n  <SolidColorBrush x:Key=\"InkBrush\" Color=\"#FF0000\"/>\n</ResourceDictionary>";
         Assert.True(IsWellFormed(xaml));
 

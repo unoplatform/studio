@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Uno.XamlParser" Version="0.10.0-dev.74" />
+    <PackageReference Include="Uno.XamlParser" Version="0.10.0-dev.80" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
   </ItemGroup>
 

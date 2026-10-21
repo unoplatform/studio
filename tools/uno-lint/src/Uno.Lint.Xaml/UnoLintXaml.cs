@@ -12,9 +12,9 @@ namespace Uno.Lint.Xaml;
 /// <list type="number">
 /// <item><see cref="AddTo"/> registers the rules on the host's pipeline. They are Stage-1 fixers that only report, with
 /// the rule id as the diagnostic code (UNOL001...).</item>
-/// <item><see cref="IsWellFormed"/> tells the host whether to run the Stage-0 sanitizers. In Uno.XamlParser
-/// 0.10.0-dev.74 a sanitizer rewrites valid markup whose element text contains ":/" (ms-appx:///..., http://...) and
-/// the reader then stops; running sanitizers only on malformed text avoids it.</item>
+/// <item><see cref="IsWellFormed"/> tells the host whether to run the Stage-0 sanitizers. Repairs are for malformed
+/// text, so a valid file is never rewritten. (Before Uno.XamlParser 0.10.0-dev.80, a sanitizer also corrupted valid
+/// markup whose element text contains ":/", such as ms-appx:///... or http://....)</item>
 /// <item><see cref="Collect"/> turns the result into uno-lint findings: rule gating, the HEX/TOKENTHEME hand-off,
 /// suppression comments, line order and the info counters.</item>
 /// </list>

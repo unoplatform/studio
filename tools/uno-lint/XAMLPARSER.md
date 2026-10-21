@@ -1,7 +1,7 @@
 # XAML rules on Uno.XamlParser
 
 The six XAML rules run inside the [Uno.XamlParser](https://www.nuget.org/packages/Uno.XamlParser) NuGet package
-(`0.10.0-dev.74`) as Stage-1 semantic fixers that only report. uno-lint has no XAML reader of its own. It keeps what the
+(`0.10.0-dev.80`) as Stage-1 semantic fixers that only report. uno-lint has no XAML reader of its own. It keeps what the
 parser does not do: the C# rules, `.editorconfig` severities and profiles, project gates, suppression comments and
 counts, the hook and the report. Everything below is observable through the package's public API.
 
@@ -55,17 +55,18 @@ serializes `ProcessAsync`; `XamlLintEngine` does it with a semaphore, and its ca
 
 ## Package behavior uno-lint works around
 
-Each item is reproducible with the package alone, and is filed with its maintainers.
+Each item is reproducible with the package alone, and is filed with its maintainers. The workarounds for the fixer context (element text, the closing element, re-runs on a parent) go once a release gives fixers that context.
 
-| Behavior in 0.10.0-dev.74 | Effect | uno-lint's workaround |
+| Behavior in 0.10.0-dev.80 | Effect | uno-lint's workaround |
 |---|---|---|
-| With the default sanitizers on, valid markup whose element text contains `:/` (`ms-appx:///Assets/x.png`, `http://...`) is rewritten, and the reader stops with XML0001 | every element after the URL is lost | sanitizers run only when `IsWellFormed` is false |
 | Fixers are not given element text | `<Color>#7A67F8</Color>` would be invisible | a stream visitor (`ElementTextCapture`) records it |
 | Fixers run again on a parent each time a property element is folded into it, with `IsProcessingElementStart` true | report-only rules would report twice | rules skip a start position they have already seen |
 | The end-tag call does not say which element closed | rules cannot tell children from the element | rules keep the open-element path |
 | The repaired text is not exposed | callers cannot tell whether repairs shifted line numbers | uno-lint reads it through reflection, only after a repair; a test fails if that stops working |
 | Balancing an early wrong close tag can orphan the real one further down (XML0001) | the rest of the file is not read | the elements read before the stop are linted; the file counts as partial |
 | A document type declaration stops the reader | the file is not linted | none needed: XAML has no DTD, and no entity is ever expanded |
+
+Fixed in 0.10.0-dev.80: with the default sanitizers on, valid markup whose element text contains `:/` (`ms-appx:///Assets/x.png`, `http://...`) was rewritten and the reader stopped with XML0001. uno-lint still runs the sanitizers only when `IsWellFormed` is false, so a valid file is never rewritten.
 
 ## What stays in uno-lint, and why
 

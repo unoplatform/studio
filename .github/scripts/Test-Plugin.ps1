@@ -107,6 +107,24 @@ try {
         if (-not $markdownValue -or $markdownValue -cne $tomlValue) { $errors.Add("uno-dev: Markdown and Codex agent $field differ or are missing") }
     }
 
+    # --- Hooks and skills cite the Hot Reload rule by its alias, "the running-app rule", never by its number, so the
+    # rules can be reordered; the alias must stay defined on a numbered rule in uno-build-app's SKILL.md.
+    $pluginRoot = (Resolve-Path $plugin).Path
+    $ruleSkill = "$pluginRoot/skills/uno-build-app/SKILL.md"
+    $citing = Get-ChildItem $pluginRoot -Recurse -File -Include *.md, *.sh, *.toml | Where-Object { $_.FullName -ne $ruleSkill -and (Select-String -Path $_.FullName -Pattern 'running-app rule' -SimpleMatch -Quiet) }
+    if ($citing -and -not (Select-String -Path $ruleSkill -Pattern '^\d+\. \*\*[^*]+\*\* \(the running-app rule\)\.' -Quiet)) {
+        $errors.Add("uno-build-app/SKILL.md: no numbered rule defines '(the running-app rule)', yet it is cited by: $(($citing | ForEach-Object { $_.FullName.Substring($pluginRoot.Length + 1) }) -join ', ')")
+    }
+
+    # --- The plugin version tracks the Uno.Sdk major.minor it is built for (plugin 7.0.x targets Uno.Sdk 7.0),
+    # so version.json must name a line that exists on NuGet. On main that line may have only -dev builds;
+    # the Release workflow refuses to ship until it has a stable one.
+    $line = [regex]::Match((Get-Content version.json -Raw | ConvertFrom-Json).version, '^\d+\.\d+').Value
+    $unoSdkVersions = (Invoke-RestMethod 'https://api.nuget.org/v3-flatcontainer/uno.sdk/index.json').versions
+    if (-not ($unoSdkVersions | Where-Object { $_ -like "$line.*" })) {
+        $errors.Add("version.json: '$line' is not an Uno.Sdk major.minor published on NuGet (the plugin version tracks the Uno.Sdk it is built for)")
+    }
+
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"
@@ -142,8 +160,9 @@ try {
     # --- Size report. Every file an agent reads stays in its context and is re-read on each later
     # call, so references get a budget. Larger files are split by task; templates and lookup tables
     # that should not be split are exempt but need a table of contents (an `](#` link near the top).
-    # ponytail: 4 chars/token is a fixed estimate; recalibrate against the real tokenizer if it drifts.
-    $charsPerToken = 4
+    # 2.4 chars/token was measured from billed context in 2026-10 sessions (each reference's growth of the next call's
+    # input, Claude Opus 5.5): these files are dense with code, tables and identifiers. Recalibrate if the model changes.
+    $charsPerToken = 2.4
     $referenceBudget = 6000
     $exempt = @{
         'uno-navigation/references/shell-navigationview-template.md' = 'complete template'

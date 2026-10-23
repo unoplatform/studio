@@ -33,7 +33,7 @@ This reference is the definitive reference for the **Semantic Design Language** 
 
 ### How It Works
 
-Each design-theme's `_Resources.xaml` defines `<StaticResource>` aliases that map the shared semantic key to the theme's concrete style (e.g. `FilledButtonStyle` -> `{ThemePrefix}FilledButtonStyle`).
+Each design-theme's `SemanticStyles.xaml` defines `<StaticResource>` aliases that map the shared semantic key to the theme's concrete style (e.g. `FilledButtonStyle` -> `{ThemePrefix}FilledButtonStyle`).
 
 Use semantic keys in XAML for portable, theme-agnostic styling:
 
@@ -88,6 +88,7 @@ Use semantic keys in XAML for portable, theme-agnostic styling:
 | `MenuFlyoutSubItemStyle` | `MenuFlyoutSubItem` | Yes | |
 | `ToggleMenuFlyoutItemStyle` | `ToggleMenuFlyoutItem` | Yes | |
 | `RadioMenuFlyoutItemStyle` | `RadioMenuFlyoutItem` | Yes | |
+| `RippleStyle` | `Ripple` (`using:Uno.Material`) | Yes | Material only |
 
 #### FAB Styles
 
@@ -105,6 +106,8 @@ Use semantic keys in XAML for portable, theme-agnostic styling:
 | `SurfaceFabStyle` | `Button` | |
 | `SurfaceSmallFabStyle` | `Button` | |
 | `SurfaceLargeFabStyle` | `Button` | |
+
+Simple has no FAB: these keys alias to its icon-button styles (`FabStyle` / `SmallFabStyle` / `LargeFabStyle` → `SimpleIconButtonStyle`, `Secondary*` and `Surface*` → `SimpleIconButtonNeutralStyle`, `Tertiary*` → `SimpleIconButtonSubtleStyle`).
 
 > **Note:** Individual design-themes may also expose additional theme-prefixed styles (e.g. danger variants, controls without a cross-theme equivalent) that are **not** part of the shared semantic surface. See the design-theme-specific references (`material.md`, `simple-styles.md`) for those.
 
@@ -317,7 +320,7 @@ Every Color key generates **9 SolidColorBrush variants** at different opacity le
 
 ### Method 1: Override Color Palette (Full Cascade)
 
-Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in a ResourceDictionary referenced by the theme's `Colors` (`ThemeColors.OverrideSource`). All 280 brushes and controls update automatically.
+Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in a ResourceDictionary referenced by the theme's `Colors` (`ThemeColors.OverrideSource`). All 280 brushes and controls update automatically, except that a seed leaves the four `Error*` colours at their base values.
 
 **Always provide both** `Light` and `Default` (Dark) theme values.
 

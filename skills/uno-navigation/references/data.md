@@ -1,8 +1,19 @@
 # Uno Navigation Data Passing
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the Data Passing Documentation
+- Data is received via constructor dependency injection in the target ViewModel
+- `DataViewMap` associates a data type with a View/ViewModel for data-based navigation
+- `ResultDataViewMap` additionally specifies a result type for round-trip navigation
+- `NavigateBackWithResultAsync(this, data: value)` returns data to the calling page (`sender` comes first)
+- Routes must be configured in `RegisterRoutes` to support data types
+- `Navigation.Data` attached property enables data passing in XAML
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Data Passing Documentation
 
 ```
 uno_platform_docs_search("Uno Navigation data passing receive NavigateDataAsync constructor injection")
@@ -15,10 +26,10 @@ Primary documentation pages:
 Fetch the Chefs data passing page:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/navigation/PassingNavigationData.md")
+uno_platform_docs_fetch(sourcePath="external/uno.chefs/doc/navigation/PassingNavigationData.md", anchor="…")
 ```
 
-### Step 2: For Route Configuration with Data
+### For Route Configuration with Data
 
 Data-based navigation requires proper route registration:
 
@@ -26,28 +37,19 @@ Data-based navigation requires proper route registration:
 uno_platform_docs_search("Uno Navigation DataViewMap ResultDataViewMap route data type")
 ```
 
-### Step 3: For Returning Results
+### For Returning Results
 
 If the user needs a round-trip (navigate, pick data, return):
 
 The Chefs page covers `NavigateBackWithResultAsync` and `ResultDataViewMap` patterns.
 
-### Step 4: For XAML Data Passing
+### For XAML Data Passing
 
 For passing data declaratively:
 
 ```
 uno_platform_docs_search("Uno Navigation XAML Navigation.Data binding pass")
 ```
-
-## Key Principles (Stable)
-
-- Data is received via constructor dependency injection in the target ViewModel
-- `DataViewMap` associates a data type with a View/ViewModel for data-based navigation
-- `ResultDataViewMap` additionally specifies a result type for round-trip navigation
-- `NavigateBackWithResultAsync(this, data: value)` returns data to the calling page (`sender` comes first)
-- Routes must be configured in `RegisterRoutes` to support data types
-- `Navigation.Data` attached property enables data passing in XAML
 
 ## Related Skills
 

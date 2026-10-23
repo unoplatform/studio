@@ -1,53 +1,5 @@
 # MVUX ListState
 
-## Workflow
-
-### Step 1: Fetch the ListState Documentation
-
-```
-uno_platform_docs_search("MVUX ListState mutable collection add remove update selection")
-```
-
-Primary documentation page:
-- **ListStates**: `external/uno.extensions/doc/Learn/Mvux/ListStates.md` (creation, `Add`/`Insert`/`Update`/`Remove`/`ForEach` operators, `TrySelectAsync`/`ClearSelection`)
-
-Supporting pages:
-- **ListFeed Reference**: `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
-- **State Reference**: `external/uno.extensions/doc/Reference/Reactive/state.md`
-- **Usage in Apps**: `external/uno.extensions/doc/Reference/Reactive/in-apps.md`
-
-Fetch the ListStates page:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/ListStates.md")
-```
-
-### Step 2: For ListState Creation
-
-- `ListState<T>.Empty(this)` — starts with no items
-- `ListState.Async(this, asyncFunc)` — loads initial data from async source
-- Can add `.Selection(...)` to track selected items
-
-### Step 3: For ListState Mutations
-
-Search for mutation operations:
-
-```
-uno_platform_docs_search("MVUX ListState add remove update items operation")
-```
-
-Key operations: `AddAsync`, `InsertAsync`, `RemoveAllAsync(predicate)`, `UpdateAllAsync(predicate, updater)`, `UpdateItemAsync(item, updater)`, and `UpdateAsync(list => ...)` (the single-delegate overload receives the whole `IImmutableList<T>`).
-
-### Step 4: For Messaging Integration
-
-If the user needs list updates from service CRUD operations:
-
-```
-uno_platform_docs_search("MVUX messaging EntityMessage ListState observe")
-```
-
-See the `references/messaging.md` for full details.
-
 ## Key Principles (Stable)
 
 - `IListState<T>` is **mutable** — supports add/remove/update
@@ -59,7 +11,7 @@ See the `references/messaging.md` for full details.
 
 ## Key Equality Requirement (Critical)
 
-**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. The `UpdateAsync(T item)` and `UpdateItemAsync(oldItem, updater)` overloads and selection tracking rely on key equality to identify which item to target (`RemoveAllAsync` and `UpdateAllAsync` take a predicate instead). Without it, those overloads do not compile (CS0311, constrained `where T : IKeyEquatable<T>`), and an edited item is diffed as a remove plus an add, which loses selection state.
+**All item types used in `IListState<T>` MUST support key equality** via `Uno.Extensions.Equality.IKeyEquatable<T>`. The `UpdateAsync(T item)` and `UpdateItemAsync(oldItem, updater)` overloads and selection tracking rely on key equality to identify which item to target (`RemoveAllAsync` and `UpdateAllAsync` take a predicate instead). Without it, those overloads do not compile (CS0311, or CS0453 for `UpdateItemAsync`; constrained `where T : IKeyEquatable<T>`), and an edited item is diffed as a remove plus an add, which loses selection state.
 
 ### Automatic generation (recommended)
 
@@ -107,7 +59,7 @@ public partial record MyItem(Guid Id, string Name);
 - At least one key property is required — without it, the key-based mutation overloads do not compile and edited items lose selection
 - Key properties define **identity** (same entity); non-key properties define **state** (changed data)
 - `KeyEquals` returns `true` when two instances represent the same entity, even if other properties differ
-- `UpdateAsync(T item)` and `UpdateItemAsync` are constrained `where T : IKeyEquatable<T>` — without key equality they do not compile (CS0311); `UpdateItemAsync` replaces every key-equal item
+- `UpdateAsync(T item)` and `UpdateItemAsync` are constrained `where T : IKeyEquatable<T>` — without key equality they do not compile (CS0311/CS0453); `UpdateItemAsync` replaces every key-equal item
 
 ## Updater Purity (Critical)
 
@@ -124,6 +76,56 @@ await Items.UpdateAllAsync(item => item.Id == id, _ => _externalItem, ct);
 
 // Note: Items.UpdateAsync(list => ...) receives the whole IImmutableList<T>, not one item.
 ```
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the ListState Documentation
+
+```
+uno_platform_docs_search("MVUX ListState mutable collection add remove update selection")
+```
+
+Primary documentation page:
+- **ListStates**: `external/uno.extensions/doc/Learn/Mvux/ListStates.md` (creation, `Add`/`Insert`/`Update`/`Remove`/`ForEach` operators, `TrySelectAsync`/`ClearSelection`)
+
+Supporting pages:
+- **ListFeed Reference**: `external/uno.extensions/doc/Reference/Reactive/listfeed.md`
+- **State Reference**: `external/uno.extensions/doc/Reference/Reactive/state.md`
+- **Usage in Apps**: `external/uno.extensions/doc/Reference/Reactive/in-apps.md`
+
+Fetch the ListStates page:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/ListStates.md", anchor="…")
+```
+
+### For ListState Creation
+
+- `ListState<T>.Empty(this)` — starts with no items
+- `ListState.Async(this, asyncFunc)` — loads initial data from async source
+- Can add `.Selection(...)` to track selected items
+
+### For ListState Mutations
+
+Search for mutation operations:
+
+```
+uno_platform_docs_search("MVUX ListState add remove update items operation")
+```
+
+Key operations: `AddAsync`, `InsertAsync`, `RemoveAllAsync(predicate)`, `UpdateAllAsync(predicate, updater)`, `UpdateItemAsync(item, updater)`, and `UpdateAsync(list => ...)` (the single-delegate overload receives the whole `IImmutableList<T>`).
+
+### For Messaging Integration
+
+If the user needs list updates from service CRUD operations:
+
+```
+uno_platform_docs_search("MVUX messaging EntityMessage ListState observe")
+```
+
+See the `references/messaging.md` for full details.
 
 ## Related Skills
 

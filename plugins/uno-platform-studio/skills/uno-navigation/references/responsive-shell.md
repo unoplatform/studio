@@ -11,33 +11,6 @@ For a complete, compilable responsive shell XAML with parameterized placeholders
 - Route registration template
 - Substitution rules
 
-## Workflow
-
-### Step 1: Fetch the Responsive Shell Documentation
-
-```
-uno_platform_docs_search("Uno Navigation responsive shell NavigationView TabBar adaptive screen size")
-```
-
-Primary documentation page:
-- **Build Responsive Navigation Layouts**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md`
-
-Fetch the walkthrough:
-
-```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md")
-```
-
-### Step 2: For ResponsiveExtension
-
-If using the Toolkit's `ResponsiveExtension`:
-
-```
-uno_platform_docs_search("Uno Toolkit responsive extension screen size breakpoints")
-```
-
-See also the `uno-toolkit` skill (`references/responsive.md`).
-
 ## Key Principles (Stable)
 
 - Use VisualStateManager with adaptive triggers to show/hide different navigation controls
@@ -65,6 +38,35 @@ See also the `uno-toolkit` skill (`references/responsive.md`).
 - The shared content area with `Region.Navigator="Visibility"` serves both navigation controls
 - **The content area Grid with `Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route, as the docs' responsive walkthrough does. Never add unnamed `Collapsed` pages.
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Responsive Shell Documentation
+
+```
+uno_platform_docs_search("Uno Navigation responsive shell NavigationView TabBar adaptive screen size")
+```
+
+Primary documentation page:
+- **Build Responsive Navigation Layouts**: `external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md`
+
+Fetch the walkthrough:
+
+```
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/ResponsiveShell.md", anchor="…")
+```
+
+### For ResponsiveExtension
+
+If using the Toolkit's `ResponsiveExtension`:
+
+```
+uno_platform_docs_search("Uno Toolkit responsive extension screen size breakpoints")
+```
+
+See also the `uno-toolkit` skill (`references/responsive.md`).
 
 ## Related Skills
 

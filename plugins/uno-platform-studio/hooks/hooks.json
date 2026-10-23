@@ -1,0 +1,29 @@
+{
+  "description": "In an Uno app project, SessionStart (also after a compaction) tells the agent that a running app is edited through Hot Reload status, not rebuilt, and to look for a running app before the first build; elsewhere it prints nothing. After a .xaml or .cs edit, PostToolUse asks the DevServer (uno-devserver app hot-reload-status) whether the running Uno app applied it through Hot Reload and tells the agent the result, so it asserts with uno_app_find_elements, fixes the reported compile errors, or restarts only for a rude edit or a DevServer internal error. Without the CLI or a solution file above the edited file, it reminds the agent that Hot Reload applies the edit; with no app connected yet, it says nothing.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/hot-reload-edit.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

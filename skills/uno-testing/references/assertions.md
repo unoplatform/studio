@@ -1,6 +1,6 @@
 # Uno Platform Test Assertions Skill
 
-> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, stop and tell the user to sign in to Uno Platform and enable the Uno tooling rather than attempting to test without them.
+> **Prerequisite:** This reference requires the **Uno App MCP** (the `uno_app_*` tools), provided by the Uno tooling. It is a separate server from the documentation MCP used by other skills. Before proceeding, confirm the `uno_app_*` tools are available; if they are not, follow the fallbacks in SKILL.md (the platform accessibility tree, then a static review labelled as unverified) rather than testing blind.
 
 This reference provides patterns for validating UI state and asserting test conditions when testing Uno Platform applications with the Uno App MCP tools.
 
@@ -40,7 +40,7 @@ Use `uno_app_visualtree_snapshot` to verify UI structure:
 
 ### Property Assertions
 
-The snapshot shows binding paths (`IsEnabled={CanSave}`), not current values. Read the value from the element's DataContext, or from a screenshot for visual state:
+The snapshot shows binding paths (`IsEnabled={CanSave}`), not current values. `uno_app_find_elements` reports most as `{state}`; read the rest from the DataContext:
 
 | Property | What to Check |
 |----------|---------------|
@@ -81,7 +81,7 @@ Verify:
 ```
 1. uno_app_visualtree_snapshot(detail: "normal")
 2. Find the button by `#Name` or its quoted text
-3. Read `IsEnabled` from the DataContext (or confirm the disabled look in a screenshot)
+3. `uno_app_find_elements` on it: `{disabled}` means `IsEnabled` is false
 4. Verify the quoted text matches
 ```
 
@@ -96,12 +96,10 @@ Verify:
 ### Assert List Items
 
 ```
-1. uno_app_visualtree_snapshot(detail: "normal")
-2. Find ListView/ItemsRepeater element
-3. Count the item lines directly under it (each carries `dc:ItemType`)
-4. Verify the expected count, or read the collection count from the DataContext
-5. Check item content if needed
+uno_app_find_elements(automationId: "<list>", until: "items==12")
 ```
+
+The list's `{items=N}` is the count of loaded items; `NOT met` in the header means it differs, and the line shows the actual count. For an item further down, `uno_app_scroll_into_view` returns it with its content (`references/INTERACTION-PATTERNS.md`).
 
 ### Assert Dialog Displayed
 
@@ -198,42 +196,27 @@ When screenshots contain dynamic data:
 
 ## Timing and Retry Patterns
 
-### Wait for Condition
-
-When UI updates asynchronously:
-
-```
-Loop (max N attempts):
-  1. Get visual tree snapshot
-  2. Check for expected condition
-  3. If condition met, break
-  4. Wait brief interval
-  5. Retry
-Fail if condition not met after all attempts
-```
+Every wait is one call; the app re-checks every 100 ms, up to 10 s, and the header says whether it held.
 
 ### Wait for Element
 
 ```
-Retry up to 10 times:
-  1. uno_app_visualtree_snapshot(detail: "normal")
-  2. Search for expected element
-  3. If found, return success
-  4. Wait 500ms
-  5. Retry
-Fail with "Element not found" if all retries exhausted
+uno_app_find_elements(automationId: "<id>", waitForMs: 3000)
+```
+
+### Wait for Condition
+
+```
+uno_app_find_elements(automationId: "<id>", until: "enabled")      // or "items>=20", "selected", "text contains Saved"
 ```
 
 ### Wait for Loading Complete
 
 ```
-Retry until no loading indicators:
-  1. uno_app_visualtree_snapshot(detail: "normal")
-  2. Search for ProgressRing, ProgressBar, loading text
-  3. If none found, loading complete
-  4. Wait 500ms
-  5. Retry
+uno_app_find_elements(automationId: "<loading indicator>", until: "absent")
 ```
+
+`NOT met` is the answer, with the last state seen; read it instead of calling again.
 
 ## Failure Handling
 

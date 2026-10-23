@@ -4,17 +4,17 @@ For Release builds, CI, and devices the DevServer does not reach, the App MCP is
 
 ## What each target exposes
 
-Checked on Uno.Sdk 6.8 (Skia renderer, `recommended` preset, Release build, `IsUiAutomationMappingEnabled` not set):
+Windows row checked on Uno.Sdk 7.0.0-dev.77, Android and macOS rows on Uno.Sdk 6.8 (Skia renderer, `recommended` preset, Release build, `IsUiAutomationMappingEnabled` not set):
 
 | Target | Tool | `AutomationProperties.Name` (or the content text) | `AutomationProperties.AutomationId` |
 |--------|------|------|------|
 | Windows (`net10.0-desktop`) | UI Automation | `Name` | `AutomationId`; falls back to `x:Name` |
-| Android (Skia) | `uiautomator dump` | `content-desc` | not exposed, even with `IsUiAutomationMappingEnabled` ([unoplatform/uno#23934](https://github.com/unoplatform/uno/issues/23934)) |
+| Android (Skia) | `uiautomator dump` | `content-desc` | `resource-id` as `<package>:id/<AutomationId>` from Uno.WinUI 7.0.0-dev.2332 (Skia accessibility bridge, [unoplatform/uno#23934](https://github.com/unoplatform/uno/issues/23934)), not yet re-checked on a device; not exposed on 6.8, even with `IsUiAutomationMappingEnabled` |
 | macOS (Skia) | AX API | not exposed to automation clients ([unoplatform/uno#24669](https://github.com/unoplatform/uno/issues/24669)) | not exposed |
 
 A `TextBlock` shows its current text as its name on both platforms, so a label, a counter, or a validation message can be asserted from the tree. For other targets (iOS, WebAssembly, Linux), use the App MCP on a Debug build; this path has not been verified there.
 
-So on Android, a control is found only by its name: give each control a test touches an `AutomationProperties.Name` that is unique on its page. The name is what screen readers announce, so make it a readable label ("Save inspection"), not an ID.
+So on Android before 7.0, a control is found only by its name (on 7.0 `resource-id` should carry the `AutomationId`, unverified on a device): give each control a test touches an `AutomationProperties.Name` that is unique on its page. The name is what screen readers announce, so make it a readable label ("Save inspection"), not an ID.
 
 ## Windows: UI Automation
 
@@ -51,7 +51,7 @@ adb shell uiautomator dump /sdcard/ui.xml && adb exec-out cat /sdcard/ui.xml > u
 - Tap the centre of the bounds: `adb shell input tap <(x1+x2)/2> <(y1+y2)/2>`. `input tap` also takes physical pixels, so do not convert to dp.
 - Type into an `EditText`: tap it, then `adb shell input text "Ada"` (`%s` for a space).
 - Dump again after every action: bounds move when layout changes, and assertions read the new dump.
-- The `text` attribute stays empty, even on an `EditText` after typing: assert a field's value through the label or message that displays it, or a screenshot.
+- On 6.8 the `text` attribute stays empty, even on an `EditText` after typing (the 7.0 bridge sets it from the peer's text, not re-checked on a device): assert a field's value through the label or message that displays it, or a screenshot.
 - A dump waits for the UI to go idle, so it fails (`ERROR: null root node`, or a timeout) while the app is starting or an animation runs, such as an indeterminate `ProgressRing`. Dump again once it settles. To assert a loading state itself, capture timed frames to files and check them in your script (a region still empty, a spinner's pixels present); do not read those frames back.
 - In Git Bash, set `MSYS_NO_PATHCONV=1`, or `/sdcard/...` is rewritten into a Windows path.
 

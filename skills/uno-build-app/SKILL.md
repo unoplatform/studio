@@ -19,11 +19,14 @@ The developer's explicit instructions and the host's permissions always outrank 
 1. **Read before editing.** Read the project's agent instructions (`AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md`), its README and representative source for the area you will touch.
 2. **Existing apps keep their architecture, navigation and theme.** Fix only defects the requested work needs, narrowly, and say why. Report other problems; do not repair them.
 3. **Ask only when the answer changes** a business rule, roles or access, data ownership, payments, a destructive action, or an external integration contract, and only after checking the brief, assets and project. Keep working on everything that does not depend on the answer. Silence is not approval. Reversible choices use the defaults in the references.
-4. **Build and exercise the first feature before repeating its pattern.**
+4. **Exercise the first feature in the running app before repeating its pattern.** Build once before the start; after it, the running-app rule.
 5. **Never claim a check you did not run.** A check that ran and failed is a failure, not "unavailable".
 6. **Views do not do storage or network. Business rules do not reference views. Services are injected.**
 7. **No unrequested packages, SDK, feature or target changes, or migrations.** Never remove a target, an `UnoFeatures` entry or a build property to make a check pass or to simplify a scaffold.
 8. **Deliver real behaviour.** If the app presents data as saved, it persists. Do not simulate core behaviour unless the developer asked for a prototype. A missing backend or integration is reported as a gap, never faked.
+9. **Automation ids are part of the view.** Every control a person acts on (`Button`, `HyperlinkButton`, `TextBox`, `CheckBox`, `ToggleSwitch`, `ComboBox`, `Slider`, list and tab items, navigation items) and every element a check reads gets `AutomationProperties.AutomationId`, PascalCase, named for its role and unique on its page (`SaveButton`, `SearchBox`, `AssetsList`); inside an item template, bind it to the item's key. Write it with the element, never as a later pass: the `uno-testing` skill drives the app by `automationId` in one call, with no snapshot, and a control without one costs a snapshot or a coordinate click every time.
+10. **Nothing of Studio's over the app.** In an app you created, `App.xaml.cs` calls `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);` under `#if DEBUG`, before the first start. The indicator and the Hot Design button otherwise sit over the app in every Debug screenshot and under pointer clicks, and Hot Design opens by itself on a first launch. Hot Reload and the App MCP keep working. In an existing app, propose the change and leave the call alone until the developer agrees.
+11. **A running app is edited, not rebuilt** (the running-app rule). While the app runs under the App MCP, an edit to an existing `.xaml` or `.cs` file is confirmed with `uno_app_hot_reload_status(file, waitForMs: 10000)`, never with `dotnet build`, `uno_app_close` or `uno_app_start`; its result carries the compiler diagnostics. A start is right only for: launch arguments, platform or app data; a Release build; the `.csproj` or packages; code that already ran at startup (`OnLaunched`, host configuration, DI registrations); and a `RudeEdit`, `InternalError` or uncovered edit the status reported.
 
 ## Step 1: pick the mode
 
@@ -37,21 +40,21 @@ Classify the request before doing anything else. Only New app mode writes a blue
 | Several projects, no obvious target | Discovery | Infer the target from the request; ask only if the choice is consequential |
 | "Why does this binding fail?" | Diagnostic | Inspect the narrow path and the generated code; no app plan |
 | "Make this card match the design" | Scoped visual | Inspect the card and theme; check the changed states; no service refactor |
-| A typo, a resource value, a one-line fix | Trivial edit | Make the edit and build; no blueprint, no checkpoint, no report template |
+| A typo, a resource value, a one-line fix | Trivial edit | Make the edit; with the app running, confirm it through Hot Reload status (the running-app rule), otherwise build. No blueprint, no checkpoint, no report template |
 
-Feature, Repair and Scoped visual modes follow [references/existing-app.md](references/existing-app.md). Every mode starts with [references/discovery.md](references/discovery.md), scaled to the request.
+Feature, Repair and Scoped visual modes follow [references/existing-app.md](references/existing-app.md). Every mode but New app starts with [references/discovery.md](references/discovery.md), scaled to the request; a new app has nothing to discover yet, and [references/new-app.md](references/new-app.md) has its own baseline step.
 
 ## Step 2: the phases
 
 Agent guidance, not a state machine. Scale each phase to the request.
 
-1. **Inspect and scope.** Discovery per [references/discovery.md](references/discovery.md). Output: target project, mode, applicable instructions, target matrix, and the build and test failures that already exist before you change anything.
+1. **Inspect and scope.** Discovery per [references/discovery.md](references/discovery.md); in New app mode, the brief and assets, then [references/new-app.md](references/new-app.md). Output: target project, mode, applicable instructions, target matrix, and the build and test failures that already exist before you change anything.
 2. **Blueprint** (New app only). Fill in [assets/blueprint.template.md](assets/blueprint.template.md) after scaffolding and before writing any app source, following [references/new-app.md](references/new-app.md) and [references/architecture-baseline.md](references/architecture-baseline.md). Keep it current when decisions change. Before filling it in, load `uno-mvux` (`references/overview.md`) and `uno-navigation` (`references/setup.md`, `references/routes.md`): the default stack's models and routes are written with them.
 3. **Feature contract.** For each meaningful feature, write down: trigger and result; who owns the state and the service; navigation in and out, with payload; data source and persistence; loading, empty and error states; theme, responsive and accessibility states affected; the checks that will prove it. Identify entity identity, invariants and invalid operations from the requirements; never invent missing business rules. "Use `IState<bool>`" is not a contract. "Toggling persists through the settings service, shows a recoverable save failure, and is restored after relaunch" is.
 4. **Select a recipe and skills.** Match the contract to [references/recipes.md](references/recipes.md). Load only the domain skills this feature needs, and within each only the references it names. An incompatible recipe still lends its acceptance checks.
 5. **Implement one complete feature.** Pick the slice that exercises the risky pattern (settings persistence beats another static page). Wire view, model, service, registration, navigation and a meaningful test before replicating anything. If a generated command does nothing, diagnose it (signature, parameters, binding context, generated wrapper, logs) before adding a code-behind workaround. A rendered button with no observable effect is unfinished work. A property changed through live tooling is not a source fix.
-6. **Build and exercise.** Every task-relevant target that can run on this machine, per [references/verification.md](references/verification.md). A screenshot proves rendering, not persistence. Visual quality is checked separately from function, per [references/design.md](references/design.md).
-7. **Recover.** Read diagnostics before changing approach. After two materially equivalent failed repairs, change strategy: reduce to a reproducer, inspect generated output, consult version-matched docs, or report the blocker. When docs, skills and observed behaviour disagree, what you verified on the project's exact versions wins; record the versions and do not upgrade anything to escape the conflict.
+6. **Build once, start, then exercise.** Every task-relevant target that can run on this machine, per [references/verification.md](references/verification.md); after the start, each edit is confirmed through Hot Reload status (the running-app rule), not another build. A screenshot proves rendering, not persistence. Visual quality is checked separately from function, per [references/design.md](references/design.md).
+7. **Recover.** Read diagnostics before changing approach. After two materially equivalent failed repairs, change strategy: reduce to a reproducer, inspect generated output (the `obj/` of the last build; a Model that fails to compile shows in the Hot Reload status, and a build to regenerate it is a restart under the running-app rule), consult version-matched docs, or report the blocker. When docs, skills and observed behaviour disagree, what you verified on the project's exact versions wins; record the versions and do not upgrade anything to escape the conflict.
 8. **Repeat and finish.** Reuse the verified pattern. If runtime checks were unavailable but the build and service tests passed, you may reuse it provisionally; record the pending checks per feature. Never repeat a pattern with an observed, unresolved runtime failure. Re-check across features when shared state, theme or navigation changed. Compare every requested journey and visible action against what now works. Then report.
 
 ## Completion report
@@ -64,13 +67,13 @@ Only an explicit instruction from the developer, or a standing project policy, w
 
 ## Checkpoints and handoff
 
-Substantial work (a new app, several features, or anything likely to span sessions) leaves a checkpoint, updated at milestones, per [references/checkpoint.md](references/checkpoint.md). Trivial edits do not. On request, produce a handoff note another agent or machine can resume from. When resuming, re-read the source and re-check tools; never trust a recorded "passed" for files that changed.
+Substantial work (a new app, several features, or anything likely to span sessions) leaves a checkpoint, updated at milestones, per [references/checkpoint.md](references/checkpoint.md). Trivial edits do not. On request, produce a handoff note another agent or machine can resume from. When resuming, re-read the source and re-check tools, starting with `uno_app_get_runtime_info`: an app that is still running takes the re-check through Hot Reload, not a build. Never trust a recorded "passed" for files that changed.
 
 ## References
 
 | File | Read when |
 |---|---|
-| [references/discovery.md](references/discovery.md) | Every mode, at the start |
+| [references/discovery.md](references/discovery.md) | Every mode but New app, at the start |
 | [references/new-app.md](references/new-app.md) | New app mode: template command, default stack, targets, blueprint |
 | [references/architecture-baseline.md](references/architecture-baseline.md) | Designing a new app or a substantive feature |
 | [references/existing-app.md](references/existing-app.md) | Feature, Repair and Scoped visual modes |

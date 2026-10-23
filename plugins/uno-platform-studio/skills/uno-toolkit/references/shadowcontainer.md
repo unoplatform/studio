@@ -1,8 +1,20 @@
 # Uno Toolkit ShadowContainer
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the ShadowContainer Documentation
+- Shadow properties follow CSS `box-shadow` (`IsInner` is `inset`), with `Opacity` as a separate multiplier on `Color`
+- `Shadows` property (a `ShadowCollection`) holds the `Shadow` items; `ShadowContainer` and `Shadow` ship in the `Uno.Toolkit.Skia.WinUI` package. Since Uno.Sdk 7, `<UnoFeatures>Toolkit</UnoFeatures>` references it on every non-WinAppSDK head because the `Skia` feature is implied when no renderer is named; add `Skia` (or an explicit `Uno.Toolkit.Skia.WinUI` PackageReference) only for a WinAppSDK head or an app that names only `WebGpu` (the xmlns stays `using:Uno.Toolkit.UI`)
+- Each `Shadow` has: `OffsetX`, `OffsetY`, `BlurRadius`, `Spread`, `Color`, `Opacity`
+- `IsInner="True"` creates an inset shadow
+- **Background must be set on ShadowContainer, not on the child** for inner shadows to work
+- Multiple shadows layer on top of each other for complex effects
+- XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the ShadowContainer Documentation
 
 ```
 uno_platform_docs_search("Uno Toolkit ShadowContainer shadow drop inner inset layer")
@@ -14,24 +26,14 @@ Primary documentation page:
 Fetch the page:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/ShadowContainer.md")
+uno_platform_docs_fetch(sourcePath="external/uno.toolkit.ui/doc/controls/ShadowContainer.md", anchor="…")
 ```
 
-### Step 2: For How-To / Walkthrough
+### For How-To / Walkthrough
 
 ```
 uno_platform_docs_search("ShadowContainer howto walkthrough shadow example")
 ```
-
-## Key Principles (Stable)
-
-- Shadow properties follow CSS `box-shadow` (`IsInner` is `inset`), with `Opacity` as a separate multiplier on `Color`
-- `Shadows` property (a `ShadowCollection`) holds the `Shadow` items; `ShadowContainer` and `Shadow` ship in the `Uno.Toolkit.Skia.WinUI` package, which `<UnoFeatures>Toolkit</UnoFeatures>` alone does not reference: use `<UnoFeatures>Toolkit;Skia</UnoFeatures>` or an explicit `Uno.Toolkit.Skia.WinUI` PackageReference (the xmlns stays `using:Uno.Toolkit.UI`)
-- Each `Shadow` has: `OffsetX`, `OffsetY`, `BlurRadius`, `Spread`, `Color`, `Opacity`
-- `IsInner="True"` creates an inset shadow
-- **Background must be set on ShadowContainer, not on the child** for inner shadows to work
-- Multiple shadows layer on top of each other for complex effects
-- XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 
 ## Related Skills
 

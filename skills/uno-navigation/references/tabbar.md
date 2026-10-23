@@ -12,9 +12,30 @@ For complete, compilable shell XAML with parameterized placeholders, see:
 - Substitution rules
 - Localization template (Resources.resw)
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the TabBar Navigation Documentation
+- TabBar uses region-based navigation similarly to NavigationView
+- Each `TabBarItem` gets `uen:Region.Name="RouteName"`
+- Parent container and content area need `Region.Attached="True"`
+- Apply `BottomTabBarStyle` to the `TabBar` and `BottomTabBarItemStyle` to each `TabBarItem`; these alias keys are defined only by the Material and Simple toolkit themes. On Fluent (the `-preset blank` default) omit the `Style` attributes: on WebAssembly and Skia a missing `{StaticResource}` key resolves to null silently (the TabBar keeps its default Toolkit style, nothing is logged), and only the Windows head throws `XamlParseException: Cannot find a Resource with the Name/Key BottomTabBarStyle`; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`. Likewise replace the page `Background="{ThemeResource BackgroundBrush}"` with `ApplicationPageBackgroundThemeBrush` on Fluent or `CupertinoSystemBackgroundBrush` on Cupertino. `MaterialBottomTabBarItemStyle` is the Material-only alias and throws under Simple; see the `uno-toolkit` skill (`references/tabbar.md`, `references/material-theme.md`)
+- Requires `Toolkit` in `<UnoFeatures>` along with `Navigation`
+- XAML namespaces: `xmlns:uen="using:Uno.Extensions.Navigation.UI"` and `xmlns:utu="using:Uno.Toolkit.UI"`
+
+## Critical Rules
+
+- The root `Grid` with `uen:Region.Attached="True"` is the Page content (the template shows it as the direct child of `Page`); it enables region navigation
+- `uen:Region.Navigator="Visibility"` MUST be on the content area Grid — this tells the framework to toggle child visibility
+- **The content area Grid with `Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route. Never add unnamed `Collapsed` pages.
+- `uen:Region.Attached="True"` MUST also be on the TabBar itself
+- Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
+- Tab page routes are nested under the `"Main"` route so only the content area updates, not the entire page
+- Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the TabBar Navigation Documentation
 
 ```
 uno_platform_docs_search("Uno Navigation TabBar bottom tab region navigation")
@@ -28,10 +49,10 @@ Primary documentation pages:
 Fetch the TabBar walkthrough:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/UseTabBar.md", anchor="…")
 ```
 
-### Step 2: For TabBar Control Reference
+### For TabBar Control Reference
 
 For TabBar control properties and styling:
 
@@ -41,30 +62,11 @@ uno_platform_docs_search("Uno Toolkit TabBar TabBarItem styles badges")
 
 See also the `uno-toolkit` skill (`references/tabbar.md`) for the control itself.
 
-### Step 3: For Responsive Navigation
+### For Responsive Navigation
 
 If combining TabBar (mobile) with NavigationView (desktop):
 
 See the `references/responsive-shell.md`.
-
-## Key Principles (Stable)
-
-- TabBar uses region-based navigation similarly to NavigationView
-- Each `TabBarItem` gets `uen:Region.Name="RouteName"`
-- Parent container and content area need `Region.Attached="True"`
-- Apply `BottomTabBarStyle` to the `TabBar` and `BottomTabBarItemStyle` to each `TabBarItem`; these alias keys are defined only by the Material and Simple toolkit themes. On Fluent (the `-preset blank` default) omit the `Style` attributes or the page throws `XamlParseException: Cannot find a Resource with the Name/Key BottomTabBarStyle`; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`. Likewise replace the page `Background="{ThemeResource BackgroundBrush}"` with `ApplicationPageBackgroundThemeBrush` on Fluent or `CupertinoSystemBackgroundBrush` on Cupertino. `MaterialBottomTabBarItemStyle` is the Material-only alias and throws under Simple; see the `uno-toolkit` skill (`references/tabbar.md`, `references/material-theme.md`)
-- Requires `Toolkit` in `<UnoFeatures>` along with `Navigation`
-- XAML namespaces: `xmlns:uen="using:Uno.Extensions.Navigation.UI"` and `xmlns:utu="using:Uno.Toolkit.UI"`
-
-## Critical Rules
-
-- The root `Grid` with `uen:Region.Attached="True"` is the Page content (the template shows it as the direct child of `Page`); it enables region navigation
-- `uen:Region.Navigator="Visibility"` MUST be on the content area Grid — this tells the framework to toggle child visibility
-- **The content area Grid with `Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route. Never add unnamed `Collapsed` pages.
-- `uen:Region.Attached="True"` MUST also be on the TabBar itself
-- Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
-- Tab page routes are nested under the `"Main"` route so only the content area updates, not the entire page
-- Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
 
 ## Related Skills
 

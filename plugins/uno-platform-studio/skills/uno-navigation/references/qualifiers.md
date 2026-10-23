@@ -1,8 +1,19 @@
 # Uno Navigation Qualifiers
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the Qualifiers Documentation
+- `-/` prefix: clears back stack (e.g., `uen:Navigation.Request="-/Login"`)
+- `!` prefix: opens a dialog/flyout (`!Route`)
+- Qualifiers can be combined with route names
+- From code: use `Qualifiers.ClearBackStack`, `Qualifiers.Dialog`, etc.
+- `Qualifiers` class is in `Uno.Extensions.Navigation` namespace
+- Common scenario: after login, navigate to main page with `-/` to prevent back navigation to login
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the Qualifiers Documentation
 
 ```
 uno_platform_docs_search("Uno Navigation qualifiers back stack clear dialog Qualifiers class")
@@ -16,18 +27,18 @@ Primary documentation pages:
 Fetch the qualifiers reference:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Navigation/Qualifiers.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Reference/Navigation/Qualifiers.md", anchor="…")
 ```
 
-### Step 2: For Advanced Back Stack Management
+### For Advanced Back Stack Management
 
 Fetch the advanced page navigation walkthrough:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/AdvancedPageNavigation.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Navigation/Walkthrough/AdvancedPageNavigation.md", anchor="…")
 ```
 
-### Step 3: For Code-Behind Qualifiers
+### For Code-Behind Qualifiers
 
 If using qualifiers from code:
 
@@ -37,15 +48,6 @@ uno_platform_docs_search("Uno Navigation Qualifiers.ClearBackStack code behind N
 
 Key page:
 - **How-To Advanced Page Navigation**: `external/uno.extensions/doc/Learn/Navigation/Advanced/HowTo-AdvancedPageNavigation.md`
-
-## Key Principles (Stable)
-
-- `-/` prefix: clears back stack (e.g., `uen:Navigation.Request="-/Login"`)
-- `!` prefix: opens a dialog/flyout (`!Route`)
-- Qualifiers can be combined with route names
-- From code: use `Qualifiers.ClearBackStack`, `Qualifiers.Dialog`, etc.
-- `Qualifiers` class is in `Uno.Extensions.Navigation` namespace
-- Common scenario: after login, navigate to main page with `-/` to prevent back navigation to login
 
 ## Related Skills
 

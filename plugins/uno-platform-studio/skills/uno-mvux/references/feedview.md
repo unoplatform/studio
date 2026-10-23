@@ -1,8 +1,28 @@
 # FeedView Control
 
-## Workflow
+## Key Principles (Stable)
 
-### Step 1: Fetch the FeedView Documentation
+- XAML namespace: `xmlns:mvux="using:Uno.Extensions.Reactive.UI"`
+- `Source` property binds to the feed/state: `Source="{Binding MyFeed}"`
+- Inside templates, access the data via `{Binding Data}` (e.g., `{Binding Data.Name}`)
+- The default `<DataTemplate>` content child acts as the `ValueTemplate`
+- FeedView automatically provides a `Refresh` command — no need to create one manually. In the value template, bind `Command="{Binding Refresh}"`. `ErrorTemplate` and `ProgressTemplate` get the exception and the progress flag as their DataContext, not the `FeedViewState`, so `{Binding Refresh}` there binds to nothing and the button does nothing: name the `FeedView` and bind `Command="{Binding Refresh, ElementName=MyFeedView}"`
+- FeedView handles all state transitions (loading → value → error) without code-behind
+
+## Understand FeedView Templates
+
+The templates:
+- **ValueTemplate** (default `<DataTemplate>`) — shown when data is available
+- **ProgressTemplate** — shown during loading
+- **ErrorTemplate** — shown when an error occurs
+- **NoneTemplate** — shown when there is no data
+- **UndefinedTemplate** — shown before the feed has produced any message (the initial "not loaded yet" state); `None` and `Undefined` also accept plain content instead of a template
+
+## Docs, for what this page does not cover
+
+Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.
+
+### Fetch the FeedView Documentation
 
 Search for and fetch the FeedView documentation:
 
@@ -17,28 +37,20 @@ Primary documentation pages:
 Fetch the full reference page:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/FeedView.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/FeedView.md", anchor="…")
 ```
 
-### Step 2: Understand FeedView Templates
-
-From the fetched docs, extract the available templates:
-- **ValueTemplate** (default `<DataTemplate>`) — shown when data is available
-- **ProgressTemplate** — shown during loading
-- **ErrorTemplate** — shown when an error occurs
-- **NoneTemplate** — shown when there is no data
-
-### Step 3: For FeedView How-To Walkthroughs
+### For FeedView How-To Walkthroughs
 
 For step-by-step implementation guidance:
 
 ```
-uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Walkthrough/FeedView.howto.md")
+uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Mvux/Walkthrough/FeedView.howto.md", anchor="…")
 ```
 
 This covers rendering `IFeed<T>`, `IState<T>`, customizing templates, and refresh behavior.
 
-### Step 4: For FeedView with Lists
+### For FeedView with Lists
 
 If the user is displaying a collection feed, search for:
 
@@ -48,15 +60,6 @@ uno_platform_docs_search("MVUX FeedView list feed ListView collection display")
 
 Key page:
 - **ListFeed How-To**: `external/uno.extensions/doc/Learn/Mvux/Walkthrough/ListFeed.howto.md`
-
-## Key Principles (Stable)
-
-- XAML namespace: `xmlns:mvux="using:Uno.Extensions.Reactive.UI"`
-- `Source` property binds to the feed/state: `Source="{Binding MyFeed}"`
-- Inside templates, access the data via `{Binding Data}` (e.g., `{Binding Data.Name}`)
-- The default `<DataTemplate>` content child acts as the `ValueTemplate`
-- FeedView automatically provides a `Refresh` command — no need to create one manually. In the value template, bind `Command="{Binding Refresh}"`. `ErrorTemplate` and `ProgressTemplate` get the exception and the progress flag as their DataContext, not the `FeedViewState`, so `{Binding Refresh}` there binds to nothing and the button does nothing: name the `FeedView` and bind `Command="{Binding Refresh, ElementName=MyFeedView}"`
-- FeedView handles all state transitions (loading → value → error) without code-behind
 
 ## Related Skills
 

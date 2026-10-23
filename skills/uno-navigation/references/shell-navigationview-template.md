@@ -206,7 +206,7 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 8. Add or remove `NavigationViewItem` entries to match the number of pages in the plan
 9. Choose the "With Settings" or "Without Settings" variant based on whether the plan includes a Settings page
 10. If using Settings, add `new ViewMap<SettingsPage>()` to `views.Register(...)` and `new RouteMap("Settings", View: views.FindByView<SettingsPage>())` to the nested routes; `FindByView` throws at startup for an unregistered view
-11. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does
+11. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does. The `""` root and `ShellModel` exist only in an app created with `-shell`; without it (the template default) `ShellModel` fails with CS0246, so drop its `ViewMap` and the `""` `RouteMap` and register `"Main"` at the top level, as the template does
 12. `BackgroundBrush` is an Uno.Themes key; on Fluent (`-preset blank`) use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`
 
 ## Route Registration Rules

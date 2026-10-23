@@ -30,10 +30,12 @@ dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests un
 - Pass `-theme` explicitly even though Simple is the preset default, so a change to the preset cannot change the app.
 - `-tests unit` adds an NUnit test project. The recommended preset does not add one by default.
 - `-auth` adds sign-in: `custom` (the app's own login API), `msal` (Microsoft Entra ID), `oidc` (an OpenID Connect provider) or `Web` (a backend that redirects back with tokens). Pass it only when the brief has users signing in, then load the `uno-authentication` skill: the generated code has gaps that skill lists.
-- `-platforms` sets the targets: `android`, `ios`, `wasm`, `desktop` (Skia Desktop: Windows, macOS, Linux) and `windows` (WinAppSDK). Pass it only when the brief names its targets, for example `-platforms android desktop`, and put it last: it takes every value after it. Without it the template uses the default list above. Never use it to drop a target whose workload is missing.
-- Then, in the generated `App.xaml.cs`, change `MainWindow.UseStudio();` to `MainWindow.UseStudio(launchHotDesignOnStart: false);`, keeping the `#if DEBUG`. Without the argument, Hot Design opens over the app on its first launch and covers it during runtime checks. The `uno-testing` skill explains why.
+- `-platforms` sets the targets: `android`, `ios`, `wasm`, `desktop` (Skia Desktop: Windows, macOS, Linux) and `windows` (WinAppSDK). Pass it only when the brief names its targets, for example `-platforms android desktop`. Without it the template uses the default list above. Never use it to drop a target whose workload is missing.
+- Then apply the skill's rule 10 to the generated `App.xaml.cs`: `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);`, still under `#if DEBUG`.
 
-Verified with Uno.Templates 6.7.30 (Uno.Sdk 6.7.30, .NET SDK 10.0.400): the command produces one app project targeting `net10.0-android`, `net10.0-ios`, `net10.0-browserwasm`, `net10.0-desktop` and plain `net10.0`, with the features `SimpleTheme`, `Hosting`, `Toolkit`, `Logging`, `MVUX`, `Configuration`, `HttpKiota`, `Serialization`, `Localization`, `Navigation`, `ThemeService` and `SkiaRenderer`, plus a test project using NUnit and FluentAssertions. The plain `net10.0` target is not a platform: `-tests unit` adds it so the test project can reference the app. Keep it. It builds for `net10.0-desktop` with no warnings and its sample test passes. With `-platforms android desktop` last, it targets `net10.0-android`, `net10.0-desktop` and plain `net10.0`, with the same features and test project. On other template versions, check what was generated rather than assuming this list.
+`-tests unit` also adds a plain `net10.0` target, which is not a platform: it lets the test project reference the app. Keep it. Check what the template generated rather than assuming a target or feature list; the features it sets up are the default stack above.
+
+**Baseline.** Before writing app source, build each target in scope once and run the template's tests. Record what already fails or warns as pre-existing, for example a sample test that fails on this template version. Attribute later failures against that record, and do not drop a target or change build properties to hide one.
 
 Start from these features. Add another `UnoFeatures` entry or package only when a concrete feature needs it, say why in the report, and follow the approval policy. Once the developer has approved a kind of addition, do not ask again for the same kind.
 
@@ -62,7 +64,7 @@ The blueprint must name the owner and the observation and mutation path of every
 
 ## First feature
 
-Choose a first journey that crosses the app's risky boundaries: persistence, a shared entity edited on two pages, an integration. Not the easiest static page. Implement it through view, state, rules, service, persistence and a test, build and exercise it, and only then repeat its pattern.
+Choose a first journey that crosses the app's risky boundaries: persistence, a shared entity edited on two pages, an integration. Not the easiest static page. Implement it through view, state, rules, service, persistence and a test, build once, start the app and exercise it (later edits go through Hot Reload status, the running-app rule), and only then repeat its pattern.
 
 ## Prototypes
 

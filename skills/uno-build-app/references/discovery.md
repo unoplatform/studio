@@ -44,7 +44,7 @@ For each tool you intend to rely on (Uno App MCP, the Uno docs MCP, an emulator,
 - **Not configured**: present but lacking something it needs, such as an app to attach to.
 - **Not running**: configured, but its process or target is not up.
 
-Report the state you observed, not a guess. The Uno App MCP reports its own state through `uno_health`: a degraded or "discovering" state with no solution selected means no app is attached yet, not that the tool is broken.
+Report the state you observed, not a guess. The `uno` MCP server reports its own state through `uno_health` (`status` is `Healthy`, `Degraded` or `Unhealthy`, with `toolCount`, `selectedSolutionPath` and `issues` codes such as `NoSolutionFound`, `WorkspaceAmbiguous` or `HostUnreachable`); whether an app is attached comes from `uno_app_get_runtime_info` and `uno_devserver_diagnostics`. No connected instance means no app is attached yet, not that the tool is broken.
 
 ## Baseline before you change anything
 

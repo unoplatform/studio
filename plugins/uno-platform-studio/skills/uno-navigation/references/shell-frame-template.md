@@ -122,5 +122,5 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 7. Replace `PAGE2_LABEL` with the display label (e.g., `"View Details"`)
 8. Add more `Button` + `Navigation.Request` pairs for additional pages
 9. On secondary pages, always include a back button with `uen:Navigation.Request="-"`
-10. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does
+10. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does. The `""` root and `ShellModel` exist only in an app created with `-shell`; without it (the template default) `ShellModel` fails with CS0246, so drop its `ViewMap` and the `""` `RouteMap` and register `"Main"` and its sibling pages at the top level, as the template does
 11. `BackgroundBrush` is an Uno.Themes key; on Fluent (`-preset blank`) use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`

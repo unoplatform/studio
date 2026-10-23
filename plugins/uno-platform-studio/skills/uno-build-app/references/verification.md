@@ -11,7 +11,7 @@ Every check ends in exactly one of four states. Use these words in the checkpoin
 
 ## Which targets
 
-Task-relevant targets are the declared targets the change can affect. Shared code, XAML, models and services affect all of them. Build and exercise every task-relevant target that can run on this machine, and report each remaining one as **not run** with the reason. Never remove a target from the project to make the list shorter.
+Task-relevant targets are the declared targets the change can affect. Shared code, XAML, models and services affect all of them. Build once, start and exercise every task-relevant target that can run on this machine, and report each remaining one as **not run** with the reason. Never remove a target from the project to make the list shorter.
 
 | Target | Build | Runtime |
 |---|---|---|
@@ -19,6 +19,8 @@ Task-relevant targets are the declared targets the change can affect. Shared cod
 | WebAssembly | `dotnet build -f net10.0-browserwasm` | The Uno App MCP with a browser |
 | Android | `dotnet build -f net10.0-android` (needs the Android workload and SDK) | An emulator or device through the Uno App MCP |
 | iOS | `dotnet build -f net10.0-ios` (needs macOS and Xcode) | A simulator or device through the Uno App MCP |
+
+The **Build** column is the build before a start. With the app running under the App MCP, a fix does not need a build or a start: edit the file and confirm with `uno_app_hot_reload_status(file, waitForMs: 10000)` (the `uno-testing` skill, workflow step 8); its result carries the compiler diagnostics, and a passing status is the build. A start is right only for: launch arguments, platform or app data; a Release build; the `.csproj` or packages; code that already ran at startup (`OnLaunched`, host configuration, DI registrations); and a `RudeEdit`, `InternalError` or uncovered edit the status reported.
 
 Use the target framework monikers the project actually declares; the table shows the .NET 10 names. A shared Skia renderer does not make one platform's pass count for another. Record which device, emulator or browser actually ran; a simulator run is not device coverage.
 
@@ -49,7 +51,7 @@ Use available browser or desktop automation, or the project's runtime tests, whe
 ## Practical traps
 
 - **`uno_app_start` builds before launching.** A build-time configuration change must be in place at launch time, not reverted before it.
-- **A running app locks its output.** Build errors `MSB3027` or `MSB3021` usually mean an earlier instance is still running. Close it (`uno_app_close`) before building again.
+- **A running app locks its output.** Build errors `MSB3026` or `MSB3027` mean an instance is still running, and usually that the build was not needed: an edit to a running app goes through Hot Reload status (above). When a start the restart list allows is really due, `uno_app_close` first, then build.
 - **Stop what you start.** Close every app instance, emulator session or server your checks launched.
 
 ## Provisional reuse

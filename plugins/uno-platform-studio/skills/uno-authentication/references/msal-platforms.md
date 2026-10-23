@@ -16,6 +16,8 @@ The provider applies each platform's conventional redirect URI; do not add a per
 
 Precedence, lowest to highest: the platform default, `RedirectUri` in the configuration section, then anything `Builder(...)` sets. A `RedirectUri` set unconditionally applies to every head; guard a single-platform value with `OperatingSystem.IsAndroid()` and the like, or WebAssembly sign-in fails with a redirect-URI mismatch. `"UseDefaultPlatformRedirectUri": false` turns the defaults off.
 
+The template sets `"RedirectUri": "myprotocol://auth"` in `appsettings.development.json`, which every Debug build loads (`UseEnvironment(Environments.Development)`), and an empty `RedirectUri` in `appsettings.json`. Delete the key from both files rather than replacing the scheme: any non-empty value is `ConfigurationSupplied` and skips the table above on every head, so `msal<client-id>://auth` fixes Android and breaks iOS, WebAssembly and desktop. The `KeychainSecurityGroup` key next to it binds to nothing in `MsalConfiguration` or MSAL's `PublicClientApplicationOptions`; the iOS keychain group comes from `Entitlements.plist` below, or from `Builder(app => app.WithIosKeychainSecurityGroup(...))`.
+
 The registrations themselves are the developer's: list the URIs they must register in the report, do not claim sign-in works until they have.
 
 ## Android

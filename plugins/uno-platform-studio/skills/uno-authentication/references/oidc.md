@@ -56,6 +56,13 @@ auth.AddOidc(oidc => oidc.ConfigureOidcClientOptions(options =>
 - **WebAssembly**: the callback must be on the app's own origin (`<origin>/authentication-callback`); a custom scheme cannot work there.
 - **Windows (WinAppSDK)**: `AddOidc` handles the redirect activation of the out-of-process browser itself.
 
+## Google
+
+Google is an OIDC provider with two traps, checked against its discovery document and OidcClient 6.0.1:
+
+- Its discovery document has no `end_session_endpoint`, so `LogoutAsync` throws `InvalidOperationException` ("Discovery document has no end session endpoint") after the tokens are cleared and `LoggedOut` has fired. Catch it in the logout command; the user is signed out of the app either way.
+- It accepts a custom-scheme redirect only as the reverse client ID (`com.googleusercontent.apps.<client-id>:/oauth2redirect`, iOS client type), no longer accepts custom schemes on Android, and gives desktop clients a loopback `http://127.0.0.1:<port>` URI. Check Google's native-app guide for the client type of each head before promising sign-in there, and do not reuse one `RedirectUri` across platforms.
+
 ## Behavior
 
 - `LoginAsync(Dispatcher)` opens the browser; credentials are ignored. A cancelled or failed sign-in returns `false` and logs the provider's error.

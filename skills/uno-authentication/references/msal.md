@@ -70,4 +70,4 @@ The ID token's payload holds the user's claims (`name`, `preferred_username`, `e
 
 Set `"B2CAuthority": "https://contoso.b2clogin.com/tfp/contoso.onmicrosoft.com/B2C_1_signupsignin"` in the section and request an API scope (or the app's own client ID) so an access token is issued. On WinAppSDK, B2C falls back to the system browser: set `"RedirectUri": "http://localhost"` and register it under "Mobile and desktop applications". One user flow per provider.
 
-Version note: written against Uno.Extensions 7.4 (Uno.Sdk 6.8), which requires Uno 6.8 or later. Interactive sign-in on Android, iOS and WebAssembly with `SkiaRenderer` silently does nothing on Uno 6.7.x.
+Version note: written against Uno.Extensions 8.0.0-dev.85 (Uno.Sdk 7.0.0-dev.77), whose authentication API is the same as 7.4; both require Uno 6.8 or later. Interactive sign-in on Android, iOS and WebAssembly with `SkiaRenderer` silently does nothing on Uno 6.7.x.

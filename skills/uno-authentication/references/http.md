@@ -21,7 +21,7 @@ A client from `services.AddHttpClient(...)` or `new HttpClient()` does not get t
 .UseAuthentication(auth => auth.AddCustom<IAuthApi>(/* see references/custom.md */))
 ```
 
-`<UnoFeatures>` needs `HttpRefit` or `HttpKiota`; the `Http` feature alone adds only `Uno.Extensions.Http`. The recommended template already lists `HttpKiota`.
+`<UnoFeatures>` needs `HttpRefit` or `HttpKiota`; the `Http` feature alone adds only `Uno.Extensions.Http`. The recommended template already lists `HttpKiota`. Switching a generated app from `HttpKiota` to `HttpRefit` also means deleting `global using Uno.Extensions.Http.Kiota;` from `GlobalUsings.cs`; `AddRefitClient` lives in the `Uno.Extensions` namespace, and `Uno.Extensions.Http.Refit` is not a namespace.
 
 ## Endpoint configuration
 

@@ -56,7 +56,7 @@ Logout itself then only signs out:
 public async ValueTask Logout(CancellationToken ct) => await Authentication.LogoutAsync(Dispatcher, ct);
 ```
 
-Do not also navigate after `LogoutAsync`: the `LoggedOut` handler already does, and a second navigation races it. `LogoutAsync` returns `false` when the provider did not sign out (the user cancelled the identity provider's page, or `AddWeb` has no `LogoutStartUri`); then nothing is cleared and no event fires.
+Do not also navigate after `LogoutAsync`: the `LoggedOut` handler already does, and a second navigation races it. `LogoutAsync` returns `false`, clearing nothing and raising no event, when MSAL's sign-out is cancelled or `AddWeb` has no `LogoutStartUri`. The OIDC provider has no such path: it clears the tokens and raises `LoggedOut` whatever its browser returned, after the post-logout redirect or the 300 s browser timeout (`references/oidc.md`).
 
 ## Login page
 

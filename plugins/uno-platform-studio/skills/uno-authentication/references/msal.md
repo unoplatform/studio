@@ -30,7 +30,8 @@ Drop the Mac Catalyst guard when the app has no Catalyst target. The `name` is a
 }
 ```
 
-- `ClientId` (a GUID from the app registration) is required; without it the app throws `MsalClientException: No ClientId was specified`. Never invent one: ask the developer for it, or leave the placeholder and report sign-in as unconfigured.
+- `ClientId` (a GUID from the app registration) is required; without it the app throws `MsalClientException: No ClientId was specified`. Never invent one: ask the developer for it, or leave the placeholder and report sign-in as unconfigured. The registration must have **Allow public client flows** set to Yes, or sign-in fails with `unauthorized_client` or `invalid_client`.
+- `TenantId` must match the registration's supported account types: `consumers` (personal accounts only, the sample's default), `organizations`, `common`, or a tenant ID. A mismatch fails with `AADSTS50020`.
 - `Scopes`: request at least one API scope. `LoginAsync` returns `false` when no access token comes back (B2C with only `openid`/`offline_access`, for example).
 - Other keys the section binds: MSAL's `PublicClientApplicationOptions` (`TenantId`, `Instance`, `RedirectUri`, ...), plus `B2CAuthority`, `UseDefaultPlatformRedirectUri`, `InteractiveTimeout`, `KeychainServiceName`, `KeychainAccountName`, `AllowUnprotectedTokenCacheFallback`.
 
@@ -54,7 +55,7 @@ Other builder calls:
 - **`LoginAsync` must receive an `IDispatcher`**: `Authentication.LoginAsync(Dispatcher)`. The convenience overload without one makes the MSAL provider throw `ArgumentNullException`, even when a cached account would have signed in silently. Inject `IDispatcher` into the login Model.
 - `LogoutAsync(ct)` needs no dispatcher. It removes MSAL's accounts and cache; the identity provider's browser session survives, so the next sign-in may complete without a prompt.
 - `RefreshAsync` at startup acquires a token silently from MSAL's cache; the flow in `references/flow.md` applies unchanged.
-- On desktop (Skia), an interactive sign-in the user abandons times out after 5 minutes (the system browser cannot report a closed window). Change it with `"InteractiveTimeout": "00:02:00"`.
+- On desktop (Skia), an interactive sign-in the user abandons times out after 5 minutes (the system browser cannot report a closed window). Change it with `"InteractiveTimeout": "00:02:00"`; `00:00:00` waits forever.
 
 ## Token cache
 
@@ -64,7 +65,7 @@ On a Linux session without a keyring the cache stays in memory (the user signs i
 
 ## User claims
 
-The ID token's payload holds the user's claims (`name`, `preferred_username`, `emails`, B2C attributes such as `extension_Role`). Read it with `await tokenCache.TokenAsync(TokenCacheExtensions.IdTokenKey, ct)`, split on `.`, Base64Url-decode the second segment (`System.Buffers.Text.Base64Url.DecodeFromChars`) and deserialize with a source-generated `JsonSerializerContext`. Decode once after sign-in and clear it on `ITokenCache.Cleared`. Use claims to shape the UI; the API enforces authorization from the access token.
+The ID token's payload holds the user's claims (`name`, `preferred_username`, `emails`, B2C attributes such as `extension_Role`). Read it with `await tokenCache.TokenAsync(TokenCacheExtensions.IdTokenKey, ct)` (null after sign-out, despite the signature), split on `.`, Base64Url-decode the second segment (`System.Buffers.Text.Base64Url.DecodeFromChars`) and deserialize with a source-generated `JsonSerializerContext`. Decode once after sign-in and clear it on `ITokenCache.Cleared`. Use claims to shape the UI; the API enforces authorization from the access token.
 
 ## Azure AD B2C
 

@@ -8,17 +8,15 @@ The provider applies each platform's conventional redirect URI; do not add a per
 
 | Platform | Redirect URI applied | Register in the app registration as |
 |---|---|---|
-| Android | `msal{ClientId}://auth` | Android / mobile |
-| iOS | `msauth.{BundleId}://auth` | iOS / mobile |
+| Android | `msal{ClientId}://auth` | Mobile and desktop applications, **Custom redirect URI**. Not the portal's Android option: that makes a broker `msauth://{package}/{hash}` URI |
+| iOS | `msauth.{BundleId}://auth` | iOS/macOS: enter the bundle ID, the portal builds the URI |
 | WebAssembly | the `WebAuthenticationBroker` callback, path `/authentication-callback` | **Single-page application (`spa`)** |
 | Desktop (Skia: Windows, macOS, Linux) | `http://localhost` (system browser) | Mobile and desktop applications |
-| WinAppSDK (`net10.0-windows10.*`) | none: the Windows broker (WAM) owns it | Mobile and desktop applications (broker URI) |
+| WinAppSDK (`net10.0-windows10.*`) | none: the Windows broker (WAM) owns it | Mobile and desktop applications: `ms-appx-web://microsoft.aad.brokerplugin/{ClientId}` |
 
 Precedence, lowest to highest: the platform default, `RedirectUri` in the configuration section, then anything `Builder(...)` sets. A `RedirectUri` set unconditionally applies to every head; guard a single-platform value with `OperatingSystem.IsAndroid()` and the like, or WebAssembly sign-in fails with a redirect-URI mismatch. `"UseDefaultPlatformRedirectUri": false` turns the defaults off.
 
-The template sets `"RedirectUri": "myprotocol://auth"` in `appsettings.development.json`, which every Debug build loads (`UseEnvironment(Environments.Development)`), and an empty `RedirectUri` in `appsettings.json`. Delete the key from both files rather than replacing the scheme: any non-empty value is `ConfigurationSupplied` and skips the table above on every head, so `msal<client-id>://auth` fixes Android and breaks iOS, WebAssembly and desktop. The `KeychainSecurityGroup` key next to it binds to nothing in `MsalConfiguration` or MSAL's `PublicClientApplicationOptions`; the iOS keychain group comes from `Entitlements.plist` below, or from `Builder(app => app.WithIosKeychainSecurityGroup(...))`.
-
-The registrations themselves are the developer's: list the URIs they must register in the report, do not claim sign-in works until they have.
+The template sets `"RedirectUri": "myprotocol://auth"` in `appsettings.development.json`, which every Debug build loads (`UseEnvironment(Environments.Development)`), and an empty one in `appsettings.json`. Delete the key from both files: any non-empty value skips the table above on every head, so `msal<client-id>://auth` there fixes Android and breaks iOS, WebAssembly and desktop. The `KeychainSecurityGroup` key next to it binds to nothing; the iOS keychain group comes from `Entitlements.plist` below, or `Builder(app => app.WithIosKeychainSecurityGroup(...))`. The registrations are the developer's: list the URIs in the report, and do not claim sign-in works until they exist.
 
 ## Android
 
@@ -26,7 +24,7 @@ Without these, the browser sign-in succeeds but `LoginAsync` never completes. Th
 
 ```csharp
 // Platforms/Android/MsalActivity.Android.cs
-[Activity(Exported = true, LaunchMode = LaunchMode.SingleTask, NoHistory = true)]
+[Activity(Exported = true, LaunchMode = LaunchMode.SingleTop, NoHistory = true)]
 [IntentFilter(
     [Intent.ActionView],
     Categories = [Intent.CategoryBrowsable, Intent.CategoryDefault],
@@ -37,15 +35,7 @@ public class MsalActivity : BrowserTabActivity
 }
 ```
 
-`MainActivity` forwards activity results (the template already has this):
-
-```csharp
-protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
-{
-    base.OnActivityResult(requestCode, resultCode, data);
-    AuthenticationContinuationHelper.SetAuthenticationContinuationEventArgs(requestCode, resultCode, data);
-}
-```
+`MainActivity.OnActivityResult` already forwards to `AuthenticationContinuationHelper.SetAuthenticationContinuationEventArgs` in the template; keep it.
 
 ## iOS
 
@@ -95,12 +85,11 @@ The template adds none of the three pieces iOS needs. Its `Info.plist` has a `my
 
     Keep the bundle's own group first. A distribution build needs Keychain Sharing enabled on the App ID.
 
+An incremental build can skip edits to `Info.plist` and `Entitlements.plist` without a word: after changing either, delete `bin` and `obj` for the iOS target and rebuild.
+
 ## WebAssembly
 
-- Register the redirect URI under the **`spa`** platform; a public-client registration fails the token request (CORS) in the browser.
+- Register the redirect URI under the **`spa`** platform; any other type fails the token request with `AADSTS90023` (CORS).
+- Sign-in runs in a popup whose URL Uno polls: the popup must not be blocked, the origin must not send `Cross-Origin-Opener-Policy`, and the host must rewrite `/authentication-callback` to `index.html` (the template's `staticwebapp.config.json` does).
 - `spa` refresh tokens last 24 hours, non-sliding: users sign in again at least daily.
 - The token cache is cleartext browser storage, `localStorage` by default. For credentials prefer `SessionStorage` (cleared with the tab): `"KeyValueStorageConfiguration": { "BrowserCacheLocation": "SessionStorage" }`. `MemoryStorage` keeps nothing across reloads.
-
-## Mac Catalyst
-
-Not supported: `AddMsal` throws `PlatformNotSupportedException` at host build. Guard the registration with `!OperatingSystem.IsMacCatalyst()`.

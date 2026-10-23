@@ -31,7 +31,7 @@ Drop the Mac Catalyst guard when the app has no Catalyst target. The `name` is a
 ```
 
 - `ClientId` (a GUID from the app registration) is required; without it the app throws `MsalClientException: No ClientId was specified`. Never invent one: ask the developer for it, or leave the placeholder and report sign-in as unconfigured. The registration must have **Allow public client flows** set to Yes, or sign-in fails with `unauthorized_client` or `invalid_client`.
-- `TenantId` must match the registration's supported account types: `consumers` (personal accounts only, the sample's default), `organizations`, `common`, or a tenant ID. A mismatch fails with `AADSTS50020`.
+- `TenantId` must match the registration's supported account types: `consumers` (personal accounts only), `organizations`, `common`, or a tenant ID. A mismatch fails with `AADSTS50020`.
 - `Scopes`: request at least one API scope. `LoginAsync` returns `false` when no access token comes back (B2C with only `openid`/`offline_access`, for example).
 - Other keys the section binds: MSAL's `PublicClientApplicationOptions` (`TenantId`, `Instance`, `RedirectUri`, ...), plus `B2CAuthority`, `UseDefaultPlatformRedirectUri`, `InteractiveTimeout`, `KeychainServiceName`, `KeychainAccountName`, `AllowUnprotectedTokenCacheFallback`.
 

@@ -61,7 +61,7 @@ auth.AddOidc(oidc => oidc.ConfigureOidcClientOptions(options =>
 Google is an OIDC provider with two traps, checked against its discovery document and OidcClient 6.0.1:
 
 - Its discovery document has no `end_session_endpoint`, so `LogoutAsync` throws `InvalidOperationException` ("Discovery document has no end session endpoint") after the tokens are cleared and `LoggedOut` has fired. Catch it in the logout command; the user is signed out of the app either way.
-- It accepts a custom-scheme redirect only as the reverse client ID (`com.googleusercontent.apps.<client-id>:/oauth2redirect`, iOS client type), no longer accepts custom schemes on Android, and gives desktop clients a loopback `http://127.0.0.1:<port>` URI. Check Google's native-app guide for the client type of each head before promising sign-in there, and do not reuse one `RedirectUri` across platforms.
+- A custom-scheme redirect must be the reverse DNS of a domain you control or of the client ID (`com.example.app:/oauth2redirect` or `com.googleusercontent.apps.<client-id>:/oauth2redirect`; the scheme needs a period, the path a single slash); Google no longer accepts custom schemes on Android, and gives desktop clients a loopback `http://127.0.0.1:<port>` URI. Check Google's native-app guide for the client type of each head before promising sign-in there, and do not reuse one `RedirectUri` across platforms.
 
 ## Behavior
 

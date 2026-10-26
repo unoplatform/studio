@@ -1,6 +1,6 @@
 ---
 name: uno-platform
-description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-testing) and sets the project-wide rules that apply before any of them."
+description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-thirdparty, uno-testing) and sets the project-wide rules that apply before any of them."
 metadata:
   author: uno-platform
   category: overview
@@ -20,6 +20,7 @@ Most real requests touch two or three domains. Load every one that applies.
 | Pages, routes, back navigation, dialogs, tab bars, navigation drawers, passing data between pages, app shell | `uno-navigation` |
 | Uno Toolkit controls (`TabBar`, `NavigationBar`, `CardContentControl`, `Chip`, `DrawerControl`, `SafeArea`, `AutoLayout`, `LoadingView`, `ShadowContainer`, and more) or its attached-property extensions | `uno-toolkit` |
 | Colors, brushes, typography, Material Design 3, the Simple theme, dark mode, restyling controls, theme resource keys | `uno-themes` |
+| Charts and graphs, maps with pins, data grids and tables (LiveCharts2, ScottPlot, Mapsui, WinUI.TableView, the Community Toolkit `DataGrid`) | `uno-thirdparty` |
 | Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (the Uno App MCP, or the platform accessibility tree for Release builds) | `uno-testing` |
 
 Worked examples:
@@ -27,6 +28,7 @@ Worked examples:
 - "Add a products page that lists items from our API with a bottom tab" → `uno-navigation` (tab shell, route), `uno-mvux` (`IListFeed<T>` + `FeedView`), `uno-toolkit` (`TabBar`), `uno-themes` if styling is mentioned.
 - "The card on the dashboard looks flat, make it match Material" → `uno-toolkit` (`CardContentControl`), `uno-themes` (Material brushes).
 - "Check that the login form shows an error on bad credentials" → `uno-testing`, with `uno-mvux` if the form logic also needs changes.
+- "Add a dashboard with monthly sales as a bar chart and the orders in a table" → `uno-thirdparty` (LiveCharts2, WinUI.TableView), `uno-mvux` (the feeds they bind to).
 
 ## Project-wide rules
 

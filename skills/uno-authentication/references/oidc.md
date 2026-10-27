@@ -49,7 +49,7 @@ auth.AddOidc(oidc => oidc.ConfigureOidcClientOptions(options =>
 
 ## Redirect URI per platform
 
-See `references/oidc-platforms.md`: a custom scheme on Android and iOS, the broker's callback on WebAssembly, and on the Skia desktop head an `IBrowser` of your own, because Uno's `WebAuthenticationBroker` is not implemented there and `LoginAsync` fails out of the box.
+See `references/oidc-platforms.md`: a custom scheme on Android and iOS, the broker's callback on WebAssembly, and on the Skia desktop head a loopback `http://localhost:<port>/...` URI for the broker that `AddOidc` registers since Uno.Extensions 8.0.0-dev.135. On older versions (every Uno.Sdk pin today) Uno's `WebAuthenticationBroker` is not implemented there and `LoginAsync` fails out of the box; `references/oidc-desktop.md` has the version check, the opt-in and the workaround.
 
 ## Google
 
@@ -60,9 +60,9 @@ Google is an OIDC provider with two traps, checked against its discovery documen
 
 ## Behavior
 
-- `LoginAsync(Dispatcher)` opens the browser; credentials are ignored. A cancelled or failed sign-in returns `false` and logs the provider's error.
+- `LoginAsync(Dispatcher)` opens the browser; credentials are ignored. A sign-in the user cancels, or that times out or fails, returns `false` and logs the provider's error (since 8.0.0-dev.135 the error reads `UserCancel` or `Timeout`; before, an exception text). Since 8.0.0-dev.135 a `CancellationToken` the app cancels propagates as `OperationCanceledException` from `LoginAsync` and `LogoutAsync` and leaves the stored tokens alone; before, `LoginAsync` returned `false`.
 - Stored tokens: `AccessToken`, `RefreshToken` and `IdToken` in `ITokenCache`. The HTTP handler sends the access token (`references/http.md`).
-- `LogoutAsync` opens the end-session endpoint with only `post_logout_redirect_uri` (no `id_token_hint`, no `state`), waits for the browser to reach the post-logout URI or for OidcClient's 300 s browser timeout, then clears the tokens and raises `LoggedOut` whatever the browser returned: there is no cancel path that keeps the tokens. Many identity providers (Duende included) do not redirect back without `id_token_hint`, so the user sees the provider's logged-out page and the call waits for the timeout; a custom `IBrowser` can add the hint (`references/oidc-platforms.md`).
-- To replace the browser (an embedded web view, a custom tab), register your own `Duende.IdentityModel.OidcClient.Browser.IBrowser` with `services.AddTransient<IBrowser, MyBrowser>()` in `ConfigureServices`.
+- `LogoutAsync` opens the end-session endpoint, waits for the browser to reach the post-logout URI or for the browser timeout (OidcClient's 300 s, or the broker's own), then clears the tokens and raises `LoggedOut` whatever the browser returned: there is no cancel path that keeps the tokens. Since 8.0.0-dev.135 the request carries the cached ID token as `id_token_hint`, which identity providers need before they redirect back (Duende's demo server then shows its logged-out page with a link to the app). Before dev.135 it carried only `post_logout_redirect_uri`, the user was left on the provider's logged-out page, and the call waited for the timeout unless a custom `IBrowser` added the hint (`references/oidc-desktop.md`).
+- To replace the browser (an embedded web view, a custom tab), register your own `Duende.IdentityModel.OidcClient.Browser.IBrowser` with `services.AddTransient<IBrowser, MyBrowser>()` in a `ConfigureServices` call after `UseAuthentication`: the last `IBrowser` registration wins.
 
 Docs: `uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Authentication/HowTo-OidcAuthentication.md")` and the walkthrough `external/uno.extensions/doc/Learn/Walkthrough/Authentication.Oidc.howto.md`. A search for "OpenID Connect tutorial" returns the older `guides/open-id-connect.md`, which drives `IdentityModel.OidcClient` by hand without Uno.Extensions.

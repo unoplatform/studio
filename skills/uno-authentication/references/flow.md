@@ -56,7 +56,7 @@ Logout itself then only signs out:
 public async ValueTask Logout(CancellationToken ct) => await Authentication.LogoutAsync(Dispatcher, ct);
 ```
 
-Do not also navigate after `LogoutAsync`: the `LoggedOut` handler already does, and a second navigation races it. `LogoutAsync` returns `false`, clearing nothing and raising no event, when MSAL's sign-out is cancelled or `AddWeb` has no `LogoutStartUri`. The OIDC provider has no such path: it clears the tokens and raises `LoggedOut` whatever its browser returned, after the post-logout redirect or the browser timeout; since Uno.Extensions 8.0.0-dev.135 a cancelled `CancellationToken` comes out of its `LoginAsync` and `LogoutAsync` as `OperationCanceledException` rather than `false` (`references/oidc.md`).
+Do not also navigate after `LogoutAsync`: the `LoggedOut` handler already does, and a second navigation races it. `LogoutAsync` returns `false`, clearing nothing and raising no event, when MSAL's sign-out is cancelled or `AddWeb` has no `LogoutStartUri`. The OIDC provider has no such path: it clears the tokens and raises `LoggedOut` whatever its browser returned, after the post-logout redirect or the browser timeout; since Uno.Extensions 8.0.0-dev.135 a cancelled `CancellationToken` comes out of its `LoginAsync` and `LogoutAsync` as `OperationCanceledException` rather than `false`, and a cancelled `LogoutAsync` has already cleared the tokens and raised `LoggedOut` by then, so the logout command catches it (`references/oidc.md`).
 
 ## Login page
 

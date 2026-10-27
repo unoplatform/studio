@@ -4,7 +4,7 @@ For Release builds, CI, and devices the DevServer does not reach, the App MCP is
 
 ## What each target exposes
 
-Windows row checked on Uno.Sdk 7.0.0-dev.77, Android and macOS rows on Uno.Sdk 6.8 (Skia renderer, `recommended` preset, Release build, `IsUiAutomationMappingEnabled` not set):
+Windows row checked on Uno.Sdk 6.8.0-dev.70, Android and macOS rows on Uno.Sdk 6.8 (Skia renderer, `recommended` preset, Release build, `IsUiAutomationMappingEnabled` not set):
 
 | Target | Tool | `AutomationProperties.Name` (or the content text) | `AutomationProperties.AutomationId` |
 |--------|------|------|------|

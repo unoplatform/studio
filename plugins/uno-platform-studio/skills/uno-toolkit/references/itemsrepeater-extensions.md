@@ -7,6 +7,7 @@
 - `utu:ItemsRepeaterExtensions.SelectedItems` — multiple selected items (bindable)
 - `utu:ItemsRepeaterExtensions.SelectedIndexes` — multiple selection indexes (bindable)
 - `utu:ItemsRepeaterExtensions.SelectionMode` — None, Single, SingleOrNone, Multiple
+- **Selection needs both a `SelectionMode` and a selectable template root.** Without `SelectionMode` the selection properties do nothing. The `ItemTemplate`'s root element must be a `SelectorItem` or `ToggleButton` (which includes `Chip`); a `Border` or `Grid` root never shows or reports selection. A `RadioButton` root does not support `Multiple`.
 - Incremental loading via `SupportsIncrementalLoading`, `DataFetchSize`, `IncrementalLoadingThreshold`, `IsLoading` (works with `ISupportIncrementalLoading` sources)
 - XAML namespace: `xmlns:utu="using:Uno.Toolkit.UI"`
 

@@ -12,7 +12,7 @@ Three escalating scopes:
 2. **Specific brush override (targeted)** — drop a `<SolidColorBrush x:Key="FilledButtonBackground" Color="..." />` into App.xaml or scoped resources.
 3. **Per-instance override (scoped)** — wrap the override in the control's `Resources` block.
 
-Font override: set `DefaultFontFamily` on the theme (`<MaterialTheme DefaultFontFamily="ms-appx:///Fonts/MyFont.ttf#MyFont" />`, a variable font or one with a font manifest); it generates the root token and every type-scale `*FontFamily` key. Use `FontOverrideSource` / `FontOverrideDictionary` only to override individual font keys. The `MaterialRegularFontFamily` / `MaterialMediumFontFamily` / `MaterialLightFontFamily` keys still exist but are legacy, and the `TypefacePlain` / `TypefaceBrand` pair introduced in 7.1.1 is removed in 8.0 (an override that still defines them is silently ignored).0 (an override that defines them is silently ignored).
+Font override: set `DefaultFontFamily` on the theme (`<MaterialTheme DefaultFontFamily="ms-appx:///Fonts/MyFont.ttf#MyFont" />`, a variable font or one with a font manifest); it generates the root token and every type-scale `*FontFamily` key. Use `FontOverrideSource` / `FontOverrideDictionary` only to override individual font keys. The `MaterialRegularFontFamily` / `MaterialMediumFontFamily` / `MaterialLightFontFamily` keys still exist but are legacy, and the `TypefacePlain` / `TypefaceBrand` pair introduced in 7.1.1 is removed in 8.0 (an override that still defines them is silently ignored).
 
 ## Migration
 

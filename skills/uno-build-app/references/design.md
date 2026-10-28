@@ -33,7 +33,7 @@ Read `uno-themes`' `references/simple.md` or `references/material.md` for theme-
 
 Recolour through the theme's generator, not by rewriting palette keys. Setting a single `*Color` override silently breaks its generated "On" and container pairings. The [seed colour palette](https://platform.uno/docs/articles/external/uno.themes/doc/seed-colors.html) (`PrimarySeed`, optionally `SecondarySeed` and `TertiarySeed` on the theme's `ThemeColors`) regenerates the whole palette for both themes. Shape and density are set on the theme element, not as `CornerRadius` literals on controls.
 
-**Check the attribute exists in the project's resolved version before using it.** Docs and examples track the newest Uno.Themes. For example, Uno.Themes 7.1.1, which Uno.Sdk 6.7.30 pins, has `PrimarySeed` but no `SeedColorMode`; Uno.Themes 9.0.0-dev.42, which Uno.Sdk 7.0.0-dev.77 pins, has both. Build after each theme change; a XAML parse error or a missing resource means the attribute or key does not exist in this version. Do not upgrade packages to get it.
+**Check the attribute exists in the project's resolved version before using it.** Docs and examples track the newest Uno.Themes. For example, Uno.Themes 7.1.1, which Uno.Sdk 6.7.30 pins, has `PrimarySeed` but no `SeedColorMode`; Uno.Themes 8.0.0-dev.25, which Uno.Sdk 6.8.0-dev.70 pins, has both. Build after each theme change; a XAML parse error or a missing resource means the attribute or key does not exist in this version. Do not upgrade packages to get it.
 
 ## Existing and legacy themes
 

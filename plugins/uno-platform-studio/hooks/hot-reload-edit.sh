@@ -12,7 +12,7 @@ file=$(printf '%s' "$input" | sed -En 's/.*"file_path" *: *"([^"]*\.(xaml|cs))".
 cli=${UNO_DEVSERVER_CLI:-uno-devserver}
 json_escape() { printf '%s' "$1" | tr -d '\r' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' | sed -e ':a' -e '$!N' -e '$!ba' -e 's/\n/\\n/g'; }
 remind() {
-	printf '%s' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"An Uno app source file changed. If the app is running under the App MCP, Hot Reload applies this edit within a few seconds (a C# edit recreates the current page): confirm it with uno_app_hot_reload_status(file, waitForMs: 10000) when that tool is available, then assert with uno_app_find_elements(waitForMs). Do not dotnet build, uno_app_close or uno_app_start for it, and not to be safe either: the status result carries the compiler diagnostics and says RudeEdit when a start is really needed. Start again only for the cases the uno-build-app running-app rule allows: launch arguments, platform or app data; a Release build; the .csproj or packages; code that already ran at startup; and a RudeEdit, InternalError or uncovered edit the status reported."}}'
+	printf '%s' '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"An Uno app source file changed. If the app is running under the App MCP, Hot Reload applies this edit within a few seconds (a C# edit recreates the current page): wait, then confirm by selector (a scoped uno_app_visualtree_snapshot or uno_app_get_element_datacontext by automationId or name) and assert on it. Do not dotnet build or uno_app_close for it. Call uno_app_start again (it terminates the running instance and rebuilds, and reports a failed build with its output) only when the change is still missing after about 10 s, or for the cases the uno-build-app running-app rule allows: a new file, a .csproj or package change, launch arguments, platform, app data, a Release build, or code that already ran at startup."}}'
 	exit 0
 }
 
@@ -46,7 +46,7 @@ verdict=$(printf '%s' "$out" | tr -d '\r' | grep '^edit to ' | head -1)
 # After a rude edit, or an internal error in the DevServer, no later edit applies until the app is rebuilt
 # (fieldcheck-20261012-180709: 11 internal errors, each run of them ended only by a restart), so the restart
 # comes after the edits that belong together.
-restart='finish the edits that belong with this one, then uno_app_restart once (uno_app_close and uno_app_start when it is not offered)'
+restart='finish the edits that belong with this one, then uno_app_start once (it terminates the running instance and rebuilds; uno_app_restart when the App MCP offers it)'
 context() { printf '%s' "{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"Hot Reload $(json_escape "$verdict") $1\"}}"; }
 # Code that already ran is not run again by Hot Reload, however cleanly the edit applies.
 startup=

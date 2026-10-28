@@ -51,7 +51,7 @@ function Assert-SessionStart([string]$case, [string]$dir) {
     if (-not $out) { $errors.Add("${case}: no output"); return }
     try { $parsed = $out | ConvertFrom-Json } catch { $errors.Add("${case}: output is not JSON: $out"); return }
     $context = $parsed.hookSpecificOutput.additionalContext
-    if ($parsed.hookSpecificOutput.hookEventName -ne 'SessionStart' -or $context -notlike '*uno_app_hot_reload_status*') { $errors.Add("${case}: unexpected output: $out") }
+    if ($parsed.hookSpecificOutput.hookEventName -ne 'SessionStart' -or $context -notlike '*uno_app_get_runtime_info*') { $errors.Add("${case}: unexpected output: $out") }
     if ($context.Length -gt 400) { $errors.Add("${case}: context is $($context.Length) characters, over the 400 budget") }
 }
 

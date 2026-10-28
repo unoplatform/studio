@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'DispatcherQueue|Click\s*=\s*"|_Click\s*\('
+pattern: 'DispatcherQueue\s*\.|\.TryEnqueue\s*\(|EnqueueAsync\s*\(|\bIDispatcher\b|\(\s*object\s+\w+\s*,\s*RoutedEventArgs'
 ---

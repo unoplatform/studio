@@ -3,7 +3,7 @@
 ## Key Principles (Stable)
 
 - Shadow properties follow CSS `box-shadow` (`IsInner` is `inset`), with `Opacity` as a separate multiplier on `Color`
-- `Shadows` property (a `ShadowCollection`) holds the `Shadow` items; `ShadowContainer` and `Shadow` ship in the `Uno.Toolkit.Skia.WinUI` package, which `<UnoFeatures>Toolkit</UnoFeatures>` alone does not reference on Uno.Sdk 6.8: use `<UnoFeatures>Toolkit;Skia</UnoFeatures>` or an explicit `Uno.Toolkit.Skia.WinUI` PackageReference (the xmlns stays `using:Uno.Toolkit.UI`)
+- `Shadows` property (a `ShadowCollection`) holds the `Shadow` items; `ShadowContainer` and `Shadow` ship in the `Uno.Toolkit.Skia.WinUI` package, which `<UnoFeatures>Toolkit</UnoFeatures>` alone does not reference on the Uno.Sdk 6.7 service release after 6.7.30: use `<UnoFeatures>Toolkit;Skia</UnoFeatures>` or an explicit `Uno.Toolkit.Skia.WinUI` PackageReference (the xmlns stays `using:Uno.Toolkit.UI`)
 - Each `Shadow` has: `OffsetX`, `OffsetY`, `BlurRadius`, `Spread`, `Color`, `Opacity`
 - `IsInner="True"` creates an inset shadow
 - **Background must be set on ShadowContainer, not on the child** for inner shadows to work

@@ -1,6 +1,6 @@
 # Uno Toolkit FlexPanel
 
-> **Availability:** `FlexPanel` ships in Uno.Toolkit 10.0, which Uno.Sdk 6.8 pins, and is absent from Toolkit 9.1.3 (Uno.Sdk 6.7.30). On an older Toolkit, confirm `utu:FlexPanel` resolves before using it. If it does not, use `AutoLayout` or `Grid` instead (there is no `WrapPanel` in the Toolkit or WinUI; the CommunityToolkit ships one).
+> **Availability:** `FlexPanel` ships in Uno.Toolkit 10.0, which the Uno.Sdk 6.7 service release after 6.7.30 pins, and is absent from Toolkit 9.1.3 (Uno.Sdk 6.7.30 and earlier). On an older Toolkit, confirm `utu:FlexPanel` resolves before using it. If it does not, use `AutoLayout` or `Grid` instead (there is no `WrapPanel` in the Toolkit or WinUI; the CommunityToolkit ships one).
 
 ## Key Principles (Stable)
 

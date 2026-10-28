@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: '\.RemoveAllAsync\s*\('
+pattern: '\.(?:RemoveAllAsync|UpdateAsync)\s*\('
 ---

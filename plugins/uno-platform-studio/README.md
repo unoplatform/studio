@@ -9,7 +9,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
 | `skills/` | The `uno-build-app` workflow skill and six domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 | `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
-| `hooks/` | Claude Code hooks. In an Uno app project, `SessionStart` (also after a compaction) tells the agent that a running app is edited through Hot Reload status, not rebuilt, and to look for a running app before the first build; elsewhere it prints nothing. After an edit to a `.xaml` or `.cs` file, `PostToolUse` asks the DevServer whether the running app applied it through Hot Reload (`uno-devserver app hot-reload-status --no-start`) and tells the agent the result: assert, fix the reported errors, or restart only for a rude edit. Without the `uno-devserver` tool or a solution file above the edited file, it reminds the agent that Hot Reload applies the edit; with no app connected yet, it says nothing. |
+| `hooks/` | Claude Code hooks that keep the agent on Hot Reload instead of rebuilding a running app (see [Hooks](#hooks)). |
 
 | Skill | Covers | References |
 |---|---|---|
@@ -18,16 +18,10 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `uno-mvux` | MVUX state management: feeds, states, list feeds/states, FeedView, commands, selection, pagination, messaging, records. | 11 |
 | `uno-navigation` | Uno.Extensions.Navigation: setup, routes, regions, code and XAML navigation, data passing, dialogs, qualifiers, TabBar/NavigationView/responsive shells, troubleshooting. | 14 topics + 4 shell templates |
 | `uno-toolkit` | Uno Toolkit controls (TabBar, NavigationBar, CardContentControl, Chip, Drawer, SafeArea, AutoLayout, LoadingView, ShadowContainer, …) and attached-property extensions, plus setup, theming, lightweight styling, and C# Markup. | 32 |
-| `uno-themes` | Uno Material (MD3), Simple theme, and the shared semantic colors, brushes, and typography. | 3 |
-| `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions. | 4 |
+| `uno-themes` | Uno Material (MD3), Simple theme, and the shared semantic colors, brushes, and typography. | 5 |
+| `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions. Release builds on Windows and Android through the platform accessibility tree. | 6 |
 
-### Why hubs instead of one skill per topic
-
-Agents decide whether to load a skill from its `name` and `description` alone, and every host caps how much of that listing it will show. Claude Code caps the listing through its `skillListingBudgetFraction` setting and each description through `skillListingMaxDescChars` (1,536 characters), and once the listing budget is exceeded it drops descriptions, leaving bare names; Codex gives the catalog at most 2% of the model's context window (or 8,000 characters when the window is unknown), shortens descriptions to fit, and may omit skills from the list entirely; the [Agent Skills spec](https://agentskills.io/specification) limits each description to 1,024 characters. Sixty-two separate skills produced roughly 27,000 characters of listing text, so most of them were shown to the model as bare names and never triggered. Six hubs fit inside every budget, and the per-topic detail is still one `Read` away through the topic map.
-
-### Writing a skill description
-
-The `description` is the only field every host reads when choosing a skill (`when_to_use` is honored by Claude Code alone). Put both what the skill does and when to use it there: lead with the domain and the API or control names, then list the ways a user phrases the task without naming the technology. Keep it under 1,024 characters. Do not add a `when_to_use` field. To add a topic, add a `references/<topic>.md` under the matching hub and a row in its topic map rather than a new skill; every new skill costs listing budget in every host.
+To change a skill or add a topic, see [CONTRIBUTING.md](https://github.com/unoplatform/studio/blob/main/CONTRIBUTING.md).
 
 ## Install
 
@@ -68,9 +62,9 @@ If your agent does not support a plugin format (Cursor, Gemini CLI, Windsurf, Cl
 
 ## Versions
 
-Marketplace installs use the release tag pinned by `source.ref`, not the latest code on `main`. The agent and `uno-build-app` workflow described below are available from this checkout until a release containing them is published. See [Releasing](#releasing).
+Marketplace installs use the release tag pinned by `source.ref`, not the latest code on `main`. The plugin version tracks the Uno.Sdk it is built for: plugin `<major>.<minor>.<patch>` targets Uno.Sdk `<major>.<minor>`, and the patch number is the plugin's own. `main` targets the next Uno.Sdk minor, so it can describe APIs that have only `-dev` builds yet.
 
-To try this checkout before that release, use `claude --plugin-dir ./plugins/uno-platform-studio --agent uno-platform-studio:uno-dev`, or `copilot plugin install ./plugins/uno-platform-studio`. For Codex, copy all seven folders under `skills/` into your project's `.agents/skills/`, then install the custom agent below. Avoid enabling an older plugin copy of the same skills in that session.
+To try unreleased changes from this checkout, use `claude --plugin-dir ./plugins/uno-platform-studio --agent uno-platform-studio:uno-dev`, or `copilot plugin install ./plugins/uno-platform-studio`. For Codex, copy all seven folders under `skills/` into your project's `.agents/skills/`, then install the custom agent below. Avoid enabling an older plugin copy of the same skills in that session.
 
 ## Use the `uno-dev` agent
 
@@ -108,6 +102,15 @@ The workflow lives in the `uno-build-app` skill, so every client can invoke it d
 ```
 
 The workflow uses the Uno documentation MCP when it is available, and the Uno App MCP or other available UI automation for runtime checks. It reports any runtime checks it cannot perform as not run.
+
+## Hooks
+
+Claude Code loads two hooks from `hooks/hooks.json`. GitHub Copilot and Codex do not load them; there the skills carry the same rule as text.
+
+- **`SessionStart`** (on startup, resume, `/clear` and after a compaction): in an Uno app project, it tells the agent that a running app is edited through Hot Reload, not rebuilt, and to look for a running app before the first build. In any other folder it prints nothing.
+- **`PostToolUse`** (after an `Edit`, `Write` or `MultiEdit` of a `.xaml` or `.cs` file): it asks the DevServer whether the running app applied the edit (`uno-devserver app hot-reload-status --no-start`) and tells the agent the result: assert on the change, fix the compile errors it reports, or restart only after a rude edit or a DevServer internal error. With no app connected yet, it prints nothing. Without the `uno-devserver` tool, or without a `.sln` or `.slnx` above the edited file, it only reminds the agent that Hot Reload applies the edit.
+
+Both hooks are POSIX `sh` scripts using `sed`, `grep` and `find`, run as `sh "<script>"`, so a POSIX `sh` must be on the `PATH`; on Windows, Git for Windows provides one. Set `UNO_DEVSERVER_CLI` to use a `uno-devserver` that is not on the `PATH`. To turn them off without uninstalling the plugin, set `"disableAllHooks": true` in your Claude Code settings; that turns off every other hook too.
 
 ## Uninstall
 
@@ -149,11 +152,13 @@ If you don't have the Uno tooling:
 
 ## UI Testing Requirement
 
-The `uno-testing` skill additionally requires the **Uno App MCP**, which drives a running app for visual-tree inspection, interaction, and screenshots (the `uno_app_*` tools). Like the documentation MCP, it is provided by the **Uno tooling**, not bundled in this plugin. Agents that have only the documentation MCP cannot run this skill; its `compatibility:` frontmatter notes the same requirement.
+The `uno-testing` skill drives a running Debug build through the **Uno App MCP** (the `uno_app_*` tools): visual-tree inspection, interaction, and screenshots. Like the documentation MCP, it is provided by the **Uno tooling**, not bundled in this plugin.
+
+Without the App MCP, and for Release builds, the skill verifies the app through the platform accessibility tree instead: Windows UI Automation on Windows, `uiautomator` on Android. On other targets without the App MCP, it falls back to a static review of the XAML and code and reports those checks as unverified. Its `compatibility:` frontmatter says the same.
 
 ## Migrating from the per-topic skills
 
-Versions before 7.0 shipped one skill per topic (`uno-mvux-feed-basics`, `uno-toolkit-card`, and so on). Every one of them still exists as a reference file inside its hub, at `skills/uno-<domain>/references/<topic>.md`; only the `uno-<domain>-` prefix was dropped. For example `uno-toolkit-card` is now `skills/uno-toolkit/references/card.md`, `uno-navigation-tabbar` is `skills/uno-navigation/references/tabbar.md`, and `uno-mvux-overview` is `skills/uno-mvux/references/overview.md`. The two testing skills became `uno-testing/references/ui.md` and `uno-testing/references/assertions.md`. If you copied individual skill folders into an agent that does not use plugins, replace them with the hub folder.
+Versions before 6.7 (the 1.x releases) shipped one skill per topic (`uno-mvux-feed-basics`, `uno-toolkit-card`, and so on). Every one of them still exists as a reference file inside its hub, at `skills/uno-<domain>/references/<topic>.md`; only the `uno-<domain>-` prefix was dropped. For example `uno-toolkit-card` is now `skills/uno-toolkit/references/card.md`, `uno-navigation-tabbar` is `skills/uno-navigation/references/tabbar.md`, and `uno-mvux-overview` is `skills/uno-mvux/references/overview.md`. The two testing skills became `uno-testing/references/ui.md` and `uno-testing/references/assertions.md`. If you copied individual skill folders into an agent that does not use plugins, replace them with the hub folder.
 
 ## Manifests
 
@@ -163,19 +168,4 @@ Versions before 7.0 shipped one skill per topic (`uno-mvux-feed-basics`, `uno-to
 | `.codex-plugin/plugin.json` | OpenAI Codex CLI |
 | `hooks/hooks.json` | Claude Code (hooks only) |
 
-## Releasing
-
-`main` is staging. Every marketplace pins the plugin to a release tag through its `source.ref`, so agents only install what has been released.
-
-The plugin version tracks the Uno.Sdk it is built for: plugin `7.0.<patch>` targets Uno.Sdk `7.0`, and the `release/stable/7.0` branch is the 7.0 line. `main` targets the next Uno.Sdk minor, which may only have `-dev` builds yet, so skills can cover APIs that haven't shipped. CI checks that the `major.minor` in `version.json` is an Uno.Sdk line published on NuGet, and the **Release** workflow refuses to ship until that line has a stable release, so a release never targets an SDK users can't install. The patch number is the plugin's own; it doesn't track Uno.Sdk patches.
-
-Releases ship from `release/stable/<major>.<minor>` branches, like the other Uno Platform repos:
-
-1. Comment `/unobot prepare-release --commit-message-pattern "ci: Set version to '{0}'"` on a merged PR. The bot cuts `release/stable/<major>.<minor>` from `main`, using the version in `version.json`, and opens a PR bumping `main` to the next `-dev` version. For a patch release, merge fixes into an existing release branch instead, for example with `/unobot backport release/stable/7.0`.
-2. The **Release** workflow validates the branch, then waits for approval on the `plugin-release` environment.
-3. Once approved, it releases the next `7.0.<patch>` (starting at `7.0.0`). It stamps that version into every manifest on the release branch, tags the commit, publishes a GitHub Release, and opens a PR that moves the marketplaces on `main` to the new tag.
-4. Merge that PR. Agents start installing the release once `main` points at it.
-
-Don't edit versions or `source.ref` by hand. On `main` they always show the latest release, and `version.json` holds the next one. The workflow sets them with `.github/scripts/Set-PluginVersion.ps1`, and CI checks that they all agree.
-
-Run the repo checks locally with `pwsh .github/scripts/Test-Plugin.ps1`.
+To build, test or release the plugin, see [CONTRIBUTING.md](https://github.com/unoplatform/studio/blob/main/CONTRIBUTING.md).

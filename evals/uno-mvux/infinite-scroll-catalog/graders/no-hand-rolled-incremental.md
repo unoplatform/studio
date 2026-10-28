@@ -1,5 +1,5 @@
 ---
 type: regex
-pattern: ':\s*[^{;]*ISupportIncrementalLoading|IncrementalLoadingCollection\s*<|\.Index\s*\*'
+pattern: '(?:class|record)\s+\w+(?:<[^>{;]*>)?\s*:[^{;]*\bISupportIncrementalLoading\b|IncrementalLoadingCollection\s*<|\.Index\s*\*'
 match: not_contains
 ---

@@ -49,4 +49,4 @@ your-project/
 
 ## Maintenance note
 
-This folder is a **mirror** of [`plugins/uno-platform-studio/skills/`](../plugins/uno-platform-studio/skills). The plugin copy is the source of truth: make edits there and sync them here. The two trees must stay identical (except this README).
+This folder is a **mirror** of [`plugins/uno-platform-studio/skills/`](../plugins/uno-platform-studio/skills). The plugin copy is the source of truth: make edits there and sync them here (see [Syncing the mirror](../CONTRIBUTING.md#syncing-the-mirror)). The two trees must stay identical (except this README).

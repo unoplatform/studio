@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'uiautomator'
+pattern: '[Uu][Ii] ?[Aa]utomator'
 ---

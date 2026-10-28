@@ -1,5 +1,5 @@
 ---
 type: regex
-pattern: '_Click\s*\(\s*object|INotifyPropertyChanged'
+pattern: '_Click\s*\(\s*object|[:,]\s*INotifyPropertyChanged\b'
 match: not_contains
 ---

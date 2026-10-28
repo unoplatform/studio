@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'RudeEdit|[Rr]ude edit'
+pattern: '[Rr]ude[ -]?[Ee]dit|[Ii]nternal ?[Ee]rror'
 ---

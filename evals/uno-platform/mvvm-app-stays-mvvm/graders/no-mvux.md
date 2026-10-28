@@ -1,5 +1,5 @@
 ---
 type: regex
-pattern: 'IListFeed\s*<|IListState\s*<|IFeed\s*<|IState\s*<|mvux:FeedView|partial\s+record\s+\w+Model'
+pattern: '\b(?:IListFeed|IListState|IFeed|IState)\s*<[^;{}()\n]*>\s+\w+\s*(?:=>|[{;=])|<mvux:FeedView|partial\s+record\s+\w+Model\b'
 match: not_contains
 ---

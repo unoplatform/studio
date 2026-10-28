@@ -32,6 +32,8 @@ From the dotnet/skills eval-quality rules:
   goes wrong. A case both arms pass shows no lift and only guards against regressions.
 - **Grade Uno correctness, not the skill's phrasing.** Every graded API is checked against the references or the Uno
   docs, and each regex accepts every correct variant, so a right answer can't fail.
+- **Anti-patterns match code, not mentions.** A `not_contains` regex matches the anti-pattern's code shape (a
+  declaration, a call, an override), so a reply that warns against it still passes.
 - **Cover different ground.** Each case targets a different capability or risk in the skill.
 
 ## Run

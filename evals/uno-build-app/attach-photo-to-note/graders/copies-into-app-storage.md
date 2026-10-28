@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'CopyAsync|CopyToAsync|LocalFolder|ApplicationData|AppDataDirectory|SpecialFolder\.LocalApplicationData'
+pattern: '\.CopyAsync\s*\(|\.CopyToAsync\s*\(|File\.Copy\s*\(|FileIO\.Write\w*Async\s*\('
 ---

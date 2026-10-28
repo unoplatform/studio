@@ -5,6 +5,7 @@
 - **`StatusBar.Foreground` is a `StatusBarForegroundTheme` enum value, NOT a Brush.** Use attribute syntax with a bare enum name: `utu:StatusBar.Foreground="Light"` (or `Dark`, `Auto`, `AutoInverse`). Element syntax or a Brush value (e.g. `<utu:StatusBar.Foreground><SolidColorBrush Color="White"/></utu:StatusBar.Foreground>`) is **invalid**.
 - `StatusBar.Background` *is* a color/brush — accepts an attribute color name or a `{StaticResource}` brush.
 - The class is **`StatusBar`**, not `StatusBarExtensions`, despite the file/skill name.
+- **On iOS, set `UIViewControllerBasedStatusBarAppearance` to `false` in `Platforms/iOS/Info.plist`** (`<key>UIViewControllerBasedStatusBarAppearance</key><false/>`). Without it the properties do nothing on iOS.
 
 ## Key Principles (Stable)
 

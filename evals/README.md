@@ -46,3 +46,5 @@ claude plugin eval . --tag routing --ablation none --trust-plugin --no-publish  
 
 The report gives each case's score with and without the plugin and the difference between them. A skill whose cases
 show no lift on a new model is a candidate to trim.
+
+To run the same cases through GitHub Copilot CLI, see [`waza/`](waza/README.md).

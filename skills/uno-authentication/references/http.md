@@ -23,6 +23,8 @@ A client from `services.AddHttpClient(...)` or `new HttpClient()` does not get t
 
 `<UnoFeatures>` needs `HttpRefit` or `HttpKiota`; the `Http` feature alone adds only `Uno.Extensions.Http`. The recommended template already lists `HttpKiota`. Switching a generated app from `HttpKiota` to `HttpRefit` also means deleting `global using Uno.Extensions.Http.Kiota;` from `GlobalUsings.cs`; `AddRefitClient` lives in the `Uno.Extensions` namespace, and `Uno.Extensions.Http.Refit` is not a namespace.
 
+The template's Kiota client is generated code checked in under `Content/Client`, built from the OpenAPI document in `Specs/` with Kiota 1.16. After an API change, regenerate it: `kiota generate -l CSharp -c <Client> -n <Namespace> -d Specs/<api>.json -o Content/Client/<Client> --clean-output`. Kiota reports an HTTP error as `Microsoft.Kiota.Abstractions.ApiException`, status in `ResponseStatusCode`.
+
 ## Endpoint configuration
 
 The base address comes from a configuration section in `appsettings.json` (`Url`, and `UseNativeHandler`, default `true`) unless you pass `options: new EndpointOptions { Url = "..." }`.
@@ -46,7 +48,7 @@ The token refresh endpoint must not go through that loop: a 401 from it would wa
 Task<TokenResponse> RefreshAsync([Body] RefreshRequest request, CancellationToken ct);
 ```
 
-For a Kiota or plain `HttpClient` request, add the header `No-Refresh: true` to that request.
+For a Kiota request, add it in the request configuration: `PostAsync(body, config => config.Headers.Add("No-Refresh", "true"), ct)`. For a plain `HttpClient` request, add the header `No-Refresh: true`.
 
 The login call goes through the handler too. With no token stored it is sent without an `Authorization` header, and a 401 there (wrong password) surfaces as the client's exception, which the `Login` callback turns into a failed login.
 

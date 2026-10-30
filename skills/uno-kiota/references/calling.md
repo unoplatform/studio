@@ -29,6 +29,15 @@ For a header on every request, use the `configure` callback of `AddKiotaClient` 
 - Every result is nullable (`List<Todo>?`, `Todo?`); every model property is nullable too. Check before use.
 - Models are mutable generated classes. JSON members the schema lacks land in `AdditionalData`, so a stale client silently drops new fields until you regenerate.
 - Dates with `format: date-time` arrive as `DateTimeOffset?`.
+- A map (`additionalProperties`) has no properties: its entries are in `AdditionalData` as untyped nodes from `Microsoft.Kiota.Abstractions.Serialization`: `UntypedArray` (`GetValue()` returns the items), `UntypedString`, `UntypedInteger`, `UntypedLong`, `UntypedDouble`, `UntypedBoolean`, `UntypedObject`. ASP.NET Core's validation `errors`, field name to messages:
+
+```csharp
+var fields = (problem.Errors?.AdditionalData ?? new Dictionary<string, object>()).ToImmutableDictionary(
+    e => e.Key,
+    e => e.Value is UntypedArray messages
+        ? messages.GetValue().OfType<UntypedString>().Select(m => m.GetValue() ?? "").ToImmutableList()
+        : ImmutableList<string>.Empty);
+```
 
 ## Wrapping the client for MVUX
 
@@ -59,10 +68,10 @@ Register the service in `ConfigureServices` (`services.AddSingleton<ITodoService
 |---|---|
 | A status the document maps to an error schema (`404`, `4XX`, `default`) | That generated model, which derives from `ApiException`: `catch (ProblemDetails ex)` and read its properties |
 | Any other non-success status | `Microsoft.Kiota.Abstractions.ApiException`, `Message` "The server returned an unexpected status code and no error factory is registered for this code: 500" |
-| An error body that is not `application/json`, including `application/problem+json` | `ArgumentOutOfRangeException` (`references/content-types.md`) |
+| Through `AddKiotaClient`, an error body that is not `application/json`, including `application/problem+json` | `ArgumentOutOfRangeException` (`references/content-types.md`) |
 | Cancellation through the token | `TaskCanceledException` |
 
-Every `ApiException` carries `ResponseStatusCode` (an `int`) and `ResponseHeaders`. The generated error model's `Message` is the generic "Exception of type ... was thrown" unless the schema marks a property with `x-ms-primary-error-message`, so show your own text, not `ex.Message`.
+Every `ApiException` carries `ResponseStatusCode` (an `int`) and `ResponseHeaders`. The generated error model's `Message` is the generic "Exception of type ... was thrown" unless the schema has a property named `message` (Kiota renames it `MessageEscaped` and returns it from `Message`) or marks one with `x-ms-primary-error-message`. Check the generated model before showing `ex.Message` to the user.
 
 ```csharp
 try

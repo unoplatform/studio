@@ -34,6 +34,16 @@ When no Url reaches the client, the generated constructor falls back to the Open
 | `appsettings.json` | Always. The template sets no `ApiClient:Url` here, so a Release build (Production) falls back to `https://localhost:5002` |
 | `appsettings.development.json` | Debug builds only: the template calls `UseEnvironment(Environments.Development)` under `#if DEBUG` |
 
+The address can also differ per head, so compute it once and pass it as `options`:
+
+| Head | Development address |
+|---|---|
+| Desktop, Windows, iOS simulator | The configured `http://localhost:<port>`. iOS allows plain HTTP to it only with `NSAppTransportSecurity` / `NSAllowsLocalNetworking` in `Info.plist` |
+| WebAssembly served by the `-server` project | The page's own origin, `JSHost.GlobalThis.GetPropertyAsJSObject("location")!.GetPropertyAsString("origin")` under `OperatingSystem.IsBrowser()`; any other host is cross-origin and needs CORS on the server |
+| Android emulator | `localhost` is the emulator itself; the development machine is `10.0.2.2`. Plain HTTP also needs a `network_security_config.xml` that permits cleartext to that host |
+
+The template's development address is `https://localhost:5002` with `UseHttpsRedirection()`, which needs a trusted development certificate on every head; a sample or prototype is simpler on plain `http://localhost:<port>` in Development.
+
 ## Options or a configuration section
 
 | Registration | Url comes from | Other section keys |

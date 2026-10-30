@@ -48,3 +48,25 @@ The report gives each case's score with and without the plugin and the differenc
 show no lift on a new model is a candidate to trim.
 
 To run the same cases through GitHub Copilot CLI, see [`waza/`](waza/README.md).
+
+## Reports and the CI gate
+
+CI holds no model credentials, so it doesn't run the evals. Instead, a change that touches a suite carries a fresh
+report of it: `evals/reports/<suite>.json`, written by a local run.
+
+```sh
+pwsh .github/scripts/Update-EvalReport.ps1                    # every suite whose report is stale or missing
+pwsh .github/scripts/Update-EvalReport.ps1 -Suite uno-mvux    # one suite
+```
+
+It runs the suite with the plugin only (`--ablation none`, so the "skill loaded" graders count), with Sonnet 5.5 as
+agent and judge, and records each case's score and run count with a hash of the files the suite depends on: its
+cases, its skill (for `routing`, every `SKILL.md`), and the plugin's hooks. Commit the report with the change.
+
+`Test-EvalReports.ps1`, in the required "Validate plugin and skills" check, fails the build when a report is missing,
+was run against different files, skipped a case or runs, or has a case scoring below 0.8 (the mean over its runs of
+the fraction of graders passed). It makes no model calls, so it also runs on fork PRs. It checks every report on
+every build, so a report left stale on `main` fails later PRs until someone refreshes it.
+
+A case that fails because a new model answers differently, not because of a change here, fails the next report of its
+suite too: fix the skill or the case, or change the case's expectations in the same PR.

@@ -75,3 +75,15 @@ function Get-EvalCaseRuns([string] $caseDir) {
     $front = Get-Content (Join-Path $EvalRoot "$caseDir/prompt.md") -Raw
     if ($front -match '(?m)^runs:\s*(\d+)\s*$') { [int]$Matches[1] } else { $EvalDefaultRuns }
 }
+
+# A case's entry in a report, from one case of a `claude plugin eval --json` result. `failed` names each scored grader
+# that failed in at least one run, as "<runs failed>/<runs>", so a reviewer sees why a case lost points.
+function ConvertTo-EvalReportCase($case) {
+    $runs = @($case.arms.with)
+    $entry = [ordered]@{ dir = $case.dir; runs = $runs.Count; score = [math]::Round($case.aggregates.score, 3) }
+    $failed = [ordered]@{}
+    $runs.graders | Where-Object { $_.scored -and -not $_.passed } | Group-Object name | Sort-Object Name |
+        ForEach-Object { $failed[$_.Name] = "$($_.Count)/$($runs.Count)" }
+    if ($failed.Count) { $entry.failed = $failed }
+    $entry
+}

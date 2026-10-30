@@ -68,9 +68,11 @@ pwsh .github/scripts/Update-EvalReport.ps1 -Suite uno-mvux    # one suite
 ```
 
 It runs the suite with the plugin only (`--ablation none`, so the "skill loaded" graders count), with Sonnet 5.5 as
-agent and judge, and records each case's score and run count with a hash of the files the suite depends on: its
-cases, its skill (for `routing`, the frontmatter of every `SKILL.md`: an agent picks a skill from its name and
-description alone), and the plugin's hooks. Commit the report with the change.
+agent and judge. It records each case's score, its run count, and each grader that failed with how many runs it
+failed in (`"info-plist": "3/3"`), so a reviewer sees why a case lost points without rerunning it. It also records a
+hash of the files the suite depends on: its cases, its skill (for `routing`, the frontmatter of every `SKILL.md`: an
+agent picks a skill from its name and description alone), and the plugin's hooks. Commit the report with the change.
+The full result of each run, with every judge's evidence, stays in the git-ignored `evals/results/` folder.
 
 `Test-EvalReports.ps1`, in the required "Validate plugin and skills" check, fails the build when a report is missing,
 was run against different files, skipped a case or runs, or has a case scoring below 0.8 (the mean over its runs of

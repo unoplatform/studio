@@ -1,0 +1,24 @@
+{
+  "suite": "routing",
+  "inputsHash": "8deda6ae3405d624121e21352b4ee4dd30ab2f7e15b96a0a163f1254fca20611",
+  "ranAt": "2026-10-30T18:32:56.347Z",
+  "claudeVersion": "2.1.314",
+  "pluginVersion": "1.1.0",
+  "model": "claude-sonnet-5-5",
+  "judgeModel": "claude-sonnet-5-5",
+  "ablation": "none",
+  "costUsd": 0.22,
+  "reportUrl": null,
+  "cases": [
+    {
+      "dir": "evals/routing/aspnet-question",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/routing/maui-question",
+      "runs": 3,
+      "score": 1.0
+    }
+  ]
+}

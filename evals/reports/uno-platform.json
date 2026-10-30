@@ -1,0 +1,24 @@
+{
+  "suite": "uno-platform",
+  "inputsHash": "aeb6a76687d3ace0a4373ee0378d505f9e00775ffdc8ff2ed95278381f910dad",
+  "ranAt": "2026-10-30T12:35:40.591Z",
+  "claudeVersion": "2.1.314",
+  "pluginVersion": "1.1.0",
+  "model": "claude-sonnet-5-5",
+  "judgeModel": "claude-sonnet-5-5",
+  "ablation": "none",
+  "costUsd": 0.83,
+  "reportUrl": null,
+  "cases": [
+    {
+      "dir": "evals/uno-platform/add-toolkit-to-project",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/uno-platform/mvvm-app-stays-mvvm",
+      "runs": 3,
+      "score": 0.933
+    }
+  ]
+}

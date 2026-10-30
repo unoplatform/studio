@@ -1,21 +1,21 @@
 {
   "suite": "uno-mvux",
-  "inputsHash": "2002a6aa9491401ad58307109e1665960024f87db6d90a83f94106ccbdab2072",
-  "ranAt": "2026-10-30T18:34:59.103Z",
+  "inputsHash": "acb44fff3534e9dfb85738baf965a81a07f673695cb0012a9e5178174b2cac15",
+  "ranAt": "2026-10-30T20:45:13.576Z",
   "claudeVersion": "2.1.314",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 2.11,
+  "costUsd": 1.93,
   "reportUrl": null,
   "cases": [
     {
       "dir": "evals/uno-mvux/command-reads-search-text",
       "runs": 3,
-      "score": 0.833,
+      "score": 0.944,
       "failed": {
-        "loads-skill": "3/3"
+        "loads-skill": "1/3"
       }
     },
     {
@@ -26,10 +26,7 @@
     {
       "dir": "evals/uno-mvux/infinite-scroll-catalog",
       "runs": 3,
-      "score": 0.958,
-      "failed": {
-        "returns-page-result": "1/3"
-      }
+      "score": 1.0
     },
     {
       "dir": "evals/uno-mvux/remove-item-from-list",

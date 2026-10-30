@@ -1,13 +1,13 @@
 {
   "suite": "uno-themes",
-  "inputsHash": "b11f57ae8ea08eaa5aea13b10b0fe901196d9dd124bb7115d02c29b3aa88362d",
-  "ranAt": "2026-10-30T18:46:54.63Z",
+  "inputsHash": "e69662ab469a2c40d016440918e1ec303f8c0c8e3f3bb0c17fe6cd407bae9d45",
+  "ranAt": "2026-10-30T20:53:01.683Z",
   "claudeVersion": "2.1.314",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 2.97,
+  "costUsd": 2.84,
   "reportUrl": null,
   "cases": [
     {
@@ -28,10 +28,7 @@
     {
       "dir": "evals/uno-themes/shared-page-both-themes",
       "runs": 3,
-      "score": 0.926,
-      "failed": {
-        "rubric-delete-error-role": "2/3"
-      }
+      "score": 1.0
     },
     {
       "dir": "evals/uno-themes/simple-danger-and-error",

@@ -125,6 +125,23 @@ try {
         $errors.Add("version.json: '$line' is not an Uno.Sdk major.minor published on NuGet (the plugin version tracks the Uno.Sdk it is built for)")
     }
 
+    # --- The README's skill table lists every skill once, with the number of files in its references/ folder: "8", or
+    # "14 topics + 4 shell templates" (the parts add up). A hand-kept count drifts as soon as a reference is added.
+    $tableSkills = [System.Collections.Generic.List[string]]::new()
+    foreach ($row in Select-String -Path "$plugin/README.md" -Pattern '^\| `(uno-[a-z-]+)` \|.*\| ([^|]+) \|$') {
+        $name = $row.Matches[0].Groups[1].Value
+        $cell = $row.Matches[0].Groups[2].Value.Trim()
+        $tableSkills.Add($name)
+        if (-not (Test-Path "$plugin/skills/$name" -PathType Container)) { $errors.Add("$plugin/README.md: the skill table lists '$name', which is not a skill"); continue }
+        $actual = @(Get-ChildItem "$plugin/skills/$name/references" -File -ErrorAction SilentlyContinue).Count
+        $claimed = $cell -eq '—' ? 0 : (([regex]::Matches($cell, '\d+') | ForEach-Object { [int]$_.Value }) | Measure-Object -Sum).Sum
+        if ($claimed -ne $actual) { $errors.Add("$plugin/README.md: the skill table says '$cell' references for '$name'; references/ holds $actual") }
+    }
+    foreach ($name in (Get-ChildItem "$plugin/skills" -Directory).Name) {
+        $rows = @($tableSkills | Where-Object { $_ -eq $name }).Count
+        if ($rows -ne 1) { $errors.Add("$plugin/README.md: the skill table has $rows rows for '$name', expected 1") }
+    }
+
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"

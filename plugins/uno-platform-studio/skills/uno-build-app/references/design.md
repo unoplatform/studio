@@ -33,6 +33,8 @@ Read `uno-themes`' `references/simple.md` or `references/material.md` for theme-
 
 Recolour through the theme's generator, not by rewriting palette keys. Setting a single `*Color` override silently breaks its generated "On" and container pairings. The [seed colour palette](https://platform.uno/docs/articles/external/uno.themes/doc/seed-colors.html) (`PrimarySeed`, optionally `SecondarySeed` and `TertiarySeed` on the theme's `ThemeColors`) regenerates the whole palette for both themes. Shape and density are set on the theme element, not as `CornerRadius` literals on controls.
 
+**A pill's radius is half its height, never 999.** A design written for the web gives pills, chips and badges a radius such as `999px` or `9999px`, which CSS shrinks evenly to half the height. WinUI, and Uno with it, fits each side's corners on their own instead, so the same value turns anything wider than it is tall into an ellipse. Give the pill a fixed height and declare its radius once, as half of it: a 32-pixel chip takes `16`. If the height can change, with text scaling for example, set the radius from `SizeChanged`. `RadiusFull` is 9999 too: it makes a square element, such as an icon button, a circle, and is not a pill radius.
+
 **Check the attribute exists in the project's resolved version before using it.** Docs and examples track the newest Uno.Themes. For example, Uno.Themes 7.1.1, which Uno.Sdk 6.7.30 pins, has `PrimarySeed` but no `SeedColorMode`; Uno.Themes 9.0.0-dev.42, which Uno.Sdk 7.0.0-dev.77 pins, has both. Build after each theme change; a XAML parse error or a missing resource means the attribute or key does not exist in this version. Do not upgrade packages to get it.
 
 ## Existing and legacy themes

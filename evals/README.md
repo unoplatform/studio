@@ -18,7 +18,7 @@ evals/
     graders/
       loads-skill.md     the skill loaded (with-plugin arm only, reported but not scored)
       *.md               regex graders on the reply: required APIs, and anti-patterns that must not appear
-      rubric.md          LLM judge: PASS/FAIL criteria
+      rubric-*.md        LLM judge, one criterion per file: one PASS condition and the FAIL conditions it rules out
   routing/<case>/        prompts outside Uno (MAUI, ASP.NET Core) that must load no Uno skill
 ```
 
@@ -35,6 +35,14 @@ From the dotnet/skills eval-quality rules:
 - **Anti-patterns match code, not mentions.** A `not_contains` regex matches the anti-pattern's code shape (a
   declaration, a call, an override), so a reply that warns against it still passes.
 - **Cover different ground.** Each case targets a different capability or risk in the skill.
+- **One criterion per judge.** A judge asked whether several things all hold rates the same reply differently from run
+  to run when one of them is missed, so each `rubric-<criterion>.md` holds one `PASS if` and no list, and carries only
+  the facts that criterion needs. A criterion a regex can check (an API name, a property value) is a regex grader
+  instead: it costs nothing and gives the same answer every run.
+
+`Test-EvalCases.ps1`, in the "Validate plugin and skills" check, enforces the file rules without running anything:
+every prompt is non-empty and no two cases share one, and every `llm` grader is named `rubric-*.md` (and only those)
+and has one `PASS if` and no list.
 
 ## Run
 

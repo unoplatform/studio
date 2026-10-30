@@ -1,6 +1,6 @@
 # OIDC: Redirect URIs and Platform Setup
 
-How the identity provider's redirect gets back into the app on each head. Registration and configuration are in `references/oidc.md`. Verified with the Duende demo server on Uno.Sdk 7.0.0-dev.77 (Uno.Extensions 8.0.0-dev.85) and, for desktop, on Uno.Sdk 7.0.0-dev.89 with Uno.Extensions 8.0.0-dev.135; the working reference is `UI/Authentication.OidcExtensionsDemo` in Uno.Samples.
+How the identity provider's redirect gets back into the app on each head. Registration and configuration are in `references/oidc.md`. Verified with the Duende demo server on Android with Uno.Sdk 7.0.0-dev.77 (Uno.Extensions 8.0.0-dev.85), and on desktop, WebAssembly and an iOS 18.5 simulator with Uno.Sdk 7.0.0-dev.89 (Uno.Extensions 8.0.0-dev.135); the working reference is `UI/Authentication.OidcExtensionsDemo` in Uno.Samples.
 
 The provider sends the configured `RedirectUri` everywhere except WebAssembly. What differs per head is the browser that opens the page and the route back, through Uno's `WebAuthenticationBroker` or, on desktop, a browser you supply.
 

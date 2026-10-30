@@ -24,7 +24,7 @@ foreach ($suite in $suites) {
     $report = Get-Content $path -Raw | ConvertFrom-Json
 
     if ($report.inputsHash -ne (Get-EvalInputsHash $suite)) {
-        $errors.Add("$file is stale: the suite's cases, its skill or the plugin hooks changed after it ran; $rerun")
+        $errors.Add("$file is stale: the suite's cases, its skill (for routing, a SKILL.md frontmatter) or the plugin hooks changed after it ran; $rerun")
         continue
     }
     if ($report.ablation -ne $EvalAblation) {

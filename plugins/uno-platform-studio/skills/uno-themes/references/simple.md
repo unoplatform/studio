@@ -8,7 +8,7 @@ The Simple theme is a lightweight design system with minimal, essential styling,
 
 - **Simple uses a flat grayscale palette** for all roles except Error (which uses red). Primary, Secondary, Tertiary, Surface, and Outline are achromatic grays. Brand colors come from seeds or a palette override on `SimpleTheme.Colors` (see Configuration).
 - **Simple defaults to Inter** for all typography; `CharacterSpacing` is 0 where the M3 scale defines it (Display, Body, Label, Caption); the type scales use `Bold` / `SemiBold` / `Normal` (no `Medium`), but `SimpleButtonFontWeight` and `SimpleToggleButtonFontWeight` are `Medium`. To change the font, see Customization step 5.
-- **Sizes come from design tokens, not size-named styles.** `DefaultDensity`, `DefaultSpacing`, and `DefaultCornerRadius` scale the `Space*` and `Radius*` tokens (`RadiusFull` stays 9999); `ControlHeight*`, `IconSize*`, and `TouchTargetMinSize` are fixed. There is no `DefaultSize` and no `SimpleSmall*` / `SimpleMedium*` family in Uno.Themes 8.0; only `TextBox` (`SimpleTextBoxSmallStyle`) and `PersonPicture` have size variants.
+- **Sizes come from design tokens, not size-named styles.** `DefaultDensity`, `DefaultSpacing`, and `DefaultCornerRadius` scale the `Space*` and `Radius*` tokens (`RadiusFull` stays 9999: a circle on a square element, an ellipse on anything wider); `ControlHeight*`, `IconSize*`, and `TouchTargetMinSize` are fixed. There is no `DefaultSize` and no `SimpleSmall*` / `SimpleMedium*` family in Uno.Themes 8.0; only `TextBox` (`SimpleTextBoxSmallStyle`) and `PersonPicture` have size variants.
 
 ## SimpleTheme Configuration
 

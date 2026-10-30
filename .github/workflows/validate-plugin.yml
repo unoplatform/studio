@@ -46,6 +46,10 @@ jobs:
         shell: pwsh
         run: ./.github/scripts/Test-Plugin.ps1
 
+      - name: Eval cases are well formed
+        shell: pwsh
+        run: ./.github/scripts/Test-EvalCases.ps1
+
       # The evals run on the author's machine (CI holds no model credentials); this checks the committed reports
       # ran against the current skills and cases and passed. See evals/README.md.
       - name: Eval reports are fresh and passing

@@ -1,13 +1,13 @@
 {
   "suite": "uno-navigation",
-  "inputsHash": "2ddc671ba0ede4005f5f7b35e9d6557a63ae604bc0fd0a9c530619da848c4b13",
-  "ranAt": "2026-10-30T18:38:40.395Z",
+  "inputsHash": "9b70fbb71a473fb1140c1d83a8dd269f156647d63af194efb7a13997ce358fa3",
+  "ranAt": "2026-10-30T20:48:02.788Z",
   "claudeVersion": "2.1.314",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 2.28,
+  "costUsd": 2.0,
   "reportUrl": null,
   "cases": [
     {
@@ -33,10 +33,7 @@
     {
       "dir": "evals/uno-navigation/tab-content-replaces-page",
       "runs": 3,
-      "score": 0.905,
-      "failed": {
-        "rubric-names-cause": "2/3"
-      }
+      "score": 1.0
     }
   ]
 }

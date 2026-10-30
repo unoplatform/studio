@@ -1,13 +1,13 @@
 {
   "suite": "uno-toolkit",
-  "inputsHash": "1e1603b48db123767cf9eb869ec4b1c5ec46902c235b9a2229b46e1be8ef46ed",
-  "ranAt": "2026-10-30T18:50:30.075Z",
+  "inputsHash": "2908e751ee9028acb55bba1de96bccb64a265dccd92ec53a9120d924a6c2254b",
+  "ranAt": "2026-10-30T20:55:32.297Z",
   "claudeVersion": "2.1.314",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 1.89,
+  "costUsd": 1.84,
   "reportUrl": null,
   "cases": [
     {
@@ -18,18 +18,12 @@
     {
       "dir": "evals/uno-toolkit/itemsrepeater-category-selection",
       "runs": 3,
-      "score": 0.857,
-      "failed": {
-        "rubric-selectable-root": "3/3"
-      }
+      "score": 1.0
     },
     {
       "dir": "evals/uno-toolkit/order-row-tap",
       "runs": 3,
-      "score": 0.857,
-      "failed": {
-        "loads-skill": "3/3"
-      }
+      "score": 1.0
     },
     {
       "dir": "evals/uno-toolkit/recipe-card-list",
@@ -39,10 +33,7 @@
     {
       "dir": "evals/uno-toolkit/status-bar-icons",
       "runs": 3,
-      "score": 0.833,
-      "failed": {
-        "info-plist": "3/3"
-      }
+      "score": 1.0
     }
   ]
 }

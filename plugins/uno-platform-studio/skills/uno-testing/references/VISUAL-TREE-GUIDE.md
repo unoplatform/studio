@@ -2,6 +2,8 @@
 
 This guide explains how to use the `uno_app_visualtree_snapshot` tool to inspect and interact with UI elements in Uno Platform applications.
 
+**Contents:** [Understanding the Visual Tree](#understanding-the-visual-tree) · [Tool Parameters](#tool-parameters) · [Reading the Output](#reading-the-output) · [Common Element Types](#common-element-types) · [Finding Elements](#finding-elements) · [Handling Dynamic Content](#handling-dynamic-content) · [Debugging Tips](#debugging-tips) · [Performance](#performance) · [Best Practices Summary](#best-practices-summary)
+
 ## Understanding the Visual Tree
 
 The snapshot is the hierarchical structure of every UI element currently rendered, as an indented text outline: one element per line, two spaces of indentation per level of nesting. Each line can carry:

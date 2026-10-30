@@ -2,6 +2,8 @@
 
 Ready-to-use templates for a simple Frame-based navigation shell. Copy, substitute placeholders, and use.
 
+**Contents:** [SHELL_PAGE_NAME.xaml (Shell)](#shell_page_namexaml-shell) · [Navigation.Request Syntax](#navigationrequest-syntax) · [Page Template (PageName.xaml)](#page-template-pagenamexaml) · [Page Template (PageName.xaml.cs)](#page-template-pagenamexamlcs) · [Route Registration (App.xaml.cs)](#route-registration-appxamlcs) · [Substitution Rules](#substitution-rules)
+
 ## SHELL_PAGE_NAME.xaml (Shell)
 
 ```xml

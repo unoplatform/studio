@@ -7,7 +7,7 @@ It installs in **Claude Code**, **GitHub Copilot CLI**, **GitHub Copilot in VS C
 ## What's in the plugin
 
 - **The `uno-dev` agent.** Describe what you want in plain language: a new app from a brief, a feature for an existing Uno app, or a binding, state or navigation defect. It plans the work, builds and runs the first feature before repeating its pattern, and ends with a report of which checks ran, which failed and which could not run.
-- **Seven skills.** `uno-build-app` is the workflow the agent follows; `uno-platform` routes any Uno request; `uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes` and `uno-testing` hold one short reference per topic. Any agent can use the skills without the `uno-dev` agent.
+- **Eight skills.** `uno-build-app` is the workflow the agent follows; `uno-platform` routes any Uno request; `uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-authentication` and `uno-testing` hold one short reference per topic. Any agent can use the skills without the `uno-dev` agent.
 - **Claude Code hooks.** While an app is running, they keep the agent on Hot Reload instead of rebuilding and restarting it after each edit.
 
 The [plugin README](plugins/uno-platform-studio/README.md) describes each skill and hook in detail.

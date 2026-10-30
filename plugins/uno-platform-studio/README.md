@@ -7,7 +7,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | Asset | Purpose |
 |---|---|
 | `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
-| `skills/` | The `uno-build-app` workflow skill and six domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+| `skills/` | The `uno-build-app` workflow skill and seven domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 | `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
 | `hooks/` | Claude Code hooks that keep the agent on Hot Reload instead of rebuilding a running app (see [Hooks](#hooks)). |
 
@@ -19,6 +19,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `uno-navigation` | Uno.Extensions.Navigation: setup, routes, regions, code and XAML navigation, data passing, dialogs, qualifiers, TabBar/NavigationView/responsive shells, troubleshooting. | 14 topics + 4 shell templates |
 | `uno-toolkit` | Uno Toolkit controls (TabBar, NavigationBar, CardContentControl, Chip, Drawer, SafeArea, AutoLayout, LoadingView, ShadowContainer, …) and attached-property extensions, plus setup, theming, lightweight styling, and C# Markup. | 32 |
 | `uno-themes` | Uno Material (MD3), Simple theme, and the shared semantic colors, brushes, and typography. | 5 |
+| `uno-authentication` | Uno.Extensions.Authentication: custom, MSAL, OIDC and web sign-in providers, the login/logout navigation flow, and tokens on Refit/Kiota calls. | 9 |
 | `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions. Release builds on Windows and Android through the platform accessibility tree. | 6 |
 
 To change a skill or add a topic, see [CONTRIBUTING.md](https://github.com/unoplatform/studio/blob/main/CONTRIBUTING.md).

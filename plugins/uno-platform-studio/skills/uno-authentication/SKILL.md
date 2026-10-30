@@ -1,0 +1,51 @@
+---
+name: uno-authentication
+description: "Sign-in for Uno Platform apps with Uno.Extensions.Authentication: IAuthenticationService (LoginAsync, RefreshAsync, LogoutAsync, LoggedOut), custom login against your own API, MSAL (Microsoft Entra ID, B2C), OpenID Connect, and web/OAuth redirect providers, the access token added to Refit and Kiota calls, and the login/logout navigation flow. Use whenever an Uno app needs a login page, sign-in, sign-out, user accounts, a session that survives restarts, tokens or bearer headers on API calls, protected pages, or Microsoft, Google, Auth0, Keycloak or IdentityServer sign-in, even when the request only says 'users must log in'. Also use when the project lists Authentication, AuthenticationMsal or AuthenticationOidc in <UnoFeatures>, or when an agent is about to write its own auth service or token storage. Read this skill before writing any authentication code."
+metadata:
+  author: uno-platform
+  category: authentication
+---
+
+# Uno Authentication
+
+Uno.Extensions.Authentication owns the whole session: a provider signs the user in, the tokens are stored in the platform's secure storage, an HTTP handler adds the access token to API calls and refreshes it on a 401, and `IAuthenticationService.LoggedOut` reports when the session ends. Generic agents write their own `IAuthService`, keep tokens in settings or a singleton, and set `Authorization` headers by hand; each of those breaks refresh, restart, or logout. This skill routes you to the provider and the flow.
+
+## Workflow
+
+1. Pick the provider. A new app gets it from the template: `dotnet new unoapp -preset recommended -auth <custom|msal|oidc|Web>`, alongside the flags the `uno-build-app` skill gives. Then fix the template gaps listed in the critical rules.
+2. Read the provider's reference and `references/flow.md`; add `references/http.md` when the app calls an API.
+3. Ground details in the official docs: call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result (a relative `.md` path). Never pass a URL, `.html` link, or hand-built path.
+4. Identity-provider values (client IDs, authorities, tenants, redirect URIs registered with the provider) are the developer's. Never invent them: use placeholders and report sign-in as not configured.
+
+## Topic map
+
+| Task | Read | Key APIs |
+|------|------|----------|
+| Username/password or API-key login against the app's own backend, or a local prototype check | `references/custom.md` | `AddCustom`, `AddCustom<TService>`, `Login`/`Refresh`/`Logout` callbacks |
+| Sign in with Microsoft Entra ID, Microsoft accounts, or Azure AD B2C | `references/msal.md` | `AddMsal(window)`, `Scopes`, `Builder`, `InteractiveBuilder` |
+| MSAL redirect URIs, Android activity, iOS URL scheme and keychain, WebAssembly `spa` registration | `references/msal-platforms.md` | `BrowserTabActivity`, `AuthenticationContinuationHelper`, `keychain-access-groups` |
+| Any OpenID Connect provider (IdentityServer, Keycloak, Auth0, Okta) | `references/oidc.md` | `AddOidc`, `OidcClientOptions`, `AutoRedirectUriFromWebAuthenticationBroker` |
+| OIDC redirect per head: Android activity scheme, iOS `CFBundleURLTypes`, WebAssembly callback | `references/oidc-platforms.md` | `WebAuthenticationBrokerActivityBase`, `CFBundleURLTypes`, `AutoRedirectUriFromWebAuthenticationBroker` |
+| OIDC or Web sign-in on the Skia desktop head: which Uno.Extensions version has the loopback broker, how to opt in, the loopback redirect URI, the pre-dev.135 workaround | `references/oidc-desktop.md` | `DesktopWebAuthenticationBrokerProvider`, `UnoExtensionsVersion`, `DefaultReturnUri`, `AddInMemoryCollection` |
+| A backend that redirects back with tokens in the URL (custom OAuth, social login) | `references/web.md` | `AddWeb`, `LoginStartUri`, `LogoutStartUri`, `PostLogin` |
+| Start page by sign-in state, login page, logout, expired session, optional sign-in | `references/flow.md` | `RefreshAsync`, `LoggedOut`, `Qualifiers.ClearBackStack`, `initialNavigate` |
+| Access token on Refit/Kiota calls, 401 refresh, cookies, reading tokens and claims | `references/http.md` | `AddRefitClient`, `AddKiotaClient`, `Headers.NoRefresh`, `ITokenCache` |
+
+## Critical rules
+
+- **Use `IAuthenticationService` and `ITokenCache`; build no session layer of your own.** Inject `IAuthenticationService` into Models; never create `IAuthService`, a token store, a "current user" singleton, or an `Authorization` header by hand.
+- **Features:** `Authentication` (custom and web providers), `AuthenticationMsal`, or `AuthenticationOidc` in `<UnoFeatures>`. API clients need `HttpRefit` or `HttpKiota`; `Http` alone adds neither Refit nor Kiota.
+- **Register in the host:** `.UseAuthentication(auth => auth.AddCustom(...))` inside `Configure`. For MSAL, OIDC and Web, the provider's `name` argument is also its configuration section (default `Msal`, `Oidc`, `Web`; the template uses `MsalAuthentication`, `OidcAuthentication`, `WebAuthentication`). `AddCustom` reads no section. `AddMsal` takes the `Window`: `.Configure((host, window) => ...)`.
+- **The user is signed in while any token is stored.** A custom `Login` returns a new dictionary holding only tokens (`TokenCacheExtensions.AccessTokenKey`, ...), or `null` to fail. The template returns the `credentials` dictionary, which stores the password: replace that.
+- **Pass the dispatcher:** `LoginAsync(Dispatcher, credentials)`. The MSAL provider throws without one; inject `IDispatcher` into the login Model.
+- **Subscribe to `LoggedOut` once, at app lifetime, and navigate to login with `Qualifiers.ClearBackStack` there.** It fires on logout, on a failed refresh, and on an API 401 that a refresh could not fix. The recommended template does not subscribe, so logout leaves the user on the signed-in page. After `LogoutAsync`, do not navigate again.
+- **Only Uno-registered clients carry the token:** `AddRefitClient`, `AddKiotaClient` or `AddClient` inside `UseHttp`. `AddHttpClient` and `new HttpClient()` send no token. Mark the token-refresh endpoint `[Headers(Uno.Extensions.Authentication.Headers.NoRefresh)]`.
+- **Provider traps:** `AddWeb` without `LogoutStartUri` cannot sign out (`LogoutAsync` returns `false`). OIDC needs the `offline_access` scope, or the session ends at every restart. On the Skia desktop head, OIDC and Web sign-in need Uno.Extensions 8.0.0-dev.135 or later plus a loopback `http://localhost:<port>/...` redirect URI: from that version `AddOidc` and `AddWeb` register a loopback `WebAuthenticationBroker`; Uno.Sdk 7.0.0-dev.95 and later pin such a version; on an older Sdk Uno's broker throws `NotImplementedException` there and the app must opt in or bring its own browser (`references/oidc-desktop.md`). The desktop listener takes any local request, so `AddWeb` apps must check a `state` (`references/web.md`). OIDC's `LogoutAsync` clears the tokens whatever the browser returned; before dev.135 it sent no `id_token_hint`, so identity providers did not redirect back and the call waited up to 300 s. The template's redirect scheme `myprotocol` is a placeholder in the Android activities, iOS `Info.plist` (where it is also misplaced), `Package.appxmanifest` and `appsettings.development.json`; for OIDC and Web, replace it everywhere. For MSAL, the Android activity takes `msal<client-id>` and `Info.plist` takes `msauth.<bundle-id>` under `CFBundleURLTypes`, but delete the `RedirectUri` key from both appsettings files rather than filling it: a configured value replaces the per-platform redirect URIs on every head, so `msal<client-id>://auth` there breaks iOS, WebAssembly and desktop (`references/msal-platforms.md`). The template's `KeychainSecurityGroup` key is read by nothing. Tokens live in Keychain on iOS, so the app needs keychain entitlements there.
+
+Verified against Uno.Extensions 8.0.0-dev.85 (pinned by Uno.Sdk 7.0.0-dev.77), 8.0.0-dev.135 (the first with desktop sign-in) and 8.0.0-dev.150 (Uno.Sdk 7.0.0-dev.115), with Uno.Templates 7.0.0-dev.77 and 7.0.0-dev.115. On other versions, check the template output and the docs.
+
+## Related skills
+
+- `uno-navigation` for routes, `initialNavigate`, and `Qualifiers.ClearBackStack` (`references/qualifiers.md`).
+- `uno-mvux` for the login Model's states and commands.
+- `uno-testing` to exercise sign-in, logout, and the expired-session path in the running app.

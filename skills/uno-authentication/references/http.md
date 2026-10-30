@@ -23,7 +23,7 @@ A client from `services.AddHttpClient(...)` or `new HttpClient()` does not get t
 
 `<UnoFeatures>` needs `HttpRefit` or `HttpKiota`; the `Http` feature alone adds only `Uno.Extensions.Http`. The recommended template already lists `HttpKiota`. Switching a generated app from `HttpKiota` to `HttpRefit` also means deleting `global using Uno.Extensions.Http.Kiota;` from `GlobalUsings.cs`; `AddRefitClient` lives in the `Uno.Extensions` namespace, and `Uno.Extensions.Http.Refit` is not a namespace.
 
-The template's Kiota client is generated code checked in under `Content/Client`, built from the OpenAPI document in `Specs/` with Kiota 1.16. After an API change, regenerate it: `kiota generate -l CSharp -c <Client> -n <Namespace> -d Specs/<api>.json -o Content/Client/<Client> --clean-output`. Kiota reports an HTTP error as `Microsoft.Kiota.Abstractions.ApiException`, status in `ResponseStatusCode`.
+The template's Kiota client is generated code checked in under `Content/Client`. Regenerating it, its base URL per environment, its errors and its JSON-only serializers are in the `uno-kiota` skill (`references/generate.md`, `references/register.md`). Kiota reports an HTTP error as `Microsoft.Kiota.Abstractions.ApiException`, status in `ResponseStatusCode`.
 
 ## Endpoint configuration
 

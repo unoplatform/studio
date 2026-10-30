@@ -7,7 +7,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | Asset | Purpose |
 |---|---|
 | `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
-| `skills/` | The `uno-build-app` workflow skill and seven domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+| `skills/` | The `uno-build-app` workflow skill and eight domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 | `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
 | `hooks/` | Claude Code hooks that keep the agent on Hot Reload instead of rebuilding a running app (see [Hooks](#hooks)). |
 
@@ -20,6 +20,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `uno-toolkit` | Uno Toolkit controls (TabBar, NavigationBar, CardContentControl, Chip, Drawer, SafeArea, AutoLayout, LoadingView, ShadowContainer, …) and attached-property extensions, plus setup, theming, lightweight styling, and C# Markup. | 32 |
 | `uno-themes` | Uno Material (MD3), Simple theme, and the shared semantic colors, brushes, and typography. | 5 |
 | `uno-authentication` | Uno.Extensions.Authentication: custom, MSAL, OIDC and web sign-in providers, the login/logout navigation flow, and tokens on Refit/Kiota calls. | 9 |
+| `uno-kiota` | Uno.Extensions.Http.Kiota: generating a typed client from an OpenAPI document, registering it with `AddKiotaClient`, the endpoint Url per environment, calls, errors and retries, and the JSON-only serializer limit. | 4 |
 | `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions. Release builds on Windows and Android through the platform accessibility tree. | 6 |
 
 To change a skill or add a topic, see [CONTRIBUTING.md](https://github.com/unoplatform/studio/blob/main/CONTRIBUTING.md).
@@ -65,7 +66,7 @@ If your agent does not support a plugin format (Cursor, Gemini CLI, Windsurf, Cl
 
 Marketplace installs use the release tag pinned by `source.ref`, not the latest code on `main`. The plugin version tracks the Uno.Sdk it is built for: plugin `<major>.<minor>.<patch>` targets Uno.Sdk `<major>.<minor>`, and the patch number is the plugin's own. `main` targets the next Uno.Sdk minor, so it can describe APIs that have only `-dev` builds yet.
 
-To try unreleased changes from this checkout, use `claude --plugin-dir ./plugins/uno-platform-studio --agent uno-platform-studio:uno-dev`, or `copilot plugin install ./plugins/uno-platform-studio`. For Codex, copy all seven folders under `skills/` into your project's `.agents/skills/`, then install the custom agent below. Avoid enabling an older plugin copy of the same skills in that session.
+To try unreleased changes from this checkout, use `claude --plugin-dir ./plugins/uno-platform-studio --agent uno-platform-studio:uno-dev`, or `copilot plugin install ./plugins/uno-platform-studio`. For Codex, copy all nine folders under `skills/` into your project's `.agents/skills/`, then install the custom agent below. Avoid enabling an older plugin copy of the same skills in that session.
 
 ## Use the `uno-dev` agent
 

@@ -30,6 +30,7 @@ dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests un
 - Pass `-theme` explicitly even though Simple is the preset default, so a change to the preset cannot change the app.
 - `-tests unit` adds an NUnit test project. The recommended preset does not add one by default.
 - `-auth` adds sign-in: `custom` (the app's own login API), `msal` (Microsoft Entra ID), `oidc` (an OpenID Connect provider) or `Web` (a backend that redirects back with tokens). Pass it only when the brief has users signing in, then load the `uno-authentication` skill: the generated code has gaps that skill lists.
+- `-server` adds an ASP.NET Core backend project, its OpenAPI document and a generated Kiota client for it. Pass it only when the brief has the app own its backend. Whenever the app calls a web API, with or without `-server`, load the `uno-kiota` skill: the generated client calls `https://localhost:5002` in Release builds until that skill's fixes are applied.
 - `-platforms` sets the targets: `android`, `ios`, `wasm`, `desktop` (Skia Desktop: Windows, macOS, Linux) and `windows` (WinAppSDK). Pass it only when the brief names its targets, for example `-platforms android desktop`. Without it the template uses the default list above. Never use it to drop a target whose workload is missing.
 - Then apply the skill's rule 10 to the generated `App.xaml.cs`: `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);`, still under `#if DEBUG`.
 

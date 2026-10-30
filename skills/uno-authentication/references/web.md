@@ -1,6 +1,6 @@
 # Web Authentication (browser redirect)
 
-`AddWeb` opens a login URL in the browser and reads the tokens from the URL the browser is redirected to. Use it for a backend that runs its own OAuth or social-login flow and redirects back with `access_token` (and optionally `refresh_token`) in the query or fragment. For a standard OpenID Connect provider use `AddOidc` (`references/oidc.md`) instead.
+`AddWeb` opens a login URL in the browser and reads the tokens from the URL the browser is redirected to. Use it for a backend that runs its own OAuth or social-login flow and redirects back with `access_token` (and optionally `refresh_token`) in the query or fragment. For a standard OpenID Connect provider use `AddOidc` (`references/oidc.md`) instead. Verified with Uno.Samples `UI/Authentication.WebExtensionsDemo`, backend included (desktop, WebAssembly, Android; Uno.Sdk 7.0.0-dev.115).
 
 Feature: `Authentication` in `<UnoFeatures>` (Web is part of it). New app: `dotnet new unoapp -preset recommended -auth Web` (capital `W`).
 
@@ -48,13 +48,16 @@ auth.AddWeb(web => web
 
 `PrepareLoginCallbackUri`, `PrepareLogoutStartUri` and `PrepareLogoutCallbackUri` follow `PrepareLoginStartUri`.
 
-- `PostLogin` gets the tokens already extracted from the callback URL. Use it to exchange a code for tokens or to add an `IdToken`; only the `AddWeb<TService>` overload also receives the callback URL itself.
-- Without `Refresh`, `RefreshAsync` keeps the stored tokens until an API returns 401. A refresh call to the backend must carry the no-refresh header (`references/http.md`).
+- `PostLogin` gets the tokens already extracted from the callback URL. Use it to exchange a code for tokens or to add an `IdToken`; only the `AddWeb<TService>` overload also receives the callback URL itself, so a `state` check needs that overload.
+- Without `Refresh`, `RefreshAsync` reports success while any token is stored; the session ends only on an API 401. In `Refresh`, return `null` only when the backend rejects the refresh token (the service clears the tokens and raises `LoggedOut`). An exception (backend unreachable) comes out of `RefreshAsync` with the tokens kept, and the template's `InitialNavigate` does not catch it: wrap the startup call. The refresh endpoint must carry the no-refresh header (`references/http.md`).
+- `LogoutAsync` clears the tokens whatever the browser returned, a cancelled or timed-out page included; only a missing `LogoutStartUri` makes it return `false`.
 
 ## Platforms
 
 - **Android**: the template's `Platforms/Android/WebAuthenticationBrokerActivity.Android.cs` has the placeholder scheme `myprotocol`: set `DataScheme` to the callback URI's scheme.
 - **iOS and macOS**: the callback must use a custom scheme registered under `CFBundleURLTypes` in `Info.plist`. The template's top-level `CFBundleURLSchemes` key is ignored by iOS; move its scheme into `CFBundleURLTypes`.
-- **WebAssembly**: the callback must be on the app's own origin; use the URL `WebAuthenticationBroker.GetCurrentApplicationCallbackUri()` returns (`<origin>/authentication-callback` by default) and register it with the backend.
-- **Desktop (Skia)**: since Uno.Extensions 8.0.0-dev.135 `AddWeb` registers a loopback `WebAuthenticationBroker` (`DesktopWebAuthenticationBrokerProvider`): `LoginCallbackUri` and `LogoutCallbackUri` must be loopback HTTP addresses such as `http://localhost:<port>/authentication-callback`, registered with the backend as is. The listener completes on the first request to that path from any local page or process, and the Web provider does not tie it to the flow it started: send a `state` from `PrepareLoginStartUri` and check it in `PostLogin` before accepting the tokens. The version gate, the opt-in and the ordering rule (first registration wins; touch nothing on `WebAuthenticationBroker` before `UseAuthentication`) are in `references/oidc-desktop.md`. Before dev.135 Uno's broker throws `NotImplementedException` there, and since `AddWeb` has no browser seam, the only route was an `IWebAuthenticationBrokerProvider` of your own registered with `ApiExtensibility.Register` before `AddWeb`.
+- **WebAssembly**: unlike `AddOidc`, the provider sends the configured callback here too, and it must be on the app's own origin: set the `redirect_uri` to `WebAuthenticationBroker.GetCurrentApplicationCallbackUri()` (`<origin>/authentication-callback`) through configuration at startup (`AddInMemoryCollection` in `ConfigureAppConfiguration`), register it with the backend, and serve `index.html` for that path.
+- **Desktop (Skia)**: since Uno.Extensions 8.0.0-dev.135 `AddWeb` registers a loopback `WebAuthenticationBroker` (`DesktopWebAuthenticationBrokerProvider`): `LoginCallbackUri` and `LogoutCallbackUri` must be loopback HTTP addresses such as `http://localhost:<port>/authentication-callback`, registered with the backend as is. The listener completes on the first request to that path from any local page or process, and the Web provider does not tie it to the flow it started: send a `state` from `PrepareLoginStartUri` and check it in `PostLogin` before accepting the tokens. Tokens in the fragment work: the broker relays them. The version gate, the opt-in and the ordering rule (first registration wins; touch nothing on `WebAuthenticationBroker` before `UseAuthentication`) are in `references/oidc-desktop.md`.
 - **Windows (WinAppSDK)**: `AddWeb` opens an out-of-process browser instead of the `WebAuthenticationBroker` and handles the redirect activation itself.
+
+Docs: `uno_platform_docs_fetch(sourcePath="external/uno.extensions/doc/Learn/Authentication/HowTo-WebAuthentication.md")` and the walkthrough `external/uno.extensions/doc/Learn/Walkthrough/Authentication.Web.howto.md`.

@@ -49,7 +49,7 @@ auth.AddOidc(oidc => oidc.ConfigureOidcClientOptions(options =>
 
 ## Redirect URI per platform
 
-See `references/oidc-platforms.md`: a custom scheme on Android and iOS, the broker's callback on WebAssembly, and on the Skia desktop head a loopback `http://localhost:<port>/...` URI for the broker that `AddOidc` registers since Uno.Extensions 8.0.0-dev.135. On older versions (every Uno.Sdk pin today) Uno's `WebAuthenticationBroker` is not implemented there and `LoginAsync` fails out of the box; `references/oidc-desktop.md` has the version check, the opt-in and the workaround.
+See `references/oidc-platforms.md`: a custom scheme on Android and iOS, the broker's callback on WebAssembly, and on the Skia desktop head a loopback `http://localhost:<port>/...` URI for the broker that `AddOidc` registers since Uno.Extensions 8.0.0-dev.135. Before (Uno.Sdk older than 7.0.0-dev.95) Uno's `WebAuthenticationBroker` is not implemented there and `LoginAsync` fails out of the box; `references/oidc-desktop.md` has the version check, the opt-in and the workaround.
 
 ## Google
 

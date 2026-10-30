@@ -16,7 +16,7 @@ The provider sends the configured `RedirectUri` everywhere except WebAssembly. W
 
 ## Desktop (Skia)
 
-Version-gated: since Uno.Extensions 8.0.0-dev.135 `AddOidc` registers a loopback `WebAuthenticationBroker` and the head only needs a `http://localhost:<port>/authentication-callback` redirect URI, set through configuration; on every version an Uno.Sdk pins today, sign-in fails with `NotImplementedException` until the app brings its own browser. Read `references/oidc-desktop.md` for the version check, the opt-in, the ordering and logging rules, and the pre-dev.135 workaround.
+Version-gated: since Uno.Extensions 8.0.0-dev.135 `AddOidc` registers a loopback `WebAuthenticationBroker` and the head only needs a `http://localhost:<port>/authentication-callback` redirect URI, set through configuration; on older versions (Uno.Sdk before 7.0.0-dev.95) sign-in fails with `NotImplementedException` until the app opts in or brings its own browser. Read `references/oidc-desktop.md` for the version check, the opt-in, the ordering and logging rules, and the pre-dev.135 workaround.
 
 ## Android
 

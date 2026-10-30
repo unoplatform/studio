@@ -1,13 +1,13 @@
 # OIDC and Web Sign-in on the Skia Desktop Head
 
-Uno's own `WebAuthenticationBroker` is not implemented on the Skia desktop head (`net10.0-desktop`: Windows, macOS, Linux). Since **Uno.Extensions 8.0.0-dev.135** (uno.extensions #3261) `AddOidc` and `AddWeb` register one: `DesktopWebAuthenticationBrokerProvider`, which opens the sign-in page in the system browser and receives the redirect on a loopback HTTP listener. Verified with the Uno.Samples OIDC sample (`UI/Authentication.OidcExtensionsDemo`) against the Duende demo server on Uno.Sdk 7.0.0-dev.89.
+Uno's own `WebAuthenticationBroker` is not implemented on the Skia desktop head (`net10.0-desktop`: Windows, macOS, Linux). Since **Uno.Extensions 8.0.0-dev.135** (uno.extensions #3261) `AddOidc` and `AddWeb` register one: `DesktopWebAuthenticationBrokerProvider`, which opens the sign-in page in the system browser and receives the redirect on a loopback HTTP listener. Verified with the Uno.Samples OIDC sample (`UI/Authentication.OidcExtensionsDemo`, Uno.Sdk 7.0.0-dev.89) and Web sample (`UI/Authentication.WebExtensionsDemo`, Uno.Sdk 7.0.0-dev.115).
 
 ## Which version the app is on
 
-Check before promising desktop sign-in: no Uno.Sdk pins dev.135 yet (7.0.0-dev.89, the newest, pins 8.0.0-dev.118). Look for `UnoExtensionsVersion` in the csproj or `Directory.Build.props`; without it the app runs the Sdk's pin. To opt in today:
+Check the Uno.Sdk in `global.json` before promising desktop sign-in: 7.0.0-dev.95 and later pin Uno.Extensions 8.0.0-dev.147 or later and need nothing more. An `UnoExtensionsVersion` in the csproj or `Directory.Build.props` overrides the pin. On an older Sdk, opt in or upgrade:
 
-- Set `<UnoExtensionsVersion>8.0.0-dev.135</UnoExtensionsVersion>` **and** use Uno.Sdk 7.0.0-dev.89 or later in `global.json`: dev.135 was built against Uno.WinUI 7.0.0-dev.2428 and Toolkit 11.0.0-dev.155, and an older Sdk's pins fail the restore with NU1605 downgrade errors.
-- On Uno.Sdk 7.0.0-dev.89 a Debug build also needs a `Uno.WinUI.Lottie` PackageReference (7.0.0-dev.1663, Debug-only item group) until the Hot Design and App MCP tooling packages stop referencing `Uno.UI.Lottie` (uno.extensions #3262); without it the app dies at startup with `FileNotFoundException: Uno.UI.Lottie`. Release builds do not need it.
+- Set `<UnoExtensionsVersion>8.0.0-dev.135</UnoExtensionsVersion>` **and** use Uno.Sdk 7.0.0-dev.89 or later: dev.135 was built against Uno.WinUI 7.0.0-dev.2428 and Toolkit 11.0.0-dev.155, and an older Sdk's pins fail the restore with NU1605 downgrade errors.
+- From Uno.Sdk 7.0.0-dev.89 through at least 7.0.0-dev.115, a Debug build needs a `Uno.WinUI.Lottie` PackageReference (7.0.0-dev.1663, Debug-only item group) while the Hot Design tooling references `Uno.UI.Lottie` (uno.extensions #3262); without it the desktop app dies with `FileNotFoundException: Uno.UI.Lottie` or hangs with no window. Release builds do not need it.
 
 ## With the broker (8.0.0-dev.135 and later)
 

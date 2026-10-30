@@ -41,7 +41,8 @@ foreach ($suite in $suites) {
         if ($case.runs -lt $runs) {
             $errors.Add("$($case.dir) ran $($case.runs) time(s) in $file; its prompt.md asks for $runs. $rerun")
         } elseif ($case.score -lt $EvalThreshold) {
-            $errors.Add("$($case.dir) scored $($case.score) in $file, below $EvalThreshold. Fix the skill or the case, then $rerun")
+            $why = $case.failed ? " (failed: $(@($case.failed.PSObject.Properties | ForEach-Object { "$($_.Name) $($_.Value)" }) -join ', '))" : ''
+            $errors.Add("$($case.dir) scored $($case.score) in $file, below $EvalThreshold$why. Fix the skill or the case, then $rerun")
         }
     }
 }

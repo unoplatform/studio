@@ -18,7 +18,10 @@
     {
       "dir": "evals/uno-platform/mvvm-app-stays-mvvm",
       "runs": 3,
-      "score": 0.952
+      "score": 0.952,
+      "failed": {
+        "loads-skill": "1/3"
+      }
     }
   ]
 }

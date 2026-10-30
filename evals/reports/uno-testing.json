@@ -1,0 +1,46 @@
+{
+  "suite": "uno-testing",
+  "inputsHash": "f77e8063eee142156e24d746a044775f942d5799477f0050723c6d8e821a70a5",
+  "ranAt": "2026-10-30T18:42:17.341Z",
+  "claudeVersion": "2.1.314",
+  "pluginVersion": "1.1.0",
+  "model": "claude-sonnet-5-5",
+  "judgeModel": "claude-sonnet-5-5",
+  "ablation": "none",
+  "costUsd": 3.36,
+  "reportUrl": null,
+  "cases": [
+    {
+      "dir": "evals/uno-testing/feed-list-loaded",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/uno-testing/fill-signup-form",
+      "runs": 3,
+      "score": 0.933,
+      "failed": {
+        "rubric-checkbox-action": "1/3",
+        "toggle-checkbox": "1/3"
+      }
+    },
+    {
+      "dir": "evals/uno-testing/fix-then-confirm",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/uno-testing/narrow-and-wide-layout",
+      "runs": 3,
+      "score": 0.857,
+      "failed": {
+        "screenshot": "3/3"
+      }
+    },
+    {
+      "dir": "evals/uno-testing/release-build-no-mcp",
+      "runs": 3,
+      "score": 1.0
+    }
+  ]
+}

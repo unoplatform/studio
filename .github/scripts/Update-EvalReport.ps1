@@ -69,9 +69,7 @@ foreach ($name in $Suite) {
         ablation      = $result.suite.ablation
         costUsd       = [math]::Round($result.costUsd, 2)
         reportUrl     = $url
-        cases         = @($result.cases | Sort-Object dir | ForEach-Object {
-            [ordered]@{ dir = $_.dir; runs = @($_.arms.with).Count; score = [math]::Round($_.aggregates.score, 3) }
-        })
+        cases         = @($result.cases | Sort-Object dir | ForEach-Object { ConvertTo-EvalReportCase $_ })
     }
     $out = Join-Path $EvalRoot "$EvalReportDir/$name.json"
     New-Item -ItemType Directory -Force (Split-Path $out) | Out-Null

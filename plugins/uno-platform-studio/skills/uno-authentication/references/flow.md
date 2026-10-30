@@ -30,6 +30,8 @@ Host = await MainWindow.InitializeNavigationAsync(
     initialNavigate: InitialNavigate);
 ```
 
+`RefreshAsync` throws when the provider's refresh does (an `AddWeb` `Refresh` callback that cannot reach the backend, `references/web.md`), and nothing above catches it: wrap the call.
+
 with both pages registered:
 
 ```csharp
@@ -45,10 +47,10 @@ routes.Register(
 
 `LoggedOut` is raised whenever the stored tokens are cleared: an explicit `LogoutAsync`, a `RefreshAsync` that could not renew the session, and an API call whose 401 could not be fixed by a refresh. Handle it in **one** place that lives as long as the app, and navigate there:
 
-- the `InitialNavigate` callback above (the recommended template has no Shell Model, and does not subscribe anywhere, so without this a logout leaves the user on the signed-in page);
+- the `InitialNavigate` callback above (the recommended template subscribes nowhere, so without this a logout leaves the user on the signed-in page);
 - or the constructor of `ShellModel`/`ShellViewModel` when the app has one (the template does this when it generates a Shell).
 
-Navigation from the handler is safe even when the event comes from an HTTP call on a background thread. `Qualifiers.ClearBackStack` keeps Back from returning to signed-in pages.
+Navigating from the handler is safe even when an HTTP call raises it on a background thread. `Qualifiers.ClearBackStack` keeps Back from returning to signed-in pages.
 
 Logout itself then only signs out:
 
@@ -56,7 +58,7 @@ Logout itself then only signs out:
 public async ValueTask Logout(CancellationToken ct) => await Authentication.LogoutAsync(Dispatcher, ct);
 ```
 
-Do not also navigate after `LogoutAsync`: the `LoggedOut` handler already does, and a second navigation races it. `LogoutAsync` returns `false`, clearing nothing and raising no event, when MSAL's sign-out is cancelled or `AddWeb` has no `LogoutStartUri`. The OIDC provider has no such path: it clears the tokens and raises `LoggedOut` whatever its browser returned, after the post-logout redirect or the browser timeout; since Uno.Extensions 8.0.0-dev.135 a cancelled `CancellationToken` comes out of its `LoginAsync` and `LogoutAsync` as `OperationCanceledException` rather than `false`, and a cancelled `LogoutAsync` has already cleared the tokens and raised `LoggedOut` by then, so the logout command catches it (`references/oidc.md`).
+Do not also navigate after `LogoutAsync`: the `LoggedOut` handler already does, and a second navigation races it. `LogoutAsync` returns `false`, clearing nothing and raising no event, when MSAL's sign-out is cancelled or `AddWeb` has no `LogoutStartUri`. The OIDC and Web providers have no such path: they clear the tokens and raise `LoggedOut` whatever the browser returned. Since Uno.Extensions 8.0.0-dev.135 a cancelled `CancellationToken` comes out of OIDC's `LogoutAsync` as `OperationCanceledException` after the tokens are cleared, so the logout command catches it (`references/oidc.md`).
 
 ## Login page
 

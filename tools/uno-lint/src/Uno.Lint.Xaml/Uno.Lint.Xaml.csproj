@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The uno-lint XAML rules as Uno.XamlParser Stage-1 fixers, plus the step that turns their diagnostics into uno-lint
+    findings. net9.0 like Uno.XamlParser, so any host that can reference the parser can reference this too.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Uno.Lint.Xaml</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Uno.Lint.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Uno.XamlParser" Version="0.10.0-dev.80" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Uno.Lint.Core\Uno.Lint.Core.csproj" />
+  </ItemGroup>
+
+</Project>

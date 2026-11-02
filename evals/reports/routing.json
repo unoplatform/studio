@@ -1,8 +1,8 @@
 {
   "suite": "routing",
-  "inputsHash": "8b8321b92072bd66678c37bb13d92abddbeba828f59b6f3a83aa18736bc39d05",
-  "ranAt": "2026-10-30T20:44:59.638Z",
-  "claudeVersion": "2.1.314",
+  "inputsHash": "73ee400e2d96af19f239a18060c3269c8e9dea14e7a2608c1f24af973a161b44",
+  "ranAt": "2026-11-02T16:01:30.377Z",
+  "claudeVersion": "2.1.316",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",

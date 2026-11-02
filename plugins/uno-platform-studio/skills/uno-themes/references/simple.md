@@ -22,7 +22,7 @@ The Simple theme is a lightweight design system with minimal, essential styling,
 | `FontOverrideDictionary` | `ResourceDictionary` | — | Inline ResourceDictionary overriding font resources |
 | `DefaultDensity` | `Density` | `Regular` | `Compact` / `Regular` / `Comfy`: scales the `Space*` tokens ×0.75 / ×1 / ×1.25 |
 | `DefaultCornerRadius` | `double` | `4` | Base value the `Radius*` tokens derive from |
-| `DefaultSpacing` | `double` | `8` | Base unit the `Space*` tokens derive from |
+| `DefaultSpacing` | `double` | `4` | Base unit the `Space*` tokens derive from |
 
 ```xml
 <SimpleTheme xmlns="using:Uno.Simple"

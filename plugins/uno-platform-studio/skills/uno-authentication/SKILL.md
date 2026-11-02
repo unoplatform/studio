@@ -48,4 +48,5 @@ Verified against Uno.Extensions 8.0.0-dev.85 (pinned by Uno.Sdk 7.0.0-dev.77), 8
 
 - `uno-navigation` for routes, `initialNavigate`, and `Qualifiers.ClearBackStack` (`references/qualifiers.md`).
 - `uno-mvux` for the login Model's states and commands.
+- `uno-kiota` for generating, registering and calling the Kiota client the token is added to.
 - `uno-testing` to exercise sign-in, logout, and the expired-session path in the running app.

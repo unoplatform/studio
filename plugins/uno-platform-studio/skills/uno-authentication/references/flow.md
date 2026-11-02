@@ -2,6 +2,8 @@
 
 How a signed-in or signed-out user moves through the app: the start route, the login page, logout, and an expired session. The route and qualifier mechanics are in the `uno-navigation` skill (`references/qualifiers.md`).
 
+**Contents:** [Start on the right page](#start-on-the-right-page) · [Return to login on logout and on an expired session](#return-to-login-on-logout-and-on-an-expired-session) · [Login page](#login-page) · [Optional sign-in](#optional-sign-in) · [What not to build](#what-not-to-build)
+
 ## Start on the right page
 
 `dotnet new unoapp -preset recommended -auth <provider>` generates this in `App.xaml.cs`. Keep it: `RefreshAsync` renews stored tokens and returns whether the user is still signed in.

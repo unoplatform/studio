@@ -1,13 +1,13 @@
 {
   "suite": "uno-platform",
-  "inputsHash": "33c51e801796a429f078e1255f29730063154a2f861e24d4a98a6afb8a7d5220",
-  "ranAt": "2026-10-30T18:14:40.444Z",
-  "claudeVersion": "2.1.314",
+  "inputsHash": "34529cbd06ef1b3218d6d87d5c17934d49cfe96feea97893ec8c1dbbad90cd20",
+  "ranAt": "2026-11-02T16:07:59.689Z",
+  "claudeVersion": "2.1.316",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 1.38,
+  "costUsd": 1.57,
   "reportUrl": null,
   "cases": [
     {
@@ -18,10 +18,7 @@
     {
       "dir": "evals/uno-platform/mvvm-app-stays-mvvm",
       "runs": 3,
-      "score": 0.952,
-      "failed": {
-        "loads-skill": "1/3"
-      }
+      "score": 1.0
     }
   ]
 }

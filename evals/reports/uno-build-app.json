@@ -1,22 +1,19 @@
 {
   "suite": "uno-build-app",
-  "inputsHash": "da656489282822bb195e9ff545d3263d9b572d96f3e96d7a43d4724e24b84759",
-  "ranAt": "2026-10-30T18:33:19.139Z",
-  "claudeVersion": "2.1.314",
+  "inputsHash": "500c4dcf76b1f74371442ed975f9f1dff9c6dfe8b4097f7b71fd4aaf38e24ffd",
+  "ranAt": "2026-11-02T16:01:42.284Z",
+  "claudeVersion": "2.1.316",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 1.06,
+  "costUsd": 0.96,
   "reportUrl": null,
   "cases": [
     {
       "dir": "evals/uno-build-app/attach-photo-to-note",
       "runs": 3,
-      "score": 0.967,
-      "failed": {
-        "loads-skill": "1/3"
-      }
+      "score": 1.0
     }
   ]
 }

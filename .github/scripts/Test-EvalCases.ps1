@@ -6,7 +6,9 @@
 .DESCRIPTION
   Makes no model calls. Each case has a non-empty prompt that no other case repeats, and each `llm` grader judges
   exactly one criterion: a judge asked whether several things all hold gives a different verdict from run to run when
-  one of them is missed, so each criterion gets its own grader (and its own score). See evals/README.md.
+  one of them is missed, so each criterion gets its own grader (and its own score). The checks are one `PASS if`, no
+  list, and no `(and ` or `; ` in the PASS condition: a tripwire for the two phrasings a second requirement has hidden
+  in before, not proof that a rubric judges one thing. See evals/README.md.
 #>
 
 $ErrorActionPreference = 'Stop'
@@ -50,6 +52,12 @@ foreach ($suite in Get-EvalSuites) {
             }
             if ($grader.Body -match '(?m)^\s*(?:[-*+]|\d+\.)\s') {
                 $errors.Add("${relative}: a list in an llm grader is several criteria; give each its own rubric-<criterion>.md")
+            }
+            # From PASS up to the FAIL line, so a wrapped line counts too, without inline code: a quoted C# statement's
+            # "; " is not a second requirement.
+            $passText = [regex]::Match($grader.Body, '(?ms)^[^\n]*\bPASS\b.*?(?=^FAIL\b|\z)').Value -replace '`[^`\n]*`', ''
+            if ($passText -match '(?i)\(and\s|;\s') {
+                $errors.Add("${relative}: the PASS condition joins a second requirement with '(and ' or '; '; give it its own rubric-<criterion>.md, and put a clarification in the 'Facts the judge needs' line")
             }
         }
     }

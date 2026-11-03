@@ -80,10 +80,27 @@ try {
     # --- Workflow templates and relative Markdown links (including assets/ and ../ links).
     $pluginFiles = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     Get-ChildItem $plugin -Recurse -File | ForEach-Object { $pluginFiles.Add($_.FullName) | Out-Null }
+    # A `](#anchor)` link must name a heading of its own file, by GitHub's slug: lowercase, punctuation dropped, spaces
+    # to hyphens, and -1, -2, ... on repeats. So a table of contents can't drift from the headings it lists.
+    function Get-HeadingSlugs([string[]]$lines) {
+        $slugs = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+        foreach ($line in $lines) {
+            if ($line -notmatch '^#{1,6}\s+(.+?)\s*#*\s*$') { continue }
+            $base = ($Matches[1].ToLowerInvariant() -replace '[^\p{L}\p{N}_\- ]', '') -replace ' ', '-'
+            $slug = $base; $n = 0
+            while (-not $slugs.Add($slug)) { $slug = "$base-$((++$n))" }
+        }
+        $slugs
+    }
     foreach ($file in Get-ChildItem $plugin -Recurse -File -Filter *.md) {
-        foreach ($line in Get-ProseLines $file.FullName) {
+        $prose = @(Get-ProseLines $file.FullName)
+        $slugs = Get-HeadingSlugs $prose
+        foreach ($line in $prose) {
             foreach ($m in [regex]::Matches($line, '\[[^\]]*\]\(([^\s)]+)\)')) {
-                $target = ($m.Groups[1].Value -split '#', 2)[0]
+                $target, $anchor = $m.Groups[1].Value -split '#', 2
+                if (-not $target -and $anchor -and -not $slugs.Contains($anchor)) {
+                    $errors.Add("$($file.FullName): link '#$anchor' names no heading in the file")
+                }
                 if (-not $target -or $target -match '^[a-zA-Z][a-zA-Z0-9+.-]*:') { continue }
                 $resolved = [IO.Path]::GetFullPath((Join-Path $file.DirectoryName $target))
                 if (-not $pluginFiles.Contains($resolved)) {
@@ -125,6 +142,23 @@ try {
         $errors.Add("version.json: '$line' is not an Uno.Sdk major.minor published on NuGet (the plugin version tracks the Uno.Sdk it is built for)")
     }
 
+    # --- The README's skill table lists every skill once, with the number of files in its references/ folder: "8", or
+    # "14 topics + 4 shell templates" (the parts add up). A hand-kept count drifts as soon as a reference is added.
+    $tableSkills = [System.Collections.Generic.List[string]]::new()
+    foreach ($row in Select-String -Path "$plugin/README.md" -Pattern '^\| `(uno-[a-z-]+)` \|.*\| ([^|]+) \|$') {
+        $name = $row.Matches[0].Groups[1].Value
+        $cell = $row.Matches[0].Groups[2].Value.Trim()
+        $tableSkills.Add($name)
+        if (-not (Test-Path "$plugin/skills/$name" -PathType Container)) { $errors.Add("$plugin/README.md: the skill table lists '$name', which is not a skill"); continue }
+        $actual = @(Get-ChildItem "$plugin/skills/$name/references" -File -ErrorAction SilentlyContinue).Count
+        $claimed = $cell -eq '—' ? 0 : (([regex]::Matches($cell, '\d+') | ForEach-Object { [int]$_.Value }) | Measure-Object -Sum).Sum
+        if ($claimed -ne $actual) { $errors.Add("$plugin/README.md: the skill table says '$cell' references for '$name'; references/ holds $actual") }
+    }
+    foreach ($name in (Get-ChildItem "$plugin/skills" -Directory).Name) {
+        $rows = @($tableSkills | Where-Object { $_ -eq $name }).Count
+        if ($rows -ne 1) { $errors.Add("$plugin/README.md: the skill table has $rows rows for '$name', expected 1") }
+    }
+
     $hubs = (Get-ChildItem "$plugin/skills" -Directory).Name
     foreach ($dir in Get-ChildItem "$plugin/skills" -Directory) {
         $skill = "$plugin/skills/$($dir.Name)/SKILL.md"
@@ -154,6 +188,15 @@ try {
         }
         foreach ($name in $onDisk) {
             if (-not $routed.Contains($name)) { $errors.Add("${skill}: does not route to 'references/$name'") }
+        }
+    }
+
+    # --- A reference over 100 lines lists its sections near the top (a `](#` link in its first 30 lines), after the
+    # sentence that answers, so an agent can see what the file holds and go to the part it needs.
+    foreach ($f in Get-ChildItem "$plugin/skills" -Recurse -File -Filter *.md | Where-Object { $_.Directory.Name -eq 'references' }) {
+        $lineCount = @(Get-Content $f.FullName).Count
+        if ($lineCount -gt 100 -and -not ((Get-Content $f.FullName -TotalCount 30) -match '\]\(#')) {
+            $errors.Add("$([IO.Path]::GetRelativePath($root, $f.FullName) -replace '\\', '/'): $lineCount lines and no table of contents in its first 30 lines (add a **Contents:** line of links to its ## sections)")
         }
     }
 

@@ -1,0 +1,34 @@
+{
+  "suite": "routing",
+  "inputsHash": "4115a9b432bb5a3a6affd973b6213fbfc6bc8f54d7a27e51c434fcf3d26ee10f",
+  "ranAt": "2026-11-03T17:00:06.427Z",
+  "claudeVersion": "2.1.317",
+  "pluginVersion": "1.1.0",
+  "model": "claude-sonnet-5-5",
+  "judgeModel": "claude-sonnet-5-5",
+  "ablation": "none",
+  "costUsd": 0.5,
+  "reportUrl": null,
+  "cases": [
+    {
+      "dir": "evals/routing/aspnet-jwt-bearer",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/routing/aspnet-question",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/routing/console-kiota-client",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/routing/maui-question",
+      "runs": 3,
+      "score": 1.0
+    }
+  ]
+}

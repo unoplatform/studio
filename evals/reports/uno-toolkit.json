@@ -1,0 +1,39 @@
+{
+  "suite": "uno-toolkit",
+  "inputsHash": "bd3a6df74b4d9863e47c0ddb7d604378160ee1a93551de1bf91de4cf17efffd3",
+  "ranAt": "2026-11-03T17:12:23.47Z",
+  "claudeVersion": "2.1.317",
+  "pluginVersion": "1.1.0",
+  "model": "claude-sonnet-5-5",
+  "judgeModel": "claude-sonnet-5-5",
+  "ablation": "none",
+  "costUsd": 1.9,
+  "reportUrl": null,
+  "cases": [
+    {
+      "dir": "evals/uno-toolkit/detail-page-app-bar",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/uno-toolkit/itemsrepeater-category-selection",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/uno-toolkit/order-row-tap",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/uno-toolkit/recipe-card-list",
+      "runs": 3,
+      "score": 1.0
+    },
+    {
+      "dir": "evals/uno-toolkit/status-bar-icons",
+      "runs": 3,
+      "score": 1.0
+    }
+  ]
+}

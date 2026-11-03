@@ -72,9 +72,9 @@ foreach ($name in $Suite) {
         ranAt         = $result.startedAt
         claudeVersion = $result.claudeVersion
         pluginVersion = @($result.suite.plugins)[0].version
-        # The values passed to --model and --judge-model: the documented --json result records neither.
-        model         = $EvalModel
-        judgeModel    = $EvalJudgeModel
+        # What the run used, as its result records them, so the gate checks the run and not this script's constants.
+        model         = $result.suite.modelOverride
+        judgeModel    = $result.suite.judgeModel
         ablation      = $result.suite.ablation
         costUsd       = [math]::Round($result.costUsd, 2)
         reportUrl     = $url

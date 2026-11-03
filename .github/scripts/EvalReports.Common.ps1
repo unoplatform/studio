@@ -111,7 +111,8 @@ function Get-EvalCaseRuns([string] $caseDir) {
 # that failed in at least one run, as "<runs failed>/<runs>", so a reviewer sees why a case lost points.
 function ConvertTo-EvalReportCase($case) {
     $runs = @($case.arms.with)
-    $entry = [ordered]@{ dir = $case.dir; runs = $runs.Count; score = [math]::Round($case.aggregates.score, 3) }
+    # The result spells dir with the OS's separator; the gate compares it with Get-EvalCases' forward slashes.
+    $entry = [ordered]@{ dir = $case.dir -replace '\\', '/'; runs = $runs.Count; score = [math]::Round($case.aggregates.score, 3) }
     $failed = [ordered]@{}
     $runs.graders | Where-Object { $_.scored -and -not $_.passed } | Group-Object name | Sort-Object Name |
         ForEach-Object { $failed[$_.Name] = "$($_.Count)/$($runs.Count)" }

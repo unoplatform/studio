@@ -1,13 +1,13 @@
 {
   "suite": "uno-build-app",
-  "inputsHash": "ed4e057e70bc8a2760ea64ca57e3742d116b5d8154ab78fad35c53f241d38c42",
-  "ranAt": "2026-11-03T17:02:01.514Z",
+  "inputsHash": "fcf4af1d8c940577025df25cf55c6bf7982487ac3fb169aa05981adfbe577956",
+  "ranAt": "2026-11-03T17:55:27.907Z",
   "claudeVersion": "2.1.317",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 1.19,
+  "costUsd": 1.1,
   "reportUrl": null,
   "cases": [
     {

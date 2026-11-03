@@ -17,6 +17,18 @@ The tables below are a fast lookup; `external/uno.themes/doc/simple-controls-sty
 | `SimpleIconButtonDangerPrimaryStyle` | `Button` | Destructive filled icon button |
 | `SimpleIconButtonDangerSubtleStyle` | `Button` | Destructive subtle icon button |
 
+### Icon Button Emphasis (CRITICAL)
+
+In Simple, the semantic `IconButtonStyle` is the **filled primary** icon button: a `PrimaryBrush` circle with an `OnPrimaryBrush` glyph (Material's is transparent). Pick icon buttons by emphasis, as you would text buttons:
+
+| Emphasis | Style Key | Looks Like | Use For |
+|---|---|---|---|
+| High | `IconButtonStyle` | Filled `PrimaryBrush` circle | The page's one primary icon-only action (send, confirm) |
+| Medium | `SimpleIconButtonNeutralStyle` | Tonal `SurfaceVariantBrush` circle | Secondary icon actions that need a visible container |
+| Low | `SimpleIconButtonSubtleStyle` | Transparent, `PrimaryBrush` glyph | Toolbar / header / utility icons: notifications, settings, search, sort, edit, close, back, overflow |
+
+Most icon buttons are Low emphasis. Never set `Foreground` on the icon inside (`FontIcon`, `SymbolIcon`, `PathIcon`): the style pairs it with the fill.
+
 ### Input Variants
 
 | Style Key | Control | Use For |

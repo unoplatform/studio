@@ -378,7 +378,7 @@ Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in 
 | Primary action | `FilledButtonStyle` |
 | Secondary action | `FilledTonalButtonStyle` or `OutlinedButtonStyle` |
 | Tertiary / low emphasis | `TextButtonStyle` |
-| Icon-only action | `IconButtonStyle` |
+| Icon-only action | `IconButtonStyle` (transparent in Material, filled primary in Simple: see `references/simple-styles.md`) |
 
 ### XAML Best Practices
 

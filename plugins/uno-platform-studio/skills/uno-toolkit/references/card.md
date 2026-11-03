@@ -90,6 +90,10 @@ When `CardContentControl` is used **inside** an `ItemsRepeater`, `ListView`, or 
 </DataTemplate>
 ```
 
+## `IsClickable` defaults to `True` — turn it off on cards nothing clicks
+
+`IsClickable` drives the PointerOver and Pressed states, so a clickable card highlights under the pointer like a button. Leave it on only when tapping the card selects the item or navigates. Set `IsClickable="False"` on presentational cards: summary tiles, stats, grouping containers, and cards whose actions are their own `Button`s.
+
 ## Sizing — `CardContentControl` does NOT stretch by default
 
 `CardContentControl` sizes to its content. It will **not** fill the available width or height of its parent on its own, even inside a `Grid` cell or `StackPanel` slot that has space to spare. If you need the card to take all available space (a hero card, a full-width row, a column-filling pane), set the alignment **explicitly** on the `CardContentControl` itself:

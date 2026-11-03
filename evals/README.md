@@ -60,35 +60,47 @@ claude plugin eval . --model claude-sonnet-5-5 --judge-model claude-sonnet-5-5 -
 
 `Invoke-Evals.ps1` runs the suites the way CI does (below), with your Claude Code login, and costs what CI would: at
 API prices $0.50 to $3.20 a suite, about $19 for all ten. With no `-Suite`, it runs the suites whose inputs differ from
-`origin/main` (`-Base` names another branch), uncommitted changes included. Each run's result and HTML report, with
-every judge's reasoning, stay in the git-ignored `evals/results/` folder.
+where your branch left `origin/main` (`-Base` names another branch), uncommitted changes included. It prints the same
+summary as CI, and each run's result and HTML report, with every judge's reasoning, stay in the git-ignored
+`evals/results/` folder.
 
 Running both arms gives each case's score with and without the plugin, and the difference between them. A skill whose
 cases show no lift on a new model is a candidate to trim.
 
 ## CI
 
-The "Evals" workflow (`.github/workflows/evals.yml`) runs the evals with the repository's API key, the
-`ANTHROPIC_EVALS_API_KEY` secret, so contributors need no Claude credentials and pay nothing.
+The "Evals" workflow (`.github/workflows/evals.yml`) runs the evals with the repository's API key, so contributors
+need no Claude credentials and pay nothing.
 
 - **On a pull request** to `main` or `release/stable/**`, it runs the suites whose inputs the pull request changes
-  (`Get-EvalInputPaths` in `Evals.Common.ps1`). A skill suite depends on its cases, its skill, the `SKILL.md` of
-  `uno-platform` and `uno-build-app`, and the plugin's hooks. Agents load `uno-platform` first and follow its routing
-  table, which sends feature work to `uno-build-app` before any domain skill, so an edit to either file runs every
-  skill suite: about $19 and 30 minutes. `routing` depends on its cases, the hooks, and the frontmatter of every
-  `SKILL.md`: an agent picks a skill from its name and description alone, and a routing case passes only when no skill
-  loads. A pull request that changes none of these runs nothing and passes. A new push cancels the run in progress.
-- **Weekly on `main`**, and by hand from the Actions tab, it runs every suite. A new model or Claude Code version can
-  answer differently with no change here, and no diff shows that.
+  (`Get-EvalInputPaths` in `Evals.Common.ps1`):
+  - A skill suite depends on its cases, its skill, and the `SKILL.md` of `uno-platform` and `uno-build-app`. Agents
+    load `uno-platform` first and follow its routing table, which sends feature work to `uno-build-app` before any
+    domain skill, so an edit to either file runs every skill suite: about $19 and 30 minutes.
+  - `routing` depends on its cases and the frontmatter of every `SKILL.md`: an agent picks a skill from its name and
+    description alone, and a routing case passes only when no skill loads.
+  - Every suite depends on `hooks/hooks.json`, the SessionStart hook, and how the evals run: `Evals.Common.ps1` (the
+    models and threshold), `Invoke-Evals.ps1`, and the workflow (the Claude Code version).
+
+  A pull request that changes none of these runs nothing and passes. A suite that already passed on the same pull
+  request with the same inputs isn't rerun, so a push that changes something else, or a rerun, costs only what changed
+  or failed. A new push cancels the run in progress.
+- **By hand**, from the Actions tab, a maintainer runs any suites (the `suites` input, `all` by default) on any branch.
 - It runs with the plugin only (`--ablation none`, so the "skill loaded" graders count), with Sonnet 5.5 as agent and
-  judge. It fails when a case scores below 0.8 (the mean over its runs of the fraction of graders passed), or when the
-  run stops early at its $30 cost ceiling.
+  judge. It fails when a case scores below 0.8 (the mean over its runs of the fraction of graders passed), when a case
+  doesn't run (each case's `tags` must include its suite, which `Test-EvalCases.ps1` checks), or when the run stops at
+  its cost ceiling of $5 a suite.
 - The job summary lists each case's score and the graders it failed, with how many runs each failed in
   (`info-plist 3/3`), so a reviewer sees why a case lost points. The `eval-results` artifact holds the HTML report and
-  the full result.
+  the full result for 14 days.
 - Pull requests from forks get no secrets, so the job says so and passes without running: the author can run
-  `Invoke-Evals.ps1` locally, and the weekly run covers the change once it merges. Drafts run when marked ready for
-  review.
+  `Invoke-Evals.ps1` locally, or a maintainer runs the workflow after merging. Drafts run when marked ready for review.
 
-A case that fails because a new model answers differently, not because of a change here, fails the weekly run and the
-next pull request that touches its suite: fix the skill or the case.
+**A case that fails by chance.** A case near 0.8 can fail on an unlucky run. "Re-run failed jobs" reruns only the
+suites that failed. A case that keeps failing because a new model answers differently needs its skill or its
+expectations changed.
+
+**The key** is the `ANTHROPIC_EVALS_API_KEY` secret. Anyone who can push a branch to this repository can run code with
+it, and the per-run ceiling is set in files a pull request can change, so the key comes from an Anthropic Console
+workspace of its own with a monthly spend limit: that limit is the real cap. When it's reached, every run errors and the
+summary says so. Setting the `EVALS_ENABLED` repository variable to `false` turns the evals off without a pull request.

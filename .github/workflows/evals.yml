@@ -1,17 +1,13 @@
 name: Evals
 
 # Runs the skill evals (evals/README.md) with the repository's API key, so contributors need no Claude credentials. A
-# pull request runs only the suites whose inputs it changes; the weekly run on main runs them all, to catch a change of
-# model or of Claude Code that no diff shows, and anything a fork pull request merged without a run.
+# pull request runs only the suites whose inputs it changes; a maintainer runs any suites by hand from the Actions tab.
 on:
   pull_request:
     branches:
       - main
       - release/stable/**
     types: [opened, synchronize, reopened, ready_for_review]
-  schedule:
-    # Sunday 05:00 UTC.
-    - cron: '0 5 * * 0'
   workflow_dispatch:
     inputs:
       suites:
@@ -38,19 +34,23 @@ jobs:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          persist-credentials: false
 
-      # Fork pull requests get no secrets, so they run nothing here; the weekly run covers them once merged. A draft runs
-      # when it's marked ready for review.
-      - name: Skip forks and drafts
+      # Fork pull requests get no secrets, so they run nothing here. A draft runs when it's marked ready for review.
+      # Setting the EVALS_ENABLED repository variable to false turns the evals off without a pull request.
+      - name: Skip when turned off, for forks, and for drafts
         id: skip
-        if: github.event_name == 'pull_request' && (github.event.pull_request.draft || github.event.pull_request.head.repo.full_name != github.repository)
+        if: vars.EVALS_ENABLED == 'false' || (github.event_name == 'pull_request' && (github.event.pull_request.draft || github.event.pull_request.head.repo.full_name != github.repository))
         env:
+          ENABLED: ${{ vars.EVALS_ENABLED }}
           DRAFT: ${{ github.event.pull_request.draft }}
         run: |
-          if [ "$DRAFT" = true ]; then
+          if [ "$ENABLED" = false ]; then
+            echo "::notice::Evals are turned off: the EVALS_ENABLED repository variable is false."
+          elif [ "$DRAFT" = true ]; then
             echo "::notice::Evals run when this draft is marked ready for review."
           else
-            echo "::notice::Evals don't run on pull requests from forks, which get no secrets. Run them locally with pwsh .github/scripts/Invoke-Evals.ps1 (evals/README.md); the weekly run on main covers this change once it merges."
+            echo "::notice::Evals don't run on pull requests from forks, which get no secrets. Run them locally with pwsh .github/scripts/Invoke-Evals.ps1 (evals/README.md), or a maintainer runs the Evals workflow by hand after merging."
           fi
 
       - name: Pick the suites
@@ -58,7 +58,7 @@ jobs:
         if: steps.skip.conclusion == 'skipped'
         shell: pwsh
         env:
-          SUITES: ${{ github.event_name == 'schedule' && 'all' || inputs.suites }}
+          SUITES: ${{ github.event_name == 'workflow_dispatch' && (inputs.suites || 'all') || '' }}
           BASE: ${{ github.event.pull_request.base.sha }}
         run: ./.github/scripts/Invoke-Evals.ps1 -Suite $env:SUITES -Base $env:BASE -List
 
@@ -67,10 +67,19 @@ jobs:
         with:
           node-version: 22
 
-      # A version with `claude plugin eval` (2.1.269 or later); the same one the suites were last run with locally.
+      # 2.1.269 or later has `claude plugin eval`. This file is an input of every suite, so a new version runs them all.
       - name: Install Claude Code
         if: steps.plan.outputs.suites
         run: npm install -g @anthropic-ai/claude-code@2.1.317
+
+      # Markers for the suites that passed on this pull request's earlier pushes and attempts, by their inputs, so a new
+      # push, or a rerun after a flaky failure, runs only the suites that changed or failed.
+      - uses: actions/cache/restore@v6
+        if: steps.plan.outputs.suites && github.event_name == 'pull_request'
+        with:
+          path: evals/results/passed
+          key: evals-passed-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: evals-passed-${{ github.event.pull_request.number }}-
 
       - name: Run the evals
         if: steps.plan.outputs.suites
@@ -78,16 +87,39 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_EVALS_API_KEY }}
           SUITES: ${{ steps.plan.outputs.suites }}
+          PASSED_DIR: ${{ github.event_name == 'pull_request' && 'evals/results/passed' || '' }}
         run: |
           if (-not $env:ANTHROPIC_API_KEY) {
-            Write-Host '::error::The ANTHROPIC_EVALS_API_KEY secret is not set. A repository admin adds it under Settings > Secrets and variables > Actions.'
+            Write-Host '::error::The ANTHROPIC_EVALS_API_KEY secret is not set. A repository admin adds it under Settings > Secrets and variables > Actions, from an Anthropic Console workspace of its own with a monthly spend limit (evals/README.md).'
             exit 1
           }
-          ./.github/scripts/Invoke-Evals.ps1 -Suite $env:SUITES -OutputDir evals/results/ci
+          ./.github/scripts/Invoke-Evals.ps1 -Suite $env:SUITES -PassedDir $env:PASSED_DIR -OutputDir evals/results/ci
+
+      - uses: actions/cache/save@v6
+        if: always() && steps.plan.outputs.suites && github.event_name == 'pull_request'
+        with:
+          path: evals/results/passed
+          key: evals-passed-${{ github.event.pull_request.number }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # The repository is public, and so are its artifacts, which log masking doesn't cover. The agent's replies and the
+      # judges' evidence are in the results, so drop them if the key turns up there.
+      - name: Check the results for the key
+        if: always() && steps.plan.outputs.suites
+        shell: pwsh
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_EVALS_API_KEY }}
+        run: |
+          $files = @(Get-ChildItem evals/results/ci -Recurse -File -ErrorAction SilentlyContinue)
+          if ($env:ANTHROPIC_API_KEY -and $files -and @($files | Select-String -SimpleMatch -Pattern $env:ANTHROPIC_API_KEY -List).Count) {
+            Remove-Item -Recurse -Force evals/results/ci
+            Write-Host '::error::The API key appears in the eval results, so they are not uploaded. Rotate the key.'
+            exit 1
+          }
 
       - uses: actions/upload-artifact@v7
         if: always() && steps.plan.outputs.suites
         with:
-          name: eval-results
+          name: eval-results-${{ github.run_attempt }}
           path: evals/results/ci/
+          retention-days: 14
           if-no-files-found: ignore

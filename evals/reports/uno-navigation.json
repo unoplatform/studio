@@ -1,13 +1,13 @@
 {
   "suite": "uno-navigation",
-  "inputsHash": "9b70fbb71a473fb1140c1d83a8dd269f156647d63af194efb7a13997ce358fa3",
-  "ranAt": "2026-11-02T16:05:00.774Z",
-  "claudeVersion": "2.1.316",
+  "inputsHash": "c04d88aad76a4b124bb6f0162a48190263b234c3b3d8aa17e0465cfd26f5bd73",
+  "ranAt": "2026-11-03T17:05:54.169Z",
+  "claudeVersion": "2.1.317",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 2.22,
+  "costUsd": 2.1,
   "reportUrl": null,
   "cases": [
     {

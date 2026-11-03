@@ -1,22 +1,19 @@
 {
   "suite": "uno-testing",
-  "inputsHash": "f1c5302c7ddbb610842b67f50b776da2e44f6607bb72e7b9f29c0081c41dbcda",
-  "ranAt": "2026-11-02T16:09:54.511Z",
-  "claudeVersion": "2.1.316",
+  "inputsHash": "61b659f3fd299fd6094fb7f08097e36326ac2e77fbabbcb5fd11e084b082c64f",
+  "ranAt": "2026-11-03T17:08:25.689Z",
+  "claudeVersion": "2.1.317",
   "pluginVersion": "1.1.0",
   "model": "claude-sonnet-5-5",
   "judgeModel": "claude-sonnet-5-5",
   "ablation": "none",
-  "costUsd": 3.52,
+  "costUsd": 3.21,
   "reportUrl": null,
   "cases": [
     {
       "dir": "evals/uno-testing/feed-list-loaded",
       "runs": 3,
-      "score": 0.963,
-      "failed": {
-        "rubric-not-error-template": "1/3"
-      }
+      "score": 1.0
     },
     {
       "dir": "evals/uno-testing/fill-signup-form",

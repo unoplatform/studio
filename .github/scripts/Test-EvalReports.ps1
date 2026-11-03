@@ -6,8 +6,9 @@
 
 .DESCRIPTION
   Makes no model calls and needs no secrets, so it runs on every PR, forks included. A report goes stale whenever a
-  file its suite depends on changes (see Get-EvalInputPaths); the fix is to rerun Update-EvalReport.ps1 and commit
-  the new report. Every report is checked on every build, so one left stale on main fails later PRs until refreshed.
+  file its suite depends on changes (see Get-EvalInputPaths) or the gate's models change (Get-EvalReportStaleReason);
+  the fix is to rerun Update-EvalReport.ps1 and commit the new report. Every report is checked on every build, so one
+  left stale on main fails later PRs until refreshed.
 #>
 
 $ErrorActionPreference = 'Stop'
@@ -15,21 +16,14 @@ $ErrorActionPreference = 'Stop'
 
 $errors = [System.Collections.Generic.List[string]]::new()
 $suites = @(Get-EvalSuites)
+$toRerun = [System.Collections.Generic.List[string]]::new()
 
 foreach ($suite in $suites) {
     $file = "$EvalReportDir/$suite.json"
     $rerun = "rerun it with: pwsh .github/scripts/Update-EvalReport.ps1 -Suite $suite, and commit $file"
-    $path = Join-Path $EvalRoot $file
-    if (-not (Test-Path $path)) { $errors.Add("$file is missing; $rerun"); continue }
-    $report = Get-Content $path -Raw | ConvertFrom-Json
-
-    if ($report.inputsHash -ne (Get-EvalInputsHash $suite)) {
-        $errors.Add("$file is stale: the suite's cases, its skill (for routing, a SKILL.md frontmatter) or the plugin hooks changed after it ran; $rerun")
-        continue
-    }
-    if ($report.ablation -ne $EvalAblation) {
-        $errors.Add("$file ran with --ablation $($report.ablation), not $EvalAblation; $rerun")
-    }
+    $reason = Get-EvalReportStaleReason $suite
+    if ($reason) { $errors.Add("$file $reason; $rerun"); $toRerun.Add($suite); continue }
+    $report = Get-Content (Join-Path $EvalRoot $file) -Raw | ConvertFrom-Json
 
     $cases = @(Get-EvalCases $suite)
     $reported = @($report.cases | ForEach-Object dir)
@@ -53,5 +47,13 @@ foreach ($report in Get-ChildItem (Join-Path $EvalRoot $EvalReportDir) -Filter *
 
 $prefix = $env:GITHUB_ACTIONS ? '::error::' : 'ERROR: '
 $errors | ForEach-Object { Write-Host "$prefix$_" }
+if ($toRerun.Count) {
+    # One command for all of them, and what they cost the last time they ran (a missing report has no figure).
+    $lastCost = ($toRerun | ForEach-Object { Join-Path $EvalRoot "$EvalReportDir/$_.json" } | Where-Object { Test-Path $_ } |
+        ForEach-Object { (Get-Content $_ -Raw | ConvertFrom-Json).costUsd } | Measure-Object -Sum).Sum
+    Write-Host ("`n$($toRerun.Count) of $($suites.Count) reports to rerun. ``pwsh .github/scripts/Update-EvalReport.ps1``, " +
+        "with no -Suite, reruns all of them with your Claude credentials (their last runs cost `$$([math]::Round($lastCost, 2))). " +
+        'Commit evals/reports/ afterwards. See evals/README.md.')
+}
 if ($errors.Count) { exit 1 }
 Write-Host "Eval reports are up to date and passing ($($suites.Count) suites)."

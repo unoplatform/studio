@@ -12,6 +12,10 @@ $EvalThreshold = 0.8
 $EvalAblation = 'none'
 # A case's runs when its prompt.md sets none (claude plugin eval's default).
 $EvalDefaultRuns = 3
+# The agent and the judge every report must come from. Changing either makes every report fail the gate until rerun:
+# the hash covers files, not models.
+$EvalModel = 'claude-sonnet-5-5'
+$EvalJudgeModel = 'claude-sonnet-5-5'
 
 # A suite is a folder under evals/ holding cases (<suite>/<case>/prompt.md), tagged with the folder name.
 function Get-EvalSuites {
@@ -26,12 +30,18 @@ function Get-EvalCases([string] $suite) {
         ForEach-Object { "evals/$suite/$($_.Name)" } | Sort-Object
 }
 
-# What a suite's result depends on. A skill suite: its cases and its skill. routing: its cases and the frontmatter of
-# every SKILL.md (see Get-EvalFrontmatterPaths). Every suite: the plugin's hooks, which run in every session. Not
-# plugin.json: releases bump its version without changing behavior.
+# The SKILL.md files every skill suite depends on besides its own skill: uno-platform, which agents load first and
+# whose routing table picks the other skills, and uno-build-app, which that table sends feature work to before any
+# domain skill. Not their references, which only the workflow's own steps read.
+$EvalSharedSkillFiles = @("$EvalPlugin/skills/uno-platform/SKILL.md", "$EvalPlugin/skills/uno-build-app/SKILL.md")
+
+# What a suite's result depends on. A skill suite: its cases, its skill and $EvalSharedSkillFiles. routing: its cases
+# and the frontmatter of every SKILL.md (see Get-EvalFrontmatterPaths); a skill's body cannot change a case that passes
+# only when no skill loads. Every suite: the plugin's hooks, which run in every session. Not plugin.json: releases bump
+# its version without changing behavior.
 function Get-EvalInputPaths([string] $suite) {
     $paths = @("evals/$suite", "$EvalPlugin/hooks")
-    if ($suite -ne 'routing') { $paths += "$EvalPlugin/skills/$suite" }
+    if ($suite -ne 'routing') { $paths += @("$EvalPlugin/skills/$suite") + $EvalSharedSkillFiles }
     $paths
 }
 
@@ -48,6 +58,10 @@ function Get-EvalFrontmatterPaths([string] $suite) {
 function Get-EvalInputsHash([string] $suite) {
     Push-Location $EvalRoot
     try {
+        # git ls-files matches nothing for a path that is gone, so a renamed skill would silently leave the hash.
+        foreach ($path in Get-EvalInputPaths $suite) {
+            if (-not (Test-Path -LiteralPath $path)) { throw "$path, an input of eval suite $suite, does not exist" }
+        }
         [string[]] $files = @(git ls-files --cached --others --exclude-standard --deduplicate -- (Get-EvalInputPaths $suite) |
             Where-Object { Test-Path -LiteralPath $_ -PathType Leaf })
         if ($LASTEXITCODE) { throw "git ls-files failed for suite $suite" }
@@ -71,6 +85,23 @@ function Get-EvalInputsHash([string] $suite) {
     }
 }
 
+# Why a suite's report no longer describes the current files and settings, or $null when it does. Update-EvalReport.ps1
+# reruns the suites this gives a reason for, and Test-EvalReports.ps1 fails on the same reasons. A low score is not
+# one: rerunning unchanged files only rolls the dice again.
+function Get-EvalReportStaleReason([string] $suite) {
+    $path = Join-Path $EvalRoot "$EvalReportDir/$suite.json"
+    if (-not (Test-Path $path)) { return 'is missing' }
+    $report = Get-Content $path -Raw | ConvertFrom-Json
+    if ($report.inputsHash -ne (Get-EvalInputsHash $suite)) {
+        return 'is stale: a file the suite depends on changed after it ran (Get-EvalInputPaths in EvalReports.Common.ps1 lists them)'
+    }
+    if ($report.ablation -ne $EvalAblation) { return "ran with --ablation $($report.ablation), not $EvalAblation" }
+    if ($report.model -ne $EvalModel -or $report.judgeModel -ne $EvalJudgeModel) {
+        return "ran with agent $($report.model) and judge $($report.judgeModel), not $EvalModel and $EvalJudgeModel"
+    }
+    $null
+}
+
 function Get-EvalCaseRuns([string] $caseDir) {
     $front = Get-Content (Join-Path $EvalRoot "$caseDir/prompt.md") -Raw
     if ($front -match '(?m)^runs:\s*(\d+)\s*$') { [int]$Matches[1] } else { $EvalDefaultRuns }
@@ -80,7 +111,8 @@ function Get-EvalCaseRuns([string] $caseDir) {
 # that failed in at least one run, as "<runs failed>/<runs>", so a reviewer sees why a case lost points.
 function ConvertTo-EvalReportCase($case) {
     $runs = @($case.arms.with)
-    $entry = [ordered]@{ dir = $case.dir; runs = $runs.Count; score = [math]::Round($case.aggregates.score, 3) }
+    # The result spells dir with the OS's separator; the gate compares it with Get-EvalCases' forward slashes.
+    $entry = [ordered]@{ dir = $case.dir -replace '\\', '/'; runs = $runs.Count; score = [math]::Round($case.aggregates.score, 3) }
     $failed = [ordered]@{}
     $runs.graders | Where-Object { $_.scored -and -not $_.passed } | Group-Object name | Sort-Object Name |
         ForEach-Object { $failed[$_.Name] = "$($_.Count)/$($runs.Count)" }

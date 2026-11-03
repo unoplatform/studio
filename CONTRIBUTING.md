@@ -57,9 +57,8 @@ CI runs these on every pull request to `main` and `release/stable/**`. Run them 
 | `claude plugin validate . --strict` and `claude plugin validate plugins/uno-platform-studio --strict` | The marketplaces, manifests and skill frontmatter, as Claude Code parses them. | Claude Code |
 | `agentskills validate plugins/uno-platform-studio/skills/<skill>` | Each skill against the [Agent Skills spec](https://agentskills.io/specification). | `pipx install skills-ref` |
 | `pwsh .github/scripts/Test-EvalCases.ps1` | The eval cases under `evals/` are well formed: one prompt per case, no prompt repeated, one criterion per LLM grader. | — |
-| `pwsh .github/scripts/Test-EvalReports.ps1` | Each eval suite's committed report in `evals/reports/` ran against the current skills and cases, with the gate's models, and passes. | — |
 
-The eval reports go stale whenever their inputs change: a skill or an eval case changes its own suite's report, and `uno-platform/SKILL.md` or `uno-build-app/SKILL.md` changes every suite's report. CI holds no model credentials, so it can't refresh them. Run `pwsh .github/scripts/Update-EvalReport.ps1`, which uses your Claude Code credentials and costs money (a full pass is about $20), then commit `evals/reports/` with the change. If you can't run it, say so in the pull request. [`evals/README.md`](evals/README.md) explains the cases, the graders and the reports.
+The "Evals" workflow runs the eval suites a pull request affects, with the repository's API key: a change to a skill or its eval cases runs that skill's suite, and a change to `uno-platform/SKILL.md`, `uno-build-app/SKILL.md` or the hooks runs every suite. Its job summary lists each case's score and the graders that failed. To check a change before you push, run `pwsh .github/scripts/Invoke-Evals.ps1`, which runs the same suites with your Claude Code login (at API prices, $0.50 to $3.20 a suite). Pull requests from forks don't run the evals in CI. [`evals/README.md`](evals/README.md) explains the cases, the graders and the workflow.
 
 ## Commits and pull requests
 

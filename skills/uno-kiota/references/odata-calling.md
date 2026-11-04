@@ -1,6 +1,8 @@
 # Calling an OData Service
 
-The client comes from `references/odata.md`. Register it like any Kiota client (`references/register.md`), with the service root as the Url: `<org>/api/data/v9.2` for Dataverse. The access token comes from the authentication handler (the `uno-authentication` skill, `references/http.md`). The service enforces these rules at runtime; the document can't express them.
+The client comes from `references/odata.md`. Register it like any Kiota client (`references/register.md`), with the service root as the Url: `<org>/api/data/v9.2` for Dataverse. The service enforces the rules below at runtime; the document can't express them. Creating, updating and deleting are in `references/odata-writing.md`, and Dataverse's own rules in `references/dataverse.md`.
+
+The access token comes from the authentication handler: the `uno-authentication` skill (`references/http.md`) for a user's sign-in, or your own `DelegatingHandler` registered in `UseHttp` for a service identity such as an app registration with a client secret.
 
 ## Pages follow the next link
 
@@ -19,9 +21,21 @@ var more = await client.Accounts.WithUrl(next!)
     .GetAsync(r => r.Headers.Add("Prefer", "odata.maxpagesize=25"), ct);
 ```
 
+- **A list the user scrolls is a paginated feed.** Read the `uno-mvux` skill's `references/pagination.md` before writing it, and feed it with cursor pagination, the next link as the cursor: `ListFeed<T>.PaginatedByCursorAsync`. Don't loop the next link into one list in memory and search it on the client.
 - **Send `Prefer: odata.maxpagesize` on every request, including the one that follows the next link.** The link doesn't carry the page size. Without the header, Dataverse returned all 38 remaining rows as one page.
 - **Follow the link with `WithUrl`, and pass only the header.** The link already carries the query options and the service's paging token.
-- **Don't page with `$skip`** unless your probe showed the service supports it. Dataverse rejects it with a 400. To feed an MVUX list, use cursor pagination with the next link as the cursor: `ListFeed<T>.PaginatedByCursorAsync` in the `uno-mvux` skill (`references/pagination.md`).
+- **When the probe found the page size ignored** (`references/odata.md`), there is never a next link: page with `$top` and `$skip` instead, in a stable order. A page shorter than `$top` is the last.
+
+  ```csharp
+  var page = await client.People.GetAsync(r =>
+  {
+      r.QueryParameters.Top = 25;
+      r.QueryParameters.Skip = pageIndex * 25;
+      r.QueryParameters.Orderby = ["UserName"]; // the key, so pages don't overlap
+  }, ct);
+  ```
+
+- **Don't page with `$skip`** unless your probe showed it moves. Dataverse rejects it with a 400.
 
 ## The count is in the collection response
 
@@ -39,18 +53,15 @@ r.QueryParameters.Orderby = ["name desc"];
 - **Use the schema's property names**: lower case for Dataverse (`name`, `emailaddress1`), Pascal case for TripPin (`FirstName`).
 - **Ask for the columns you show with `Select`.** Dataverse's `account` has 152 columns, and `contact` has 225.
 
-## Get, create, update and delete by key
+## Get by key
 
 ```csharp
 var account = await client.AccountsWithAccountid(id).GetAsync(cancellationToken: ct);
-var created = await client.Accounts.PostAsync(new Account { Name = name },
-    r => r.Headers.Add("Prefer", "return=representation"), ct);
-await client.AccountsWithAccountid(id).PatchAsync(new Account { Name = name }, cancellationToken: ct);
-await client.AccountsWithAccountid(id).DeleteAsync(cancellationToken: ct);
+var person = await client.PeopleWithUserName(userName.Replace("'", "''")).GetAsync(cancellationToken: ct);
 ```
 
-- **A create returns `null` without `Prefer: return=representation`.** The service answers 204 with no body. Send the header whenever you need the new entity or its key.
-- **The key's type comes from the schema.** It's a `Guid` for Dataverse (`AccountsWithAccountid(Guid)`) and a `string` for TripPin (`PeopleWithUserName("russellwhyte")`).
+- **The key's type comes from the schema.** It's a `Guid` for Dataverse (`AccountsWithAccountid(Guid)`) and a `string` for TripPin (`PeopleWithUserName(string)`).
+- **Double a quote in a text key.** The script puts a text key in quotes in the path, `People('{UserName}')`; Kiota percent-encodes the value but doesn't double a quote in it, so `o'brien` goes as `o''brien`.
 
 ## Errors carry the service's message
 

@@ -65,9 +65,10 @@ if (missing.Count > 0)
 }
 var keptEntities = keptSets.Values.ToHashSet();
 
-// Navigation properties that leave the kept entity types go first, so they don't pull their targets in.
-foreach (var name in keptEntities)
-    types[name].Elements(edm + "NavigationProperty").Where(n => !keptEntities.Contains(Resolve(n.Attribute("Type")!.Value)!)).Remove();
+// Navigation properties that leave the kept entity types go first, so they don't pull their targets in. On every type, not only
+// the kept ones: a kept type's base type has its own (Dataverse's activitypointer has 46), and they would pull most of the schema in.
+foreach (var e in types.Values)
+    e.Elements(edm + "NavigationProperty").Where(n => !keptEntities.Contains(Resolve(n.Attribute("Type")!.Value)!)).Remove();
 
 // Everything the kept entity types reach. ponytail: no derived types or bound operations; add them when a scenario needs type casts or actions.
 var reached = new HashSet<string>();
@@ -150,9 +151,36 @@ try
 }
 finally { File.Delete(settings); }
 
-return scope.RootElement.TryGetProperty("client", out var client)
-    ? Run("kiota", "update", "-o", Path.GetFullPath(client.GetString()!))
-    : 0;
+// A text key is a string literal in the path: People('russellwhyte'). The converter writes People({UserName}), which the service
+// answers with a 500, so the keyed paths of each kept set get quotes around its Edm.String keys. A Guid or number key stays bare.
+string[] TextKeys(string typeName)
+{
+    for (var t = types.GetValueOrDefault(typeName); t is not null; t = types.GetValueOrDefault(Resolve(t.Attribute("BaseType")?.Value) ?? ""))
+        if (t.Element(edm + "Key") is { } key)
+            return [.. key.Elements(edm + "PropertyRef").Select(r => r.Attribute("Name")!.Value)
+                .Where(k => t.Elements(edm + "Property").FirstOrDefault(p => p.Attribute("Name")!.Value == k)?.Attribute("Type")?.Value == "Edm.String")];
+    return [];
+}
+var yamlPath = Path.Combine(dir, "openapi.yaml");
+var yaml = File.ReadAllText(yamlPath);
+foreach (var (set, type) in keptSets)
+    foreach (var k in TextKeys(type))
+    {
+        var quoted = System.Text.RegularExpressions.Regex.Replace(yaml, $@"(?m)^(  '/{System.Text.RegularExpressions.Regex.Escape(set)}\([^']*?)(?<=[(=])\{{{k}\}}(?=[,)])",
+            m => $"{m.Groups[1].Value}''{{{k}}}''"); // a quote is doubled inside a YAML single-quoted key
+        Console.WriteLine(quoted == yaml ? $"warning: no keyed path of {set} to quote {k} in; check openapi.yaml" : $"text key quoted: {set}('{{{k}}}')");
+        yaml = quoted;
+    }
+File.WriteAllText(yamlPath, yaml);
+
+if (!scope.RootElement.TryGetProperty("client", out var client)) return 0;
+var clientDir = Path.GetFullPath(client.GetString()!);
+if (!File.Exists(Path.Combine(clientDir, "kiota-lock.json")))
+{
+    Console.WriteLine($"no client in {clientDir} yet: generate it once (references/odata.md, step 7); later runs update it");
+    return 0;
+}
+return Run("kiota", "update", "-o", clientDir);
 
 static int Run(params string[] arguments)
 {

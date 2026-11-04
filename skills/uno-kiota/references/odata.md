@@ -31,7 +31,7 @@ It needs the .NET 10 SDK. Run every step from the solution folder.
      -d odata/Dataverse/openapi.yaml -o MyApp/Content/Client/DataverseClient
    ```
 
-8. Add `"client": "MyApp/Content/Client/DataverseClient"` to `scope.json`, relative to the solution folder. To regenerate after the service changes, re-fetch `metadata.xml` and re-run step 6. The script rewrites both files, then runs `kiota update` on the client.
+8. Add `"client": "MyApp/Content/Client/DataverseClient"` to `scope.json`, relative to the solution folder. To regenerate after the service changes, re-fetch `metadata.xml` and re-run step 6. The script rewrites both files, then runs `kiota update` on the client. Until step 7 has made the client, it says so and skips the update.
 
 Check in `odata/` (except `metadata.xml`), the client with its `kiota-lock.json`, and `dotnet-tools.json`. After cloning, a teammate runs `dotnet tool restore` first. Never edit `scoped.xml`, `openapi.yaml` or the client: change `scope.json` and re-run.
 
@@ -41,15 +41,21 @@ Services rarely declare which query options they support, and the converter offe
 
 | Result | Meaning | Example |
 |---|---|---|
-| 4xx | Unsupported | Dataverse: `$skip` and `$search` return 400 |
+| 4xx or 5xx | Unsupported | Dataverse: `$skip` returns 400, `$search` 501 |
 | The same rows as without it | Ignored, which is worse: the feature looks like it works | TripPin: `$search=Russell` returns all 20 people |
 
 List both kinds in `unsupported` (`skip`, `top`, `search`, `count`, `filter`, `orderby`). The client then doesn't offer them, and the app gets the feature another way (`references/odata-calling.md`). Known so far: Dataverse `skip` and `search`, and TripPin `search`. Probe any other service.
 
+Probe paging too:
+
+- **Page size:** `$top=2` with `Prefer: odata.maxpagesize=1`. One row and an `@odata.nextLink` means the service pages. Two rows and no link means it's ignored (TripPin): the whole set comes back in one call.
+- **`$skip` really moves:** `$top=1&$skip=1&$orderby=<key>` must return the second row of `$top=2&$orderby=<key>`. A 200 with the first row again means it's ignored.
+
 ## What the script keeps
 
-- The named entity sets, the types they reach through properties and base types, and the navigation properties between kept sets. Everything else goes: other sets, actions, functions, and navigation properties to other types.
+- The named entity sets, the types they reach through properties and base types, and the navigation properties between kept sets. Everything else goes: other sets, actions, functions, and navigation properties to other types, on every type including base types. Dataverse's activities derive from `activitypointer`, whose 46 navigation properties would otherwise pull in 622 of its 1,427 types.
 - No empty base types. Kiota rejects Dataverse's `crmbaseentity` ("The type does not contain any information").
+- Text keys in quotes. The converter writes `/People({UserName})`, which TripPin answers with a 500; the script makes it `/People('{UserName}')` for every `Edm.String` key and prints each one it quoted. A Guid or number key stays bare.
 - `hidi` settings that type `@odata.nextLink` and `@odata.count`, and generate no navigation, operation or `/$count` paths. A `/$count` path answers `text/plain`, which `AddKiotaClient` can't parse.
 - It doesn't keep derived entity types or bound actions and functions. A derived type's extra properties land in `AdditionalData`.
 
@@ -59,4 +65,4 @@ List both kinds in `unsupported` (`skip`, `top`, `search`, `count`, `filter`, `o
 - Kiota names a keyed path's builder `<Set>With<Key>`: `client.AccountsWithAccountid(id)`, not an indexer.
 - The derived document's server is `http://localhost`. Always pass the service URL (`references/register.md`). For Dataverse, that's `<org>/api/data/v9.2`.
 
-Verified with `hidi` 3.10.2, Kiota 1.38.0 and .NET SDK 10.0.400, against Dataverse Web API v9.2 and TripPin.
+Verified with `hidi` 3.10.2, Kiota 1.38.0 and .NET SDK 10.0.400, against Dataverse Web API v9.2 and TripPin, and in two Dataverse apps built on Uno.Sdk 6.8.0-dev.51 and 7.0.0-dev.132.

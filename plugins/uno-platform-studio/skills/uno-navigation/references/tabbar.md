@@ -29,6 +29,7 @@ For complete, compilable shell XAML with parameterized placeholders, see:
 - `uen:Region.Attached="True"` MUST also be on the TabBar itself
 - Route names in `RouteMap` MUST match the `uen:Region.Name` values in `SHELL_PAGE_NAME.xaml`
 - Tab page routes are nested under the `"Main"` route so only the content area updates, not the entire page
+- A details page opened from a tab is a sibling of that tab under `"Main"`, with `DependsOn: "Tab"`, never nested under it: see `references/section-details.md`
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
 
 ## Docs, for what this page does not cover

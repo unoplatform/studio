@@ -39,7 +39,6 @@ function Find($id) { $win.FindFirst($Scope::Descendants, $Cond::new($A::Automati
 - Find by `AutomationIdProperty`, or by `NameProperty` for controls with no ID.
 - Act through patterns: `Invoke` (buttons), `Value.SetValue` (text boxes; no focus or typing needed), `Toggle` (`CheckBox`, and `ToggleSwitch`, which appears as a `Button`). Read `ToggleState` back from the same pattern.
 - A find returns `$null` until the UI has updated: poll it, like the App MCP wait loop, before asserting.
-- `Stop-Process` the app when done.
 
 ## Android: uiautomator
 
@@ -58,6 +57,15 @@ adb shell uiautomator dump /sdcard/ui.xml && adb exec-out cat /sdcard/ui.xml > u
 ## Iterating
 
 Scripting the checks pays off, but a full end-to-end pass on Android takes minutes. After a fix, rebuild only the target that changed and re-run only the checks for the flow it touched; run the whole pass once at the end.
+
+## Scripts that leave the machine clean
+
+Each check script must run alone, in any order:
+
+- **Start the app in an explicit state.** Set or clear every environment variable it reads and reset its data and settings files first.
+- **Close the app in a `finally`** (`Stop-Process -Id $app.Id -Force`, `adb shell am force-stop <package>`); an open app hangs whatever waits for the script.
+- **Restore what it persisted** (language, theme, data mode) in that `finally`.
+- **The runner times out each script**, then kills it and the app.
 
 ## Screenshots
 

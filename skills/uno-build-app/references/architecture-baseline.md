@@ -16,7 +16,7 @@ Confirmed mutations are the baseline. Use optimistic interaction only when rollb
 
 Client development is the default scope. Integrate existing contracts; propose missing backend work separately; never invent production endpoints or quietly turn a networked requirement into a local-only feature.
 
-Development data implementations are fine for progress and tests when isolated and labelled. A fake login, simulated purchase, no-op action or seed-only dataset never satisfies a required real integration. Keep fixtures out of Release output.
+Development data implementations are fine for progress and tests when isolated and labelled. A sample-data mode the brief asks for is a second implementation of the same service interface: [sample-data.md](sample-data.md). A fake login, simulated purchase, no-op action or seed-only dataset never satisfies a required real integration. Keep fixtures out of Release output.
 
 For networked features apply timeouts and cancellation, useful error mapping, and retry that respects operation semantics; never blindly replay a possibly-completed non-idempotent action. Page where scale requires it. Separate transport from UI and domain types when their meanings differ, without mechanical duplicate types.
 

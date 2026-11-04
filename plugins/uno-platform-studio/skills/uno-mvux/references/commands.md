@@ -14,6 +14,17 @@ Commands, and the state updates they make, run on a **background thread**. Feeds
 - If a command needs to mutate a collection, the property on the Model must be `IListState<T>` (not `IListFeed<T>`); convert with `ListState.FromFeed(this, sourceFeed)` if needed.
 - **When mutating via `UpdateAsync`, the updater must be pure** — derive the new value solely from the `current` value, with no captured external state or side effects. See `references/state-basics.md` and `references/liststate.md` for details.
 
+## Commands in list item templates
+
+**Inside an item template, reach the page's model with `{utu:AncestorBinding AncestorType=Page, Path=DataContext.X}`.** There the `DataContext` is the item, and `{Binding X, ElementName=Root}` bound nothing on Uno.Sdk 7.0.0-dev.132 (the row buttons did nothing). Pass the row with `CommandParameter="{Binding}"`:
+
+```xml
+<Button Content="Complete" CommandParameter="{Binding}"
+        Command="{utu:AncestorBinding AncestorType=Page, Path=DataContext.CompleteActivity}" />
+```
+
+For a click on the whole row, put `utu:CommandExtensions.Command` on the `ListView` (with `IsItemClickEnabled="True"`); the clicked item is the parameter. A `Flyout` is not under the `Page`, so `AncestorType=Page` finds nothing there: on a `ListView` in a `FeedView` template inside a flyout, bind the model through the `FeedViewState`, `utu:CommandExtensions.Command="{Binding Parent.OpenHit}"`. Which binding fits which template is in the `uno-toolkit` skill's `references/ancestor-binding.md` (namespace `xmlns:utu="using:Uno.Toolkit.UI"`).
+
 ## Key Principles (Stable)
 
 - Any public method on a `*Model` partial record generates a command in the ViewModel
@@ -36,3 +47,4 @@ Search with `uno_platform_docs_search("MVUX commands …")` and fetch the sectio
 - `references/state-basics.md` — States that commands often update
 - `references/feed-basics.md` — Feeds whose values commands can consume
 - `references/selection.md` — Selection-aware commands
+- `references/validation.md` for a Save command that validates its draft (`Command.Create` with `.Validation`)

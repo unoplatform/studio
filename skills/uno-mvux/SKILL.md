@@ -1,6 +1,6 @@
 ---
 name: uno-mvux
-description: "MVUX state management for Uno Platform apps: feeds, states, FeedView, commands, Models. Covers IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, selection, pagination, entity messaging, and immutable partial record Models with generated ViewModels (Model-View-Update-eXtended). Use whenever an Uno Platform app that uses MVUX, or a new app with no pattern chosen yet, loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model layer. Also use when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records, or the user asks how MVUX compares with MVVM, or reports a bound command button that stays disabled or a list or value that does not update on screen. Not for apps built on MVVM (<UnoFeatures>Mvvm</UnoFeatures>, CommunityToolkit.Mvvm, ObservableObject ViewModels): keep their pattern. Read this skill before writing any MVUX Model, feed, state, or command code."
+description: "MVUX state management for Uno Platform apps: feeds, states, FeedView, commands, Models. Covers IFeed<T>, IState<T>, IListFeed<T>, IListState<T>, selection, pagination, entity messaging, validation (FluentValidation), and immutable partial record Models with generated ViewModels (Model-View-Update-eXtended). Use whenever an Uno Platform app that uses MVUX, or a new app with no pattern chosen yet, loads async data from a service or API, binds user input, shows loading/error/empty states, edits a collection, or needs a Model layer. Also use when the project has <UnoFeatures>MVUX</UnoFeatures> or *Model records, or the user asks how MVUX compares with MVVM, or reports a bound command button that stays disabled or a list or value that does not update on screen. Not for apps built on MVVM (<UnoFeatures>Mvvm</UnoFeatures>, CommunityToolkit.Mvvm, ObservableObject ViewModels): keep their pattern. Read this skill before writing any MVUX Model, feed, state, or command code."
 metadata:
   author: uno-platform
   category: mvux
@@ -26,19 +26,22 @@ Look at `<UnoFeatures>` in the app's project file before writing any presentatio
 
 ## Topic map
 
+**Any list backed by a server or an API (anything a user scrolls or searches over remote data) must be a paginated list feed, and `references/pagination.md` must be read before writing it.** `references/listfeed.md` alone leads to loading every row into memory and searching on the client.
+
 | Task | Read | Key APIs |
 |------|------|----------|
 | Explain MVUX, compare with MVVM, add MVUX to a project | `references/overview.md` | `<UnoFeatures>MVUX</UnoFeatures>`, `*Model` → `*ViewModel` |
 | Design entities and Models | `references/records.md` | `partial record`, `IKeyEquatable<T>`, `[Key]`, `with` |
 | Load a single async value from a service or API | `references/feed-basics.md` | `IFeed<T>`, `Feed.Async`, `Select`, `Where`, `Signal` |
-| Load a collection | `references/listfeed.md` | `IListFeed<T>`, `ListFeed.Async`, `IImmutableList<T>` |
+| Load a local or small collection (server data: pagination below) | `references/listfeed.md` | `IListFeed<T>`, `ListFeed.Async`, `IImmutableList<T>` |
 | Show a feed in XAML with loading, error, and empty UI | `references/feedview.md` | `mvux:FeedView`, `{Binding Data}`, `Refresh` |
 | Two-way bind user input, hold editable state | `references/state-basics.md` | `IState<T>`, `State.Value`, `UpdateAsync`, `ForEach` |
 | Add, remove, or edit items in a list | `references/liststate.md` | `IListState<T>`, `AddAsync`, `RemoveAllAsync`, `UpdateAllAsync`, `UpdateItemAsync` |
-| Bind a Button or other control to a Model method | `references/commands.md` | public methods → `IAsyncCommand`, `[ImplicitCommands]` |
+| Bind a Button or other control to a Model method, including from a list item template | `references/commands.md` | public methods → `IAsyncCommand`, `[ImplicitCommands]`, `utu:AncestorBinding` |
 | Track the selected item or items of a list | `references/selection.md` | `.Selection(state)`, `IState<T>`, `IState<IImmutableList<T>>` |
-| Infinite scroll or page-by-page loading | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PageRequest` |
+| Any list over server or API data: infinite scroll, next links, search over remote data | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PaginatedByCursorAsync`, `SelectPaginatedByCursorAsync`, `PageResult` |
 | Keep several pages in sync after create/update/delete | `references/messaging.md` | `IMessenger`, `EntityMessage<T>`, `.Observe(messenger, e => e.Id)` |
+| Validate a form or draft, show field errors, block an invalid Save | `references/validation.md` | `UseValidation`, `AbstractValidator<T>`, `State.Validate`, command `.Validation` |
 
 ## Critical rules
 
@@ -53,10 +56,14 @@ These come up in nearly every MVUX task. Each reference repeats the ones it need
 - **Bind the Model surface with `{Binding}`, not `x:Bind`.** The templates, the docs, and Chefs all use `{Binding}`. `x:Bind` needs a typed property on the page for the generated ViewModel, and record-typed states are exposed as a generated `Bindable<Name>ViewModel` class with a private setter (opt out with `[Value]`; simple-typed states are plain properties). On Uno.Sdk 7.0.0-dev.77 any TwoWay `x:Bind` to a generated ViewModel member fails at build (UXAML0001 `Unable to find member`, even for an `int` state), and a public page property typed as the generated ViewModel fails with CS0400.
 - **`FeedView` binds the feed, templates bind `Data`.** `Source="{Binding MyFeed}"` on the `FeedView`; inside its value template use `{Binding Data.Property}`. `FeedView` already exposes `Refresh`; do not create a refresh command. The value template can bind `{Binding Refresh}`, but `ErrorTemplate` and `ProgressTemplate` receive the exception and the progress flag as their DataContext, so a retry button there needs `Command="{Binding Refresh, ElementName=<feedViewName>}"`.
 - **Any public method on the Model becomes a command.** A parameter receives a snapshot of a feed when its name matches an `IFeed<T>`/`IState<T>` property case-insensitively and its type is exactly `T` (exactly `IImmutableList<T>` for a list feed); a name match with any other type silently becomes the `CommandParameter`. A method becomes a command only with 0 or 1 non-feed parameters and 0 or 1 `CancellationToken`. Opt out with `[ImplicitCommands(false)]`.
+- **Lists over server data are paginated.** Use a paginated list feed (`references/pagination.md`) and send search terms to the server; never load every row and filter on the client.
+- **Validate with MVUX validation, not hand-rolled error state.** `State.Validate` on the draft and `.Validation` on the Save command (`references/validation.md`); it shows no message and leaves Save enabled on its own, so add the errors and `IsValid` feeds that reference describes.
+- **Item templates reach the Model with `{utu:AncestorBinding AncestorType=Page, Path=DataContext.X}`**, not `ElementName` (`references/commands.md`).
 - **Service methods take a `CancellationToken` and return `ValueTask<T>`** (`ValueTask<IImmutableList<T>>` for lists). `Feed.Async`/`ListFeed.Async` take an `AsyncFunc<T>` (`ValueTask<T>(CancellationToken)`), so such a method group passes directly; a `Task<T>` method needs a lambda: `Feed.Async(async ct => await Service.GetAsync(ct))`.
 
 ## Related skills
 
 - `uno-navigation` for moving between pages and passing entities; MVUX Models are registered with `ViewMap`/`DataViewMap` there.
-- `uno-toolkit` (`references/itemsrepeater-extensions.md`) when a paginated or selectable list is rendered with `ItemsRepeater` instead of `ListView`.
+- `uno-toolkit` (`references/itemsrepeater-extensions.md`) when a paginated or selectable list is rendered with `ItemsRepeater` instead of `ListView`; `references/ancestor-binding.md` for commands inside item templates.
+- `uno-kiota` for the API client a paginated feed calls, and for field rules read from server metadata.
 - `uno-testing` to verify loading, error, and value states of a `FeedView` in a running app.

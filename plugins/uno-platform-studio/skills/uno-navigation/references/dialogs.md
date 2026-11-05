@@ -54,6 +54,46 @@ If the user needs to return data from a dialog:
 
 See the `references/data.md` for `NavigateBackWithResultAsync`.
 
+## A picker page that returns a row
+
+A lookup field (a contact's account, an order's customer) opens a page over the related table, with search and paging, and gets the chosen row back. **Never use a `ComboBox` over the whole table** for this: it loads every row and has no search.
+
+**Register the picker by its result type**, once per app, however many forms use it:
+
+```csharp
+new ResultDataViewMap<AccountPickerPage, AccountPickerModel, AccountPick>()
+new RouteMap("AccountPicker", View: views.FindByViewModel<AccountPickerModel>())
+```
+
+`AccountPick` is a small record with the key and the display name.
+
+**The form awaits the row and opens the picker as a flyout:**
+
+```csharp
+public async ValueTask PickAccount(CancellationToken ct)
+{
+    if (await _navigator.GetDataAsync<AccountPick>(this, qualifier: Qualifiers.Dialog, cancellation: ct) is { } pick)
+    {
+        await Draft.UpdateAsync(d => d is null ? d : d with { AccountId = pick.Id, AccountName = pick.Name }, ct);
+    }
+}
+
+public async ValueTask ClearAccount(CancellationToken ct) =>
+    await Draft.UpdateAsync(d => d is null ? d : d with { AccountId = null, AccountName = null }, ct);
+```
+
+`GetDataAsync<TResult>` resolves the route from the result type and returns `default` when the picker closes without a row, so Cancel changes nothing. Clear belongs to the form, beside the Pick button.
+
+**The picker returns the row from XAML.** A row click and Cancel both navigate back; the list sends the clicked item as the result:
+
+```xml
+<ListView ItemsSource="{Binding Data}" IsItemClickEnabled="True" SelectionMode="None"
+          uen:Navigation.Request="-" />
+<Button Content="Cancel" uen:Navigation.Request="-" />
+```
+
+The list is a paginated MVUX list feed with server-side search, debounced (`uno-mvux` skill, `references/pagination.md`), inside a `FeedView` with loading, empty and error templates.
+
 ## Related Skills
 
 - `references/qualifiers.md` — Qualifier prefixes

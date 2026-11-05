@@ -80,6 +80,7 @@ Substantial work (a new app, several features, or anything likely to span sessio
 | [references/design.md](references/design.md) | Any theme, colour, typography or layout work, and visual acceptance |
 | [references/verification.md](references/verification.md) | Building, testing and exercising each target; failure attribution |
 | [references/recipes.md](references/recipes.md) | Choosing an implementation pattern and its acceptance checks |
+| [references/sample-data.md](references/sample-data.md) | The brief asks for offline use, sample data or a demo mode beside a live backend |
 | [references/checkpoint.md](references/checkpoint.md) | Substantial work, handoff, resuming |
 
 | Template | Produces |

@@ -51,6 +51,20 @@ Most icon buttons are Low emphasis. Never set `Foreground` on the icon inside (`
 | `SimplePersonPictureSquareSmallStyle` | `PersonPicture` | Square (rounded), small |
 | `SimplePersonPictureSquareLargeStyle` | `PersonPicture` | Square (rounded), large |
 
+## Selected List Rows
+
+Simple fills a selected `ListViewItem` with `PrimaryBrush` and leaves the row's text on `OnSurfaceBrush`. With a dark brand primary (a near-black accent, common in mockups) the selected row's text disappears. Override the selected background keys on the list, not by copying the `ListViewItem` template:
+
+```xml
+<ListView.Resources>
+  <StaticResource x:Key="ListViewItemBackgroundSelected" ResourceKey="SecondaryContainerBrush" />
+  <StaticResource x:Key="ListViewItemBackgroundSelectedPointerOver" ResourceKey="SecondaryContainerBrush" />
+  <StaticResource x:Key="ListViewItemBackgroundSelectedPressed" ResourceKey="SecondaryContainerBrush" />
+</ListView.Resources>
+```
+
+The same keys work in a page's or the app's resources. Checked on Uno.Simple.WinUI 9.0.0-dev.61, desktop, light theme: the default selected row is the primary colour, and the override is applied. The `SystemControlHighlightListAccent*` brushes have no effect. Check the selected row in a screenshot whenever the palette is rebranded.
+
 ## Simple-Specific Utility Brushes
 
 Beyond the shared semantic brushes, Simple defines utility brushes for overlays, scrims, and measurement/debug overlays. Defined in Simple's `ColorPalette.xaml`; no shared equivalent.

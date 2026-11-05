@@ -12,9 +12,9 @@ Windows row checked on Uno.Sdk 7.0.0-dev.77, Android and macOS rows on Uno.Sdk 6
 | Android (Skia) | `uiautomator dump` | `content-desc` | `resource-id` as `<package>:id/<AutomationId>` from Uno.WinUI 7.0.0-dev.2332 (Skia accessibility bridge, [unoplatform/uno#23934](https://github.com/unoplatform/uno/issues/23934)), not yet re-checked on a device; not exposed on 6.8, even with `IsUiAutomationMappingEnabled` |
 | macOS (Skia) | AX API | not exposed to automation clients ([unoplatform/uno#24669](https://github.com/unoplatform/uno/issues/24669)) | not exposed |
 
-A `TextBlock` shows its current text as its name on both platforms, so a label, a counter, or a validation message can be asserted from the tree. For other targets (iOS, WebAssembly, Linux), use the App MCP on a Debug build; this path has not been verified there.
+A `TextBlock`'s name is its current text, so a label, counter or validation message can be asserted from the tree. For iOS, WebAssembly and Linux, use the App MCP on a Debug build; this path is unverified there.
 
-So on Android before 7.0, a control is found only by its name (on 7.0 `resource-id` should carry the `AutomationId`, unverified on a device): give each control a test touches an `AutomationProperties.Name` that is unique on its page. The name is what screen readers announce, so make it a readable label ("Save inspection"), not an ID.
+On Android before 7.0 a control is found only by its name: give each control a test touches an `AutomationProperties.Name` unique on its page. Screen readers announce it, so make it a readable label ("Save inspection"), not an ID.
 
 ## Windows: UI Automation
 
@@ -39,6 +39,7 @@ function Find($id) { $win.FindFirst($Scope::Descendants, $Cond::new($A::Automati
 - Find by `AutomationIdProperty`, or by `NameProperty` for controls with no ID.
 - Act through patterns: `Invoke` (buttons), `Value.SetValue` (text boxes; no focus or typing needed), `Toggle` (`CheckBox`, and `ToggleSwitch`, which appears as a `Button`). Read `ToggleState` back from the same pattern.
 - A find returns `$null` until the UI has updated: poll it, like the App MCP wait loop, before asserting.
+- Prefer patterns to pointer clicks, which land on whatever window is in front: `SetForegroundWindow` the app first, and click only if `GetForegroundWindow` returns its handle.
 
 ## Android: uiautomator
 
@@ -54,13 +55,9 @@ adb shell uiautomator dump /sdcard/ui.xml && adb exec-out cat /sdcard/ui.xml > u
 - A dump waits for the UI to go idle, so it fails (`ERROR: null root node`, or a timeout) while the app is starting or an animation runs, such as an indeterminate `ProgressRing`. Dump again once it settles. To assert a loading state itself, capture timed frames to files and check them in your script (a region still empty, a spinner's pixels present); do not read those frames back.
 - In Git Bash, set `MSYS_NO_PATHCONV=1`, or `/sdcard/...` is rewritten into a Windows path.
 
-## Iterating
+## Check scripts
 
-Scripting the checks pays off, but a full end-to-end pass on Android takes minutes. After a fix, rebuild only the target that changed and re-run only the checks for the flow it touched; run the whole pass once at the end.
-
-## Scripts that leave the machine clean
-
-Each check script must run alone, in any order:
+Save them in the project (`tests/ui/`) so they can be run again. After a fix, rebuild only the target that changed and re-run the checks for that flow; run the whole pass once at the end. Each script must run alone, in any order:
 
 - **Start the app in an explicit state.** Set or clear every environment variable it reads and reset its data and settings files first.
 - **Close the app in a `finally`** (`Stop-Process -Id $app.Id -Force`, `adb shell am force-stop <package>`); an open app hangs whatever waits for the script.

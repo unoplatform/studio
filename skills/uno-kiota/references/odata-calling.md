@@ -57,11 +57,13 @@ r.QueryParameters.Orderby = ["name desc"];
 
 ```csharp
 var account = await client.AccountsWithAccountid(id).GetAsync(cancellationToken: ct);
-var person = await client.PeopleWithUserName(userName.Replace("'", "''")).GetAsync(cancellationToken: ct);
+var person = await client.PeopleWithUserName(TextKey(userName)).GetAsync(cancellationToken: ct);
+
+static string TextKey(string value) => "'" + value.Replace("'", "''") + "'"; // an OData string literal
 ```
 
 - **The key's type comes from the schema.** It's a `Guid` for Dataverse (`AccountsWithAccountid(Guid)`) and a `string` for TripPin (`PeopleWithUserName(string)`).
-- **Double a quote in a text key.** The script puts a text key in quotes in the path, `People('{UserName}')`; Kiota percent-encodes the value but doesn't double a quote in it, so `o'brien` goes as `o''brien`.
+- **Pass a text key as an OData string literal.** The generated builder puts its argument in the path as it is, so wrap it in quotes and double any quote inside; Kiota percent-encodes the result (`People(%27o%27%27brien%27)`). A bare key fails: TripPin answers with an HTML 500, which surfaces as `InvalidOperationException`, not `ApiException`. Don't edit the generated builder or the OpenAPI document to add the quotes.
 
 ## Errors carry the service's message
 

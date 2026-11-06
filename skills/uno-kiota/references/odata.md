@@ -55,14 +55,13 @@ Probe paging too:
 
 - The named entity sets, the types they reach through properties and base types, and the navigation properties between kept sets. Everything else goes: other sets, actions, functions, and navigation properties to other types, on every type including base types. Dataverse's activities derive from `activitypointer`, whose 46 navigation properties would otherwise pull in 622 of its 1,427 types.
 - No empty base types. Kiota rejects Dataverse's `crmbaseentity` ("The type does not contain any information").
-- Text keys in quotes. The converter writes `/People({UserName})`, which TripPin answers with a 500; the script makes it `/People('{UserName}')` for every `Edm.String` key and prints each one it quoted. A Guid or number key stays bare.
 - `hidi` settings that type `@odata.nextLink` and `@odata.count`, and generate no navigation, operation or `/$count` paths. A `/$count` path answers `text/plain`, which `AddKiotaClient` can't parse.
 - It doesn't keep derived entity types or bound actions and functions. A derived type's extra properties land in `AdditionalData`.
 
 ## Traps
 
 - `hidi` writes keyed paths in quotes (`'/accounts({accountid})':`), so a search for lines starting with `/` finds none.
-- Kiota names a keyed path's builder `<Set>With<Key>`: `client.AccountsWithAccountid(id)`, not an indexer.
+- Kiota names a keyed path's builder `<Set>With<Key>`: `client.AccountsWithAccountid(id)`, not an indexer. A text key's builder puts its argument in the path as it is (`/People({UserName})`): pass an OData string literal (`references/odata-calling.md`).
 - The derived document's server is `http://localhost`. Always pass the service URL (`references/register.md`). For Dataverse, that's `<org>/api/data/v9.2`.
 
 Verified with `hidi` 3.10.2, Kiota 1.38.0 and .NET SDK 10.0.400, against Dataverse Web API v9.2 and TripPin, and in two Dataverse apps built on Uno.Sdk 6.8.0-dev.51 and 7.0.0-dev.132.

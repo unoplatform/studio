@@ -65,9 +65,10 @@ if (missing.Count > 0)
 }
 var keptEntities = keptSets.Values.ToHashSet();
 
-// Navigation properties that leave the kept entity types go first, so they don't pull their targets in.
-foreach (var name in keptEntities)
-    types[name].Elements(edm + "NavigationProperty").Where(n => !keptEntities.Contains(Resolve(n.Attribute("Type")!.Value)!)).Remove();
+// Navigation properties that leave the kept entity types go first, so they don't pull their targets in. On every type, not only
+// the kept ones: a kept type's base type has its own (Dataverse's activitypointer has 46), and they would pull most of the schema in.
+foreach (var e in types.Values)
+    e.Elements(edm + "NavigationProperty").Where(n => !keptEntities.Contains(Resolve(n.Attribute("Type")!.Value)!)).Remove();
 
 // Everything the kept entity types reach. ponytail: no derived types or bound operations; add them when a scenario needs type casts or actions.
 var reached = new HashSet<string>();
@@ -150,9 +151,14 @@ try
 }
 finally { File.Delete(settings); }
 
-return scope.RootElement.TryGetProperty("client", out var client)
-    ? Run("kiota", "update", "-o", Path.GetFullPath(client.GetString()!))
-    : 0;
+if (!scope.RootElement.TryGetProperty("client", out var client)) return 0;
+var clientDir = Path.GetFullPath(client.GetString()!);
+if (!File.Exists(Path.Combine(clientDir, "kiota-lock.json")))
+{
+    Console.WriteLine($"no client in {clientDir} yet: generate it once (references/odata.md, step 7); later runs update it");
+    return 0;
+}
+return Run("kiota", "update", "-o", clientDir);
 
 static int Run(params string[] arguments)
 {

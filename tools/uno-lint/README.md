@@ -149,9 +149,10 @@ How each harness's edit becomes added lines:
 Copilot CLI and Gemini CLI are not supported yet: their payloads and replies differ (`edit`/`create` tool names, a
 top-level `additionalContext`, a timeout in milliseconds for Gemini).
 
-Debugging: the hook writes nothing to stdout when there is nothing to say. When the payload is not JSON, an option is
-unknown, or the lint fails, it writes one `uno-lint:` line to stderr and still exits 0; harnesses do not show an
-exit-0 hook's stderr to the agent, so run it by hand to see it:
+Debugging: the hook writes nothing to stdout when there is nothing to say. When the payload is not JSON, an option or a
+`--profile` value is unknown, or the lint fails, it writes one `uno-lint:` line to stderr and still exits 0; an unknown
+option or value is ignored and the hook still runs with its defaults. Harnesses do not show an exit-0 hook's stderr to
+the agent, so run it by hand to see it:
 
 ```bash
 uno-lint hook < payload.json
@@ -159,8 +160,9 @@ uno-lint hook < payload.json
 
 In single-file runs the project context (Toolkit, MVUX, Uno.Themes) is cached per project, keyed by the project files'
 paths and timestamps, in `uno-lint/context` under the user's local application data (`UNO_LINT_CACHE_DIR` overrides
-the folder). `--no-cache` or `UNO_LINT_NO_CACHE=1` bypasses it. A reference first used only in XAML shows up after the
-next project-file change.
+the folder). `--no-cache` or `UNO_LINT_NO_CACHE=1` (or `true`, `yes`, `on`, any case) bypasses it. The linted page's
+own namespaces always count; a reference first used only in another XAML file shows up after the next project-file
+change.
 
 Hook and scan times, with the machine and method, are in the spec's
 [Performance](../../specs/001-uno-linter/spec.md#performance) section.

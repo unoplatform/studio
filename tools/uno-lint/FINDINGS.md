@@ -83,6 +83,10 @@ Every difference is a false positive the C# tool removes; on the apps both were 
 | HEX + TOKENTHEME | a brush defined once with a literal color is one problem; reported once, under HEX |
 | Suppression | `<!-- xaml-lint: allow hex -->` was accepted because the `-->` terminator matched as the reason |
 
+The spec lists the same five. Moving the XAML rules onto Uno.XamlParser removed one more, measured against the tool's
+own earlier XDocument reader rather than the prototype: HEX on `<SolidColorBrush x:Key="Red">`, where the key names a
+resource and is not a color.
+
 ## Open items
 
 1. ShadowContainer: exempt the documented pattern from CARD, or point the message at `ElevatedCardContentControlStyle`.

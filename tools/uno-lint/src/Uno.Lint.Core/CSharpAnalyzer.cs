@@ -324,7 +324,7 @@ public static class CSharpAnalyzer
         cls.BaseList?.Types.Select(t => LastIdentifier(t.Type)).Any(n => n == "Application") == true;
 
     private static Finding New(RuleDescriptor rule, CSharpFile file, int line, string message) =>
-        new Finding(rule, file.RelativePath, line, message, Suppression.IsSuppressed(file.Lines, rule, line));
+        new Finding(rule, file.RelativePath, line, message, Suppression.FindAllowComment(file.Lines, rule, CommentSyntax.CSharp, line));
 
     private static bool IsObjectType(TypeSyntax? type)
     {

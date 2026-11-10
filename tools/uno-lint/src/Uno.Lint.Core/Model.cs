@@ -73,18 +73,19 @@ public sealed class RuleDescriptor
 /// <summary>One hit of one rule. Immutable: hosts derive a new instance with <see cref="WithResolution"/>.</summary>
 public sealed class Finding
 {
-    public Finding(RuleDescriptor rule, string file, int line, string message, bool suppressed = false)
-        : this(rule, file, line, message, suppressed, rule.Fix, rule.DefaultSeverity)
+    /// <param name="allowLine">The line of the allow comment that covers the hit, or null.</param>
+    public Finding(RuleDescriptor rule, string file, int line, string message, int? allowLine = null)
+        : this(rule, file, line, message, allowLine, rule.Fix, rule.DefaultSeverity)
     {
     }
 
-    private Finding(RuleDescriptor rule, string file, int line, string message, bool suppressed, string fix, Severity severity)
+    private Finding(RuleDescriptor rule, string file, int line, string message, int? allowLine, string fix, Severity severity)
     {
         Rule = rule;
         File = file;
         Line = line;
         Message = message;
-        Suppressed = suppressed;
+        AllowLine = allowLine;
         Fix = fix;
         Severity = severity;
     }
@@ -99,7 +100,13 @@ public sealed class Finding
     public string Message { get; }
 
     /// <summary>True when an "allow" comment covers this hit. Suppressed findings are counted, not reported as gating.</summary>
-    public bool Suppressed { get; }
+    public bool Suppressed => AllowLine != null;
+
+    /// <summary>
+    /// The line of the allow comment that covers this hit (the line holding "uno-lint: allow"); null when none does. A
+    /// hook reports an edit that adds only the comment by this line, since the hit's own line was not edited.
+    /// </summary>
+    public int? AllowLine { get; }
 
     /// <summary>Fix text adapted to the project; the rule's own text until a host resolves it.</summary>
     public string Fix { get; }
@@ -108,7 +115,7 @@ public sealed class Finding
     public Severity Severity { get; }
 
     /// <summary>This finding with the severity and fix a host resolved for its file and project.</summary>
-    public Finding WithResolution(Severity severity, string fix) => new Finding(Rule, File, Line, Message, Suppressed, fix, severity);
+    public Finding WithResolution(Severity severity, string fix) => new Finding(Rule, File, Line, Message, AllowLine, fix, severity);
 
     public override string ToString() => $"{File}({Line}): {Rule.Id} {Rule.Name}: {Message}";
 }

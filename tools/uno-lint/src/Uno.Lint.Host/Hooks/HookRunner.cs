@@ -75,7 +75,8 @@ public static class HookRunner
                 // Payload lines are counted at CR and LF; C# findings carry Roslyn's lines, which also end at NEL, LS and PS.
                 var added = !FileKinds.IsXaml(path) && ReadFile(path) is { } saved && TextLines.HasUnicodeLineBreaks(saved) ? TextLines.ToCSharpLines(saved, lines) : lines;
                 findings.AddRange(result.Findings.Where(f => added.Contains(f.Line)).Select(f => (label, f)));
-                suppressed.AddRange(result.Suppressed.Where(f => added.Contains(f.Line)));
+                // An edit that adds only the allow comment leaves the hit's own line untouched: match the comment's line too.
+                suppressed.AddRange(result.Suppressed.Where(f => added.Contains(f.Line) || (f.AllowLine is int allow && added.Contains(allow))));
             }
 
             if (findings.Count == 0 && suppressed.Count == 0 && shifted.Count == 0)

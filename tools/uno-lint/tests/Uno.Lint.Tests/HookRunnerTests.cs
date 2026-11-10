@@ -164,6 +164,16 @@ public class HookRunnerTests : IDisposable
     }
 
     [Fact]
+    public void An_edit_that_only_adds_an_allow_comment_is_noted()
+    {
+        var file = _project.Write("Views/Allow.xaml", $"<Page {Ns}>\n  <!-- uno-lint: allow hex - brand -->\n  <Border Background=\"#FF0000\"/>\n</Page>");
+
+        var reply = JsonNode.Parse(Run(EditPayload(file, 2, "  <!-- uno-lint: allow hex - brand -->")).Output)!;
+
+        Assert.Equal("uno-lint: 1 allow comment(s) added (HEX)", reply["systemMessage"]!.GetValue<string>());
+    }
+
+    [Fact]
     public void An_edit_that_only_adds_suppressed_hits_is_still_noted()
     {
         var file = _project.Write("Views/MainPage.xaml", $"<Page {Ns}>\n  <!-- uno-lint: allow hex - brand -->\n  <Border Background=\"#FF0000\"/>\n</Page>");

@@ -107,8 +107,8 @@ public class SuppressionTests
     [Fact]
     public void Anchors_outside_the_file_are_ignored()
     {
-        Assert.False(Suppression.IsSuppressed(["<!-- uno-lint: allow hex - x -->"], Rules.Hex, 0, -3, 9));
-        Assert.True(Suppression.IsSuppressed(["<!-- uno-lint: allow hex - x -->", "<Border/>"], Rules.Hex, 2));
+        Assert.Null(Suppression.FindAllowComment(["<!-- uno-lint: allow hex - x -->"], Rules.Hex, CommentSyntax.Xml, 0, -3, 9));
+        Assert.Equal(1, Suppression.FindAllowComment(["<!-- uno-lint: allow hex - x -->", "<Border/>"], Rules.Hex, CommentSyntax.Xml, 2));
     }
 
     [Fact]
@@ -174,5 +174,60 @@ public class SuppressionTests
 
         var allowed = $"class A {{\n /* {separator} */\n // uno-lint: allow hex - brand\n void F(){{ var c = Colors.Red; }} }}";
         Assert.True(Assert.Single(LintCs(allowed, "A.cs", includeSuppressed: true), f => f.Rule == Rules.Hex).Suppressed);
+    }
+
+    [Theory]
+    [InlineData("string Mime = \"image/*\";")]
+    [InlineData("string Glob = \"**/*.cs\";")]
+    [InlineData("string Escaped = \"a\\\"/*\";")]
+    [InlineData("string Dir = @\"C:\\\"; string M = \"/*\";")]
+    [InlineData("string Raw = \"\"\"/* <!-- \"\"\";")]
+    [InlineData("string Quote = '\"' + \"/*\";")]
+    [InlineData("string Url = $\"{Base}/*\";")]
+    public void A_comment_opener_inside_a_csharp_literal_does_not_open_a_comment(string field)
+    {
+        var code = $"public sealed partial class Main : Page {{\n    {field}\n    // uno-lint: allow codebehind - picker glue\n    void A(object sender, RoutedEventArgs e) {{ }}\n    void B(object sender, RoutedEventArgs e) {{ }}\n    void C(object sender, RoutedEventArgs e) {{ }}\n}}";
+        var all = LintCs(code, includeSuppressed: true).Where(f => f.Rule == Rules.CodeBehind).ToList();
+        Assert.Equal(["handler A"], all.Where(f => f.Suppressed).Select(f => f.Message));
+        Assert.Equal(["handler B", "handler C"], all.Where(f => !f.Suppressed).Select(f => f.Message));
+    }
+
+    [Fact]
+    public void Lines_inside_a_multiline_csharp_string_are_code()
+    {
+        var code = "partial class P : Page {\nstring S = @\"\n// uno-lint: allow codebehind - inside a string\";\nvoid A(object sender, EventArgs e) { }\n}";
+        Assert.Equal(["handler A"], LintCs(code).Select(f => f.Message));
+    }
+
+    [Theory]
+    [InlineData("<TextBlock Text=\"/*\"/>")]
+    [InlineData("<TextBlock Text='image/*'/>")]
+    [InlineData("<TextBlock>a /* b</TextBlock>")]
+    [InlineData("<TextBlock><![CDATA[ /* ]]></TextBlock>")]
+    public void A_comment_opener_inside_xaml_markup_does_not_open_a_comment(string element)
+    {
+        var xaml = $"<Page {Ns}>\n{element}\n<!-- uno-lint: allow hex - brand -->\n<Border Background=\"#FF0000\"/>\n<Border Background=\"#00FF00\"/>\n<Border Background=\"#0000FF\"/>\n</Page>";
+        var all = LintXaml(xaml, includeSuppressed: true).Where(f => f.Rule == Rules.Hex).ToList();
+        Assert.Equal([4], all.Where(f => f.Suppressed).Select(f => f.Line));
+        Assert.Equal([5, 6], all.Where(f => !f.Suppressed).Select(f => f.Line));
+    }
+
+    [Fact]
+    public void Blank_lines_count_toward_the_three_line_look_behind()
+    {
+        var near = $"<Page {Ns}>\n<!-- uno-lint: allow hex - brand -->\n\n\n<Border Background=\"#FF0000\"/>\n</Page>";
+        Assert.True(Assert.Single(LintXaml(near, includeSuppressed: true), f => f.Rule == Rules.Hex).Suppressed);
+
+        var far = $"<Page {Ns}>\n<!-- uno-lint: allow hex - brand -->\n{new string('\n', 40)}<Border Background=\"#FF0000\"/>\n</Page>";
+        Assert.False(Assert.Single(LintXaml(far, includeSuppressed: true), f => f.Rule == Rules.Hex).Suppressed);
+    }
+
+    [Fact]
+    public void A_suppressed_finding_carries_the_line_of_its_allow_comment()
+    {
+        var xaml = $"<Page {Ns}>\n<!--\n  uno-lint: allow hex - brand\n-->\n<Border Background=\"#FF0000\"/>\n<Border Background=\"#00FF00\"/>\n</Page>";
+        var all = LintXaml(xaml, includeSuppressed: true).Where(f => f.Rule == Rules.Hex).ToList();
+        Assert.Equal(3, all.Single(f => f.Line == 5).AllowLine);
+        Assert.Null(all.Single(f => f.Line == 6).AllowLine);
     }
 }

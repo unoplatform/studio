@@ -4,13 +4,24 @@ using System.Text.RegularExpressions;
 
 namespace Uno.Lint;
 
+/// <summary>How a file writes comments and literals, for <see cref="Suppression"/>.</summary>
+public enum CommentSyntax
+{
+    /// <summary>XAML: &lt;!-- --&gt; comments; a CDATA section is content. // and /* mean nothing.</summary>
+    Xml,
+
+    /// <summary>C#: // and /* */ comments; string and character literals (regular, verbatim, raw) are code.</summary>
+    CSharp,
+}
+
 /// <summary>
-/// A finding is suppressed by a comment on the same line or in the comment lines directly above it (up to three),
-/// reason required:
+/// A finding is suppressed by a comment on the same line or in the lines directly above it (up to three, blank lines
+/// included), reason required:
 ///   &lt;!-- uno-lint: allow card - image clip with a placeholder fill --&gt;
 ///   // uno-lint: allow codebehind - video transport glue, no Toolkit equivalent
-/// The look-behind stops at the first line that is not entirely comment, so a comment never reaches past another
-/// element or statement, even one with a trailing comment; the lines of a multi-line comment count as comment lines.
+/// The look-behind stops at the first line that is not entirely comment or blank, so a comment never reaches past
+/// another element or statement, even one with a trailing comment; the lines of a multi-line comment count as comment
+/// lines. A comment opener inside a literal (<c>"image/*"</c>, <c>Text="/*"</c>) opens nothing.
 /// For a finding on an attribute of a multi-line element, the element's start line is an anchor too: XML has no place
 /// for a comment inside a start tag. "allow all - reason" covers every rule on that line.
 /// The legacy "xaml-lint:" prefix from the PowerShell prototype is accepted too.
@@ -22,13 +33,21 @@ public static class Suppression
     private static readonly ConcurrentDictionary<string, Regex> AllowPatterns = new ConcurrentDictionary<string, Regex>(StringComparer.Ordinal);
 
     // Which lines of a file are entirely comment, computed once per split file: callers pass the same lines for
-    // every finding of a file.
-    private static readonly ConditionalWeakTable<IReadOnlyList<string>, bool[]> CommentOnlyLines = new ConditionalWeakTable<IReadOnlyList<string>, bool[]>();
+    // every finding of a file. A file has one syntax, so one table per syntax.
+    private static readonly ConditionalWeakTable<IReadOnlyList<string>, bool[]> XmlCommentOnlyLines = new ConditionalWeakTable<IReadOnlyList<string>, bool[]>();
+    private static readonly ConditionalWeakTable<IReadOnlyList<string>, bool[]> CSharpCommentOnlyLines = new ConditionalWeakTable<IReadOnlyList<string>, bool[]>();
+    private static readonly ConditionalWeakTable<IReadOnlyList<string>, bool[]>.CreateValueCallback ScanXml = lines => FindCommentOnlyLines(lines, CommentSyntax.Xml);
+    private static readonly ConditionalWeakTable<IReadOnlyList<string>, bool[]>.CreateValueCallback ScanCSharp = lines => FindCommentOnlyLines(lines, CommentSyntax.CSharp);
 
     /// <summary>True when any anchor line, or the comment lines directly above any anchor, carries an allow comment for the rule.</summary>
+    public static bool IsSuppressed(IReadOnlyList<string> lines, RuleDescriptor rule, CommentSyntax syntax, params int[] anchorLines) =>
+        FindAllowComment(lines, rule, syntax, anchorLines) != null;
+
+    /// <summary>The 1-based line of the allow comment for the rule on an anchor line or in the comment lines directly above one; null when there is none.</summary>
     /// <param name="lines">The file split with <see cref="TextLines.Split"/>, so line numbers agree with the parsers'.</param>
+    /// <param name="syntax">How the file writes comments and literals, so a comment opener inside a literal is not taken for a comment.</param>
     /// <param name="anchorLines">1-based lines; out-of-range anchors are ignored.</param>
-    public static bool IsSuppressed(IReadOnlyList<string> lines, RuleDescriptor rule, params int[] anchorLines)
+    public static int? FindAllowComment(IReadOnlyList<string> lines, RuleDescriptor rule, CommentSyntax syntax, params int[] anchorLines)
     {
         var pattern = AllowPattern(rule);
         bool[]? commentOnly = null;
@@ -42,11 +61,11 @@ public static class Suppression
 
             if (pattern.IsMatch(lines[anchor - 1]))
             {
-                return true;
+                return anchor;
             }
 
-            var seen = 0;
-            for (var i = anchor - 2; i >= 0 && seen < LookBehindLines; i--)
+            // Blank lines count toward the three, so "directly above" stays three lines whatever the spacing.
+            for (var i = anchor - 2; i >= 0 && i >= anchor - 1 - LookBehindLines; i--)
             {
                 var line = lines[i];
                 if (string.IsNullOrWhiteSpace(line))
@@ -54,73 +73,221 @@ public static class Suppression
                     continue;
                 }
 
-                commentOnly ??= CommentOnlyLines.GetValue(lines, FindCommentOnlyLines);
+                commentOnly ??= syntax == CommentSyntax.Xml ? XmlCommentOnlyLines.GetValue(lines, ScanXml) : CSharpCommentOnlyLines.GetValue(lines, ScanCSharp);
                 if (!commentOnly[i])
                 {
                     break; // another element or statement: the comment above it is not ours
                 }
 
-                seen++;
                 if (pattern.IsMatch(line))
                 {
-                    return true;
+                    return i + 1;
                 }
             }
         }
 
-        return false;
+        return null;
     }
 
     /// <summary>
-    /// Marks the lines that hold a comment and nothing else, tracking XML (&lt;!-- --&gt;) and C# (/* */) comments
-    /// across lines; // runs to the end of its line. One scanner for both languages: a comment opener inside an
-    /// attribute or string only matters when the line has no code before it, which a real element or statement has.
+    /// Marks the lines that hold a comment and nothing else. Comments, CDATA sections and verbatim or raw strings are
+    /// followed across lines; a regular string or character literal ends with its line, so an unterminated one cannot
+    /// leak into the lines below.
     /// </summary>
-    private static bool[] FindCommentOnlyLines(IReadOnlyList<string> lines)
+    private static bool[] FindCommentOnlyLines(IReadOnlyList<string> lines, CommentSyntax syntax)
     {
         var result = new bool[lines.Count];
-        string? closer = null;
+        var scanner = new LineScanner(syntax);
         for (var i = 0; i < lines.Count; i++)
         {
-            var line = lines[i];
-            bool hasComment = closer != null, hasCode = false;
-            var at = 0;
-            while (at < line.Length)
-            {
-                if (closer != null)
-                {
-                    var end = line.IndexOf(closer, at, StringComparison.Ordinal);
-                    at = end < 0 ? line.Length : end + closer.Length;
-                    closer = end < 0 ? closer : null;
-                }
-                else if (char.IsWhiteSpace(line[at]))
-                {
-                    at++;
-                }
-                else if (string.CompareOrdinal(line, at, "<!--", 0, 4) == 0)
-                {
-                    (closer, hasComment, at) = ("-->", true, at + 4);
-                }
-                else if (string.CompareOrdinal(line, at, "/*", 0, 2) == 0)
-                {
-                    (closer, hasComment, at) = ("*/", true, at + 2);
-                }
-                else if (string.CompareOrdinal(line, at, "//", 0, 2) == 0)
-                {
-                    hasComment = true;
-                    break;
-                }
-                else
-                {
-                    hasCode = true;
-                    at++;
-                }
-            }
-
-            result[i] = hasComment && !hasCode;
+            result[i] = scanner.IsCommentOnly(lines[i]);
         }
 
         return result;
+    }
+
+    /// <summary>What a line holds, given what the lines above left open.</summary>
+    private struct LineScanner
+    {
+        private readonly CommentSyntax _syntax;
+        private Open _open;
+        private int _rawQuotes;
+
+        public LineScanner(CommentSyntax syntax) => _syntax = syntax;
+
+        private enum Open
+        {
+            Nothing,
+            Comment,
+            Cdata,
+            VerbatimString,
+            RawString,
+        }
+
+        public bool IsCommentOnly(string line)
+        {
+            bool hasComment = _open == Open.Comment, hasCode = _open is Open.Cdata or Open.VerbatimString or Open.RawString;
+            var at = 0;
+            while (at < line.Length)
+            {
+                switch (_open)
+                {
+                    case Open.Comment:
+                        at = Close(line, at, _syntax == CommentSyntax.Xml ? "-->" : "*/");
+                        break;
+                    case Open.Cdata:
+                        at = Close(line, at, "]]>");
+                        break;
+                    case Open.RawString:
+                        at = Close(line, at, new string('"', _rawQuotes));
+                        break;
+                    case Open.VerbatimString:
+                        at = CloseVerbatim(line, at);
+                        break;
+                    default:
+                        if (char.IsWhiteSpace(line[at]))
+                        {
+                            at++;
+                        }
+                        else if (_syntax == CommentSyntax.Xml)
+                        {
+                            at = ScanXml(line, at, ref hasComment, ref hasCode);
+                        }
+                        else if (string.CompareOrdinal(line, at, "//", 0, 2) == 0)
+                        {
+                            hasComment = true;
+                            at = line.Length;
+                        }
+                        else
+                        {
+                            at = ScanCSharp(line, at, ref hasComment, ref hasCode);
+                        }
+
+                        break;
+                }
+            }
+
+            return hasComment && !hasCode;
+        }
+
+        private int ScanXml(string line, int at, ref bool hasComment, ref bool hasCode)
+        {
+            if (string.CompareOrdinal(line, at, "<!--", 0, 4) == 0)
+            {
+                (_open, hasComment) = (Open.Comment, true);
+                return at + 4;
+            }
+
+            hasCode = true;
+            if (string.CompareOrdinal(line, at, "<![CDATA[", 0, 9) == 0)
+            {
+                _open = Open.Cdata;
+                return at + 9;
+            }
+
+            return at + 1;
+        }
+
+        private int ScanCSharp(string line, int at, ref bool hasComment, ref bool hasCode)
+        {
+            if (string.CompareOrdinal(line, at, "/*", 0, 2) == 0)
+            {
+                (_open, hasComment) = (Open.Comment, true);
+                return at + 2;
+            }
+
+            hasCode = true;
+            if (line[at] == '\'')
+            {
+                return SkipQuoted(line, at + 1, '\'');
+            }
+
+            // A string, after its $ and @ prefixes: $"..", @"..", $@"..", """..""", $$"""..""".
+            var quote = at;
+            while (quote < line.Length && line[quote] is '$' or '@')
+            {
+                quote++;
+            }
+
+            if (quote == line.Length || line[quote] != '"')
+            {
+                return at + 1;
+            }
+
+            var quotes = 0;
+            while (quote + quotes < line.Length && line[quote + quotes] == '"')
+            {
+                quotes++;
+            }
+
+            if (quotes >= 3)
+            {
+                (_open, _rawQuotes) = (Open.RawString, quotes);
+                return quote + quotes;
+            }
+
+            if (line.IndexOf('@', at, quote - at) >= 0)
+            {
+                _open = Open.VerbatimString;
+                return quote + 1;
+            }
+
+            return SkipQuoted(line, quote + 1, '"');
+        }
+
+        /// <summary>Past the closer when the line holds it (the construct is closed), else the end of the line.</summary>
+        private int Close(string line, int at, string closer)
+        {
+            var end = line.IndexOf(closer, at, StringComparison.Ordinal);
+            if (end < 0)
+            {
+                return line.Length;
+            }
+
+            _open = Open.Nothing;
+            return end + closer.Length;
+        }
+
+        /// <summary>A verbatim string ends at a quote that is not doubled.</summary>
+        private int CloseVerbatim(string line, int at)
+        {
+            for (var i = at; i < line.Length; i++)
+            {
+                if (line[i] != '"')
+                {
+                    continue;
+                }
+
+                if (i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    i++;
+                    continue;
+                }
+
+                _open = Open.Nothing;
+                return i + 1;
+            }
+
+            return line.Length;
+        }
+
+        /// <summary>Past the closing quote of a regular string or character literal, skipping escapes; the end of the line when it has none.</summary>
+        private static int SkipQuoted(string line, int at, char quote)
+        {
+            for (var i = at; i < line.Length; i++)
+            {
+                if (line[i] == '\\')
+                {
+                    i++;
+                }
+                else if (line[i] == quote)
+                {
+                    return i + 1;
+                }
+            }
+
+            return line.Length;
+        }
     }
 
     // One pattern per rule, built on first use. The reason must start with something other than '-' or '>',

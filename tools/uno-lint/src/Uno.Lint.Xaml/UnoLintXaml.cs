@@ -154,8 +154,8 @@ public static partial class UnoLintXaml
                 }
 
                 var ownerLine = OwnerOf(rule, at).Item1;
-                var suppressed = Suppression.IsSuppressed(lines, rule, at.LineNumber, ownerLine);
-                findings.Add(new Finding(rule, relativePath, at.LineNumber, diagnostic.Message, suppressed));
+                var allowLine = Suppression.FindAllowComment(lines, rule, CommentSyntax.Xml, at.LineNumber, ownerLine);
+                findings.Add(new Finding(rule, relativePath, at.LineNumber, diagnostic.Message, allowLine));
             }
         }
 

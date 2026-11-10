@@ -90,12 +90,46 @@ public class HookProcessTests : IDisposable
         }
     }
 
-    [Fact]
-    public void A_bad_hook_option_value_still_exits_0()
+    [Theory]
+    [InlineData("--profile strictest", "strictest")]
+    [InlineData("--profile=strictest", "strictest")]
+    [InlineData("--profile", "")]
+    public void A_bad_profile_value_is_noted_on_stderr_and_the_hook_still_runs(string options, string value)
     {
-        var (exitCode, output, _) = RunTool("hook --profile strictest", Encoding.UTF8.GetBytes("{}"));
+        _project.Write("App.csproj", "<Project/>");
+        var (exitCode, output, error) = RunTool($"hook {options}", WritePayload("MainPage.xaml"));
+
         Assert.Equal(0, exitCode);
-        Assert.Equal(string.Empty, output);
+        Assert.Contains("HEX", output);
+        var line = Assert.Single(error.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+        Assert.StartsWith($"uno-lint: ignoring --profile '{value}'", line);
+    }
+
+    [Theory]
+    [InlineData("--no-cache")]
+    [InlineData("--include-dev")]
+    [InlineData("--toolkit")]
+    [InlineData("--profile strict --no-cache")]
+    public void A_flag_before_the_path_does_not_take_the_path_as_its_value(string options)
+    {
+        _project.Write("App.csproj", "<Project/>");
+        var file = _project.Write("MainPage.xaml", $"<Page {Ns}>\n  <Border Background=\"#FF0000\"/>\n</Page>");
+
+        var (exitCode, output, error) = RunTool($"lint {options} \"{file}\"", []);
+
+        Assert.Equal(string.Empty, error);
+        Assert.Equal(1, exitCode);
+        Assert.Contains("HEX", output);
+    }
+
+    [Fact]
+    public void A_flag_still_takes_an_explicit_boolean()
+    {
+        _project.Write("App.csproj", "<Project/>");
+        var file = _project.Write("Tests/MainPage.xaml", $"<Page {Ns}>\n  <Border Background=\"#FF0000\"/>\n</Page>");
+
+        Assert.Equal(0, RunTool($"lint --include-dev false \"{file}\"", []).ExitCode);
+        Assert.Equal(1, RunTool($"lint --include-dev true \"{file}\"", []).ExitCode);
     }
 
     [Fact]

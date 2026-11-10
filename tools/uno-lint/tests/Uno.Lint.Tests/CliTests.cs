@@ -61,6 +61,19 @@ public class CliTests : IDisposable
     }
 
     [Fact]
+    public void Every_bool_option_of_lint_is_given_a_value_before_repl_parses_it()
+    {
+        // Repl reads the token after a bool flag as its value; CommandLine must know every such flag.
+        var lint = typeof(UnoLintCommands).GetMethod("LintAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        var flags = lint.GetParameters()
+            .Where(p => (Nullable.GetUnderlyingType(p.ParameterType) ?? p.ParameterType) == typeof(bool))
+            .Select(p => "--" + p.GetCustomAttributes(typeof(Repl.Parameters.ReplOptionAttribute), false).Cast<Repl.Parameters.ReplOptionAttribute>().Single().Name);
+
+        Assert.Equal(flags.Order(), CommandLine.Flags.Order());
+        Assert.Equal(["lint", "--no-cache=true", "App.xaml", "--toolkit", "false"], CommandLine.Prepare(["lint", "--no-cache", "App.xaml", "--toolkit", "false"], TextWriter.Null));
+    }
+
+    [Fact]
     public async Task Profile_and_toolkit_options_bind()
     {
         _project.Write("Card.xaml", $"<Page {Ns}><Border CornerRadius=\"8\" Background=\"{{ThemeResource SurfaceBrush}}\"><Grid/></Border></Page>");

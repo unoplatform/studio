@@ -53,6 +53,19 @@ public class EditorConfigTests : IDisposable
         }
     }
 
+    [Theory]
+    [InlineData("[z-a].cs")]
+    [InlineData("[]x")]
+    public void A_section_with_a_malformed_glob_matches_nothing_and_the_rest_still_applies(string glob)
+    {
+        _project.Write(".editorconfig", $"root = true\n[{glob}]\ndotnet_diagnostic.UNOL001.severity = none\n[*.xaml]\ndotnet_diagnostic.UNOL001.severity = error\n");
+        _project.Write("App.csproj", "<Project/>");
+        _project.Write("Main.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+
+        var hit = Assert.Single(_project.Lint().Findings, f => f.Rule == Rules.Hex);
+        Assert.Equal(Severity.Error, hit.Severity);
+    }
+
     [Fact]
     public void Preamble_severity_keys_are_ignored_and_reported()
     {

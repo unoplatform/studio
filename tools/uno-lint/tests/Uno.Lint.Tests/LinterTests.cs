@@ -46,6 +46,10 @@ public class LinterTests : IDisposable
     [InlineData("<UnoFeatures>MaterialToolkit</UnoFeatures>", true, true, false)]
     [InlineData("<UnoFeatures>Hosting</UnoFeatures>", false, false, false)]
     [InlineData("<PackageReference Include=\"Uno.Material.WinUI\" /><PackageReference Include=\"Uno.Extensions.Reactive.WinUI\" />", true, false, true)]
+    [InlineData("<UnoFeatures Condition=\"'$(Configuration)'=='Debug'\">Toolkit;Material</UnoFeatures>", true, true, false)]
+    [InlineData("<UnoFeatures Condition=\"'$(X)'=='y'\" >\n  Mvux;\n  Toolkit\n</UnoFeatures>", false, true, true)]
+    [InlineData("<!-- <PackageReference Include=\"Uno.Toolkit.WinUI\" /> -->", false, false, false)]
+    [InlineData("<!--\n<UnoFeatures>Material;Toolkit</UnoFeatures>\n-->", false, false, false)]
     public void Context_detects_themes_toolkit_and_mvux(string projectXml, bool themes, bool toolkit, bool mvux)
     {
         var context = ProjectContext.Detect([$"<Project>{projectXml}</Project>"], []);
@@ -248,6 +252,49 @@ public class LinterTests : IDisposable
     }
 
     [Fact]
+    public async Task A_page_that_starts_using_the_toolkit_opens_the_gate_without_a_project_change()
+    {
+        var cache = _project.Root + ".cache";
+        try
+        {
+            _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Hosting</UnoFeatures></PropertyGroup></Project>");
+            var file = _project.Write("Views/Main.xaml", $"{Page}<Border/></Page>");
+            var linter = new Linter(new LintOptions { Profile = Profile.Strict, ContextCacheDirectory = cache }, Engine);
+            Assert.False((await linter.RunAsync(file)).Context.HasToolkit);
+
+            // The agent's next edit adds the Toolkit namespace; no project file changes, so the cached entry stands.
+            File.WriteAllText(file, $"{Page.Replace(">", " xmlns:utu=\"using:Uno.Toolkit.UI\">")}<Border CornerRadius=\"8\" Background=\"White\"><Grid/></Border></Page>");
+            var next = await linter.RunAsync(file);
+
+            Assert.True(next.Context.HasToolkit);
+            Assert.Single(next.Findings, f => f.Rule == Rules.Card);
+        }
+        finally
+        {
+            if (Directory.Exists(cache))
+            {
+                Directory.Delete(cache, recursive: true);
+            }
+        }
+    }
+
+    [Theory]
+    [InlineData("1", true)]
+    [InlineData("true", true)]
+    [InlineData("TRUE", true)]
+    [InlineData("True", true)]
+    [InlineData("yes", true)]
+    [InlineData(" on ", true)]
+    [InlineData("0", false)]
+    [InlineData("false", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void The_no_cache_variable_reads_like_a_boolean(string? value, bool disabled)
+    {
+        Assert.Equal(disabled, ContextCache.IsDisabledBy(value));
+    }
+
+    [Fact]
     public void Workaround_markers_are_counted()
     {
         _project.Write("App.csproj", "<Project/>");
@@ -296,5 +343,45 @@ public class LinterTests : IDisposable
 
         Assert.Equal(1, _project.Lint().SkippedDevFiles);
         Assert.Equal(1, _project.Lint("tests/UnitTests/Page.xaml").SkippedDevFiles);
+    }
+
+    [Fact]
+    public void A_repository_without_a_solution_does_not_make_the_folders_above_the_project_count()
+    {
+        // A dotfiles repository in $HOME, or a dev/ checkout folder with its own .git: Dev/ is where the app lives.
+        _project.Write(".git/HEAD", "ref: refs/heads/main");
+        _project.Write("Dev/App/App.csproj", "<Project/>");
+        _project.Write("Dev/App/Views/Main.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+
+        foreach (var target in new[] { null, "Dev/App", "Dev/App/Views/Main.xaml" })
+        {
+            var result = _project.Lint(target);
+            Assert.Equal(0, result.SkippedDevFiles);
+            Assert.Single(result.Findings, f => f.Rule == Rules.Hex);
+        }
+    }
+
+    [Fact]
+    public void A_solution_above_the_repository_root_is_not_the_projects()
+    {
+        _project.Write("outer.sln", "");
+        _project.Write("Tests/repo/.git/HEAD", "ref: refs/heads/main");
+        _project.Write("Tests/repo/App/App.csproj", "<Project/>");
+        _project.Write("Tests/repo/App/Main.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+
+        Assert.Equal(0, _project.Lint("Tests/repo/App/Main.xaml").SkippedDevFiles);
+    }
+
+    [Fact]
+    public void A_file_outside_any_project_is_skipped_or_linted_the_same_from_any_start()
+    {
+        _project.Write("Tests/Foo.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+        _project.Write("App/Bar.xaml", $"{Page}<Border Background=\"#FF0000\"/></Page>");
+
+        var folder = _project.Lint();
+        Assert.Equal(1, folder.SkippedDevFiles);
+        Assert.Equal(["Bar.xaml"], folder.Findings.Select(f => Path.GetFileName(f.File)));
+        Assert.Equal(1, _project.Lint("Tests/Foo.xaml").SkippedDevFiles);
+        Assert.Equal(0, _project.Lint("App/Bar.xaml").SkippedDevFiles);
     }
 }

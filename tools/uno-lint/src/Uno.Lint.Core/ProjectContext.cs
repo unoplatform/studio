@@ -9,7 +9,9 @@ public sealed class ProjectContext
     private static readonly Regex NavigationXmlns = new Regex(@"using:Uno\.Extensions\.Navigation(\.UI)?\b");
     private static readonly Regex MvuxXmlns = new Regex(@"using:Uno\.Extensions\.Reactive(\.UI)?\b");
     private static readonly Regex ThemesXmlns = new Regex(@"using:Uno\.(Material|Cupertino|Simple|Themes)\b");
-    private static readonly Regex UnoFeatures = new Regex(@"<UnoFeatures>([^<]*)</UnoFeatures>", RegexOptions.IgnoreCase);
+    // Attributes allowed: the Uno template and many apps write <UnoFeatures Condition="...">.
+    private static readonly Regex UnoFeatures = new Regex(@"<UnoFeatures\b[^>]*>([^<]*)</UnoFeatures>", RegexOptions.IgnoreCase);
+    private static readonly Regex XmlComment = new Regex(@"<!--.*?-->", RegexOptions.Singleline);
     private static readonly Regex ToolkitPackage = new Regex(@"PackageReference\s+Include\s*=\s*""Uno\.Toolkit", RegexOptions.IgnoreCase);
     private static readonly Regex NavigationPackage = new Regex(@"PackageReference\s+Include\s*=\s*""Uno\.Extensions\.Navigation", RegexOptions.IgnoreCase);
     private static readonly Regex MvuxPackage = new Regex(@"PackageReference\s+Include\s*=\s*""Uno\.Extensions\.Reactive", RegexOptions.IgnoreCase);
@@ -53,8 +55,10 @@ public sealed class ProjectContext
     public static ProjectContext FromProjectFiles(IEnumerable<string> projectFileTexts)
     {
         bool toolkit = false, navigation = false, mvux = false, themes = false;
-        foreach (var text in projectFileTexts)
+        foreach (var raw in projectFileTexts)
         {
+            // A commented-out reference or feature list is not a reference.
+            var text = raw.IndexOf("<!--", StringComparison.Ordinal) >= 0 ? XmlComment.Replace(raw, string.Empty) : raw;
             toolkit |= ToolkitPackage.IsMatch(text);
             navigation |= NavigationPackage.IsMatch(text);
             mvux |= MvuxPackage.IsMatch(text);

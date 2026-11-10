@@ -57,23 +57,30 @@ public static partial class ProjectLocator
     }
 
     /// <summary>
-    /// The folder a project's dev-path segments are counted from: the project root when it holds the solution or the
-    /// repository, else the nearest folder above it that does, else its parent. The project folder's own name
-    /// (MyApp.Tests) and the folders between it and the solution (tests/) count whether the run starts at a file or
-    /// at a folder above it.
+    /// The folder a project's dev-path segments are counted from: the project root when it holds the solution or is
+    /// the repository root, else the nearest folder above it that holds a solution, else its parent. The project
+    /// folder's own name (MyApp.Tests) and the folders between it and the solution (tests/) count whether the run
+    /// starts at a file or at a folder above it. Only a solution makes the folders above the project count: the climb
+    /// stops at the repository root, so a solution-less project under a repository (a dotfiles repo in $HOME, a dev/
+    /// checkout folder) is not skipped for the folders that hold it.
     /// </summary>
     public static string DevBoundary(string projectRoot)
     {
-        if (IsSolutionRoot(projectRoot))
+        if (HasSolution(projectRoot) || IsRepositoryRoot(projectRoot))
         {
             return projectRoot;
         }
 
         for (var dir = Path.GetDirectoryName(projectRoot); dir is { Length: > 0 }; dir = Path.GetDirectoryName(dir))
         {
-            if (IsSolutionRoot(dir))
+            if (HasSolution(dir))
             {
                 return dir;
+            }
+
+            if (IsRepositoryRoot(dir))
+            {
+                break; // a solution above the repository is not this project's
             }
         }
 
@@ -82,17 +89,19 @@ public static partial class ProjectLocator
 
     public static bool IsGeneratedCode(string path) => GeneratedCs().IsMatch(path);
 
-    private static bool IsSolutionRoot(string dir)
+    private static bool HasSolution(string dir)
     {
         try
         {
-            return Directory.EnumerateFiles(dir, "*.sln").Any() || Directory.EnumerateFiles(dir, "*.slnx").Any() || Path.Exists(Path.Combine(dir, ".git"));
+            return Directory.EnumerateFiles(dir, "*.sln").Any() || Directory.EnumerateFiles(dir, "*.slnx").Any();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return false;
         }
     }
+
+    private static bool IsRepositoryRoot(string dir) => Path.Exists(Path.Combine(dir, ".git"));
 
     private static bool IsProjectFile(string path)
     {
@@ -115,12 +124,17 @@ public static partial class ProjectLocator
 /// Hook calls lint one file at a time; re-reading every project file and XAML file of a large solution on each call
 /// would cost more than the lint. The detected <see cref="ProjectContext"/> is cached per project, keyed by the project
 /// files' paths and timestamps. The cache is a folder of 4-byte files under the user's local application data
-/// (<c>uno-lint/context</c>), or under <c>UNO_LINT_CACHE_DIR</c>; <c>UNO_LINT_NO_CACHE=1</c> or <c>--no-cache</c>
-/// bypasses it. A reference first used only in XAML shows up after the next project-file change.
+/// (<c>uno-lint/context</c>), or under <c>UNO_LINT_CACHE_DIR</c>; <c>UNO_LINT_NO_CACHE=1</c> (or true, yes, on, any
+/// case) or <c>--no-cache</c> bypasses it. A single-file run adds the linted page's own namespaces to the cached
+/// context; a reference first used only in another XAML file shows up after the next project-file change.
 /// </summary>
 public static class ContextCache
 {
-    public static bool IsDisabledByEnvironment => Environment.GetEnvironmentVariable("UNO_LINT_NO_CACHE") is "1" or "true";
+    public static bool IsDisabledByEnvironment => IsDisabledBy(Environment.GetEnvironmentVariable("UNO_LINT_NO_CACHE"));
+
+    /// <summary>True for 1, true, yes or on, in any case and with surrounding spaces.</summary>
+    public static bool IsDisabledBy(string? value) =>
+        value?.Trim().ToLowerInvariant() is "1" or "true" or "yes" or "on";
 
     /// <summary>Where entries go when the options name no folder: UNO_LINT_CACHE_DIR, else the user's local application data.</summary>
     public static string DefaultDirectory

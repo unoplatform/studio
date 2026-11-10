@@ -159,15 +159,12 @@ public sealed class Linter
             return root;
         }
 
+        // A file outside any project is counted from its own folder as if that folder were its project, so a folder
+        // run and a single-file run skip it alike.
         bool IsDev(string file)
         {
-            var root = ProjectRootOf(file);
-            string boundary;
-            if (root == null)
-            {
-                boundary = startDirectory;
-            }
-            else if (!devBoundaries.TryGetValue(root, out boundary!))
+            var root = ProjectRootOf(file) ?? Path.GetDirectoryName(file) ?? file;
+            if (!devBoundaries.TryGetValue(root, out var boundary))
             {
                 boundary = ProjectLocator.DevBoundary(root);
                 devBoundaries[root] = boundary;
@@ -218,6 +215,14 @@ public sealed class Linter
             if (!contexts.TryGetValue(key, out var context))
             {
                 context = DetectContext(contextRoot, cacheDirectory, ReadCached);
+
+                // The cache is keyed on project files only. The linted page is already in memory, so its own
+                // namespaces count at once: a page that starts using the Toolkit opens the gate on that edit.
+                if (!isDirectory && FileKinds.IsXaml(fullRoot))
+                {
+                    context = context.AddXaml([ReadCached(fullRoot)]);
+                }
+
                 if (_options.AssumeToolkit is bool assumeToolkit)
                 {
                     context = context.WithToolkit(assumeToolkit);

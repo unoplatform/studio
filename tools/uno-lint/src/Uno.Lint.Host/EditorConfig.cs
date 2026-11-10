@@ -242,19 +242,28 @@ public sealed partial class EditorConfigSet
     private sealed class Section
     {
         private readonly string _directory;
-        private readonly Regex _pattern;
+        private readonly Regex? _pattern;
 
         public Section(string directory, string glob)
         {
             _directory = directory.Replace('\\', '/').TrimEnd('/');
-            _pattern = GlobToRegex(glob);
+            try
+            {
+                _pattern = GlobToRegex(glob);
+            }
+            catch (ArgumentException)
+            {
+                // A header it cannot parse ([[z-a].cs]) matches nothing, as Roslyn ignores such a section: one bad
+                // header, perhaps in a parent folder the user does not own, must not fail every file below it.
+                _pattern = null;
+            }
         }
 
         public Dictionary<string, Severity?> Severities { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         public bool Matches(string normalizedFilePath)
         {
-            if (!normalizedFilePath.StartsWith(_directory + "/", StringComparison.OrdinalIgnoreCase))
+            if (_pattern == null || !normalizedFilePath.StartsWith(_directory + "/", StringComparison.OrdinalIgnoreCase))
             {
                 return false;
             }

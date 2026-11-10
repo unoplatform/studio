@@ -15,8 +15,9 @@ src/Uno.Lint.Xaml    net9.0 like Uno.XamlParser: the XAML rules as Stage-1 fixer
                      any XamlParser host calls (AddTo, IsWellFormed, Collect). XamlLintEngine runs them for uno-lint.
 src/Uno.Lint.Host    net10.0: the Linter (folder walk, project context and its cache, .editorconfig), the immutable
                      LintReport with its text rendering, and the agent-hook adapters (Claude Code, Codex).
-src/Uno.Lint.Cli     the uno-lint command: lint, rules, hook, on Repl Toolkit.
-tests/Uno.Lint.Tests xunit, grouped by subject; CliTests drive the command graph in memory, HookProcessTests run the
+src/Uno.Lint.Cli     the uno-lint command: lint, rules, hook. No command-line framework: one option table per
+                     command drives parsing and help.
+tests/Uno.Lint.Tests xunit, grouped by subject; CliTests run the command line in memory, HookProcessTests run the
                      built tool with raw UTF-8 on stdin.
 hooks/               the hook shim and settings snippet
 FINDINGS.md          corpus results and per-rule verdicts
@@ -45,11 +46,12 @@ dotnet run --project src/Uno.Lint.Cli -c Release -- lint --help
 | `--include-dev` | also lint `Dev`, `Harness`, `Probe(s)` and `Test(s)` folders |
 | `--toolkit` / `--no-toolkit` | force the Uno.Toolkit gate instead of detecting it |
 | `--no-cache` | detect the project context again instead of reading the cached one |
-| `--json`, `--output:yaml`... | structured output of the same report; the last format flag wins |
+| `--json` | the same report as JSON; the last of `--json` and `--markdown` wins |
 | `--markdown` | the text report in a Markdown code block |
 
-Exit codes: `0` no finding at warning or above, `1` at least one, `2` the run could not complete (unknown or
-malformed option, missing path, a file that is not `.xaml` or `.cs`).
+Options take `--name value`, `--name=value` or `--name:value`; flags take no value, so a path after a flag is always
+the path. Exit codes: `0` no finding at warning or above, `1` at least one, `2` the run could not complete (unknown or
+malformed option, missing path, a file that is not `.xaml` or `.cs`), with one `uno-lint:` line on standard error.
 
 To install as a global tool from a local build: `dotnet pack src/Uno.Lint.Cli -c Release -o artifacts` then
 `dotnet tool install -g --add-source artifacts Uno.Lint.Tool`. The package is not on nuget.org yet.

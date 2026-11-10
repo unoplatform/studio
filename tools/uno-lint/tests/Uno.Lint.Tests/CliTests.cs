@@ -1,13 +1,12 @@
 using System.Text.Json.Nodes;
-using Repl;
-using Repl.Testing;
+using System.Text.RegularExpressions;
 using Uno.Lint.Cli;
 using Xunit;
 using static Uno.Lint.Tests.TestHost;
 
 namespace Uno.Lint.Tests;
 
-/// <summary>The command surface through Repl's in-memory harness: exit codes, the JSON contract and the text report.</summary>
+/// <summary>The command line in memory, as Program.Main runs it: exit codes, the JSON contract, the text report and help.</summary>
 public class CliTests : IDisposable
 {
     private readonly TempProject _project = new();
@@ -19,19 +18,16 @@ public class CliTests : IDisposable
 
     public void Dispose() => _project.Dispose();
 
-    /// <summary>Runs one command line the way Program.Main wires the app.</summary>
-    private static async Task<CommandExecution> RunAsync(string commandLine)
+    private sealed record Run(int ExitCode, string Output, string Error);
+
+    /// <summary>Runs one command line, split like a shell: double quotes group, and are dropped.</summary>
+    private static async Task<Run> RunAsync(string commandLine, string stdin = "")
     {
-        var args = commandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        await using var host = ReplTestHost.Create(() =>
-        {
-            var app = ReplApp.Create();
-            app.Options(options => UnoLintCommands.Configure(options, hookMode: false));
-            app.MapModule(new UnoLintCommands(OutputFormats.Of(args), Engine));
-            return app;
-        });
-        await using var session = await host.OpenSessionAsync();
-        return await session.RunCommandAsync(commandLine);
+        var args = Regex.Matches(commandLine, "\"([^\"]*)\"|(\\S+)").Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).ToArray();
+        var output = new StringWriter();
+        var error = new StringWriter();
+        var exitCode = await UnoLintCli.RunAsync(args, () => new StringReader(stdin), output, error, Engine);
+        return new Run(exitCode, output.ToString(), error.ToString());
     }
 
     private string Quoted(string relative = "") => $"\"{_project.Path(relative).TrimEnd('\\', '/')}\"";
@@ -49,38 +45,51 @@ public class CliTests : IDisposable
     }
 
     [Theory]
-    [InlineData("lint does-not-exist")]
-    [InlineData("lint --bogus")]
-    [InlineData("lint --top 0")]
-    [InlineData("lint --top many")]
-    [InlineData("lint --profile strictest")]
-    [InlineData("frobnicate")]
-    public async Task Exit_code_is_2_when_the_run_cannot_complete(string commandLine)
+    [InlineData("lint does-not-exist", "Path not found: does-not-exist")]
+    [InlineData("lint --bogus", "unknown option --bogus")]
+    [InlineData("lint --top 0", "--top must be a whole number of at least 1")]
+    [InlineData("lint --top many", "--top must be a whole number of at least 1")]
+    [InlineData("lint --top", "--top needs a value")]
+    [InlineData("lint --profile strictest", "--profile must be recommended or strict, not 'strictest'")]
+    [InlineData("lint --profile", "--profile needs a value")]
+    [InlineData("lint --include-dev=true", "--include-dev takes no value")]
+    [InlineData("lint one two", "lint takes one path, not 2")]
+    [InlineData("rules extra", "unknown argument extra")]
+    [InlineData("frobnicate", "unknown command frobnicate")]
+    public async Task Exit_code_is_2_with_one_line_on_stderr_when_the_run_cannot_complete(string commandLine, string message)
     {
-        Assert.Equal(2, (await RunAsync(commandLine)).ExitCode);
+        var run = await RunAsync(commandLine);
+
+        Assert.Equal(2, run.ExitCode);
+        Assert.Empty(run.Output);
+        var line = Assert.Single(run.Error.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+        Assert.StartsWith("uno-lint: ", line);
+        Assert.Contains(message, line);
     }
 
     [Fact]
-    public void Every_bool_option_of_lint_is_given_a_value_before_repl_parses_it()
+    public async Task A_flag_before_the_path_is_not_read_as_its_value()
     {
-        // Repl reads the token after a bool flag as its value; CommandLine must know every such flag.
-        var lint = typeof(UnoLintCommands).GetMethod("LintAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
-        var flags = lint.GetParameters()
-            .Where(p => (Nullable.GetUnderlyingType(p.ParameterType) ?? p.ParameterType) == typeof(bool))
-            .Select(p => "--" + p.GetCustomAttributes(typeof(Repl.Parameters.ReplOptionAttribute), false).Cast<Repl.Parameters.ReplOptionAttribute>().Single().Name);
+        _project.Write("Hex.xaml", $"<Page {Ns}><Border Background=\"#FF0000\"/></Page>");
 
-        Assert.Equal(flags.Order(), CommandLine.Flags.Order());
-        Assert.Equal(["lint", "--no-cache=true", "App.xaml", "--toolkit", "false"], CommandLine.Prepare(["lint", "--no-cache", "App.xaml", "--toolkit", "false"], TextWriter.Null));
+        foreach (var flag in new[] { "--no-cache", "--include-dev", "--toolkit", "--no-toolkit" })
+        {
+            var run = await RunAsync($"lint {flag} {Quoted("Hex.xaml")}");
+            Assert.Equal(string.Empty, run.Error);
+            Assert.Equal(1, run.ExitCode);
+        }
     }
 
     [Fact]
-    public async Task Profile_and_toolkit_options_bind()
+    public async Task Profile_and_toolkit_options_bind_and_the_last_toolkit_flag_wins()
     {
         _project.Write("Card.xaml", $"<Page {Ns}><Border CornerRadius=\"8\" Background=\"{{ThemeResource SurfaceBrush}}\"><Grid/></Border></Page>");
 
         Assert.Equal(0, (await RunAsync($"lint {Quoted()} --no-cache")).ExitCode);
         Assert.Equal(1, (await RunAsync($"lint {Quoted()} --profile strict --no-cache")).ExitCode);
+        Assert.Equal(1, (await RunAsync($"lint {Quoted()} --profile=STRICT --no-cache")).ExitCode);
         Assert.Equal(0, (await RunAsync($"lint {Quoted()} --profile strict --no-toolkit --no-cache")).ExitCode);
+        Assert.Equal(1, (await RunAsync($"lint {Quoted()} --profile strict --no-toolkit --toolkit --no-cache")).ExitCode);
     }
 
     // ------------------------------------------------------------ JSON contract
@@ -91,7 +100,7 @@ public class CliTests : IDisposable
         _project.Write("Views/MainPage.xaml", $"<Page {Ns}>\n<!-- uno-lint: allow hex - chart -->\n<Border Background=\"#FF0000\"/>\n<TextBox Text=\"{{Binding Name.Value}}\"/>\n</Page>");
 
         var execution = await RunAsync($"lint {Quoted()} --profile strict --no-cache --json");
-        var report = JsonNode.Parse(execution.OutputText)!.AsObject();
+        var report = JsonNode.Parse(execution.Output)!.AsObject();
 
         Assert.Equal(1, execution.ExitCode);
         Assert.Equal(["root", "profile", "project", "files", "gating", "rules", "info", "findings", "suppressedFindings", "warnings"], report.Select(p => p.Key));
@@ -121,10 +130,10 @@ public class CliTests : IDisposable
     {
         var text = await RunAsync("rules");
         Assert.Equal(0, text.ExitCode);
-        Assert.Contains("UNOL201  BINDVALUE    correctness  recommended  mvux", text.OutputText);
-        Assert.Contains("UNOL101  CARD         style        strict       toolkit", text.OutputText);
+        Assert.Contains("UNOL201  BINDVALUE    correctness  recommended  mvux", text.Output);
+        Assert.Contains("UNOL101  CARD         style        strict       toolkit", text.Output);
 
-        var json = JsonNode.Parse((await RunAsync("rules --json")).OutputText)!["rules"]!.AsArray();
+        var json = JsonNode.Parse((await RunAsync("rules --json")).Output)!["rules"]!.AsArray();
         Assert.Equal(Rules.All.Count, json.Count);
         var bindValue = json.Single(r => r!["id"]!.GetValue<string>() == "UNOL201")!;
         Assert.Equal(["id", "name", "category", "profile", "requires", "defaultSeverity", "title"], bindValue.AsObject().Select(p => p.Key));
@@ -139,7 +148,7 @@ public class CliTests : IDisposable
     {
         _project.Write("Views/Swatches.xaml", $"<Page {Ns}>\n<Border Background=\"Red\"/>\n<Border Background=\"Blue\"/>\n<Border Background=\"Green\"/>\n<Border Background=\"Gray\"/>\n</Page>");
 
-        var output = (await RunAsync($"lint {Quoted()} --no-cache")).OutputText;
+        var output = (await RunAsync($"lint {Quoted()} --no-cache")).Output;
 
         Assert.Contains("HEX: 4 hit(s) in 1 file(s)", output);
         Assert.Contains("  fix: Use a theme role brush", output);
@@ -147,18 +156,14 @@ public class CliTests : IDisposable
     }
 
     [Theory]
-    [InlineData("lint --json", OutputFormat.Structured)]
-    [InlineData("lint --output:yaml", OutputFormat.Structured)]
-    [InlineData("lint --output:human", OutputFormat.Text)]
-    [InlineData("lint --human", OutputFormat.Text)]
-    [InlineData("lint --json --human", OutputFormat.Text)]
-    [InlineData("lint --human --json", OutputFormat.Structured)]
-    [InlineData("lint --markdown", OutputFormat.Markdown)]
-    [InlineData("lint --output:markdown", OutputFormat.Markdown)]
-    [InlineData("lint", OutputFormat.Text)]
-    public void The_last_format_flag_decides_the_output(string commandLine, OutputFormat format)
+    [InlineData("rules", "Id       Rule")]
+    [InlineData("rules --json", "{")]
+    [InlineData("rules --markdown", "```text")]
+    [InlineData("rules --json --markdown", "```text")]
+    [InlineData("rules --markdown --json", "{")]
+    public async Task The_last_format_flag_decides_the_output(string commandLine, string start)
     {
-        Assert.Equal(format, OutputFormats.Of(commandLine.Split(' ')));
+        Assert.StartsWith(start, (await RunAsync(commandLine)).Output.TrimStart());
     }
 
     [Fact]
@@ -166,9 +171,64 @@ public class CliTests : IDisposable
     {
         _project.Write("Hex.xaml", $"<Page {Ns}><Border Background=\"#FF0000\"/></Page>");
 
-        var output = (await RunAsync($"lint {Quoted()} --no-cache --markdown")).OutputText;
+        var output = (await RunAsync($"lint {Quoted()} --no-cache --markdown")).Output;
 
         Assert.StartsWith("```text", output.TrimStart());
         Assert.Contains("HEX: 1 hit(s) in 1 file(s)", output);
+        Assert.EndsWith("```", output.TrimEnd());
+    }
+
+    // ------------------------------------------------------------ help
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("--help")]
+    [InlineData("-h")]
+    public async Task Help_lists_the_commands(string commandLine)
+    {
+        var run = await RunAsync(commandLine);
+
+        Assert.Equal(0, run.ExitCode);
+        Assert.Empty(run.Error);
+        foreach (var command in UnoLintCli.Commands)
+        {
+            Assert.Contains($"  {command.Name} ", run.Output);
+        }
+    }
+
+    [Fact]
+    public async Task Each_commands_help_lists_its_options()
+    {
+        foreach (var command in UnoLintCli.Commands)
+        {
+            var run = await RunAsync($"{command.Name} --help");
+
+            Assert.Equal(0, run.ExitCode);
+            Assert.StartsWith($"Usage: uno-lint {command.Name}", run.Output);
+            Assert.All(command.Options, option => Assert.Contains(option.Name, run.Output));
+        }
+    }
+
+    [Fact]
+    public void The_readme_documents_every_lint_option()
+    {
+        var readme = File.ReadAllText(Path.Combine(UnoLintRoot(), "README.md")).ReplaceLineEndings("\n");
+        var table = readme[readme.IndexOf("| Option of `lint` |", StringComparison.Ordinal)..];
+        table = table[..table.IndexOf("\n\n", StringComparison.Ordinal)];
+
+        Assert.All(
+            UnoLintCli.Commands.Single(c => c.Name == "lint").Options.Where(o => o.Name != "--help"),
+            option => Assert.Contains($"`{option.Name}", table));
+    }
+
+    private static string UnoLintRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (!File.Exists(Path.Combine(directory.FullName, "Uno.Lint.slnx")))
+        {
+            directory = directory.Parent ?? throw new InvalidOperationException("Uno.Lint.slnx not found above the test output.");
+        }
+
+        return directory.FullName;
     }
 }

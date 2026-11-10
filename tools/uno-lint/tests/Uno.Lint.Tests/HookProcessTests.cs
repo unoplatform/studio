@@ -77,10 +77,10 @@ public class HookProcessTests : IDisposable
     }
 
     [Fact]
-    public void Inline_option_values_and_repl_options_are_not_called_unknown()
+    public void Inline_profile_values_are_not_called_unknown()
     {
         _project.Write("App.csproj", "<Project/>");
-        foreach (var options in new[] { "--profile=strict", "--profile:strict", "--json" })
+        foreach (var options in new[] { "--profile=strict", "--profile:strict", "--profile=Strict" })
         {
             var (exitCode, output, error) = RunTool($"hook {options}", WritePayload("MainPage.xaml"));
 
@@ -120,16 +120,6 @@ public class HookProcessTests : IDisposable
         Assert.Equal(string.Empty, error);
         Assert.Equal(1, exitCode);
         Assert.Contains("HEX", output);
-    }
-
-    [Fact]
-    public void A_flag_still_takes_an_explicit_boolean()
-    {
-        _project.Write("App.csproj", "<Project/>");
-        var file = _project.Write("Tests/MainPage.xaml", $"<Page {Ns}>\n  <Border Background=\"#FF0000\"/>\n</Page>");
-
-        Assert.Equal(0, RunTool($"lint --include-dev false \"{file}\"", []).ExitCode);
-        Assert.Equal(1, RunTool($"lint --include-dev true \"{file}\"", []).ExitCode);
     }
 
     [Fact]

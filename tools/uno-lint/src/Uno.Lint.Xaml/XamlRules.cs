@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Uno.XamlParser;
 using Uno.XamlParser.Stage0;
 using Uno.XamlParser.Stage1;
 using Uno.XamlParser.Stage1.Nodes;
@@ -291,7 +292,7 @@ public sealed class CardRule : IXamlSemanticFixer
         }
 
         var border = frame.Start;
-        if (XamlNodes.LocalName(border) != "Border" || border.Name.NamespaceUri != XamlNodes.Presentation)
+        if (XamlNodes.LocalName(border) != "Border" || border.Name.NamespaceUri != XmlNamespaces.Presentation)
         {
             return UnoLintXaml.None;
         }

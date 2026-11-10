@@ -26,7 +26,6 @@ public static partial class UnoLintXaml
 {
     public static void AddTo(XamlStreamPipelineOptions options)
     {
-        options.VisitorTypes.Add(typeof(ElementTextCapture));
         options.SemanticFixerTypes.Add(typeof(DocumentTracker));
         options.SemanticFixerTypes.Add(typeof(HexRule));
         options.SemanticFixerTypes.Add(typeof(TokenThemeRule));

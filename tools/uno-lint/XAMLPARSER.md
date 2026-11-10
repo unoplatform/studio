@@ -1,7 +1,7 @@
 # XAML rules on Uno.XamlParser
 
 The six XAML rules run inside the [Uno.XamlParser](https://www.nuget.org/packages/Uno.XamlParser) NuGet package
-(`0.10.0-dev.80`) as Stage-1 semantic fixers that only report. uno-lint has no XAML reader of its own. It keeps what the
+(`0.10.0-dev.87`) as Stage-1 semantic fixers that only report. uno-lint has no XAML reader of its own. It keeps what the
 parser does not do: the C# rules, `.editorconfig` severities and profiles, project gates, suppression comments and
 counts, the hook and the report. Everything below is observable through the package's public API.
 
@@ -13,15 +13,16 @@ agent edit ─► uno-lint hook / lint ─► Linter (Uno.Lint.Host)
                                         └─ .xaml ─► XamlLintEngine                                     │
                                                       UnoLintXaml.IsWellFormed? ─► sanitizers on/off   ├─► severity, gates,
                                                       Uno.XamlParser pipeline                          │   LintReport
-                                                        Stage 1: ElementTextCapture, DocumentTracker,   │
-                                                                 HEX, TOKENTHEME, ICON, CARD,          │
-                                                                 BACKBAR, BINDVALUE (report only)      │
+                                                        Stage 1: DocumentTracker, HEX, TOKENTHEME,    │
+                                                                 ICON, CARD, BACKBAR, BINDVALUE        │
+                                                                 (report only)                         │
                                                       UnoLintXaml.Collect ─► findings ─────────────────┘
 ```
 
 - **Extension points used.** `XamlStreamPipelineOptions.SemanticFixerTypes` for the rules (`IXamlSemanticFixer`,
-  reporting through `XamlSemanticFixerContext.ReportDiagnostic`), and `VisitorTypes` for one stream visitor that
-  captures element text. Both are public registration lists.
+  reporting through `XamlSemanticFixerContext.ReportDiagnostic`), a public registration list. The context gives each
+  rule the element's index, its text at the end tag (`CurrentElementText`) and whether the call is a re-run on a parent
+  (`IsReapplyingToParent`); the read result gives `SanitizedText` after a repair.
 - **Values as written.** uno-lint's processing policy applies Stage-0 repairs only, and the parser's own fixers are not
   registered, so rules see the markup the agent wrote.
 - **Streaming.** Per-document state lives on `XamlSemanticFixerContext.Items`, and only the path of open elements is
@@ -50,21 +51,19 @@ straight from `SemanticResult.Diagnostics` skip all of that. A test runs exactly
 the parser's default fixers.
 
 A pipeline built from one service provider processes one document at a time, because the parser's semantic collector
-and uno-lint's text visitor keep the current document on the instance. A host that shares a pipeline across threads
+keeps the current document on the instance. A host that shares a pipeline across threads
 serializes `ProcessAsync`; `XamlLintEngine` does it with a semaphore, and its calls can be cancelled while they wait.
 
 ## Package behavior uno-lint works around
 
-Each item is reproducible with the package alone, and is filed with its maintainers. The workarounds for the fixer context (element text, the closing element, re-runs on a parent) go once a release gives fixers that context.
+Each item is reproducible with the package alone, and is filed with its maintainers.
 
-| Behavior in 0.10.0-dev.80 | Effect | uno-lint's workaround |
+| Behavior in 0.10.0-dev.87 | Effect | uno-lint's workaround |
 |---|---|---|
-| Fixers are not given element text | `<Color>#7A67F8</Color>` would be invisible | a stream visitor (`ElementTextCapture`) records it |
-| Fixers run again on a parent each time a property element is folded into it, with `IsProcessingElementStart` true | report-only rules would report twice | rules skip a start position they have already seen |
-| The end-tag call does not say which element closed | rules cannot tell children from the element | rules keep the open-element path |
-| The repaired text is not exposed | callers cannot tell whether repairs shifted line numbers | uno-lint reads it through reflection, only after a repair; a test fails if that stops working |
 | Balancing an early wrong close tag can orphan the real one further down (XML0001) | the rest of the file is not read | the elements read before the stop are linted; the file counts as partial |
 | A document type declaration stops the reader | the file is not linted | none needed: XAML has no DTD, and no entity is ever expanded |
+
+Fixed in 0.10.0-dev.87 ([uno.xamlparser#39](https://github.com/unoplatform/uno.xamlparser/pull/39)): fixers were not given the element's text, the end-tag call did not say which element closed, re-runs on a parent were indistinguishable from a first visit, and the repaired text was not exposed. uno-lint used to carry a text-capturing visitor, an open-element path with a seen-positions set, and a reflection read of the repaired text for these; `XamlSemanticFixerContext.CurrentElementIndex`, `CurrentElementText`, `IsReapplyingToParent` and `XamlStreamReadResult.SanitizedText` replace them.
 
 Fixed in 0.10.0-dev.80: with the default sanitizers on, valid markup whose element text contains `:/` (`ms-appx:///Assets/x.png`, `http://...`) was rewritten and the reader stopped with XML0001. uno-lint still runs the sanitizers only when `IsWellFormed` is false, so a valid file is never rewritten.
 

@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Uno.XamlParser;
 using Uno.XamlParser.Configuration;
@@ -16,11 +15,6 @@ namespace Uno.Lint.Xaml;
 /// </summary>
 public sealed class XamlLintEngine : IDisposable
 {
-    // The repaired text is only reachable through a non-public property of the string source; it tells whether the
-    // parser's line numbers still point into the saved file. Looked up once; a test pins that it exists.
-    internal static readonly PropertyInfo? RepairedTextProperty =
-        XamlStreamSources.FromString(string.Empty, null).GetType().GetProperty("Text", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Lazy<Host> _strict = new(() => new Host(useSanitizers: false));
     private readonly Lazy<Host> _repairing = new(() => new Host(useSanitizers: true));
@@ -37,7 +31,7 @@ public sealed class XamlLintEngine : IDisposable
             var host = wellFormed ? _strict.Value : _repairing.Value;
             var source = XamlStreamSources.FromString(text, relativePath);
             var result = await host.Pipeline.ProcessAsync(source, policyOverride: null, cancellationToken).ConfigureAwait(false);
-            var repairedText = wellFormed ? null : RepairedTextProperty?.GetValue(source) as string;
+            var repairedText = result.StreamResult.SanitizedText;
             return UnoLintXaml.Collect(result, relativePath, text, isEnabled, repairedText);
         }
         finally

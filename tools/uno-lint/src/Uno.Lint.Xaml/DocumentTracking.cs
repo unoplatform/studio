@@ -1,61 +1,8 @@
-using System.Text;
 using Uno.XamlParser.Stage0;
 using Uno.XamlParser.Stage1;
 using Uno.XamlParser.Stage1.Nodes;
 
 namespace Uno.Lint.Xaml;
-
-/// <summary>
-/// Captures each element's direct text content. Stage-1 fixers never see text (only folded property-element values),
-/// so <c>&lt;Color&gt;#7A67F8&lt;/Color&gt;</c> would be invisible to the rules. Registered through
-/// <c>XamlStreamPipelineOptions.VisitorTypes</c>, which run before the semantic collector, so the text of an element
-/// is known by the time the rules see its end tag. Only the open-element path is kept.
-/// Like the parser's own semantic collector, it is a singleton that keeps the current document's state on the instance
-/// (reset when a stream starts), so one pipeline processes one document at a time. A host that shares a pipeline
-/// across threads serializes <c>ProcessAsync</c>, as <see cref="XamlLintEngine"/> does.
-/// </summary>
-public sealed class ElementTextCapture : IXamlStreamVisitor
-{
-    private readonly Stack<(XamlLineInfo Start, StringBuilder Text)> _open = new();
-    private (XamlLineInfo Start, string Text)? _closed;
-
-    public ValueTask OnStreamStartedAsync(XamlStreamContext context, CancellationToken ct)
-    {
-        _open.Clear();
-        _closed = null;
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask OnElementStartAsync(in XamlElementToken element, CancellationToken ct)
-    {
-        _open.Push((element.LineInfo, new StringBuilder()));
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask OnTextAsync(in XamlTextToken text, CancellationToken ct)
-    {
-        if (_open.Count > 0 && text.Kind is XamlTextKind.Text or XamlTextKind.CData or XamlTextKind.Whitespace or XamlTextKind.SignificantWhitespace)
-        {
-            _open.Peek().Text.Append(text.Text);
-        }
-
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask OnElementEndAsync(in XamlElementToken element, CancellationToken ct)
-    {
-        if (_open.Count > 0)
-        {
-            var (start, text) = _open.Pop();
-            _closed = (start, text.ToString());
-        }
-
-        return ValueTask.CompletedTask;
-    }
-
-    /// <summary>Text of the element that just closed, when it is the element that started at <paramref name="start"/>.</summary>
-    internal string? ClosedText(XamlLineInfo start) => _closed is { } closed && closed.Start == start ? closed.Text : null;
-}
 
 /// <summary>What the rules know about an open element: its start node and what has been seen inside it so far.</summary>
 internal sealed class ElementFrame
@@ -114,9 +61,6 @@ internal sealed class LintDocument
 
     public Stack<ElementFrame> Open { get; } = new();
 
-    /// <summary>Start positions already seen, to tell a real start tag from the collector re-running fixers on a parent.</summary>
-    public HashSet<(int Line, int Column)> Started { get; } = new();
-
     /// <summary>
     /// True when the current start call is the collector re-running fixers on a parent after folding a property
     /// element into it. Rules ignore these: the element was already checked at its real start tag.
@@ -151,10 +95,6 @@ public sealed class DocumentTracker : IXamlSemanticFixer
 {
     private static readonly HashSet<string> Shapes = new(StringComparer.Ordinal) { "Ellipse", "Rectangle", "Line", "Polyline", "Polygon" };
 
-    private readonly ElementTextCapture _text;
-
-    public DocumentTracker(ElementTextCapture text) => _text = text;
-
     public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
     {
         var document = LintDocument.Of(context);
@@ -168,7 +108,7 @@ public sealed class DocumentTracker : IXamlSemanticFixer
 
         if (context.IsProcessingElementStart)
         {
-            document.IsRefix = !document.Started.Add((element.LineInfo.LineNumber, element.LineInfo.LinePosition));
+            document.IsRefix = context.IsReapplyingToParent;
             if (document.IsRefix)
             {
                 return UnoLintXaml.None;
@@ -211,7 +151,7 @@ public sealed class DocumentTracker : IXamlSemanticFixer
             if (document.Open.Count > 0)
             {
                 var frame = document.Open.Peek();
-                frame.Text = _text.ClosedText(frame.Start.LineInfo) ?? string.Empty;
+                frame.Text = context.CurrentElementText ?? string.Empty;
                 document.Closing = frame;
             }
         }

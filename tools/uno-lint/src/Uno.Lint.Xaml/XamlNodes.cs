@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Uno.XamlParser;
 using Uno.XamlParser.Stage1;
 using Uno.XamlParser.Stage1.Nodes;
 
@@ -7,22 +8,15 @@ namespace Uno.Lint.Xaml;
 /// <summary>Reading helpers over Uno.XamlParser Stage-1 nodes, shared by the rules.</summary>
 internal static partial class XamlNodes
 {
-    // The parser keeps its namespace constants internal, so the two URIs the rules need are repeated here.
-    public const string Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
-    public const string XamlLanguage = "http://schemas.microsoft.com/winfx/2006/xaml";
-
     public static string LocalName(XamlElementNode element) => element.Name.LocalName;
 
     /// <summary>Attribute name the way XAML writes it: "Background", "Storyboard.TargetProperty", "Key" for x:Key.</summary>
     public static string Name(XamlPropertyNode property) =>
         property.Reference.DeclaringType is { } owner ? $"{owner.LocalName}.{property.Reference.Name}" : property.Reference.Name;
 
-    public static bool IsNamespaceDeclaration(XamlPropertyNode property) =>
-        property.OriginalName is { } name && (name == "xmlns" || name.StartsWith("xmlns:", StringComparison.Ordinal));
-
     /// <summary>Inline attributes and attached properties, without namespace declarations or folded property elements.</summary>
     public static IEnumerable<XamlPropertyNode> Attributes(XamlElementNode element) =>
-        element.Properties.Where(p => p.Kind != XamlPropertyKind.PropertyElement && !IsNamespaceDeclaration(p));
+        element.Properties.Where(p => p.Kind != XamlPropertyKind.PropertyElement && !p.IsNamespaceDeclaration());
 
     /// <summary>The value of an unprefixed attribute such as Background or CornerRadius.</summary>
     public static string? Attribute(XamlElementNode element, string name) =>
@@ -47,7 +41,7 @@ internal static partial class XamlNodes
         }
 
         var colon = original.IndexOf(':');
-        return colon > 0 && owner.NamespaceScope.TryGetValue(original[..colon], out var uri) && uri == XamlLanguage;
+        return colon > 0 && owner.NamespaceScope.TryGetValue(original[..colon], out var uri) && uri == XmlNamespaces.XamlLanguage;
     }
 
     public static string? Key(XamlElementNode element) =>

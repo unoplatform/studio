@@ -107,16 +107,6 @@ public class XamlEngineTests
     // ------------------------------------------------------------ line shifts
 
     [Fact]
-    public void The_repaired_text_is_still_reachable()
-    {
-        // Line-shift detection reads the repaired text through a non-public property of the parser's string source.
-        // A parser update that renames it would silently turn detection off; this pins it.
-        Assert.NotNull(XamlLintEngine.RepairedTextProperty);
-        var source = XamlStreamSources.FromString("<Page/>", "x.xaml");
-        Assert.Equal("<Page/>", XamlLintEngine.RepairedTextProperty!.GetValue(source));
-    }
-
-    [Fact]
     public void A_repair_that_removes_a_line_is_reported_as_shifted()
     {
         // The quote repair drops stray text after a '/' up to the next '>', newline included.

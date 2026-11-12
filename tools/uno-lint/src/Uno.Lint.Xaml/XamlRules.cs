@@ -481,6 +481,96 @@ public sealed class BackBarRule : IXamlSemanticFixer
     }
 }
 
+/// <summary>
+/// UNOL105 TYPERAMP: a literal FontSize in a page or control, on an element or a Setter. Resource files are where the
+/// app's own text styles live; icons size their glyph with FontSize; templates draw a control's parts.
+/// </summary>
+public sealed class TypeRampRule : IXamlSemanticFixer
+{
+    private static readonly HashSet<string> Icons = new(StringComparer.Ordinal) { "FontIcon", "SymbolIcon", "PathIcon", "BitmapIcon", "ImageIcon", "AnimatedIcon", "FontIconSource", "SymbolIconSource" };
+
+    public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
+    {
+        var document = LintDocument.Of(context);
+        if (!context.IsProcessingElementStart || document.IsRefix || document.InResourceFile || XamlNodes.IsInside(element, context, "ControlTemplate"))
+        {
+            return UnoLintXaml.None;
+        }
+
+        var name = XamlNodes.LocalName(element);
+        if (name == "Setter")
+        {
+            if ((XamlNodes.Attribute(element, "Property") ?? XamlNodes.Attribute(element, "Target")) is { } target && RuleLogic.LastSegment(target) == "FontSize"
+                && XamlNodes.Attribute(element, "Value") is { } value && RuleLogic.ParseNumber(value.Trim()) != null)
+            {
+                UnoLintXaml.Report(context, Rules.TypeRamp, $"literal FontSize {value.Trim()} in a Setter", element.LineInfo);
+            }
+        }
+        else if (!Icons.Contains(name) && XamlNodes.Attributes(element).FirstOrDefault(p => XamlNodes.Name(p) == "FontSize") is { RawValue: { } size } property
+            && RuleLogic.ParseNumber(size.Trim()) != null)
+        {
+            UnoLintXaml.Report(context, Rules.TypeRamp, $"literal FontSize {size.Trim()} on {name}", property.LineInfo);
+        }
+
+        return UnoLintXaml.None;
+    }
+}
+
+/// <summary>
+/// UNOL106 RETEMPLATE: a ControlTemplate whose target, from its TargetType or its Style's, is a platform or Toolkit
+/// control. Generic hosts (Control, ContentControl, UserControl, Page, Frame, ItemsControl) have no look of their own
+/// to lose, presenters (FlyoutPresenter for a drawer) are templated by design and expose few lightweight keys, and the
+/// app's own controls need a template.
+/// </summary>
+public sealed class RetemplateRule : IXamlSemanticFixer
+{
+    private static readonly HashSet<string> Hosts = new(StringComparer.Ordinal) { "Control", "ContentControl", "UserControl", "Page", "Frame", "ItemsControl" };
+
+    public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
+    {
+        var document = LintDocument.Of(context);
+        if (!context.IsProcessingElementStart || document.IsRefix || XamlNodes.LocalName(element) != "ControlTemplate" || element.Name.NamespaceUri != XmlNamespaces.Presentation)
+        {
+            return UnoLintXaml.None;
+        }
+
+        var targetType = XamlNodes.Attribute(element, "TargetType");
+        if (targetType == null && XamlNodes.Ancestors(element, context).FirstOrDefault(a => XamlNodes.LocalName(a) == "Style") is { } style)
+        {
+            targetType = XamlNodes.Attribute(style, "TargetType");
+        }
+
+        if (targetType?.Trim() is not { Length: > 0 } type || type.StartsWith('{'))
+        {
+            return UnoLintXaml.None;
+        }
+
+        var colon = type.IndexOf(':');
+        var prefix = colon > 0 ? type[..colon] : null;
+        var local = type[(colon + 1)..];
+        if (Hosts.Contains(local) || local.EndsWith("Presenter", StringComparison.Ordinal) || XamlNodes.Identifier(local) is null)
+        {
+            return UnoLintXaml.None;
+        }
+
+        var stock = prefix == null
+            ? element.Name.NamespaceUri == XmlNamespaces.Presentation
+            : element.NamespaceScope.TryGetValue(prefix, out var uri) && IsStockNamespace(uri);
+        if (stock && (prefix == null || XamlNodes.Identifier(prefix) != null))
+        {
+            UnoLintXaml.Report(context, Rules.Retemplate, $"ControlTemplate copied for {(prefix == null ? local : prefix + ":" + local)}", element.LineInfo);
+        }
+
+        return UnoLintXaml.None;
+    }
+
+    private static bool IsStockNamespace(string uri) =>
+        uri == XmlNamespaces.Presentation
+        || uri.StartsWith("using:Microsoft.UI.Xaml.Controls", StringComparison.Ordinal)
+        || uri.StartsWith("using:Windows.UI.Xaml.Controls", StringComparison.Ordinal)
+        || uri.StartsWith("using:Uno.Toolkit.UI", StringComparison.Ordinal);
+}
+
 /// <summary>UNOL201 BINDVALUE: {Binding X.Value} outside item templates, the MVUX state trap.</summary>
 public sealed partial class BindValueRule : IXamlSemanticFixer
 {

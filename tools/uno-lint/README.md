@@ -71,6 +71,8 @@ To install as a global tool from a local build: `dotnet pack src/Uno.Lint.Cli -c
 | UNOL102 | BACKBAR | strict, Toolkit only | `Navigation.Request="-"` or a button with a back icon, on a page with no NavigationBar | `utu:NavigationBar` MainCommand |
 | UNOL103 | CODEBEHIND | strict | event handlers (methods or lambdas) and `.Visibility =` in `*.xaml.cs` | commands, VisualStateManagerExtensions, regions |
 | UNOL104 | OVERLAY | strict | `*Overlay/*Sheet/*Drawer.Visibility =` in code-behind | `Navigation.Request="!Route"` flyout |
+| UNOL105 | TYPERAMP | strict | literal `FontSize` on a page element or in a page `Setter` (icons and resource files exempt) | a type-ramp TextBlock style (`TitleMedium`, `BodyMedium`... with Uno.Themes) |
+| UNOL106 | RETEMPLATE | strict | `ControlTemplate` copied for a platform or Toolkit control (Button, ListViewItem, `utu:TabBarItem`...) | lightweight-styling keys, or `BasedOn` the theme style |
 | UNOL201 | BINDVALUE | recommended, MVUX only, a bug | `{Binding State.Value}` outside a DataTemplate; shows empty, writes nothing | `{Binding State, Mode=TwoWay}`; `{Binding Data.X}` inside FeedView |
 
 Info counters (never gating): TOKEN, ADAPTIVE vs `utu:Responsive`, TEMPLATE, WORKAROUND. A `Supp` column counts

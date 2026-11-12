@@ -544,6 +544,107 @@ public class XamlRuleTests
         Assert.DoesNotContain(LintXaml(xaml), x => x.Rule == Rules.Card);
     }
 
+    // ------------------------------------------------------------ TYPERAMP
+
+    [Fact]
+    public void TypeRamp_flags_literal_font_sizes_in_a_page()
+    {
+        var xaml = $$"""
+            <Page {{Ns}}>
+              <Page.Resources><Style x:Key="Local" TargetType="TextBlock"><Setter Property="FontSize" Value="15"/></Style></Page.Resources>
+              <TextBlock Text="Board" FontSize="28" FontWeight="SemiBold"/>
+              <TextBlock Text="Title" Style="{StaticResource TitleLarge}"/>
+              <TextBlock Text="Sized" FontSize="{StaticResource ClTitleSize}"/>
+              <Button><FontIcon Glyph="&#xE72B;" FontSize="18"/></Button>
+              <TextBlock><Run Text="12" FontSize="12.5"/></TextBlock>
+            </Page>
+            """;
+        var hits = LintXaml(xaml).Where(f => f.Rule == Rules.TypeRamp).Select(f => $"L{f.Line} {f.Message}").ToList();
+        Assert.Equal(["L2 literal FontSize 15 in a Setter", "L3 literal FontSize 28 on TextBlock", "L7 literal FontSize 12.5 on Run"], hits);
+    }
+
+    [Fact]
+    public void TypeRamp_leaves_resource_files_and_templates_alone()
+    {
+        var styles = $$"""
+            <ResourceDictionary {{Ns}}>
+              <Style x:Key="ClTitle" TargetType="TextBlock"><Setter Property="FontSize" Value="22"/></Style>
+              <TextBlock x:Key="Sample" FontSize="12"/>
+            </ResourceDictionary>
+            """;
+        Assert.DoesNotContain(LintXaml(styles, "Styles/Brand.xaml"), f => f.Rule == Rules.TypeRamp);
+
+        var page = $$"""
+            <Page {{Ns}}>
+              <ContentControl><ContentControl.Template><ControlTemplate TargetType="ContentControl"><TextBlock FontSize="12"/></ControlTemplate></ContentControl.Template></ContentControl>
+            </Page>
+            """;
+        Assert.DoesNotContain(LintXaml(page), f => f.Rule == Rules.TypeRamp);
+    }
+
+    [Fact]
+    public void TypeRamp_is_a_strict_style_rule_whose_fix_follows_the_theme()
+    {
+        var xaml = $"<Page {Ns}><TextBlock FontSize=\"28\"/></Page>";
+        Assert.DoesNotContain(LintXaml(xaml, profile: Profile.Recommended), f => f.Rule == Rules.TypeRamp);
+        Assert.Single(LintXaml(xaml), f => f.Rule == Rules.TypeRamp);
+
+        Assert.Contains("TitleMedium", Rules.FixFor(Rules.TypeRamp, new ProjectContext(hasUnoThemes: true)));
+        Assert.Contains("BodyTextBlockStyle", Rules.FixFor(Rules.TypeRamp, ProjectContext.Empty));
+        Assert.DoesNotContain("TitleMedium", Rules.FixFor(Rules.TypeRamp, ProjectContext.Empty));
+    }
+
+    // ------------------------------------------------------------ RETEMPLATE
+
+    [Fact]
+    public void Retemplate_flags_templates_copied_for_stock_controls()
+    {
+        var xaml = $$"""
+            <ResourceDictionary {{Ns}} xmlns:ctl="using:Crewline.Controls" xmlns:muxc="using:Microsoft.UI.Xaml.Controls">
+              <Style x:Key="ClPrimaryButton" TargetType="Button">
+                <Setter Property="Template"><Setter.Value>
+                  <ControlTemplate TargetType="Button"><Grid/></ControlTemplate>
+                </Setter.Value></Setter>
+              </Style>
+              <Style x:Key="ClTab" TargetType="utu:TabBarItem"><Setter Property="Template"><Setter.Value>
+                <ControlTemplate TargetType="utu:TabBarItem"><Grid/></ControlTemplate>
+              </Setter.Value></Setter></Style>
+              <Style TargetType="ctl:StatusDot"><Setter Property="Template"><Setter.Value>
+                <ControlTemplate TargetType="ctl:StatusDot"><Grid/></ControlTemplate>
+              </Setter.Value></Setter></Style>
+              <Style x:Key="ClChip" TargetType="ToggleButton"><Setter Property="Template"><Setter.Value>
+                <ControlTemplate><Grid/></ControlTemplate>
+              </Setter.Value></Setter></Style>
+              <Style x:Key="Shell" TargetType="ContentControl"><Setter Property="Template"><Setter.Value>
+                <ControlTemplate TargetType="ContentControl"><ContentPresenter/></ControlTemplate>
+              </Setter.Value></Setter></Style>
+              <ControlTemplate x:Key="Pager" TargetType="muxc:PipsPager"><Grid/></ControlTemplate>
+              <ControlTemplate x:Key="Drawer" TargetType="FlyoutPresenter"><ContentPresenter/></ControlTemplate>
+            </ResourceDictionary>
+            """;
+        var hits = LintXaml(xaml, "Styles/Brand.xaml").Where(f => f.Rule == Rules.Retemplate).Select(f => $"L{f.Line} {f.Message}").ToList();
+        Assert.Equal(
+            [
+                "L4 ControlTemplate copied for Button",
+                "L8 ControlTemplate copied for utu:TabBarItem",
+                "L14 ControlTemplate copied for ToggleButton",
+                "L19 ControlTemplate copied for muxc:PipsPager",
+            ],
+            hits);
+    }
+
+    [Fact]
+    public void Retemplate_is_a_strict_style_rule_whose_fix_follows_the_theme()
+    {
+        var xaml = $"<Page {Ns}><Button><Button.Template><ControlTemplate TargetType=\"Button\"><Grid/></ControlTemplate></Button.Template></Button></Page>";
+        Assert.DoesNotContain(LintXaml(xaml, profile: Profile.Recommended), f => f.Rule == Rules.Retemplate);
+        Assert.Single(LintXaml(xaml), f => f.Rule == Rules.Retemplate);
+
+        Assert.Contains("FilledButtonBackground", Rules.FixFor(Rules.Retemplate, new ProjectContext(hasUnoThemes: true)));
+        Assert.Contains("ButtonBackgroundPointerOver", Rules.FixFor(Rules.Retemplate, ProjectContext.Empty));
+        Assert.DoesNotContain("FilledButton", Rules.FixFor(Rules.Retemplate, ProjectContext.Empty));
+    }
+
     // ------------------------------------------------------------ BINDVALUE
 
     [Fact]

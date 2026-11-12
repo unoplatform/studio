@@ -139,6 +139,31 @@ public class XamlRuleTests
     }
 
     [Fact]
+    public void Hex_flags_literals_in_a_page_s_own_theme_dictionaries()
+    {
+        // Lightweight-styling overrides on a page are tokens only when they point at the palette; a literal in them is a
+        // page-local colour that no palette change reaches.
+        var resources = """
+            <ResourceDictionary.ThemeDictionaries>
+              <ResourceDictionary x:Key="Light">
+                <SolidColorBrush x:Key="ButtonBackground" Color="#1F6FEB"/>
+                <SolidColorBrush x:Key="ButtonForeground" Color="{ThemeResource OnPrimaryColor}"/>
+              </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            """;
+        var page = $"<Page {Ns}>\n<Page.Resources><ResourceDictionary>\n{resources}\n</ResourceDictionary></Page.Resources>\n</Page>";
+        var hit = Assert.Single(LintXaml(page, "WorkOrdersPage.xaml"), f => f.Rule == Rules.Hex);
+        Assert.Equal(5, hit.Line);
+        Assert.Contains("#1F6FEB", hit.Message);
+
+        var control = $"<UserControl {Ns}>\n<UserControl.Resources><ResourceDictionary>\n{resources}\n</ResourceDictionary></UserControl.Resources>\n</UserControl>";
+        Assert.Single(LintXaml(control, "PageHeader.xaml"), f => f.Rule == Rules.Hex);
+
+        var dictionary = $"<ResourceDictionary {Ns}>\n{resources}\n</ResourceDictionary>";
+        Assert.DoesNotContain(LintXaml(dictionary, "Styles/Brand.xaml"), f => f.Rule == Rules.Hex);
+    }
+
+    [Fact]
     public void Hex_ignores_non_color_hash_values_and_resource_refs()
     {
         var findings = LintXaml($"<Page {Ns}><TextBlock Text=\"#hashtag\" Foreground=\"{{ThemeResource PrimaryBrush}}\"/></Page>");
@@ -375,6 +400,53 @@ public class XamlRuleTests
     }
 
     [Fact]
+    public void Card_flags_a_border_style_that_draws_a_card()
+    {
+        // The card look moved into a keyed Border style, so the pages' <Border Style="..."> carry no geometry of their own.
+        var xaml = $$"""
+            <ResourceDictionary {{Ns}}>
+              <Style x:Key="CrewCard" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CrewSurfaceRaisedBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CrewHairlineBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="{StaticResource CrewRadiusMd}" />
+                <Setter Property="Padding" Value="16" />
+              </Style>
+              <Style x:Key="ClSkeletonBar" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource ClSkeletonBrush}" />
+                <Setter Property="CornerRadius" Value="4" />
+              </Style>
+              <Style x:Key="ClHairline" TargetType="Border">
+                <Setter Property="Height" Value="1" />
+                <Setter Property="Background" Value="{ThemeResource ClHairlineBrush}" />
+              </Style>
+              <Style x:Key="TileCard" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+                <Setter Property="CornerRadius" Value="12" />
+              </Style>
+              <Style x:Key="Avatar" TargetType="Border">
+                <Setter Property="Width" Value="40" />
+                <Setter Property="Height" Value="40" />
+                <Setter Property="CornerRadius" Value="20" />
+                <Setter Property="Background" Value="{ThemeResource PrimaryBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource OutlineBrush}" />
+              </Style>
+              <Style x:Key="Flat" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource OutlineBrush}" />
+                <Setter Property="CornerRadius" Value="0" />
+              </Style>
+              <Style x:Key="PanelCard" TargetType="Grid">
+                <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+                <Setter Property="CornerRadius" Value="12" />
+              </Style>
+            </ResourceDictionary>
+            """;
+        var hits = LintXaml(xaml, "Styles/Brand.xaml").Where(f => f.Rule == Rules.Card).Select(f => $"L{f.Line} {f.Message}").ToList();
+        Assert.Equal(["L2 Border style \"CrewCard\" draws a card", "L17 Border style \"TileCard\" draws a card"], hits);
+    }
+
+    [Fact]
     public void Card_and_BackBar_are_off_without_toolkit_or_in_recommended_profile()
     {
         var xaml = $"<Page {Ns}><Border CornerRadius=\"8\" Background=\"Red\"/><Button uen:Navigation.Request=\"-\"/></Page>";
@@ -402,6 +474,51 @@ public class XamlRuleTests
     {
         Assert.Equal(2, LintXaml($"<Page {Ns}><Button uen:Navigation.Request=\"-\"/></Page><Page {Ns}><Button uen:Navigation.Request=\"-\"/></Page>").Count(x => x.Rule == Rules.BackBar));
         Assert.Single(LintXaml($"<Page {Ns}><utu:NavigationBar/></Page><Page {Ns}><Button uen:Navigation.Request=\"-\"/></Page>"), x => x.Rule == Rules.BackBar);
+    }
+
+    [Fact]
+    public void BackBar_flags_a_button_that_shows_a_back_icon()
+    {
+        var xaml = $$"""
+            <Page {{Ns}}>
+              <Grid>
+                <Button Command="{Binding CloseDetail}" AutomationProperties.Name="Back">
+                  <FontIcon Glyph="&#xE72B;" FontSize="18" />
+                </Button>
+                <Button><SymbolIcon Symbol="Back"/></Button>
+                <AppBarButton Icon="Back" Command="{Binding GoBack}"/>
+                <Button><Button.Content><FontIcon Glyph="&#xE0A6;"/></Button.Content></Button>
+                <Button uen:Navigation.Request="-"><SymbolIcon Symbol="Back"/></Button>
+                <Button><FontIcon Glyph="&#xE72A;"/></Button>
+                <SymbolIcon Symbol="Back"/>
+              </Grid>
+            </Page>
+            """;
+        var hits = LintXaml(xaml).Where(f => f.Rule == Rules.BackBar).Select(f => $"L{f.Line} {f.Message}").ToList();
+        Assert.Equal(
+            [
+                "L3 hand-built back button (back icon); no NavigationBar on this page",
+                "L6 hand-built back button (back icon); no NavigationBar on this page",
+                "L7 hand-built back button (back icon); no NavigationBar on this page",
+                "L8 hand-built back button (back icon); no NavigationBar on this page",
+                "L9 hand-built back button; no NavigationBar on this page",
+            ],
+            hits);
+    }
+
+    [Fact]
+    public void BackBar_back_icons_skip_navigation_bar_pages_and_templates()
+    {
+        Assert.DoesNotContain(LintXaml($"<Page {Ns}><utu:NavigationBar/><Button><SymbolIcon Symbol=\"Back\"/></Button></Page>"), f => f.Rule == Rules.BackBar);
+
+        var template = $$"""
+            <ResourceDictionary {{Ns}}>
+              <Style x:Key="HeaderStyle" TargetType="ContentControl"><Setter Property="Template"><Setter.Value>
+                <ControlTemplate TargetType="ContentControl"><Button><SymbolIcon Symbol="Back"/></Button></ControlTemplate>
+              </Setter.Value></Setter></Style>
+            </ResourceDictionary>
+            """;
+        Assert.DoesNotContain(LintXaml(template, "Styles/Header.xaml"), f => f.Rule == Rules.BackBar);
     }
 
     [Theory]

@@ -39,6 +39,7 @@ Look at `<UnoFeatures>` in the app's project file before writing any presentatio
 | Track the selected item or items of a list | `references/selection.md` | `.Selection(state)`, `IState<T>`, `IState<IImmutableList<T>>` |
 | Infinite scroll or page-by-page loading | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PageRequest` |
 | Keep several pages in sync after create/update/delete | `references/messaging.md` | `IMessenger`, `EntityMessage<T>`, `.Observe(messenger, e => e.Id)` |
+| Show a page in any feed state without its real services, for a preview or a test; the `MOCK0001`–`MOCK0003` diagnostics | `references/mocking.md` | `Uno.HotTesting.Reactive`, `{Model}Mock`, `{Vm}Mock.Create`, `FeedMock`, `ListFeedMock` |
 
 ## Critical rules
 
@@ -60,3 +61,4 @@ These come up in nearly every MVUX task. Each reference repeats the ones it need
 - `uno-navigation` for moving between pages and passing entities; MVUX Models are registered with `ViewMap`/`DataViewMap` there.
 - `uno-toolkit` (`references/itemsrepeater-extensions.md`) when a paginated or selectable list is rendered with `ItemsRepeater` instead of `ListView`.
 - `uno-testing` to verify loading, error, and value states of a `FeedView` in a running app.
+- `uno-platform` (`references/previews.md`) to show a mocked page in a Hot Design preview.

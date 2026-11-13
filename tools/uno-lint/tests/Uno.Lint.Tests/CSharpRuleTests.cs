@@ -83,6 +83,35 @@ public class CSharpRuleTests
         Assert.Single(LintCs(page), f => f.Rule == Rules.CodeBehind);
     }
 
+    [Fact]
+    public void CodeBehind_flags_lambda_and_anonymous_event_handlers()
+    {
+        var code = """
+            partial class P : Page {
+              public P() {
+                InitializeComponent();
+                SizeChanged += (_, _) => ForwardWidth();
+                WorkOrderList.Loaded += delegate { AttachScroller(); };
+                _scroller.ViewChanged += (s, e) => LoadMoreIfNearEnd();
+                Loaded += OnReady;
+                RegisterPropertyChangedCallback(TagProperty, (_, _) => Refresh());
+                _count += 1;
+              }
+            }
+            """;
+        var hits = LintCs(code).Where(f => f.Rule == Rules.CodeBehind).Select(f => $"L{f.Line} {f.Message}").ToList();
+        Assert.Equal(["L4 handler lambda on SizeChanged", "L5 handler lambda on WorkOrderList.Loaded", "L6 handler lambda on _scroller.ViewChanged"], hits);
+    }
+
+    [Fact]
+    public void CodeBehind_lambda_handlers_follow_the_app_and_file_exemptions()
+    {
+        var app = "public sealed partial class App : Application { public App() { UnhandledException += (s, e) => Log(e); } }";
+        Assert.DoesNotContain(LintCs(app, "App.xaml.cs"), f => f.Rule == Rules.CodeBehind);
+        Assert.DoesNotContain(LintCs(app, "Shell/MyApp.xaml.cs"), f => f.Rule == Rules.CodeBehind);
+        Assert.DoesNotContain(LintCs("class M { M() { Changed += (s, e) => Save(); } }", "MainModel.cs"), f => f.Rule == Rules.CodeBehind);
+    }
+
     // ------------------------------------------------------------ OVERLAY
 
     [Fact]
@@ -134,6 +163,53 @@ public class CSharpRuleTests
               } }
             """;
         Assert.Single(LintCs(code), f => f.Rule == Rules.Responsive);
+    }
+
+    [Fact]
+    public void Responsive_reads_the_window_size_through_parentheses_coalescing_casts_and_locals()
+    {
+        var code = """
+            partial class P : Page {
+              void Update() {
+                var narrow = (XamlRoot?.Size.Width ?? ActualWidth) < 840;
+                var width = XamlRoot?.Size.Width ?? 0;
+                if (width > 0 && ViewModel?.SetWide is { } setWide) {
+                  setWide.Execute(width >= 840);
+                }
+                var compact = (int)this.XamlRoot.Size.Height <= 480;
+                var count = Items.Count;
+                if (count > 3) { }
+              }
+              void Other() {
+                var width = Items.Count;
+                if (width > 3) { }
+              }
+            }
+            """;
+        var hits = LintCs(code).Where(f => f.Rule == Rules.Responsive).Select(f => $"L{f.Line} {f.Message}").ToList();
+        Assert.Equal(
+            ["L3 breakpoint on XamlRoot.Size.Width in code-behind", "L6 breakpoint on XamlRoot.Size.Width (through width) in code-behind", "L8 breakpoint on XamlRoot.Size.Height in code-behind"],
+            hits);
+    }
+
+    [Fact]
+    public void Responsive_flags_window_size_breakpoints_in_any_class_but_layout_sizes_only_in_code_behind()
+    {
+        // A panel that switches layout on the window width re-implements an AdaptiveTrigger; measuring the space it was
+        // given is what a panel is for.
+        var panel = """
+            public partial class TwoColumnPanel : Panel {
+              public double Breakpoint { get; set; } = 840;
+              private bool IsWide(Size available) {
+                var window = XamlRoot?.Size.Width ?? 0;
+                return window > 0 ? window >= Breakpoint : available.Width >= Breakpoint;
+              }
+              protected override Size MeasureOverride(Size availableSize) => ActualWidth > 600 ? availableSize : default;
+            }
+            """;
+        var hit = Assert.Single(LintCs(panel, "Controls/Controls.cs"), f => f.Rule == Rules.Responsive);
+        Assert.Equal(5, hit.Line);
+        Assert.Equal("breakpoint on XamlRoot.Size.Width (through window)", hit.Message);
     }
 
     // ------------------------------------------------------------ BUILTIN

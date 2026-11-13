@@ -51,8 +51,8 @@ A desktop window is resizable and a tablet is rotated or split, so every page ha
 | Page | Wide | Narrow |
 |---|---|---|
 | Shell | Navigation pane open beside the content | The pane collapses to its menu button, or the shell switches to a bottom `TabBar`. A `NavigationView` does the first by itself when `PaneDisplayMode` stays `Auto` |
-| List with a detail pane beside it | Two columns | The list alone; the selected record's pane covers it, with a close or back action that clears the selection |
-| Dashboard, board or card grid | Columns side by side | One column, stacked in reading order; a board's columns scroll sideways |
+| List with a detail pane beside it | Two columns. While the pane is open, a table-like list beside it switches to its two-line rows, with a `MinWidth` on the name, so the name never breaks one character a line | The list alone; the selected record's pane covers it, with a close or back action that clears the selection |
+| Dashboard, board or card grid | Columns side by side, from the window's opening size up: a side column the design puts beside the main one stays beside it there | One column, stacked in reading order; a board's columns scroll sideways |
 | Form | Two or more columns of fields | One column; Save and Cancel stay on screen |
 | Table-like list | A column per value | Two-line rows: the name, then the secondary values; the least important columns are hidden |
 | Page header and command bar | Title, search and every action in one row | Search on its own row; a record page keeps Back, Save and Discard and moves the rest into a More menu (`MenuFlyout`), on every record page |
@@ -60,6 +60,10 @@ A desktop window is resizable and a tablet is rotated or split, so every page ha
 | Title and figures | One line | A title wraps or trims with an ellipsis; a row of figures wraps to a second row |
 
 Write it in XAML with the page: `{utu:Responsive}` values, a `ResponsiveView` or visual states. Load `uno-toolkit` and read `references/responsive.md` before the first page's XAML; it has the breakpoints and the list-with-pane pattern. No fixed `Width` on a page root, a pane or a card that a 400-wide window cannot hold: use star columns, `MaxWidth` and a `MinWidth` of 320 or less. The same limit holds inside a dialog, a picker page and a form block, and for the item size of a wrapping panel (`utu:FlexPanel.Basis`, `FlexMinWidth`): a field group that asks for 480 pushes a 400-wide form off screen. A flyout and a tab bar are held to it too. Read each narrow screenshot before accepting it: text cut off at an edge, a tab label missing its end or a button out of reach is a defect.
+
+A property that a `VisualState` setter sets is never also bound or set as a local value on the same element. On Uno's desktop targets the binding wins over the setter, so a list whose `ItemsSource` or `Visibility` is both bound and set by a state can show nothing at one width. Give each property one owner: the state, or the binding.
+
+Other languages run about 30 to 40 percent longer than English. Text never gets a fixed `Width`: it wraps or trims inside a star or `MaxWidth` column, and a button next to it gives way rather than pushing it to one character a line. Check every page in each of the app's languages at both widths, not only in the default one.
 
 ## Visual acceptance
 

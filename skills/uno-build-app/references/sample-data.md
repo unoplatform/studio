@@ -29,4 +29,5 @@ public enum DataMode { Sample, Live, Auto }
 
 - **Writes are tested on sample data.** Unit tests cover the sample source over a temporary file: seeding, a change surviving a new instance over the same file, the corrupt-file fallback, reset, cascades.
 - **Never send a write to a live environment the user has not cleared.** Exercise live mode read-only (lists, details) unless the developer has explicitly allowed writes to that environment, and then restore what you changed. A live write path that was not run is reported as unverified, not passed.
+- **Switches that force each state.** In Debug builds the sample source takes switches (in Settings, or from environment variables a check script sets) that make a read fail, a list come back empty, a save be refused and an answer arrive slowly. Every loading, empty, error and refused-save state is then something a check or a screenshot can reach on purpose, not only when the network misbehaves. They stay out of Release.
 - **UI checks start in an explicit mode** (the `uno-testing` skill, `references/without-app-mcp.md`): clear the credential variables for a sample run, and reset the sample file first.

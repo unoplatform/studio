@@ -6,7 +6,7 @@ Defaults for a new app when the brief does not say otherwise. Explicit choices f
 
 - **Presentation**: MVUX. Each page's state is a `<Name>Model` of feeds, states and commands (`IFeed`, `IState`, `IListFeed`), not a view model written by hand with `INotifyPropertyChanged`.
 - **Navigation**: Uno.Extensions Navigation (routes, navigation data, dialog results as needed). Pages change through `RegisterRoutes`, `INavigator` and `uen:Navigation.Request`, and tabs or a sidebar are regions, not a navigator or page stack written by hand. A visibility region keeps each tab's page in the visual tree, so its state survives switching tabs.
-- **Theme**: follow the supplied design. With no design, the Simple theme with the template's Toolkit controls. See [design.md](design.md).
+- **Theme**: follow the supplied design. With no design, the Simple theme with the template's Toolkit controls. See [design.md](design.md), and read it before the first page's XAML (the skill's rule 12): colours, sizes and a typeface from the brief go into the theme, per [design-values.md](design-values.md), never onto a page.
 - **Targets**: Skia Desktop (Windows, Linux, macOS), WebAssembly, Android and iOS, using the template's target structure. Never narrow the targets to the workloads installed on this machine; report the ones you could not build or run instead. When the brief names its targets, those are the targets: pass them to the template with `-platforms` (see *Scaffold*).
 - **Scope**: the client app. Integrate existing backend contracts. Propose missing backend work separately; do not create server projects or provision services unless asked.
 
@@ -33,6 +33,17 @@ dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests un
 - `-server` adds an ASP.NET Core backend project, its OpenAPI document and a generated Kiota client for it. Pass it only when the brief has the app own its backend. Whenever the app calls a web API, with or without `-server`, load the `uno-kiota` skill: the generated client calls `https://localhost:5002` in Release builds until that skill's fixes are applied.
 - `-platforms` sets the targets: `android`, `ios`, `wasm`, `desktop` (Skia Desktop: Windows, macOS, Linux) and `windows` (WinAppSDK). Pass it only when the brief names its targets, for example `-platforms android desktop`. Without it the template uses the default list above. Never use it to drop a target whose workload is missing.
 - Then apply the skill's rule 10 to the generated `App.xaml.cs`: `MainWindow.UseStudio(showHotReloadIndicator: false, launchHotDesignOnStart: false);`, still under `#if DEBUG`.
+- Make the scaffold the app's own now, before it first runs. These three are part of creating the app, not of finishing it:
+  - **Identity**, in the `.csproj`: `ApplicationTitle` is the name as people read it, `Description` one sentence on what the app does, `ApplicationId` and `ApplicationPublisher` the owner's from the brief. When the brief names no owner, keep the template's `com.companyname.<app>` and report it as a placeholder. Changing the id after the app has run on a device installs a second app.
+  - **Icon and splash screen**: `Assets/Icons/icon.svg`, `Assets/Icons/icon_foreground.svg` and `Assets/Splash/splash_screen.svg` hold the Uno Platform logo. Replace all three in place, same file names and canvas sizes, with the supplied artwork, or with a plain mark (the app's initial on its primary colour) that the report lists as a placeholder.
+  - **Unhandled exceptions reach the app's log.** The handler Uno Platform generates writes to the debugger output only. Add this to the `App` constructor:
+
+    ```csharp
+    UnhandledException += (_, e) =>
+        Host?.Services.GetService<ILogger<App>>()?.LogError(e.Exception, "Unhandled exception: {Message}", e.Message);
+    ```
+
+  [finish.md](finish.md) has the detail on each, and the rest of the list to go through before the report.
 
 `-tests unit` also adds a plain `net10.0` target, which is not a platform: it lets the test project reference the app. Keep it. Check what the template generated rather than assuming a target or feature list; the features it sets up are the default stack above.
 
@@ -48,12 +59,13 @@ The template already creates `Presentation/`, `Models/` and `Services/`. One pro
 
 | Concern | Where | Rule |
 |---|---|---|
-| Views | `Presentation/<Name>Page.xaml` | Render state and forward actions. No storage, no network |
+| Views | `Presentation/<Name>Page.xaml` | Render state and forward actions. No storage, no network. No colour, font-size or template literal. Code-behind holds no layout, paging or selection logic |
 | Presentation state | `Presentation/<Name>Model.cs` | MVUX feeds, states and commands. Coordinates services. Load `uno-mvux` and read `references/overview.md` first |
 | Business rules | UI-independent classes, for example under `Models/` | No reference to views or `Microsoft.UI.Xaml` types |
 | Storage, network, platform | Interfaces and implementations under `Services/`, registered in the host builder in `App.xaml.cs` | Injected into models |
 | Routes | `RegisterRoutes` in `App.xaml.cs` | Load `uno-navigation` and read `references/setup.md` and `references/routes.md` |
 | Settings the user changes | A configuration section written through `IWritableOptions<T>` from the `Configuration` feature | See the [writable configuration how-to](https://platform.uno/docs/articles/external/uno.extensions/doc/Learn/Walkthrough/WritableConfiguration.howto.html). A setting does not justify a database |
+| JSON the app reads or writes itself | An injected `ISerializer<T>`, its type registered in the host builder: `.UseSerialization(services => services.AddJsonTypeInfo(AppJsonContext.Default.Settings))`, from a source-generated `JsonSerializerContext` | Not `JsonSerializer` called directly: the reflection-based overloads can fail in a trimmed Release build. See [finish.md](finish.md) |
 
 Add an interface, service or module only for a concrete benefit: isolation for tests, reuse, lifetime, a platform difference. Not for symmetry, and not one interface per class by convention.
 

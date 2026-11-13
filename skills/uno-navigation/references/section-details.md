@@ -32,7 +32,7 @@ No service that hands requests to the section's Model is needed.
 
 ## Go back
 
-`uen:Navigation.Request="-"` on the record's Back button, or `await navigator.NavigateBackAsync(this)` in its Model (after Delete). The Frame pops the record and the list shows again; no fallback route is needed.
+Give the record page a `<utu:NavigationBar Content="…" />` as its top row: the record sits above its list on the section's Frame, so the bar shows its back button and pops the record itself, with nothing bound to `MainCommand` (the `uno-toolkit` skill, `references/navigationbar.md`). `uen:Navigation.Request="-"` does the same from a Cancel button in the content, and `await navigator.NavigateBackAsync(this)` from the record's Model (after Delete). The Frame pops the record and the list shows again; no fallback route is needed.
 
 ## Switch to another section from a section
 
@@ -58,7 +58,7 @@ The section then calls `await shell.NavigateToSectionAsync(this, "Opportunities"
 
 This recipe needs one Frame per section. With a single `Frame` as the shell's content region, a section already visited does not show again unless its item uses `-/` ([uno.extensions#3221](https://github.com/unoplatform/uno.extensions/issues/3221)).
 
-Checked on Uno.Extensions 8.0.0-dev.250 with a NavigationView shell, the section switch included (sidebar selection read through UI Automation). The framework's Commerce test app uses the same shape in its TabBar and NavigationView shells (`DependsOn` details routes, `-` on the details page).
+Checked on Uno.Extensions 8.0.0-dev.250 with a NavigationView shell, the section switch included (sidebar selection read through UI Automation). The framework's Commerce test app uses the same shape in its TabBar and NavigationView shells (`DependsOn` details routes, with a `utu:NavigationBar` and a `-` button on the details page). The NavigationBar's own back button was not part of the 8.0.0-dev.250 check: exercise it once in the running app before repeating the page.
 
 ## Related Skills
 

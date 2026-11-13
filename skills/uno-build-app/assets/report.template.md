@@ -16,6 +16,10 @@
 | <Runtime check, e.g. setting survives relaunch> | <target> | <state> | <tool and result> |
 | Visual: contrast, light and dark | <target> | <state> | <method, lowest ratio> |
 | Visual: screenshots, narrow and wide | <target> | <state> | <files> |
+| Visual: no colour, font-size or template literals in page XAML | any | <state> | <search and hit count; each remaining hit with its reason> |
+| Capability grid: every table against list states, sort, pickers, related lists, create, edit, delete, unsaved-changes guard, keyboard | any | <state> | <the grid from the checkpoint; each empty cell as ruled out, with by whom, or as a gap below> |
+| Release build (new app) | <target> | <state> | <command; whether it was started> |
+| Finish list (new app): identity, icon and splash, leftovers, unhandled failures | any | <state> | <what was set; what is still a placeholder> |
 
 ### Pending runtime checks by feature
 

@@ -18,7 +18,7 @@ Ready-to-use templates for a simple Frame-based navigation shell. Copy, substitu
                     VerticalAlignment="Center"
                     Spacing="16">
             <TextBlock Text="APP_TITLE"
-                       FontSize="32"
+                       Style="{StaticResource HeadlineLarge}"
                        HorizontalAlignment="Center" />
             <!-- REPLACE: One button per navigable page -->
             <Button Content="Go to PAGE2_LABEL"
@@ -46,6 +46,7 @@ Create one `.xaml` + `.xaml.cs` pair per page in the appropriate project folder.
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:uen="using:Uno.Extensions.Navigation.UI"
+      xmlns:utu="using:Uno.Toolkit.UI"
       Background="{ThemeResource BackgroundBrush}">
 
     <Grid>
@@ -54,15 +55,13 @@ Create one `.xaml` + `.xaml.cs` pair per page in the appropriate project folder.
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <!-- Top bar with back button -->
-        <Button Content="Back"
-                uen:Navigation.Request="-"
-                Margin="8" />
+        <!-- Top bar: the title, and a back button the bar shows and handles itself -->
+        <utu:NavigationBar Content="PAGE_LABEL" />
 
         <!-- REPLACE: Page content goes here -->
         <Grid Grid.Row="1">
             <TextBlock Text="PAGE_NAME"
-                       FontSize="24"
+                       Style="{StaticResource TitleLarge}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center" />
         </Grid>
@@ -121,6 +120,6 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 6. Replace `PAGE2_NAME` with the route name of the secondary page (e.g., `Detail`)
 7. Replace `PAGE2_LABEL` with the display label (e.g., `"View Details"`)
 8. Add more `Button` + `Navigation.Request` pairs for additional pages
-9. On secondary pages, always include a back button with `uen:Navigation.Request="-"`
+9. A secondary page's top row is `<utu:NavigationBar Content="PAGE_LABEL" />`, with `PAGE_LABEL` the page's title. The bar shows its back button while the Frame has a back stack and goes back itself: bind nothing to its `MainCommand` for plain back (the `uno-toolkit` skill, `references/navigationbar.md`). `uen:Navigation.Request="-"` is for a Cancel or Close button in the content. Without `Toolkit` in `UnoFeatures`, replace the bar with `<Button Content="Back" uen:Navigation.Request="-" />` and drop `xmlns:utu`
 10. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does. The `""` root and `ShellModel` exist only in an app created with `-shell`; without it (the template default) `ShellModel` fails with CS0246, so drop its `ViewMap` and the `""` `RouteMap` and register `"Main"` and its sibling pages at the top level, as the template does
-11. `BackgroundBrush` is an Uno.Themes key; on Fluent (`-preset blank`) use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`
+11. `BackgroundBrush` is an Uno.Themes key; on Fluent (`-preset blank`) use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`. The `HeadlineLarge` and `TitleLarge` text styles are Uno.Themes keys too; on Fluent use `TitleLargeTextBlockStyle` and `TitleTextBlockStyle`

@@ -4,12 +4,13 @@ When the brief asks for an app that runs offline, on sample data, or before its 
 
 ## The shape
 
-- **One interface for the data the app uses.** `ISalesDataSource` with `LoadAsync`, `SaveOpportunityAsync`, `DeleteOpportunityAsync`... Models and rules see only this interface, through a store or repository that picks the active source.
+- **One interface for the data the app uses.** `IOrdersDataSource` with a paged query per list, a call per total, and the writes: `GetOrdersAsync(query, cursor, ct)`, `GetOrderTotalsAsync(ct)`, `GetOrderAsync(id, ct)`, `SaveOrderAsync`, `DeleteOrderAsync`... Models and rules see only this interface, through a store or repository that picks the active source.
+- **The live source shapes the interface, never the sample one.** A list call takes the search text, filter, sort and a cursor, and returns one page, the total count and the next cursor; a total or a count per group is its own call; a record is fetched by id. That is what the server offers, and the sample source implements the same calls over its seed set (filter, sort, skip and take, sums in memory). An interface with one `LoadAsync` that returns everything forces the live source to read every table whole, which rule 13 of the skill forbids however small the seed set or the test environment is.
 - **Two implementations.** The live one over the generated client (the `uno-kiota` skill); the sample one over a seed set in code with fixed ids, so screens, tests and UI checks can name the same records every run.
 - **The sample source persists.** What the app presents as saved survives a relaunch: write the set as JSON to a file in the app's local data folder (`<LocalAppData>/<App>/sample-data.json`), through a temporary file then a move, so an interrupted write never leaves half a file. Take the path as a constructor parameter so tests use their own file.
 - **A missing or unreadable file is reseeded.** Catch the read failure, keep the bad file aside (`sample-data.json.bad`), log a warning and start from the seed. Never crash on it, never show an empty app.
 - **Reset.** A "Reset sample data" action in Settings rewrites the seed and refreshes the lists. The user can always get back to a known state.
-- **The sample source behaves like the live one.** It assigns ids on create, applies the same cascades (deleting a parent removes its children if the server does) and rejects what the server would reject, so a journey checked on sample data means something.
+- **The sample source behaves like the live one.** It assigns ids on create, applies the same cascades (deleting a parent removes its children if the server does) and rejects what the server would reject, so a journey checked on sample data means something. Its rows carry what the live rows carry, the currency of each amount included.
 
 ## The data mode
 

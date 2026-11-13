@@ -49,6 +49,8 @@ public IListFeed<Contact> Results => Search.SelectPaginatedByCursorAsync(
     });
 ```
 
+Sort is one more input to the same projection: hold the term and the sort (column, direction) in one record state and project that, so a new sort restarts from the first page too. The sort goes to the server (`$orderby` in OData), never to an `OrderBy` over the pages loaded so far.
+
 **Never start `SelectPaginatedByCursorAsync` from a `null` cursor.** It then never calls `getPage` and the list stays empty. `ListFeed<T>.PaginatedByCursorAsync` does load a `null` first cursor; `string.Empty` works in both.
 
 `SelectPaginatedAsync(async (term, request, ct) => ...)` is the index form, with the same `PageRequest` as above. Bind the `TextBox` to `Search` and the `ListView` to `Results`. Verified with Uno.Extensions.Reactive 8.0.0-dev.250: both snippets compile, and the `null` first cursor behavior was run.

@@ -94,7 +94,7 @@ Create one `.xaml` + `.xaml.cs` pair per page in the appropriate project folder.
 
     <Grid>
         <TextBlock Text="PAGE_NAME"
-                   FontSize="24"
+                   Style="{StaticResource TitleLarge}"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" />
     </Grid>
@@ -160,7 +160,7 @@ private static void RegisterRoutes(IViewRegistry views, IRouteRegistry routes)
 7. Replace `PAGE1_ICON_GLYPH`, etc. with glyphs from the Icon Lookup Table above (e.g., `&#xE80F;`)
 8. Add or remove `TabBarItem` entries to match the number of Tab pages in the plan
 9. The `BottomTabBarStyle` goes on the `TabBar` container; `BottomTabBarItemStyle` goes on each `TabBarItem`. Both alias keys exist only in the Material and Simple toolkit themes (`MaterialBottomTabBarItemStyle` is the Material-only alias and resolves to null under Simple: unstyled item on WebAssembly/Skia, an exception only on the Windows head). On Fluent (`-preset blank`) drop both `Style` attributes; on Cupertino use `CupertinoBottomTabBarStyle`/`CupertinoBottomTabBarItemStyle`
-10. `BackgroundBrush` is an Uno.Themes key; on Fluent use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`
+10. `BackgroundBrush` is an Uno.Themes key; on Fluent use `ApplicationPageBackgroundThemeBrush`, on Cupertino `CupertinoSystemBackgroundBrush`. The `TitleLarge` text style is an Uno.Themes key too; on Fluent use `TitleTextBlockStyle`
 11. `ShellModel` is the MVUX name; in an MVVM app use `ShellViewModel`, as the template does. The `""` root and `ShellModel` exist only in an app created with `-shell`; without it (the template default) `ShellModel` fails with CS0246, so drop its `ViewMap` and the `""` `RouteMap` and register `"Main"` at the top level, as the template does
 
 ## Route Registration Rules

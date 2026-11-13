@@ -4,7 +4,9 @@
   Checks that the eval cases under evals/ are well formed, without running them.
 
 .DESCRIPTION
-  Makes no model calls. Each case has a non-empty prompt that no other case repeats, and each `llm` grader judges
+  Makes no model calls. Each suite's folder name is safe to pass as an argument, each case is tagged with its suite
+  (Invoke-Evals.ps1 selects a suite's cases by that tag, so an untagged case would never run), and each case has a
+  non-empty prompt that no other case repeats. Each `llm` grader judges
   exactly one criterion: a judge asked whether several things all hold gives a different verdict from run to run when
   one of them is missed, so each criterion gets its own grader (and its own score). The checks are one `PASS if`, no
   list, and no `(and ` or `; ` in the PASS condition: a tripwire for the two phrasings a second requirement has hidden
@@ -26,9 +28,12 @@ function Read-Frontmatter([string] $path) {
 
 $prompts = @{}
 foreach ($suite in Get-EvalSuites) {
+    if ($suite -cnotmatch $EvalSuiteNamePattern) { $errors.Add("evals/${suite}: name suite folders with lowercase letters, digits and hyphens") }
     foreach ($case in Get-EvalCases $suite) {
         $prompt = Read-Frontmatter (Join-Path $EvalRoot "$case/prompt.md")
         if (-not $prompt) { $errors.Add("$case/prompt.md: no frontmatter"); continue }
+        $tags = [regex]::Match($prompt.Front, '(?m)^tags:\s*\[([^\]]*)\]').Groups[1].Value -split ',' | ForEach-Object { $_.Trim().Trim('"', "'") }
+        if ($suite -cnotin $tags) { $errors.Add("$case/prompt.md: its tags must include $suite, the tag Invoke-Evals.ps1 selects the suite's cases by") }
         if (-not $prompt.Body) { $errors.Add("$case/prompt.md: the prompt is empty") }
         else {
             $key = ($prompt.Body -replace '\s+', ' ').ToLowerInvariant()

@@ -39,6 +39,7 @@ Verify behaviour on a Debug build with the App MCP. Use a Release build only whe
 | Reading the snapshot text format, `detail`/`includeHidden`/`elementRef`, element-finding strategies, recycled list handles | `references/VISUAL-TREE-GUIDE.md` |
 | `uno_health` problems, missing app tools, licensing tiers and the Community fallbacks | `references/availability.md` |
 | Release builds, CI, or no App MCP: what Windows UI Automation and Android `uiautomator` expose, finding, acting and asserting through them | `references/without-app-mcp.md` |
+| A pass over every screen of a desktop app, per language and window width: text cut off, overlaps, unnamed controls, resource keys on screen, a PNG and the strings of each screen (`assets/PageCheck.cs`, `assets/page-check.cs`) | `references/page-check.md` |
 
 ## Critical rules
 

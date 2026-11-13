@@ -34,6 +34,8 @@ Use the target framework monikers the project actually declares; the table shows
 
 A screenshot proves rendering, not behaviour. Take layout screenshots at the size the window opens at (read it from the window after launch, not a size the script sets) and at the narrowest width the app supports. A persistence check changes the value, closes the app, relaunches it, and asserts the value came back. Recreating a model over the same in-memory data is not a persistence check.
 
+Before the report, run the page check on the desktop target (the `uno-testing` skill, `references/page-check.md`) in every language the app ships, at the size the window opens at and at about 400 wide (`--widths open,400`), on sample data. It measures every screen for text cut off, overlaps, controls with no name and resource keys on screen. Its findings go in the report: each one fixed, or listed with the reason it stays.
+
 ## Without the Uno App MCP
 
 Use available browser or desktop automation, or the project's runtime tests, when they can drive the real UI and capture evidence. For Skia-rendered WebAssembly, DOM access alone does not expose the rendered controls; use screenshots and supported interactions. Do not launch an app solely for inspection when no available tool can observe or drive it. For checks that remain unavailable:

@@ -1,5 +1,7 @@
 # Uno Toolkit CardContentControl
 
+**Contents:** [Critical Rules](#critical-rules) · [Key Principles (Stable)](#key-principles-stable) · [Critical: Content Binding in DataTemplates](#critical-content-binding-in-datatemplates) · [Sizing — `CardContentControl` does NOT stretch by default](#sizing--cardcontentcontrol-does-not-stretch-by-default) · [Style Variants](#style-variants) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Critical Rules
 
 - **NEVER use `Card`** — always use `CardContentControl`. The `Card` control has rigid predefined slots (HeaderContent, SubHeaderContent, AvatarContent, etc.) that constrain layout. `CardContentControl` gives full layout freedom via `ContentTemplate`.

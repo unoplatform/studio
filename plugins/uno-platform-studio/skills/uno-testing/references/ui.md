@@ -4,6 +4,8 @@
 
 This reference covers launching apps, inspecting UI elements, simulating user interactions, and validating visual output with the Uno App MCP tools.
 
+**Contents:** [Overview](#overview) · [Prerequisites](#prerequisites) · [Quick Start Workflow](#quick-start-workflow) · [Available MCP Tools](#available-mcp-tools) · [Detailed Tool Usage](#detailed-tool-usage) · [Testing Patterns](#testing-patterns) · [Best Practices](#best-practices) · [Troubleshooting](#troubleshooting) · [References](#references)
+
 ## Overview
 
 The Uno App MCP server exposes tools that let an agent:

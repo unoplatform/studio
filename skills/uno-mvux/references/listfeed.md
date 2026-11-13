@@ -1,5 +1,7 @@
 # MVUX ListFeed
 
+**Contents:** [Key Principles (Stable)](#key-principles-stable) · [Key Equality Requirement (Critical)](#key-equality-requirement-critical) · [Learn ListFeed Creation Methods](#learn-listfeed-creation-methods) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Key Principles (Stable)
 
 - `IListFeed<T>` is **read-only** — use `IListState<T>` for add/remove/update

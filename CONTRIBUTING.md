@@ -57,9 +57,8 @@ CI runs these on every pull request to `main` and `release/stable/**`. Run them 
 | `claude plugin validate . --strict` and `claude plugin validate plugins/uno-platform-studio --strict` | The marketplaces, manifests and skill frontmatter, as Claude Code parses them. | Claude Code |
 | `agentskills validate plugins/uno-platform-studio/skills/<skill>` | Each skill against the [Agent Skills spec](https://agentskills.io/specification). | `pipx install skills-ref` |
 | `pwsh .github/scripts/Test-EvalCases.ps1` | The eval cases under `evals/` are well formed: one prompt per case, no prompt repeated, one criterion per LLM grader. | — |
-| `pwsh .github/scripts/Test-EvalReports.ps1` | Each eval suite's committed report in `evals/reports/` ran against the current skills and cases, with the gate's models, and passes. | — |
 
-The eval reports go stale whenever their inputs change: a skill or an eval case changes its own suite's report, and `uno-platform/SKILL.md` or `uno-build-app/SKILL.md` changes every suite's report. CI holds no model credentials, so it can't refresh them. Run `pwsh .github/scripts/Update-EvalReport.ps1`, which uses your Claude Code credentials and costs money (a full pass is about $20), then commit `evals/reports/` with the change. If you can't run it, say so in the pull request. [`evals/README.md`](evals/README.md) explains the cases, the graders and the reports.
+CI checks that the eval cases are well formed but doesn't run them: it holds no model credentials. When you change a skill or an eval case, run that skill's suite locally if you can, and say in the pull request whether you did. [`evals/README.md`](evals/README.md) explains the cases, the graders and how to run them.
 
 ## Commits and pull requests
 

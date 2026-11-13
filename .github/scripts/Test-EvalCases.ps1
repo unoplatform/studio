@@ -12,7 +12,7 @@
 #>
 
 $ErrorActionPreference = 'Stop'
-. "$PSScriptRoot/EvalReports.Common.ps1"
+. "$PSScriptRoot/Evals.Common.ps1"
 
 $errors = [System.Collections.Generic.List[string]]::new()
 

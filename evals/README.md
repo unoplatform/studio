@@ -16,7 +16,7 @@ evals/
   <skill>/<case>/        one prompt per case, grouped by the skill it targets
     prompt.md            frontmatter (runs, tags, tools) + the developer's prompt
     graders/
-      loads-skill.md     the skill loaded (with-plugin arm only; scored in the reports, which run that arm alone)
+      loads-skill.md     the skill loaded (with-plugin arm only)
       *.md               regex graders on the reply: required APIs, and anti-patterns that must not appear
       rubric-*.md        LLM judge, one criterion per file: one PASS condition and the FAIL conditions it rules out
   routing/<case>/        prompts outside Uno that must load no Uno skill: MAUI, ASP.NET Core, and near misses on a
@@ -60,34 +60,9 @@ claude plugin eval . --tag routing --ablation none --trust-plugin --no-publish  
 The report gives each case's score with and without the plugin and the difference between them. A skill whose cases
 show no lift on a new model is a candidate to trim.
 
-## Reports and the CI gate
+## CI
 
-CI holds no model credentials, so it doesn't run the evals. Instead, a change that touches a suite carries a fresh
-report of it: `evals/reports/<suite>.json`, written by a local run.
-
-```sh
-pwsh .github/scripts/Update-EvalReport.ps1                    # every suite whose report is stale or missing
-pwsh .github/scripts/Update-EvalReport.ps1 -Suite uno-mvux    # one suite
-```
-
-It runs the suite with the plugin only (`--ablation none`, so the "skill loaded" graders count), with Sonnet 5.5 as
-agent and judge. It records each case's score, its run count, and each grader that failed with how many runs it
-failed in (`"info-plist": "3/3"`), so a reviewer sees why a case lost points without rerunning it. It also records a
-hash of the files the suite depends on: its cases, its skill, the `SKILL.md` of `uno-platform` and `uno-build-app`,
-and the plugin's hooks. Agents load `uno-platform` first and follow its routing table, which sends feature work to
-`uno-build-app` before any domain skill, so an edit to either file makes every skill suite's report stale: a full
-rerun, about $20 and 30 minutes. `routing` depends on the hooks and the frontmatter of every `SKILL.md` only: an agent
-picks a skill from its name and description alone, and a routing case passes only when no skill loads. Commit the
-reports with the change. With no `-Suite`, the script reruns every report the gate would reject for its files or
-models, so a run that stops halfway resumes the same way. The full result of each run, with every judge's evidence,
-stays in the git-ignored `evals/results/` folder.
-
-`Test-EvalReports.ps1`, in the required "Validate plugin and skills" check, fails the build when a report is missing,
-was run against different files or with another agent or judge model, skipped a case or runs, or has a case scoring
-below 0.8 (the mean over its runs of the fraction of graders passed). The models are set once, in
-`EvalReports.Common.ps1`, so changing them fails every report until the suites are rerun. It makes no model calls, so
-it also runs on fork PRs. It checks every report on every build, so a report left stale on `main` fails later PRs
-until someone refreshes it.
-
-A case that fails because a new model answers differently, not because of a change here, fails the next report of its
-suite too: fix the skill or the case, or change the case's expectations in the same PR.
+CI doesn't run the evals: it holds no model credentials. `Test-EvalCases.ps1` checks only that the cases are well
+formed. When you change a skill or a case, run that skill's suite locally (see [Run](#run)) and say in the pull request
+whether you did. The full result of each run, with every judge's evidence, stays in the git-ignored
+`evals/results/` folder.

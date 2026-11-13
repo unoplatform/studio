@@ -37,6 +37,23 @@ GET systemforms?$select=name,formxml&$filter=objecttypecode eq 'contact' and typ
 - **A custom table's main form can be nearly empty**: one held only the name and the owner. Then the field list is the table's own editable columns: `Attributes?$filter=IsCustomAttribute eq true and IsValidForUpdate eq true`, the required ones first.
 - **Add the form's columns to the client's scope** and regenerate (`references/odata.md`) when the generated model lacks one. Don't drop the field, and don't edit the generated model.
 - **A field whose attribute is a `Lookup` or `Customer` is a picker over the target table**, with server search (`references/odata-calling.md`): the `uno-navigation` skill's picker page. A `Picklist` is a `ComboBox` over the snapshot's options. Reading and writing the lookup are below.
+- **A lookup the maker filters by related rows says so in its control.** The `control`'s `parameters` then carry `FilterRelationshipName`, a many-to-one relationship of the picked table whose `ReferencingAttribute` is the column to filter on; `DependentAttributeType`, the table that column points at; and `DependentAttributeName`, where the row to match comes from: `account.<prefix>_country` is another lookup on the form, and when the type is the form's own table it is the record itself. `account`'s `primarycontactid` has `contact_customer_accounts`, `contact.parentcustomerid` and `account`: its picker lists the contacts whose `_parentcustomerid_value` is this account. The snapshot records each such lookup's filter column and the field it follows. The app's picker for that field adds `_<column>_value eq <id>` to its `$filter` and lists only the chosen parent's rows, or every row while the parent is empty; choosing or clearing the parent empties the field (the `uno-navigation` skill's picker page, *A picker that takes a filter*).
+
+## A list's columns, order and search come from the table's views
+
+The columns a Dataverse user sees in a table's list, the order it opens in and what its search box searches are in the table's views:
+
+```http
+GET savedqueries?$select=name,querytype,isdefault,isquickfindquery,layoutxml,fetchxml&$filter=returnedtypecode eq 'contact' and statecode eq 0 and (querytype eq 0 or querytype eq 4 or querytype eq 64)
+```
+
+- **`querytype` says what a view is for.** 0 is a public view, and the one with `isdefault` true is the list the user opens on. 4 is the quick find view, whose filter names the columns the search box searches. 64 is the lookup view, the columns a picker over this table shows.
+- **`layoutxml` has the columns, in order**: the `name` of each `grid/row/cell`. A name with a dot (`accountprimarycontactidcontactcontactid.emailaddress1` in `account`'s) is a column of a related table: the `link-entity` with that `alias` in `fetchxml` names the table and, in `to`, the lookup that leads to it.
+- **`fetchxml` has the order and the searched columns.** Each `entity/order` is a sort column (`attribute`, with `descending="true"` when it is). In the quick find view, the `condition`s of the `filter` marked `isquickfindfields="1"` are the columns searched.
+- **Snapshot it with the same script**, beside the forms: per table, the default view's columns and order, the quick find columns and the lookup view's columns. The app's list shows those columns, the table's primary name column first because it is the row's title in a narrow list, and opens in that order. Its search sends `contains()` over the quick find columns that hold text, and a picker shows the lookup view's columns. A table with no usable view shows its name, then its text and date columns, and searches the name; say so in the report.
+- **A list reads the active rows**: `statecode eq 0` in the `$filter` of every list and picker, unless the list is of closed rows.
+- **`contains()` reads `%`, `_` and `[` as wildcards.** After doubling quotes, put each in brackets (`[%]`, `[_]`, `[[]`), so the text typed matches only itself.
+- **End every `$orderby` with the key** (`fullname asc,contactid`): rows that tie on the sort column otherwise repeat or go missing between pages.
 
 ## Labels
 
@@ -71,7 +88,7 @@ A row's status is a pair: `statecode` (Active, Completed, Canceled) and `statusc
 GET EntityDefinitions(LogicalName='task')/Attributes(LogicalName='statuscode')/Microsoft.Dynamics.CRM.StatusAttributeMetadata?$select=LogicalName&$expand=OptionSet($select=Options)
 ```
 
-Each option has a `Value` and its `State`: a task's Completed is 5 in state 1, Canceled 6 in state 2. A custom table's reasons are custom values such as 100000000. To close a row, PATCH both columns.
+Each option has a `Value` and its `State`: a task's Completed is 5 in state 1, Canceled 6 in state 2. A custom table's reasons are custom values such as 100000000. To close a row, PATCH both columns; to reopen it, as an Undo does, PATCH the pair it had before.
 
 ## Keys and query options
 

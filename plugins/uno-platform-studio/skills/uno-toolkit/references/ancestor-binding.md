@@ -11,7 +11,7 @@
 
 ## Pick the escape by template scope
 
-When the page's `DataContext` is its model (the usual MVUX and Uno Navigation setup), `AncestorType=Page` reaches it from any template.
+When the page's `DataContext` is its model (the usual MVUX and Uno Navigation setup), `AncestorType=Page` reaches it from any template on the page. A `Flyout` is not under the `Page` (last row).
 
 | Inside | Use | Why |
 |---|---|---|
@@ -20,6 +20,7 @@ When the page's `DataContext` is its model (the usual MVUX and Uno Navigation se
 | `ItemsRepeater` item template | `{utu:AncestorBinding AncestorType=Page, Path=DataContext.X}` | `ItemsRepeater` derives from `FrameworkElement`, not `ItemsControl`: `ItemsControlBinding` walks past it |
 | `ContentControl.ContentTemplate` or another nested template | `{utu:AncestorBinding AncestorType=Page, Path=DataContext.X}` | Reaches the page model directly |
 | The wrapping control's `Content` | `{utu:AncestorBinding AncestorType=ContentControl, Path=Content.X}` | When `Content` holds the item |
+| A `ListView` in a `FeedView` `ValueTemplate` inside a `Flyout` (the list itself, e.g. `utu:CommandExtensions.Command`) | `{Binding Parent.X}` | The flyout has no `Page` ancestor; the list's `DataContext` is the `FeedViewState`, whose `Parent` is the `FeedView`'s `DataContext` |
 
 ## Common Pitfalls
 

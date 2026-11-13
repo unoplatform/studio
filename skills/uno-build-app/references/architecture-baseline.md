@@ -16,9 +16,9 @@ Confirmed mutations are the baseline. Use optimistic interaction only when rollb
 
 Client development is the default scope. Integrate existing contracts; propose missing backend work separately; never invent production endpoints or quietly turn a networked requirement into a local-only feature.
 
-Development data implementations are fine for progress and tests when isolated and labelled. A fake login, simulated purchase, no-op action or seed-only dataset never satisfies a required real integration. Keep fixtures out of Release output.
+Development data implementations are fine for progress and tests when isolated and labelled. A sample-data mode the brief asks for is a second implementation of the same service interface: [sample-data.md](sample-data.md). A fake login, simulated purchase, no-op action or seed-only dataset never satisfies a required real integration. Keep fixtures out of Release output.
 
-For networked features apply timeouts and cancellation, useful error mapping, and retry that respects operation semantics; never blindly replay a possibly-completed non-idempotent action. Page where scale requires it. Separate transport from UI and domain types when their meanings differ, without mechanical duplicate types.
+For networked features apply timeouts and cancellation, useful error mapping, and retry that respects operation semantics; never blindly replay a possibly-completed non-idempotent action. A list over a server table is paged, searched and sorted by the server, and its counts and totals are server requests, whatever the row count is today: the app is built for the table, not for the test environment (rule 13 of the skill). Separate transport from UI and domain types when their meanings differ, without mechanical duplicate types.
 
 Keep a short list of incomplete journeys and dependencies. Report missing implementation separately from missing verification.
 
@@ -52,7 +52,7 @@ Put platform operations behind services with useful denied or unavailable states
 
 Establish a small visual system before multiplying pages: type hierarchy, spacing, colour roles, reusable controls with their interaction states, responsive behaviour. Derive it from the supplied design or the fallback stack, using the existing theme and Toolkit skills rather than a new catalogue.
 
-Include loading, empty, error, pending, disabled and success states where relevant. Check keyboard operation, semantic names and states, focus order, contrast, text scaling, screen-reader semantics and reduced motion where motion exists. Claim only what the available tools checked.
+Include loading, empty, error, pending, disabled and success states where relevant. Check keyboard operation, semantic names and states, focus order, contrast, text scaling, screen-reader semantics ([accessibility.md](accessibility.md)) and reduced motion where motion exists. Claim only what the available tools checked.
 
 Preserve design intent while making routine usability corrections; explain material departures; ask only when the conflict changes a consequential requirement or the developer's explicit intent.
 
@@ -66,7 +66,7 @@ Exercise failure paths: invalid input, empty data, storage or network failure, i
 
 Use representative data sizes; look at startup, list virtualisation, expensive UI work, images and subscription lifetime where relevant; measure real risks with existing tooling. No universal budgets, no benchmarking product.
 
-Use the existing logging approach with actionable diagnostics and no automatic telemetry. Keep fixture switches out of Release.
+Use the existing logging approach with actionable diagnostics and no automatic telemetry. In a new app, unhandled exceptions reach that log ([finish.md](finish.md)). Keep fixture switches out of Release.
 
 For a new app include a Release build on available toolchains, checking target-specific trimming, AOT, resources or packaging where the build uses them. Record what could not run. No signing, store submission or deployment unless requested. Never disable a requested platform or build property to make a failing check disappear.
 

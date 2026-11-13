@@ -8,6 +8,7 @@
 - `NavigateBackWithResultAsync(this, data: value)` returns data to the calling page (`sender` comes first)
 - Routes must be configured in `RegisterRoutes` to support data types
 - `Navigation.Data` attached property enables data passing in XAML
+- A picker page that returns the row chosen (`GetDataAsync<TResult>` with `Qualifiers.Dialog`): `references/dialogs.md`
 
 ## Docs, for what this page does not cover
 

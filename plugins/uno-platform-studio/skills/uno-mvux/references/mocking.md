@@ -14,7 +14,7 @@ Only the members you set are replaced. A derived feed computes over the mocked i
 
 Add `Uno.HotTesting.Reactive` to the project that holds the models, or to a test or preview project that references it. Both work.
 
-- **Use version 7.4.0-dev.103 or later** (8.0.0-dev.96 or later on the 8.0 line). Earlier versions lack the generator or some of its fixes, and fail quietly: some generate nothing, others leave a list state, a state read by its page, or a model that observes a messenger without a working mock. Each version brings the `Uno.Extensions.Reactive` of the same version with it, so in an app whose Uno.Extensions version qualifies, use that same version: there is nothing to look up.
+- **Use version 7.4.1 or later.** Earlier builds lack the generator or some of its fixes, and fail quietly. Each version brings the `Uno.Extensions.Reactive` of the same version with it, so in an app whose Uno.Extensions version is 7.4.1 or later, use that same version.
 - **Check the app's Uno.Extensions version first** (`dotnet list package --include-transitive`). In an app on an earlier version, such as the 7.3 that Uno.Sdk 6.7 brings, the package lifts `Uno.Extensions.Reactive` and `Uno.Extensions.Core` to its own version while every other Uno.Extensions package stays behind. That mixed install can build and run, but Uno does not release those versions together. Tell the user before adding it, and offer the fallback under Critical Rules instead.
 
 ### Step 2: Write against the generated names

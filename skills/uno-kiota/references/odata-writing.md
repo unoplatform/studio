@@ -5,9 +5,12 @@ Create, update and delete through the client from `references/odata.md`. Dataver
 ```csharp
 var created = await client.Accounts.PostAsync(new Account { Name = name },
     r => r.Headers.Add("Prefer", "return=representation"), ct);
-await client.AccountsWithAccountid(id).PatchAsync(changes, r => r.Headers.Add("If-Match", "*"), ct);
+var etag = (string)account.AdditionalData["@odata.etag"]; // read with the row the form shows
+await client.AccountsWithAccountid(id).PatchAsync(changes, r => r.Headers.Add("If-Match", etag), ct);
 await client.AccountsWithAccountid(id).DeleteAsync(cancellationToken: ct);
 ```
+
+- **A record form's update sends the etag of the row it loaded**, so a change someone else saved since is refused with 412 instead of overwritten: say so and offer to reload. Keep the etag with the loaded record, and take the new one from the read after the save. `If-Match: *` is for a write made without the row in hand, such as a status change from a list (*Concurrency and upserts*, below).
 
 - **A create returns `null` without `Prefer: return=representation`.** The service answers 204 with no body. Send the header whenever you need the new entity or its key.
 - **An update returns nothing.** The generated `PatchAsync` is a `Task`, so `return=representation` on it is read by no one. Read the row again with `GetAsync` when the form shows values the server computes.

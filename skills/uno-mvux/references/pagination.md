@@ -53,6 +53,22 @@ public IListFeed<Contact> Results => Search.SelectPaginatedByCursorAsync(
 
 Sort is one more input to the same projection: hold the term and the sort (column, direction) in one record state and project that, so a new sort restarts from the first page too. The sort goes to the server (`$orderby` in OData), never to an `OrderBy` over the pages loaded so far.
 
+**Typing waits about 300 ms before it becomes a request.** Put a feed between the state and the list. A newer term cancels the token, so the delay is the debounce, and clearing the box is not delayed. `Results` then projects from `Term`, not from `Search`:
+
+```csharp
+private IFeed<string> Term => Search.SelectAsync(async (term, ct) =>
+{
+    if (!string.IsNullOrEmpty(term))
+    {
+        await Task.Delay(300, ct);
+    }
+
+    return term;
+});
+```
+
+**The search text is matched as typed.** The service doubles the quotes for the filter's string literal and escapes the characters the backend reads as wildcards, so a search for `50%` finds the rows that contain `50%`. **Every sort ends with the key** (`$orderby=name asc,id`): rows that tie on the sort column otherwise repeat or go missing between pages. Dataverse's wildcards and its active-rows filter are in the `uno-kiota` skill, `references/dataverse.md`.
+
 **Never start `SelectPaginatedByCursorAsync` from a `null` cursor.** It then never calls `getPage` and the list stays empty. `ListFeed<T>.PaginatedByCursorAsync` does load a `null` first cursor; `string.Empty` works in both.
 
 `SelectPaginatedAsync(async (term, request, ct) => ...)` is the index form, with the same `PageRequest` as above. Bind the `TextBox` to `Search` and the `ListView` to `Results`. Verified with Uno.Extensions.Reactive 8.0.0-dev.250: both snippets compile, and the `null` first cursor behavior was run.

@@ -96,6 +96,50 @@ public async ValueTask ClearAccount(CancellationToken ct) =>
 
 The list is a paginated MVUX list feed with server-side search, debounced (`uno-mvux` skill, `references/pagination.md`), inside a `FeedView` with loading, empty and error templates.
 
+### A picker that takes a filter
+
+When the backend filters one lookup by another field (a province by the country chosen, a contact by the record's account), the form sends the picker a filter as navigation data: a column of the picked table and the value it must have. The value is not named `Id`, which MVUX would read as an entity key.
+
+```csharp
+public sealed record PickFilter(string? Column, Guid Value)
+{
+    public static readonly PickFilter None = new(null, Guid.Empty);
+
+    // No parent chosen yet: every row is listed.
+    public static PickFilter On(string column, Guid? id) =>
+        id is { } value && value != Guid.Empty ? new(column, value) : None;
+}
+
+new ResultDataViewMap<ProvincePickerPage, ProvincePickerModel, ProvincePick>(Data: new DataMap<PickFilter>())
+```
+
+The route is still resolved from the result type. The picker's model takes the filter in its constructor, `ProvincePickerModel(IProvincePickerService service, PickFilter filter)`, and hands it to every page request beside the search term; the service adds `Column eq Value` to the request's filter when `Column` is set. Every form that opens this picker passes a filter, `PickFilter.None` when it has none.
+
+```csharp
+public async ValueTask PickProvince(CancellationToken ct)
+{
+    var filter = PickFilter.On("CountryId", (await Draft.Value(ct))?.CountryId);
+    if (await _navigator.GetDataAsync<ProvincePick>(this, qualifier: Qualifiers.Dialog, data: filter, cancellation: ct) is { } pick)
+    {
+        await Draft.UpdateAsync(d => d is null ? d : d with { ProvinceId = pick.Id, ProvinceName = pick.Name }, ct);
+    }
+}
+```
+
+**Choosing or clearing the parent empties every lookup that depends on it**, in the same update, because the row it held may belong to the old parent. `PickCountry` keeps the province only when the same country is picked again, and `ClearCountry` clears both:
+
+```csharp
+await Draft.UpdateAsync(d => d is null ? d : d with
+{
+    CountryId = pick.Id,
+    CountryName = pick.Name,
+    ProvinceId = d.CountryId == pick.Id ? d.ProvinceId : null,
+    ProvinceName = d.CountryId == pick.Id ? d.ProvinceName : null,
+}, ct);
+```
+
+Where Dataverse says which lookup filters which: the `uno-kiota` skill, `references/dataverse.md`.
+
 ## Related Skills
 
 - `references/qualifiers.md` — Qualifier prefixes

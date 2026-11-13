@@ -32,7 +32,7 @@ Uno.Extensions.Navigation is route-based: pages and ViewModels are registered on
 | Navigate from a Button, list item, or any control without code-behind | `references/xaml.md` (+ `references/shell-frame-template.md`) | `uen:Navigation.Request`, `-` (back), `-/Route`, `./Region` |
 | Navigate from a ViewModel, code-behind, or service | `references/code.md` | `INavigator`, `this.Navigator()`, `NavigateViewModelAsync<T>(this)`, `NavigateRouteAsync(this, "Route")`, `NavigateBackAsync(this)`, `*ForResultAsync` |
 | Pass an entity or ID to a details page, return a result | `references/data.md` | `DataViewMap`, `NavigateDataAsync`, `uen:Navigation.Data`, `NavigateBackWithResultAsync` |
-| Alert, confirmation, modal, or flyout; a picker page that returns the row chosen (lookup field) | `references/dialogs.md` | `ShowMessageDialogAsync`, `!Route` or `Qualifiers.Dialog`, `ContentDialog` vs `Page`, `GetDataAsync<TResult>` |
+| Alert, confirmation, modal, or flyout; a picker page that returns the row chosen (lookup field), filtered by another field or not | `references/dialogs.md` | `ShowMessageDialogAsync`, `!Route` or `Qualifiers.Dialog`, `ContentDialog` vs `Page`, `GetDataAsync<TResult>`, `DataMap<T>` |
 | Clear the back stack (after login), drop the current page, open dialogs by prefix | `references/qualifiers.md` | `-/Route`, `-Route`, `!Route`, `Qualifiers.ClearBackStack`, `Qualifiers.Dialog` |
 | Link a navigation control to a content area, nested regions | `references/regions.md` | `uen:Region.Attached`, `uen:Region.Name`, `uen:Region.Navigator` |
 | Bottom-tab shell | `references/tabbar.md` (+ `references/shell-tabbar-template.md`) | `utu:TabBar`, `TabBarItem` + `Region.Name`, `BottomTabBarStyle`, `BottomTabBarItemStyle` |

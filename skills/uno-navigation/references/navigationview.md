@@ -34,6 +34,7 @@ For complete, compilable shell XAML with parameterized placeholders, see:
 - Page routes are nested under the `"Main"` route so only the content area updates, not the entire page
 - A details or record page opened from a section is a sibling of that section under `"Main"`, with `DependsOn: "Section"`, never nested under it: see `references/section-details.md`
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
+- A control that belongs to every page (a notifications bell, a global search, the data-mode label) is written once in `SHELL_PAGE_NAME.xaml`, bound to the shell page's model: in `NavigationView.Header`, which stays above the content in every pane mode, or in `NavigationView.PaneFooter`, which hides with the pane when it collapses to its menu button. Never copy it into each page
 
 ## Docs, for what this page does not cover
 

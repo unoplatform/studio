@@ -37,9 +37,9 @@ Look at `<UnoFeatures>` in the app's project file before writing any presentatio
 | Show a feed in XAML with loading, error, and empty UI | `references/feedview.md` | `mvux:FeedView`, `{Binding Data}`, `Refresh` |
 | Two-way bind user input, hold editable state | `references/state-basics.md` | `IState<T>`, `State.Value`, `UpdateAsync`, `ForEach` |
 | Add, remove, or edit items in a list | `references/liststate.md` | `IListState<T>`, `AddAsync`, `RemoveAllAsync`, `UpdateAllAsync`, `UpdateItemAsync` |
-| Bind a Button or other control to a Model method, including from a list item template | `references/commands.md` | public methods → `IAsyncCommand`, `[ImplicitCommands]`, `utu:AncestorBinding` |
+| Bind a Button or other control to a Model method, including from a list item template; a one-click change with Undo | `references/commands.md` | public methods → `IAsyncCommand`, `[ImplicitCommands]`, `utu:AncestorBinding`, `State<T>.Empty` |
 | Track the selected item or items of a list | `references/selection.md` | `.Selection(state)`, `IState<T>`, `IState<IImmutableList<T>>` |
-| Any list over server or API data: infinite scroll, next links, search over remote data | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PaginatedByCursorAsync`, `SelectPaginatedByCursorAsync`, `PageResult` |
+| Any list over server or API data: infinite scroll, next links, search over remote data with a debounce, a stable sort | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PaginatedByCursorAsync`, `SelectPaginatedByCursorAsync`, `PageResult` |
 | Keep several pages in sync after create/update/delete | `references/messaging.md` | `IMessenger`, `EntityMessage<T>`, `.Observe(messenger, e => e.Id)` |
 | Validate a form or draft, show field errors, block an invalid Save | `references/validation.md` | `UseValidation`, `AbstractValidator<T>`, `State.Validate`, command `.Validation` |
 

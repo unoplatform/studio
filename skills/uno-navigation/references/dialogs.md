@@ -1,5 +1,7 @@
 # Uno Navigation Dialogs
 
+**Contents:** [Key Principles (Stable)](#key-principles-stable) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [A picker page that returns a row](#a-picker-page-that-returns-a-row) · [Related Skills](#related-skills)
+
 ## Key Principles (Stable)
 
 - Message dialogs are the simplest dialog type — title, message, and buttons via `navigator.ShowMessageDialogAsync<TResult>(this, ...)`, no route registration required; only the generic overload returns the choice

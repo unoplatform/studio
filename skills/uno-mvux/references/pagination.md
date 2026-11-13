@@ -1,5 +1,7 @@
 # MVUX Pagination
 
+**Contents:** [Key Principles (Stable)](#key-principles-stable) · [Understand Pagination Types](#understand-pagination-types) · [Cursor pagination with a next link](#cursor-pagination-with-a-next-link) · [Search with pagination](#search-with-pagination) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 **Any list backed by a server or an API is a paginated list feed.** Do not load every row into memory and filter it on the client: the list loads a page as the user scrolls, and a search sends the term to the server. A plain `ListFeed.Async` is for data that is local or known to stay small.
 
 **Totals over one table do not make every list load whole.** When a dashboard needs counts or sums over every row of a table, ask the server for them where it can count or aggregate, or load that one table whole and record why. The lists the totals do not need (pickers and lookups, related records, tables shown only as a count) still page.

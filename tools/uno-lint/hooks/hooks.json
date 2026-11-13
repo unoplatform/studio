@@ -1,0 +1,18 @@
+{
+  "description": "After a .xaml or .cs edit, lint the lines the edit added with uno-lint and tell the agent what to use instead. Silent when uno-lint is not installed.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/uno-lint.sh\"",
+            "timeout": 10,
+            "statusMessage": "uno-lint"
+          }
+        ]
+      }
+    ]
+  }
+}

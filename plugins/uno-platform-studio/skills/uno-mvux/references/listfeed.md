@@ -1,5 +1,7 @@
 # MVUX ListFeed
 
+**Contents:** [Key Principles (Stable)](#key-principles-stable) · [Key Equality Requirement (Critical)](#key-equality-requirement-critical) · [Learn ListFeed Creation Methods](#learn-listfeed-creation-methods) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 **A list over server or API data is a paginated list feed: read `references/pagination.md` before writing it.** `ListFeed.Async` below loads the whole collection in one call; use it only for local data or a list known to stay small. Commands in item templates: see `references/commands.md`.
 
 ## Key Principles (Stable)

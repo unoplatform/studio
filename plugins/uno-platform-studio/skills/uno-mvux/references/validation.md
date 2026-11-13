@@ -4,7 +4,7 @@ MVUX validates a state's value with `State.Validate` and a command's parameter w
 
 ## Packages
 
-- **It needs Uno.Extensions 8.0.0-dev.250 or later.** 8.0.0-dev.157, which Uno.Sdk 7.0.0-dev.132 pins, has no `State.Validate` and no command `.Validation`. Set `<UnoExtensionsVersion>8.0.0-dev.250</UnoExtensionsVersion>` in the app project.
+- **It needs Uno.Extensions 8.0.1, or 8.0.0-dev.250 or later on the 7.0 dev line.** Uno.Sdk 7.0.5 pins 8.0.1, which has both, so a project on 7.0.5 or later needs no override. Earlier dev builds don't: 8.0.0-dev.157, which Uno.Sdk 7.0.0-dev.132 pins, has no `State.Validate` and no command `.Validation`. On such an SDK, move to 7.0.5, or set `<UnoExtensionsVersion>8.0.0-dev.250</UnoExtensionsVersion>` in the app project.
 - **There is no `UnoFeatures` entry for it.** Add `PackageReference`s to `Uno.Extensions.Validation` and `Uno.Extensions.Validation.Fluent`, with `PackageVersion`s in `Directory.Packages.props` at the `UnoExtensionsVersion`. FluentValidation comes with them (11.4.0).
 
 ## Validator and registration

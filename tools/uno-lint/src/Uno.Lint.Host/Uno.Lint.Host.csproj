@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The file-system host for the rules: folder walk, project context, .editorconfig, the lint report and the agent-hook
+    adapters. The CLI is a thin command layer over this library, so an MCP tool or another host renders the same report.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Uno.Lint</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Uno.Lint.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Uno.Lint.Core\Uno.Lint.Core.csproj" />
+    <ProjectReference Include="..\Uno.Lint.Xaml\Uno.Lint.Xaml.csproj" />
+  </ItemGroup>
+
+</Project>

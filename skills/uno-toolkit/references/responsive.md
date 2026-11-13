@@ -1,5 +1,7 @@
 # Uno Toolkit Responsive
 
+**Contents:** [Critical Rules](#critical-rules) · [Key Principles (Stable)](#key-principles-stable) · [A narrow layout for every page](#a-narrow-layout-for-every-page) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Critical Rules
 
 - **`ResponsiveExtension` must be used as a markup extension** — `{utu:Responsive Narrow=Red, Wide=Blue}` — never as a XAML element (`<utu:ResponsiveExtension .../>`). The XAML engine parses the breakpoint values as strings and performs type conversion through `MarkupExtension.ProvideValue`, which is only available in markup-extension form.

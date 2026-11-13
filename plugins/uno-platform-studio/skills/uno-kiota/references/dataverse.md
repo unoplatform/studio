@@ -2,6 +2,18 @@
 
 Dataverse (Dynamics 365, Power Apps) is an OData service: generate and call its client with `references/odata.md`, `references/odata-calling.md` and `references/odata-writing.md`. This page is what its `$metadata` doesn't say. Every query below is a GET on `<org>/api/data/v9.2` with the app's token.
 
+## Read the environment before you design
+
+Everything below is read from the environment, and an app built without it has guessed its field rules, form fields, list columns and choice values. Read it first, with the developer's own sign-in, when the brief allows reading:
+
+- **The token stays inside the command that uses it.** `T=$(az account get-access-token --resource <org> --query accessToken -o tsv)` then `curl -H "Authorization: Bearer $T" ...` in the same command, or `AzureCliCredential` inside the snapshot script. Never print a token, pipe it to the screen, or write it to a file: a command that would is refused, and rightly. That refusal is about the printing, not about reading; run the form that keeps the token in a variable.
+- **GET only.** The snapshot script and every probe read; a write to try something out belongs on sample data.
+- **When it cannot be read at all** (no sign-in on this machine, no network), write the snapshot script anyway, build from `$metadata`, and put the consequence first in the report: which rules, fields, columns and choice values are inferred, and the one command that replaces them with the environment's.
+
+## Sign-in while developing
+
+For development and prototyping, Microsoft publishes a sample app registration that works against any Dataverse environment: client id `51f81489-12ee-4a9e-aaae-a2591f45987d`, redirect URI `http://localhost` with MSAL.NET, scope `<org>/user_impersonation`, tenant `organizations`. When the developer gave no client id, ship it as the default so sign-in works on first run, and report it as a development default: production needs the organisation's own registration (the `uno-authentication` skill, `references/msal.md`).
+
 ## Field rules come from EntityDefinitions
 
 `$metadata` has types and nullability only. The rules a form enforces are in the table's attribute metadata, one typed cast per kind of column:
@@ -89,6 +101,8 @@ GET EntityDefinitions(LogicalName='task')/Attributes(LogicalName='statuscode')/M
 ```
 
 Each option has a `Value` and its `State`: a task's Completed is 5 in state 1, Canceled 6 in state 2. A custom table's reasons are custom values such as 100000000. To close a row, PATCH both columns; to reopen it, as an Undo does, PATCH the pair it had before.
+
+Snapshot the pairs with the same script as the rules. The values the app tests and writes (open, won, lost, completed, a stage) and their labels come from that snapshot, never from constants typed in code: a custom table's values differ from one environment to the next.
 
 ## Keys and query options
 

@@ -56,9 +56,9 @@ CI runs these on every pull request to `main` and `release/stable/**`. Run them 
 | `pwsh .github/scripts/Test-AgentInstall.ps1` | The plugin and each marketplace install in Copilot CLI and Codex, with every skill listed. | `npm install -g @github/copilot @openai/codex` |
 | `claude plugin validate . --strict` and `claude plugin validate plugins/uno-platform-studio --strict` | The marketplaces, manifests and skill frontmatter, as Claude Code parses them. | Claude Code |
 | `agentskills validate plugins/uno-platform-studio/skills/<skill>` | Each skill against the [Agent Skills spec](https://agentskills.io/specification). | `pipx install skills-ref` |
-| `pwsh .github/scripts/Test-EvalCases.ps1` | The eval cases under `evals/` are well formed: one prompt per case, no prompt repeated, one criterion per LLM grader. | — |
+| `pwsh .github/scripts/Test-EvalCases.ps1` | The eval cases under `evals/` are well formed: one prompt per case, tagged with its suite, no prompt repeated, one criterion per LLM grader. | — |
 
-CI checks that the eval cases are well formed but doesn't run them: it holds no model credentials. When you change a skill or an eval case, run that skill's suite locally if you can, and say in the pull request whether you did. [`evals/README.md`](evals/README.md) explains the cases, the graders and how to run them.
+CI checks that the eval cases are well formed but doesn't run them: it holds no model credentials. When you change a skill or an eval case, run `pwsh .github/scripts/Invoke-Evals.ps1` if you can, and say in the pull request whether you did. It runs the suites your branch affects with your Claude Code login, at API prices $0.50 to $3.20 a suite. [`evals/README.md`](evals/README.md) explains the cases, the graders and how to run them.
 
 ## Commits and pull requests
 

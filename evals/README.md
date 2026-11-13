@@ -52,17 +52,39 @@ the judge needs" line instead.
 ## Run
 
 ```sh
-claude plugin eval . --model claude-sonnet-5-5 --judge-model claude-sonnet-5-5 --trust-plugin --no-publish  # both arms
+pwsh .github/scripts/Invoke-Evals.ps1 -List              # the suites your branch changes, without running them
+pwsh .github/scripts/Invoke-Evals.ps1                    # run the suites your branch changes
+pwsh .github/scripts/Invoke-Evals.ps1 -Suite uno-mvux    # one suite (or -Suite all)
 claude plugin eval . --tag uno-navigation --runs 1 --trust-plugin --no-publish           # one skill while iterating
-claude plugin eval . --tag routing --ablation none --trust-plugin --no-publish           # routing boundaries
+claude plugin eval . --model claude-sonnet-5-5 --judge-model claude-sonnet-5-5 --trust-plugin --no-publish  # both arms
 ```
 
-The report gives each case's score with and without the plugin and the difference between them. A skill whose cases
-show no lift on a new model is a candidate to trim.
+`Invoke-Evals.ps1` runs with the plugin only (`--ablation none`, so the "skill loaded" graders count), with Sonnet 5.5
+as agent and judge, and fails when a case scores below 0.8 (the mean over its runs of the fraction of graders passed),
+when a case doesn't run, or when the run stops at its cost ceiling of $5 a suite. It uses your Claude Code login and
+costs, at API prices, $0.50 to $3.20 a suite, about $19 for all ten. It prints each case's score and the graders it
+failed, with how many runs each failed in (`info-plist 3/3`).
+
+With no `-Suite`, it runs the suites whose inputs differ from where your branch left `origin/main` (`-Base` names
+another branch), uncommitted changes included. The inputs are listed by `Get-EvalInputPaths` in `Evals.Common.ps1`:
+
+- A skill suite depends on its cases, its skill, and the `SKILL.md` of `uno-platform` and `uno-build-app`. Agents load
+  `uno-platform` first and follow its routing table, which sends feature work to `uno-build-app` before any domain
+  skill, so an edit to either file runs every skill suite.
+- `routing` depends on its cases and the frontmatter of every `SKILL.md`: an agent picks a skill from its name and
+  description alone, and a routing case passes only when no skill loads.
+- Every suite depends on `hooks/hooks.json`, the SessionStart hook, `Evals.Common.ps1` (the models and threshold) and
+  `Invoke-Evals.ps1`.
+
+A case near 0.8 can fail on an unlucky run; rerun its suite before changing anything. A case that keeps failing
+because a new model answers differently needs its skill or its expectations changed.
+
+Running both arms gives each case's score with and without the plugin, and the difference between them. A skill whose
+cases show no lift on a new model is a candidate to trim.
 
 ## CI
 
 CI doesn't run the evals: it holds no model credentials. `Test-EvalCases.ps1` checks only that the cases are well
-formed. When you change a skill or a case, run that skill's suite locally (see [Run](#run)) and say in the pull request
-whether you did. The full result of each run, with every judge's evidence, stays in the git-ignored
-`evals/results/` folder.
+formed, including that each case's `tags` include its suite, without which `--tag <suite>` skips the case. When you
+change a skill or a case, run `Invoke-Evals.ps1` (see [Run](#run)) and say in the pull request whether you did. The
+full result of each run, with every judge's evidence, stays in the git-ignored `evals/results/` folder.

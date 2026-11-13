@@ -2,6 +2,8 @@
 
 A preview renders one page, `UserControl`, control, style or data template on its own in Hot Design's **Previews** panel, with the data you give it. Each hand-authored preview is two files — a XAML file whose root is `<hd:Preview>`, and its code-behind — and it is found by reflection when the app runs. There is nothing to register and no package to add: the Uno SDK adds the reference.
 
+**Contents:** [Before You Write One](#before-you-write-one) · [File Location](#file-location) · [Choosing a Variant](#choosing-a-variant) · [Type Only](#type-only) · [DataContext — View-Model](#datacontext--view-model) · [DataContext — Value](#datacontext--value) · [Style](#style) · [DataTemplate](#datatemplate) · [PreviewGroup — Several States in One File](#previewgroup--several-states-in-one-file) · [Critical Rules](#critical-rules) · [Checking a Preview in a Running App](#checking-a-preview-in-a-running-app)
+
 ## Before You Write One
 
 - **Every public control with a parameterless constructor already has a preview**, generated implicitly — a page shows up with no file at all. Only author a preview to add what the implicit one lacks: **data**, a **style**, a **data template**, or a **particular state**.

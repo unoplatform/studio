@@ -42,6 +42,7 @@ One test per operation the app calls, plus one per behaviour the skill warns abo
 - each query parameter, and a path parameter that does not exist (the typed 404);
 - the validation error arriving as the generated error model, with its field messages read from the map (`references/calling.md`);
 - every non-JSON operation (`text/plain`, form, multipart), and, if the app uses the custom registration, one test per content type proving plain `AddKiotaClient` still throws, so the fix of unoplatform/uno.extensions#2799 shows up as a failing test;
+- for an OData client, what the app's service sends, read from a recording handler put in as the wire: each list's `$select`, `$filter`, `$orderby` and `Prefer` page size; the next link requested as it was given; a PATCH body that holds only the changed columns, a cleared one as `null`; the `If-Match` etag on a record's update; each delete (`references/odata-calling.md`, `references/odata-writing.md`);
 - a 503 with `Retry-After` that succeeds after Kiota's retries, and the same call with `RetryHandlerOption { MaxRetry = 0 }` throwing `ApiException` 503.
 
 Assert on the app service's records, not only on the generated models: the mapping is code too.

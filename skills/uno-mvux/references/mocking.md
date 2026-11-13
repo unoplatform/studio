@@ -8,6 +8,8 @@ Referencing `Uno.HotTesting.Reactive` makes a source generator emit, for every M
 
 Only the members you set are replaced. A derived feed computes over the mocked inputs, so the required members are enough: set a derived one only to override what it computes.
 
+**Contents:** [Workflow](#workflow) · [Critical Rules](#critical-rules) · [Key Principles (Stable)](#key-principles-stable)
+
 ## Workflow
 
 ### Step 1: Reference the package

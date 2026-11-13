@@ -10,7 +10,7 @@ When the brief asks for an app that runs offline, on sample data, or before its 
 - **The sample source persists.** What the app presents as saved survives a relaunch: write the set as JSON to a file in the app's local data folder (`<LocalAppData>/<App>/sample-data.json`), through a temporary file then a move, so an interrupted write never leaves half a file. Take the path as a constructor parameter so tests use their own file.
 - **A missing or unreadable file is reseeded.** Catch the read failure, keep the bad file aside (`sample-data.json.bad`), log a warning and start from the seed. Never crash on it, never show an empty app.
 - **Reset.** A "Reset sample data" action in Settings rewrites the seed and refreshes the lists. The user can always get back to a known state.
-- **The sample source behaves like the live one.** It assigns ids on create, applies the same cascades (deleting a parent removes its children if the server does) and rejects what the server would reject, so a journey checked on sample data means something. Its rows carry what the live rows carry, the currency of each amount included.
+- **The sample source behaves like the live one.** It assigns ids on create, applies the same cascades (deleting a parent removes its children if the server does) and rejects what the server would reject, so a journey checked on sample data means something. Its rows carry what the live rows carry, the currency of each amount included. It has a current user too, one of the seed set's owners: the greeting names that person, and "my" filters and owner defaults work as they do live.
 
 ## The data mode
 

@@ -71,7 +71,9 @@ Reflection-based `JsonSerializer.Serialize(value)` works in Debug and can fail i
 
 ## Nothing dropped
 
-Fill rule 16's grid from the code, not from memory: for each table that has a page, find the delete command, the unsaved-changes check, the related lists, the picker behind each lookup field, the four list templates and the sort. An empty cell is built now, ruled out by the brief or the backend with the reason, or listed under *Implementation gaps*.
+Fill rule 16's grid from the code, not from memory: for each table that has a page, find the delete command, the unsaved-changes check, the related lists, the picker behind each lookup field, the four list templates and the sort. Count the form's fields against the backend's form or column metadata, and its pickers against the lookups there: a field or a lookup left out because its table is not in the client yet is an empty cell. An empty cell is built now, or ruled out by the brief or the backend with the reason.
+
+*Implementation gaps* is for what the developer or the environment blocks: a sign-in that needs a browser this machine lacks, a write the developer forbade, a service that is down. Work a skill describes and the session has not done yet is not a gap to report. It is the next thing to build, and the report waits for it.
 
 ## Release build
 

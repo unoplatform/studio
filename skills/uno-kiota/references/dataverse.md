@@ -48,6 +48,8 @@ GET systemforms?$select=name,formxml&$filter=objecttypecode eq 'contact' and typ
 - **Snapshot it with the same script**, as sections with their fields, beside the rules. The app's form for that table shows those fields in those sections, each with its rule from the attribute metadata. A field the brief excludes is left out and reported; a mock-up that draws one table's form doesn't shorten the others.
 - **A custom table's main form can be nearly empty**: one held only the name and the owner. Then the field list is the table's own editable columns: `Attributes?$filter=IsCustomAttribute eq true and IsValidForUpdate eq true`, the required ones first.
 - **Add the form's columns to the client's scope** and regenerate (`references/odata.md`) when the generated model lacks one. Don't drop the field, and don't edit the generated model.
+- **A lookup's target table joins the client's scope too.** A main-form lookup to a table the brief never named (a country, a province, a price list) still gets its picker: add that table's entity set to `scope.json`, regenerate, and read its key and name columns. A form field is never left out because its table was outside the scope.
+- **A record's related lists are the table's one-to-many relationships**: `EntityDefinitions(LogicalName='account')/OneToManyRelationships?$select=SchemaName,ReferencingEntity,ReferencingAttribute`, kept to the tables the app shows and to columns a user fills in. A table can point at itself: `account_parent_account` (`ReferencingEntity` `account`, `ReferencingAttribute` `parentaccountid`) is the list of child accounts on an account. `masterid` records a merge and is no list.
 - **A field whose attribute is a `Lookup` or `Customer` is a picker over the target table**, with server search (`references/odata-calling.md`): the `uno-navigation` skill's picker page. A `Picklist` is a `ComboBox` over the snapshot's options. Reading and writing the lookup are below.
 - **A lookup the maker filters by related rows says so in its control.** The `control`'s `parameters` then carry `FilterRelationshipName`, a many-to-one relationship of the picked table whose `ReferencingAttribute` is the column to filter on; `DependentAttributeType`, the table that column points at; and `DependentAttributeName`, where the row to match comes from: `account.<prefix>_country` is another lookup on the form, and when the type is the form's own table it is the record itself. `account`'s `primarycontactid` has `contact_customer_accounts`, `contact.parentcustomerid` and `account`: its picker lists the contacts whose `_parentcustomerid_value` is this account. The snapshot records each such lookup's filter column and the field it follows. The app's picker for that field adds `_<column>_value eq <id>` to its `$filter` and lists only the chosen parent's rows, or every row while the parent is empty; choosing or clearing the parent empties the field (the `uno-navigation` skill's picker page, *A picker that takes a filter*).
 
@@ -104,9 +106,11 @@ Each option has a `Value` and its `State`: a task's Completed is 5 in state 1, C
 
 Snapshot the pairs with the same script as the rules. The values the app tests and writes (open, won, lost, completed, a stage) and their labels come from that snapshot, never from constants typed in code: a custom table's values differ from one environment to the next.
 
+A maker can add or rename a status reason after the app ships. Once per session the app reads the pairs again in the background, with its own token, and uses them over the snapshot; when that read fails the snapshot stands. Tests run on the snapshot.
+
 ## Keys and query options
 
 - **Keys go in parentheses:** `accounts(<id>)`. `accounts/<id>` answers 500.
 - **`$skip` answers 400 and `$search` 501:** list both in `unsupported`, page with the next link, and search with `contains()` in `$filter`.
 
-Verified against Dataverse Web API v9.2 on 2026-11-04; the main-form query on 2026-11-10; the lookup sort and the money columns on 2026-11-12.
+Verified against Dataverse Web API v9.2 on 2026-11-04; the main-form query on 2026-11-10; the lookup sort and the money columns on 2026-11-12; the one-to-many relationships on 2026-11-14.

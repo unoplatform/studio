@@ -106,7 +106,7 @@ Each option has a `Value` and its `State`: a task's Completed is 5 in state 1, C
 
 Snapshot the pairs with the same script as the rules. The values the app tests and writes (open, won, lost, completed, a stage) and their labels come from that snapshot, never from constants typed in code: a custom table's values differ from one environment to the next.
 
-A maker can add or rename a status reason after the app ships. Once per session the app reads the pairs again in the background, with its own token, and uses them over the snapshot; when that read fails the snapshot stands. Tests run on the snapshot.
+**Read the pairs again at run time.** A maker can add or rename a status reason after the app ships, and an app that only knows the snapshot then shows a blank or refuses a valid row. Once per session the app sends the request above for each table whose status it shows, in the background and with its own token, and uses the answer over the snapshot; when that read fails the snapshot stands. This is part of the app, not an option to report as left out. A request test proves it: a recording handler that answers with one more reason than the snapshot has, and the status list shows it.
 
 ## Keys and query options
 

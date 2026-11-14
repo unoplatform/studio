@@ -4,6 +4,7 @@
 
 - Override resource keys at App, Page, or Control level
 - Resource keys follow roughly `{StyleVariant}{ShortControlName}{Property}{State}` (e.g. `ChipForegroundPointerOver` and `FilledCardContentBorderBrushPressed` under Material; `ChipForegroundChecked` and `DividerSubHeaderForeground` under Simple, which ships fewer state keys). The control name is often shortened, so copy the exact key from the control's doc table instead of composing it
+- Point a key at a brush the theme already has with one alias (`<StaticResource x:Key="ChipBackgroundChecked" ResourceKey="PrimaryBrush" />`), not a new `SolidColorBrush`; see `uno-themes`, `references/semantic-colors-brushes.md`, Part 4
 - Control-level overrides use `<Control.Resources>` or `ResourceExtensions`
 - No need to redefine entire styles/templates
 - Each control's doc page lists available resource keys

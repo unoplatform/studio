@@ -1,5 +1,7 @@
 # Dataverse
 
+**Contents:** [Read the environment before you design](#read-the-environment-before-you-design) · [Sign-in while developing](#sign-in-while-developing) · [Field rules come from EntityDefinitions](#field-rules-come-from-entitydefinitions) · [A form's fields come from the table's main form](#a-forms-fields-come-from-the-tables-main-form) · [A list's columns, order and search come from the table's views](#a-lists-columns-order-and-search-come-from-the-tables-views) · [Labels](#labels) · [Lookups](#lookups) · [Activity parties](#activity-parties) · [Money](#money) · [Status](#status) · [Keys and query options](#keys-and-query-options)
+
 Dataverse (Dynamics 365, Power Apps) is an OData service: generate and call its client with `references/odata.md`, `references/odata-calling.md` and `references/odata-writing.md`. This page is what its `$metadata` doesn't say. Every query below is a GET on `<org>/api/data/v9.2` with the app's token.
 
 ## Read the environment before you design

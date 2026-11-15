@@ -1,5 +1,7 @@
 # MVUX Commands
 
+**Contents:** [Threading](#threading) · [Critical Rules](#critical-rules) · [Commands in list item templates](#commands-in-list-item-templates) · [A change with Undo](#a-change-with-undo) · [Key Principles (Stable)](#key-principles-stable) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 Any public method on a Model becomes a command in the generated ViewModel, bound with `Command="{Binding MethodName}"`. The rules below are what the generation does with its parameters; `[ImplicitCommands(false)]` on the Model turns generation off, and `Command.Create(...)` builds one by hand (the reference's "Explicit command creation" section).
 
 ## Threading

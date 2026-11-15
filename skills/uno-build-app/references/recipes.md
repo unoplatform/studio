@@ -1,5 +1,7 @@
 # Recipes
 
+**Contents:** [Catalogue](#catalogue) · [Choosing and adapting](#choosing-and-adapting)
+
 A recipe is a small complete implementation of one user-visible behaviour: view, presentation state, service, registration, navigation, failure handling and tests. Recipes exist because the defects that hurt real apps are in the wiring a snippet leaves out: a setting that never saves, a button with no command, a detail page bound to a stale copy of its data.
 
 **Status.** This file supplies acceptance contracts, not runnable reference implementations. Use the contracts below for a matching feature. If consulting a sample such as [Uno Chefs](https://github.com/unoplatform/uno.chefs), verify its current source and tests before treating it as a recipe implementation.

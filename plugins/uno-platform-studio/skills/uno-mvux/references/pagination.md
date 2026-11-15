@@ -67,7 +67,7 @@ private IFeed<string> Term => Search.SelectAsync(async (term, ct) =>
 });
 ```
 
-**The search text is matched as typed.** The service doubles the quotes for the filter's string literal and escapes the characters the backend reads as wildcards, so a search for `50%` finds the rows that contain `50%`. **Every sort ends with the key** (`$orderby=name asc,id`): rows that tie on the sort column otherwise repeat or go missing between pages. Dataverse's wildcards and its active-rows filter are in the `uno-kiota` skill, `references/dataverse.md`.
+**The search text is matched as typed.** The service doubles the quotes for the filter's string literal and escapes the characters the backend reads as wildcards, so a search for `50%` finds the rows that contain `50%`. **Every sort ends with the key** (`$orderby=name asc,id`): rows that tie on the sort column otherwise repeat or go missing between pages. Dataverse's wildcards and its active-rows filter are in the `uno-kiota` skill's Dataverse reference.
 
 **Never start `SelectPaginatedByCursorAsync` from a `null` cursor.** It then never calls `getPage` and the list stays empty. `ListFeed<T>.PaginatedByCursorAsync` does load a `null` first cursor; `string.Empty` works in both.
 

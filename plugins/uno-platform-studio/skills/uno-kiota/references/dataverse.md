@@ -87,6 +87,17 @@ GET savedqueries?$select=name,querytype,isdefault,isquickfindquery,layoutxml,fet
 - **Sort by a lookup with its own column.** `$orderby=_parentcustomerid_value` orders the rows by the related row's name, not by its id. `$orderby=parentcustomerid_account/name` answers 400 unless the same request also expands that navigation property (`$expand=parentcustomerid_account($select=name)`).
 - **A polymorphic lookup has one navigation property per target table.** A contact's `parentcustomerid` is written as `parentcustomerid_account` or `parentcustomerid_contact`. A task's regarding is `regardingobjectid_account_task`, with the activity table's name at the end; `regardingobjectid_account` is declared only on `activitypointer`, so a write to `tasks` with it fails.
 
+## Activity parties
+
+Who a phone call is from and to, and who attends an appointment, are rows of `activityparty`, reached from the activity through `phonecall_activity_parties` or `appointment_activity_parties`. Each row names a party (`_partyid_value`: an account, a contact or a user) and a `participationtypemask`: 1 the sender (From), 2 the recipient (To), 5 a required attendee, 6 an optional one, 7 the organizer. 8 and 9 are the regarding record and the owner, which the service keeps itself.
+
+- **Add `activityparties` to the client's scope** (`references/odata.md`) so the activity models carry the collection. A form is not finished without these fields: Dataverse marks a phone call's From and To as required.
+- **Read them with the record**: `$expand=phonecall_activity_parties($select=participationtypemask,_partyid_value)`, with the formatted-value annotation for each party's name.
+- **Write them with the record**, as that collection: each item sets `participationtypemask` and binds its party through the navigation property of the party's table (`partyid_contact@odata.bind`, `partyid_account@odata.bind`, `partyid_systemuser@odata.bind`).
+- **Show them as pickers** over accounts, contacts and users: From and To on a phone call, required and optional attendees on an appointment.
+
+The read was run against a live environment; the write was not. Run an update on a test environment before relying on how the service treats parties left out of the collection.
+
 ## Money
 
 - **Every row with a money column names its currency**: `_transactioncurrencyid_value`, whose formatted value is the currency's name. `transactioncurrencies?$select=isocurrencycode,currencysymbol,currencyprecision` lists the organisation's currencies; read it once and keep it by id.
@@ -113,4 +124,4 @@ Snapshot the pairs with the same script as the rules. The values the app tests a
 - **Keys go in parentheses:** `accounts(<id>)`. `accounts/<id>` answers 500.
 - **`$skip` answers 400 and `$search` 501:** list both in `unsupported`, page with the next link, and search with `contains()` in `$filter`.
 
-Verified against Dataverse Web API v9.2 on 2026-11-04; the main-form query on 2026-11-10; the lookup sort and the money columns on 2026-11-12; the one-to-many relationships on 2026-11-14.
+Verified against Dataverse Web API v9.2 on 2026-11-04; the main-form query on 2026-11-10; the lookup sort and the money columns on 2026-11-12; the one-to-many relationships on 2026-11-14; the activity-party read on 2026-11-15, with the party types from Microsoft's ActivityParty reference.

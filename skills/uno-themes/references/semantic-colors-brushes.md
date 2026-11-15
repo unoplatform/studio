@@ -326,7 +326,12 @@ Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in 
 
 ### Method 2: Override Specific Brushes (Targeted)
 
-Override a lightweight styling key (WinUI, Uno Themes or Uno Toolkit, semantic style or not) by its exact name. **When the new value is a brush the theme already has, alias it, once, outside any `ThemeDictionaries`:**
+Override a lightweight styling key (WinUI, Uno Themes or Uno Toolkit, semantic style or not) by its exact name, and only to change it:
+
+- **Check the default first.** A key set to the brush the theme already gives it does nothing. In Simple, `FilledButtonBackground` is already `PrimaryBrush` and `ChipBackgroundChecked` is already `PrimaryBrush`; leave such keys out.
+- **Override the keys of the control the page uses.** A key only reaches the controls whose style reads it: a `utu:CardContentControl` reads the `CardContent` keys (`FilledCardContentBackground`), not the `utu:Card` ones (`FilledCardBackground`).
+
+**When the new value is a brush the theme already has, alias it, once, outside any `ThemeDictionaries`:**
 
 ```xml
 <StaticResource x:Key="FilledButtonBackground" ResourceKey="TertiaryBrush" />

@@ -1,10 +1,12 @@
 name: Release
 
-# Releases ship from release/stable/<major>.<minor> branches, like the other Uno Platform repos,
-# and wait for approval on the plugin-release environment. Each approved push releases the next
-# <major>.<minor>.<patch>: the version is stamped into every manifest on the release branch, that
-# commit is tagged and published, and a PR moves the marketplaces on main (the ones agents read)
-# to the new tag.
+# Releases ship from release/stable/<major>.<minor> branches, like the other Uno Platform repos.
+# The branches are protected, so a release takes two pushes:
+# 1. A push whose manifests do not carry the next <major>.<minor>.<patch> opens (or refreshes) a PR
+#    that stamps that version into every manifest.
+# 2. Merging that PR pushes the stamped manifests. That run waits for approval on the plugin-release
+#    environment, then tags the commit, publishes the release, and opens a PR that moves the
+#    marketplaces on main (the ones agents read) to the new tag.
 on:
   push:
     branches:
@@ -21,14 +23,13 @@ jobs:
   validate:
     uses: ./.github/workflows/validate-plugin.yml
 
-  release:
-    name: Tag and publish release
+  version:
+    name: Compute version
     needs: validate
     runs-on: ubuntu-latest
-    environment: plugin-release
-    permissions:
-      contents: write
-      pull-requests: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      stamped: ${{ steps.stamped.outputs.stamped }}
 
     steps:
       - uses: actions/checkout@v5
@@ -51,28 +52,79 @@ jobs:
           last=$(git tag -l "$minor.*" | grep -E "^${minor//./\\.}\.[0-9]+$" | sort -V | tail -1 || true)
           if [ -z "$last" ]; then patch=0; else patch=$(( ${last##*.} + 1 )); fi
           echo "version=$minor.$patch" >> "$GITHUB_OUTPUT"
-          echo "Releasing $minor.$patch" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Stamp the version on the release branch
+      - name: Check whether the manifests already carry it
+        id: stamped
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
+          pwsh .github/scripts/Set-PluginVersion.ps1 -Version "$VERSION"
+          if git diff --quiet; then
+            echo "stamped=true" >> "$GITHUB_OUTPUT"
+            echo "Manifests carry $VERSION: releasing it." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "stamped=false" >> "$GITHUB_OUTPUT"
+            echo "Manifests do not carry $VERSION: opening the PR that stamps it." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  stamp:
+    name: Open the version PR
+    needs: version
+    if: needs.version.outputs.stamped != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # A later push to the release branch before the PR merges refreshes the same branch and PR.
+      - name: Stamp the version and open the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          branch="chore/release-$VERSION-stamp"
+          git switch -c "$branch"
           pwsh .github/scripts/Set-PluginVersion.ps1 -Version "$VERSION"
           pwsh .github/scripts/Test-Plugin.ps1
-          if ! git diff --quiet; then
-            git commit -am "chore(release): $VERSION"
-            # Pushes made with GITHUB_TOKEN don't trigger workflows, so this doesn't start another release.
-            git push origin "HEAD:$GITHUB_REF_NAME"
+          git commit -am "chore(release): $VERSION"
+          git push --force origin "$branch"
+          if [ -n "$(gh pr list --head "$branch" --base "$GITHUB_REF_NAME" --state open --json number --jq '.[].number')" ]; then
+            echo "Refreshed the open PR on $branch." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
+          # A PR opened with GITHUB_TOKEN starts no workflows, so the required checks wait for a human event.
+          gh pr create --base "$GITHUB_REF_NAME" --head "$branch" \
+            --title "chore(release): $VERSION" \
+            --body "Stamps $VERSION into every manifest on \`$GITHUB_REF_NAME\`. Merging it starts the release run, which waits for approval on the \`plugin-release\` environment and then tags and publishes $VERSION.
+
+          The bot opened this PR, so its required checks have not started: close and reopen it to run them."
+
+  release:
+    name: Tag and publish release
+    needs: version
+    if: needs.version.outputs.stamped == 'true'
+    runs-on: ubuntu-latest
+    environment: plugin-release
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       # gh creates a lightweight tag. Keep it that way: Codex compares `git ls-remote` output
       # with the checked-out commit, which never matches an annotated tag's object id.
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: gh release create "$VERSION" --target "$(git rev-parse HEAD)" --title "$VERSION" --generate-notes
 
       # main is protected, so the marketplaces agents read move to the new tag through a PR.
@@ -80,8 +132,10 @@ jobs:
       - name: Open a PR pointing main at the release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           current=$(git show origin/main:plugins/uno-platform-studio/.claude-plugin/plugin.json | jq -r .version)
           if [ "$(printf '%s\n' "$current" "$VERSION" | sort -V | tail -1)" != "$VERSION" ] || [ "$current" = "$VERSION" ]; then
             echo "main is already at $current, not moving it to $VERSION." >> "$GITHUB_STEP_SUMMARY"

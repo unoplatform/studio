@@ -326,22 +326,40 @@ Set seeds (`<ut:ThemeColors PrimarySeed="..." />`) or override `*Color` keys in 
 
 ### Method 2: Override Specific Brushes (Targeted)
 
+Override a lightweight styling key (WinUI, Uno Themes or Uno Toolkit, semantic style or not) by its exact name, and only to change it:
+
+- **Check the default first.** A key set to the brush the theme already gives it does nothing. In Simple, `FilledButtonBackground` is already `PrimaryBrush` and `ChipBackgroundChecked` is already `PrimaryBrush`; leave such keys out.
+- **Override the keys of the control the page uses.** A key only reaches the controls whose style reads it: a `utu:CardContentControl` reads the `CardContent` keys (`FilledCardContentBackground`), not the `utu:Card` ones (`FilledCardBackground`).
+
+**When the new value is a brush the theme already has, alias it, once, outside any `ThemeDictionaries`:**
+
 ```xml
-<SolidColorBrush x:Key="FilledButtonBackground" Color="#006D3B" />
+<StaticResource x:Key="FilledButtonBackground" ResourceKey="TertiaryBrush" />
+```
+
+The alias resolves the target in the active theme on every lookup, so it follows Light/Dark switches and palette overrides; the theme's own control dictionaries define their keys the same way. Do not wrap a role in a new brush (a `SolidColorBrush` whose `Color` is `{ThemeResource PrimaryColor}`), and do not repeat the alias in `Light` and `Default`. The `<StaticResource x:Key ResourceKey>` element is a resource definition; it does not change the rule that a property reads a brush with `{ThemeResource ...}`.
+
+Only a colour the palette does not have needs a new `SolidColorBrush`, with a value for each theme:
+
+```xml
+<ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Light">
+        <SolidColorBrush x:Key="FilledButtonBackground" Color="#006D3B" />
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Default">
+        <SolidColorBrush x:Key="FilledButtonBackground" Color="#6BDB9A" />
+    </ResourceDictionary>
+</ResourceDictionary.ThemeDictionaries>
 ```
 
 ### Method 3: Override Per-Control Instance (Scoped)
 
+The same rule in the control's `Resources`: an alias for an existing brush, a `SolidColorBrush` per theme only for a colour outside the palette.
+
 ```xml
 <Button Style="{StaticResource FilledButtonStyle}">
     <Button.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="FilledButtonBackground" Color="#006D3B" />
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
-        </ResourceDictionary>
+        <StaticResource x:Key="FilledButtonBackground" ResourceKey="TertiaryBrush" />
     </Button.Resources>
 </Button>
 ```

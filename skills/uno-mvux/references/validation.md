@@ -1,17 +1,17 @@
 # MVUX Validation with FluentValidation
 
-MVUX validates a state's value with `State.Validate` and a command's parameter with the command builder's `.Validation`, both through the `IValidator` that `UseValidation` registers; FluentValidation validators plug in through `Uno.Extensions.Validation.Fluent`. The results land on the draft's generated bindable, which implements `INotifyDataErrorInfo`: the page reads them from there. Do not run the validator a second time in an errors feed, an `IsValid` feed or an `if` in the command. Verified on desktop with Uno.Extensions 8.0.0-dev.250: localized messages under each field, Save bound to the command alone, nothing saved while invalid.
+MVUX validates the draft with `State.Validate` and the Save command with `.Validation`, through the `IValidator` that `UseValidation` registers. The results land on the draft's generated bindable (`INotifyDataErrorInfo`), and Uno's Input validation shows them on each bound input. Write no control or feed that reads errors, and never run the validator again. Verified on desktop, Uno.Sdk 7.0.5.
 
-**Contents:** [Packages](#packages) · [Validator and registration](#validator-and-registration) · [Model](#model) · [Page: errors from the bindable](#page-errors-from-the-bindable) · [Save](#save)
+**Contents:** [Packages](#packages) · [Validator](#validator) · [Model](#model) · [Page](#page) · [Save](#save) · [Limits](#limits)
 
 ## Packages
 
-- **It needs Uno.Extensions 8.0.1, or 8.0.0-dev.250 or later on the 7.0 dev line.** Uno.Sdk 7.0.5 pins 8.0.1, which has both, so a project on 7.0.5 or later needs no override. Earlier dev builds don't: 8.0.0-dev.157, which Uno.Sdk 7.0.0-dev.132 pins, has no `State.Validate` and no command `.Validation`. On such an SDK, move to 7.0.5, or set `<UnoExtensionsVersion>8.0.0-dev.250</UnoExtensionsVersion>` in the app project.
-- **There is no `UnoFeatures` entry for it.** Add `PackageReference`s to `Uno.Extensions.Validation` and `Uno.Extensions.Validation.Fluent`, with `PackageVersion`s in `Directory.Packages.props` at the `UnoExtensionsVersion`. FluentValidation comes with them (11.4.0).
+- Uno.Extensions 8.0.1 (Uno.Sdk 7.0.5 or later), or `<UnoExtensionsVersion>8.0.0-dev.250</UnoExtensionsVersion>` on Uno.Sdk 7.0.0-dev. Earlier builds have no `Validate` and no `.Validation`.
+- No `UnoFeatures` entry: add `PackageReference`s to `Uno.Extensions.Validation` and `Uno.Extensions.Validation.Fluent` at the `UnoExtensionsVersion`.
 
-## Validator and registration
+## Validator
 
-Validate the editable draft record. **Every message is a resource key with no arguments.** `Validate` and `.Validation` take an `IStringLocalizer` and resolve each `ErrorMessage` through it; they do not format the result, and a key not found is shown as is. So a validator never builds text: no label, number or `string.Format` in a message, and no `key:argument` form. A message that needs a number gets a key per field (`Validation_Name_TooLong` = "Up to 160 characters."), written from the same rules. The label is beside the field, so the message does not repeat it.
+**Every message is a resource key with no arguments**: the localizer passed to MVUX resolves keys but formats nothing. A rule that needs a number gets its own key (`Validation_Name_TooLong` = "Up to 160 characters.").
 
 ```csharp
 public class ContactDraftValidator : AbstractValidator<ContactDraft>
@@ -20,22 +20,16 @@ public class ContactDraftValidator : AbstractValidator<ContactDraft>
     {
         RuleFor(d => d.LastName).NotEmpty().WithMessage("Validation_LastNameRequired")
             .MaximumLength(50).WithMessage("Validation_LastName_TooLong");
-        RuleFor(d => d.Email).EmailAddress().When(d => !string.IsNullOrWhiteSpace(d.Email))
-            .WithMessage("Validation_EmailFormat");
     }
 }
 ```
 
-In `App.xaml.cs`, on the host builder: `.UseValidation(configure: v => v.Validator<ContactDraft, ContactDraftValidator>())`, one `.Validator<TEntity, TValidator>()` per draft type. Inject the non-generic `Uno.Extensions.Validation.IValidator` into the Model: one instance validates every registered type.
-
-Field rules taken from a server's metadata (Dataverse `EntityDefinitions`: required level, `MaxLength`, `MinValue`/`MaxValue`) are covered by the `uno-kiota` skill's Dataverse reference; their messages follow the rule above.
+Register with `.UseValidation(configure: v => v.Validator<ContactDraft, ContactDraftValidator>())` and inject the non-generic `Uno.Extensions.Validation.IValidator`. Rules from Dataverse metadata: see `uno-kiota`.
 
 ## Model
 
-In `public partial record ContactRecordModel(IContactService Contacts, IValidator Validator, IStringLocalizer Localizer)`:
-
 ```csharp
-public IState<ContactDraft> Draft => State.Async(this, Contacts.LoadAsync).Validate(Validator, Localizer);
+public IState<ContactDraft> Draft => State.Async(this, Contacts.LoadAsync);
 
 public IAsyncCommand Save => Command.Create(b => b
     .Given(Draft)
@@ -43,41 +37,54 @@ public IAsyncCommand Save => Command.Create(b => b
     .Then(Contacts.SaveAsync), nameof(Save));
 ```
 
-That is all the Model holds for validation.
+- **Errors on Save** (above, the default for forms): `.Validation` runs before `Then`. An invalid draft skips `Then`, and the errors stay until the next Save.
+- **Live errors**: add `.Validate(Validator, Localizer)` to `Draft`. It validates each change and the first value, so a new form opens with every required field in error.
+- **Server refusals**: `await Draft.SetValidationAsync([new ValidationResult(Localizer["Validation_EmailTaken"], ["Email"])], ct);`. It does not localize.
 
-- **`Validate` runs on every change of the state**, the initial value included, and cancels the previous run. It only annotates: an invalid value is still set. It throws `NotSupportedException` on a state not created by the `State` factories.
-- **`.Validation` runs on each execution, right before `Then`.** With an error the action is not invoked and the execution completes without error. Its results are published on the `Given` state and replace those of `Validate`. The order is `.Given(state).When(predicate).Validation(validator).Then(action)`.
-- Save is a `Command.Create` property, not a public method, so it can carry `.Validation`.
+## Page
 
-## Page: errors from the bindable
-
-`{Binding Draft}` is the generated `Bindable<Name>ViewModel`: `GetErrors("LastName")` returns `ValidationResult`s with the localized `ErrorMessage`, `HasErrors` is true while any rule fails, and `ErrorsChanged` fires on each change. `GetErrors(null)` and `GetErrors("")` return nothing, so a summary asks field by field.
-
-WinUI inputs do not render `INotifyDataErrorInfo`, so the page needs one small control that does. Copy `assets/FieldError.cs` into the app (set its namespace) and put one under each input:
+In the `App` constructor, before `InitializeComponent()`: `Uno.UI.FeatureConfiguration.InputValidation.IsEnabled = true;`. Bindings created before it are never validated.
 
 ```xml
-<TextBox x:Name="LastNameBox" x:Uid="Contact_LastName"
-         Text="{Binding Draft.LastName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-<local:FieldError Source="{Binding Draft}" Property="LastName" Input="{Binding ElementName=LastNameBox}"
-                  Foreground="{ThemeResource SystemFillColorCriticalBrush}" />
+<Page xmlns:input="using:Uno.UI.Xaml.Controls" ...>
+  <TextBox x:Name="LastNameBox" x:Uid="Contact_LastName" input:Validation.Mode="Auto"
+           Text="{Binding Draft.LastName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+  <ItemsControl ItemsSource="{Binding (input:Validation.Errors), ElementName=LastNameBox}">
+    <ItemsControl.ItemTemplate>
+      <DataTemplate><TextBlock Text="{Binding ErrorMessage}" Foreground="{ThemeResource SystemFillColorCriticalBrush}" /></DataTemplate>
+    </ItemsControl.ItemTemplate>
+  </ItemsControl>
+  <TextBlock x:Uid="Contact_FixFields" Visibility="{Binding Draft.HasErrors}" />
 ```
 
-- **`Property` is the draft's property name**, as FluentValidation reports it in `MemberNames`.
-- **A message shows once its input lost focus, or after Save.** MVUX validates the whole draft from its first value, so an empty form already has an error on every required field.
-- `ErrorsChanged` can come from the thread that validated; the control reads on the UI thread, and puts the message in the input's help text for screen readers.
+- **The error comes from the last object of the binding path**: `{Binding Draft.LastName}` reads `GetErrors("LastName")` on the draft bindable.
+- `input:Validation.Mode` can be set once by a `Style` setter; base that style on the theme's own `TextBox` style.
+- **A custom input** names its validated property with `[Uno.UI.Xaml.Controls.InputValidationProperty(nameof(Value))]`; for another control type, set `FeatureConfiguration.InputValidation.ValidationProperties[typeof(T)]`.
+- **The summary** binds to `Draft.HasErrors`, never to a recomputed validity.
 
 ## Save
 
 ```xml
-<Button x:Uid="Contact_Save" Command="{Binding Save}" local:FieldError.RevealsErrors="True" />
+<Button x:Uid="Contact_Save" Command="{Binding Save}" />
 ```
 
-- **Bind Save to the command alone.** `.Validation` refuses an invalid draft, and `.Validation` does not change `CanExecute`, so the button stays enabled and a press can show why nothing was saved. Do not add an `IsEnabled` bound to validity, a Click handler that validates, or a wrapper command that checks `CanExecute` first.
-- **`FieldError.RevealsErrors="True"`** on the Save button shows every field's error on the page, including fields never visited, and moves focus to the first field in error. The command still runs; its `.Validation` stops the save.
-- A summary above the fields, when the recipe asks for one, lists the fields whose `GetErrors(name)` is not empty after Save.
+Bind Save to the command alone: `.Validation` doesn't change `CanExecute`, so a press always shows why nothing saved. No `IsEnabled` bound to validity, no Click handler that validates.
 
-## Related Skills
+To move focus to the first field in error, handle the command's completion in code-behind (a refused execution completes too):
 
-- `references/state-basics.md` for the draft state
-- `references/commands.md` for `Command.Create` and the command rules
-- `uno-kiota`, its Dataverse reference, for field rules from server metadata
+```csharp
+DataContextChanged += (_, _) =>
+{
+    if (DataContext is ContactRecordViewModel { Save: AsyncCommand save }) // Uno.Extensions.Reactive.Commands
+        save.ExecutionCompleted += (_, _) => DispatcherQueue.TryEnqueue(() =>
+            Descendants(this).OfType<Control>().FirstOrDefault(Validation.GetHasErrors)?.Focus(FocusState.Programmatic));
+};
+```
+
+`Descendants` walks `VisualTreeHelper`; `Validation` is `Uno.UI.Xaml.Controls.Validation`.
+
+## Limits
+
+- **Windows App SDK ignores it**: `Validation.*` compiles there but shows nothing. A `net10.0-windows` head needs its own display.
+- **No screen reader text**: errors don't reach `AutomationProperties.HelpText`.
+- Item-level errors of an `IListState<T>` aren't supported.

@@ -17,7 +17,7 @@
 ## Understand Pagination Types
 
 - **Index-based**: `ListFeed.PaginatedAsync(async (request, ct) => ...)`; the delegate is `AsyncFunc<PageRequest, IImmutableList<T>>`, so it takes the request and a `CancellationToken`, and a one-parameter lambda does not compile. `PageRequest` has `uint Index`, `uint CurrentCount`, and `uint? DesiredSize` (null on the first page, so fall back to a default). Slice with `Skip((int)request.CurrentCount).Take((int)(request.DesiredSize ?? DefaultPageSize))`, not `Index * DesiredSize`.
-- **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`: `(cursor, uint? desiredPageSize, ct)` returning `ValueTask<PageResult<TCursor, T>>` (namespace `Uno.Extensions.Reactive.Sources`). Use it for an API that returns a next link or a continuation token, and for any API that cannot skip (Dataverse rejects `$skip`).
+- **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`: `(cursor, uint? desiredPageSize, ct)` returning `ValueTask<PageResult<TCursor, T>>` (namespace `Uno.Extensions.Reactive.Sources`). Use it for an API that returns a next link or a continuation token, and for any API that cannot skip rows.
 
 ## Cursor pagination with a next link
 
@@ -33,7 +33,7 @@ public IListFeed<Contact> Contacts => ListFeed<Contact>.PaginatedByCursorAsync(
     });
 ```
 
-With a Kiota OData client the service requests the first page with `Prefer: odata.maxpagesize=N` and follows `OdataNextLink` with the request builder's `WithUrl(nextLink).GetAsync(...)`.
+How the service asks for a page size and follows the next link depends on its client: see `uno-kiota`.
 
 ## Search with pagination
 
@@ -51,7 +51,7 @@ public IListFeed<Contact> Results => Search.SelectPaginatedByCursorAsync(
     });
 ```
 
-Sort is one more input to the same projection: hold the term and the sort (column, direction) in one record state and project that, so a new sort restarts from the first page too. The sort goes to the server (`$orderby` in OData), never to an `OrderBy` over the pages loaded so far.
+Sort is one more input to the same projection: hold the term and the sort (column, direction) in one record state and project that, so a new sort restarts from the first page too. The sort goes to the server, never to an `OrderBy` over the pages loaded so far.
 
 **Typing waits about 300 ms before it becomes a request.** Put a feed between the state and the list. A newer term cancels the token, so the delay is the debounce, and clearing the box is not delayed. `Results` then projects from `Term`, not from `Search`:
 
@@ -67,7 +67,7 @@ private IFeed<string> Term => Search.SelectAsync(async (term, ct) =>
 });
 ```
 
-**The search text is matched as typed.** The service doubles the quotes for the filter's string literal and escapes the characters the backend reads as wildcards, so a search for `50%` finds the rows that contain `50%`. **Every sort ends with the key** (`$orderby=name asc,id`): rows that tie on the sort column otherwise repeat or go missing between pages. Dataverse's wildcards and its active-rows filter are in the `uno-kiota` skill's Dataverse reference.
+**The search text is matched as typed.** The service doubles the quotes for the filter's string literal and escapes the characters the backend reads as wildcards, so a search for `50%` finds the rows that contain `50%`. **Every sort ends with the key** (by name, then by id): rows that tie on the sort column otherwise repeat or go missing between pages. Which characters a backend reads as wildcards, and how its filter and sort are written: `uno-kiota`.
 
 **Never start `SelectPaginatedByCursorAsync` from a `null` cursor.** It then never calls `getPage` and the list stays empty. `ListFeed<T>.PaginatedByCursorAsync` does load a `null` first cursor; `string.Empty` works in both.
 

@@ -200,6 +200,21 @@ try {
         }
     }
 
+    # --- A backend's protocol and vendor details live in uno-kiota (its OData pages and one page per vendor).
+    # Every other skill states its rule for any backend and points at uno-kiota, so it never names a vendor
+    # or an OData query option.
+    $backendTerms = '(?i)\b(?:Dataverse|Dynamics 365|Business Central|Power Apps)\b|OData|(?<![\w$])\$(?:skip|apply|orderby|filter|expand|select|count|top|metadata)\b'
+    foreach ($f in Get-ChildItem "$plugin/skills" -Recurse -File | Where-Object { $_.FullName -notmatch '[\\/]uno-kiota[\\/]' }) {
+        $lineNumber = 0
+        foreach ($line in Get-Content $f.FullName) {
+            $lineNumber++
+            $m = [regex]::Match($line, $backendTerms)
+            if ($m.Success) {
+                $errors.Add("$([IO.Path]::GetRelativePath($root, $f.FullName) -replace '\\', '/'):${lineNumber}: names '$($m.Value)'; backend and vendor details belong in uno-kiota, and other skills point there")
+            }
+        }
+    }
+
     # --- Size report. Every file an agent reads stays in its context and is re-read on each later
     # call, so references get a budget. Larger files are split by task; templates and lookup tables
     # that should not be split are exempt but need a table of contents (an `](#` link near the top).

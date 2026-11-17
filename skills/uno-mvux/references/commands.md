@@ -29,7 +29,7 @@ For a click on the whole row, put `utu:CommandExtensions.Command` on the `ListVi
 
 ## A change with Undo
 
-A change made in one click (complete, reopen, a stage) is written at once, and the page keeps the last one in a single state: the notice's text and the call that reverses it. A refused write goes into the same state with no undo. The contract is the `uno-build-app` skill's `one-click-change` recipe. A command's exception shows nothing to the user, so the command catches what the service throws (Kiota's `ApiException` here) and reports it.
+A change made in one click (complete, reopen, a stage) is written at once, and the page keeps the last one in a single state: the notice's text and the call that reverses it. A refused write goes into the same state with no undo. The contract is the `uno-build-app` skill's `one-click-change` recipe. A command's exception shows nothing to the user, so the command catches what the service throws and reports it.
 
 ```csharp
 public sealed record UndoableChange(string Text, Func<CancellationToken, ValueTask>? Undo)

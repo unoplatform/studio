@@ -138,8 +138,6 @@ await Draft.UpdateAsync(d => d is null ? d : d with
 }, ct);
 ```
 
-Where Dataverse says which lookup filters which: the `uno-kiota` skill's Dataverse reference.
-
 ## Related Skills
 
 - `references/qualifiers.md` — Qualifier prefixes

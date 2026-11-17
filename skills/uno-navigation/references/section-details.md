@@ -36,7 +36,7 @@ Give the record page a `<utu:NavigationBar Content="…" />` as its top row: the
 
 ## Switch to another section from a section
 
-A section's own navigator cannot select another section. From the Overview Model, `NavigateRouteAsync(this, "Opportunities")`, `"../Opportunities"` and `"-/Opportunities"` all show the Opportunities page, but the sidebar stays on Overview and clicking Overview then does nothing. `"./Opportunities"` and `"/Main/Opportunities"` show nothing.
+A section's own navigator cannot select another section. From the Overview Model, `NavigateRouteAsync(this, "Contacts")`, `"../Contacts"` and `"-/Contacts"` all show the Contacts page, but the sidebar stays on Overview and clicking Overview then does nothing. `"./Contacts"` and `"/Main/Contacts"` show nothing.
 
 Send it through the shell's navigator, with `./`, the same call as a shell button. The shell's Model receives that navigator; keep it in a singleton that sections inject:
 
@@ -52,7 +52,7 @@ public class ShellNavigation
 }
 ```
 
-The section then calls `await shell.NavigateToSectionAsync(this, "Opportunities")`. Opening a details page in another section does not need this: the call in the table above selects its section.
+The section then calls `await shell.NavigateToSectionAsync(this, "Contacts")`. Opening a details page in another section does not need this: the call in the table above selects its section.
 
 ## Keep the content region a Visibility `Grid`
 

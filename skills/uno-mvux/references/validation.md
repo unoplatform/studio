@@ -24,7 +24,7 @@ public class ContactDraftValidator : AbstractValidator<ContactDraft>
 }
 ```
 
-Register with `.UseValidation(configure: v => v.Validator<ContactDraft, ContactDraftValidator>())` and inject the non-generic `Uno.Extensions.Validation.IValidator`. Rules from Dataverse metadata: see `uno-kiota`.
+Register with `.UseValidation(configure: v => v.Validator<ContactDraft, ContactDraftValidator>())` and inject the non-generic `Uno.Extensions.Validation.IValidator`. Rules the backend publishes (required, length, range, format): see `uno-kiota`.
 
 ## Model
 

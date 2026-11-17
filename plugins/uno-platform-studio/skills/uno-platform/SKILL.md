@@ -1,6 +1,6 @@
 ---
 name: uno-platform
-description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the uno-build-app workflow for building an app or a feature, to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-testing), and sets the project-wide rules that apply before any of them."
+description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the uno-build-app workflow for building an app or a feature, to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-charts, uno-testing), and sets the project-wide rules that apply before any of them."
 metadata:
   author: uno-platform
   category: overview
@@ -23,12 +23,14 @@ Most real requests touch two or three domains. Load every one that applies.
 | Colors, brushes, typography, Material Design 3, the Simple theme, dark mode, restyling controls, theme resource keys | `uno-themes` |
 | Login, sign-in and sign-out, user accounts, tokens on API calls, Microsoft Entra ID (MSAL), OpenID Connect, protected pages | `uno-authentication` |
 | Calling a web API or the template's server project, OpenAPI/Swagger documents, generated Kiota clients (`HttpKiota`, `AddKiotaClient`, `Content/Client`), the API's base URL | `uno-kiota` |
+| Charts, graphs, plots, sparklines, KPI trends, a dashboard's figures drawn as bars, lines or slices (LiveCharts2, ScottPlot) | `uno-charts` |
 | Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (the Uno App MCP, or the platform accessibility tree for Release builds) | `uno-testing` |
 
 Worked examples:
 
 - "Add a products page that lists items from our API with a bottom tab" → `uno-build-app` (a feature), then `uno-navigation` (tab shell, route), `uno-mvux` (`IListFeed<T>` + `FeedView`), `uno-toolkit` (`TabBar`), `uno-themes` if styling is mentioned.
 - "The card on the dashboard looks flat, make it match Material" → `uno-toolkit` (`CardContentControl`), `uno-themes` (Material brushes).
+- "Add a spending page that shows the last 12 months by category" → `uno-build-app` (a feature), `uno-mvux` (the feed the chart is built from), `uno-charts` (the package and the chart).
 - "Check that the login form shows an error on bad credentials" → `uno-testing`, with `uno-mvux` if the form logic also needs changes.
 
 ## Project-wide rules

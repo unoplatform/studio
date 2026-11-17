@@ -77,7 +77,7 @@ var open = Convert.ToInt32(one!.Value![0].AdditionalData["n"]);
 - **`filter(...)/` comes first** to narrow the rows, then `groupby((columns),aggregate(...))` or `aggregate(...)` alone. The functions are `sum`, `average`, `min`, `max`, `countdistinct` and `$count`.
 - **Expose each as its own feed** (`Feed.Async` over the service method), refreshed after a write that changes it. A total doesn't need the list, and the list doesn't need the total.
 - **Probe each `$apply` request before relying on it** (`references/odata.md`). It is an optional extension: a service may not implement it, may cap the rows one aggregate reads, or may refuse a grouping it doesn't like, such as a column that points at a related row. Narrow with `filter` first when there is a cap.
-- **When the service refuses the request**, look for its own aggregate query before anything else: the vendor's page or documentation (`references/dataverse.md` has Dataverse's). Reading every row to add them up in the app is the last resort, for a set the app already reads to the end, and it goes in the report.
+- **When the service refuses the request**, look for its own aggregate query in the vendor's page or documentation (`references/dataverse.md` has Dataverse's). Don't read every row to add them up in the app.
 - **For the count of one filtered list**, `QueryParameters.Count = true` on the list's own request is enough (above).
 
 ## Filter, sort and search are OData strings
@@ -85,13 +85,13 @@ var open = Convert.ToInt32(one!.Value![0].AdditionalData["n"]);
 ```csharp
 var text = query.Replace("'", "''"); // a quote inside an OData string literal is doubled
 r.QueryParameters.Filter = $"contains(Name,'{text}') or contains(Email,'{text}')";
-r.QueryParameters.Orderby = ["Name desc", "CustomerId"];
+r.QueryParameters.Orderby = ["Name desc", "Code"];
 ```
 
 - **Build a search with `$filter`** when `$search` is in the recipe's `unsupported` list. Probe the filter functions you use too, as `references/odata.md` describes, before you rely on them.
-- **Use the schema's property names**, in the schema's casing. One service spells them in lower case and another in Pascal case, and a wrong case is a 400.
+- **Use the schema's property names**, in the schema's casing. One service spells them in lower case and another in Pascal case.
 - **Every read names its columns with `Select`**: a list page, a related list, a picker and a get by key (below). A request without it returns every column, which is hundreds on a large business table. The service's tests can hold this: every GET for rows carries `$select`.
-- **End every `$orderby` with the key** (`Name asc,CustomerId`): rows that tie on the sort column otherwise repeat or go missing between pages.
+- **End every `$orderby` with the key** (`Name asc,Code`): rows that tie on the sort column otherwise repeat or go missing between pages.
 - **Sort a column that shows a related row by that row's name**, not by the key the row holds. The protocol's spelling is the navigation path (`$orderby=Customer/Name`), but a service can refuse it or want an `$expand` with it, so probe it (`references/odata.md`) and check the vendor's page.
 
 ## Get by key

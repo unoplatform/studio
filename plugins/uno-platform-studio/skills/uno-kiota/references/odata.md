@@ -2,11 +2,12 @@
 
 An OData v4 service (Dataverse and Dynamics 365, Business Central, an ASP.NET Core OData server) publishes its schema as CSDL at `$metadata`, not as an OpenAPI document. Generate its client from that schema with the recipe below. Never hand-write an OpenAPI document for it, and don't generate from a vendor's OpenAPI export. Microsoft Graph is OData too, but it has its own SDK: use that.
 
+The OData pages hold what is true of any OData v4 service, with illustrative names (`Sales`, `Orders`, `Customers`). A vendor's service root, limits and known probe results are in its own page, read first: `references/dataverse.md` for Dataverse.
+
 ## Recognize it
 
 - A URL ending in `$metadata`, or an XML file whose root is `<edmx:Edmx>`.
 - Responses carrying `@odata.context`, `@odata.nextLink` or `@odata.count`.
-- A vendor's service root, such as Dataverse's `https://<org>.crm<N>.dynamics.com/api/data/v9.2/`.
 - A vendor OpenAPI export with paths like `/Orders({OrderId})`. Such an export is a conversion of the schema with settings the app didn't choose: it can lack the typed next link, declare query options the service rejects, and be too big for Kiota to generate from. Fetch `$metadata` instead.
 
 ## The recipe
@@ -15,7 +16,7 @@ It needs the .NET 10 SDK. Run every step from the solution folder.
 
 1. Add `hidi`, Microsoft's CSDL-to-OpenAPI converter, to the local tool manifest next to Kiota (`references/generate.md`): `dotnet tool install Microsoft.OpenApi.Hidi`.
 2. Copy this skill's `assets/odata-scope.cs` to `odata/odata-scope.cs`. **Never put it in a project folder.** A `.cs` file there compiles into the app, its top-level statements replace the app's entry point, and the build still succeeds with only warning CS7022.
-3. Fetch the schema to `odata/<Service>/metadata.xml` with the service's credentials: `GET <service root>/$metadata`, usually with a bearer token. Never print the token or write it to a file. Add `odata/*/metadata.xml` to `.gitignore`: a large service's schema is several megabytes.
+3. Fetch the schema to `odata/<Service>/metadata.xml` with the service's credentials: `GET <service root>/$metadata`, usually with a bearer token. Add `odata/*/metadata.xml` to `.gitignore`: a large service's schema is several megabytes.
 4. Probe the query options the app will use (below).
 5. Write `odata/<Service>/scope.json`. Entity-set names are the schema's `<EntitySet Name>`, usually plural:
 
@@ -44,18 +45,14 @@ Services rarely declare which query options they support, and the converter offe
 | 4xx or 5xx | Unsupported | `$skip` returns 400, `$search` 501 |
 | The same rows as without it | Ignored, which is worse: the feature looks like it works | `$search=Russell` returns every row |
 
-List both kinds in `unsupported` (`skip`, `top`, `search`, `count`, `filter`, `orderby`). The client then doesn't offer them, and the app gets the feature another way (`references/odata-calling.md`). A vendor's page lists the results already known for it; probe any other service, and any option its page doesn't cover.
+List both kinds in `unsupported` (`skip`, `top`, `search`, `count`, `filter`, `orderby`). The client then doesn't offer them, and the app gets the feature another way (`references/odata-calling.md`). A vendor's page lists the results known for it; probe any other service.
 
 Probe paging too:
 
 - **Page size:** `$top=2` with `Prefer: odata.maxpagesize=1`. One row and an `@odata.nextLink` means the service pages. Two rows and no link means it's ignored: the whole set comes back in one call.
 - **`$skip` really moves:** `$top=1&$skip=1&$orderby=<key>` must return the second row of `$top=2&$orderby=<key>`. A 200 with the first row again means it's ignored.
 
-Probe whatever else the app relies on, with the exact request it will send: each `$apply` grouping and aggregate (a service can implement `$apply` and still refuse a grouping or cap the rows), a sort by a related row's column (`$orderby=<navigation>/<column>`), and the filter functions the search uses. Probes only read.
-
-## A vendor's page
-
-These OData pages hold what is true of any OData v4 service, with illustrative names (`Sales`, `Orders`, `Customers`). A vendor's service root, sign-in, limits, known probe results and the rules it publishes outside `$metadata` are in its own page: read it before designing anything. Dataverse, Dynamics 365 and Power Apps: `references/dataverse.md`. For a service with no page, ask its documentation and probes the same questions: which options it refuses or ignores, where a form's rules (required, length, choices) are published, how it names the navigation property behind a key column, and whether its PATCH upserts.
+Probe whatever else the app relies on, such as an `$apply` grouping or a sort by a related row, with the exact request it will send.
 
 ## What the script keeps
 

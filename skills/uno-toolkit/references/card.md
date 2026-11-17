@@ -135,6 +135,21 @@ Setting `Width`/`Height` on the inner content of the `ContentTemplate` will not 
 | `FilledCardContentControlStyle` | Background tint, no elevation; use on busy backgrounds |
 | `OutlinedCardContentControlStyle` | Stroke instead of fill/elevation; secondary content |
 
+### Lightweight styling keys
+
+A `CardContentControl` reads the `CardContent` keys. The keys without `Content` (`FilledCardBackground`, `OutlinedCardBorderBrush`, `CardForeground`) style `Card` and have no effect on a `CardContentControl`.
+
+In Simple, all three styles read the same keys:
+
+| Key | Default | Used by |
+|-----|---------|---------|
+| `FilledCardContentBackground` | `SurfaceBrush` | The background of every variant |
+| `OutlinedCardContentBorderBrush` | `OutlineVariantBrush` | The border of Outlined and Elevated |
+| `CardContentBackgroundPointerOver`, `CardContentBackgroundDisabled` | | Pointer-over and disabled backgrounds |
+| `CardCornerRadius`, `CardBorderThickness` | `8`, `1` | All variants |
+
+Simple's `OutlinedCardContentBackground` and `Elevated*` keys are defined but never read. Simple draws Elevated like Outlined, with no shadow. The text is `OnSurfaceBrush` with no key: set `Foreground` in a style based on the variant to change it.
+
 ## Docs, for what this page does not cover
 
 Use these when the sections above do not answer the question: search, then fetch only the section you need, with the `anchor` from the search result. A whole page stays in context for the rest of the session.

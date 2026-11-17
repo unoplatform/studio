@@ -41,6 +41,7 @@ Prefer a document checked into `Specs/` over a live URL: generation is then repe
 |---|---|---|
 | Code-first (the template's `-server` project, with Swashbuckle) | The server's code | Run the server, save its `/swagger/v1/swagger.json` (Development only) to `Specs/`, then `kiota update` |
 | Design-first (a hand-written or third-party document) | The document in `Specs/` | Edit the document, change the server to match, then `kiota update` |
+| An OData service (`$metadata`) | The service's schema | Re-fetch `$metadata` and re-run the recipe in `references/odata.md`, which derives the document and runs `kiota update` on the client named in its `scope.json` |
 
 Never save a server-generated document over a hand-written one: it loses what the code does not declare, such as `application/problem+json` and `text/plain` content and response descriptions. In a design-first app, remove Swashbuckle from the server so there is only one document.
 

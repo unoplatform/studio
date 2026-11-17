@@ -1,8 +1,16 @@
 # Dataverse
 
-**Contents:** [Read the environment before you design](#read-the-environment-before-you-design) · [Sign-in while developing](#sign-in-while-developing) · [Field rules come from EntityDefinitions](#field-rules-come-from-entitydefinitions) · [A form's fields come from the table's main form](#a-forms-fields-come-from-the-tables-main-form) · [A list's columns, order and search come from the table's views](#a-lists-columns-order-and-search-come-from-the-tables-views) · [Labels](#labels) · [Lookups](#lookups) · [Activity parties](#activity-parties) · [Money](#money) · [Status](#status) · [Keys and query options](#keys-and-query-options)
+**Contents:** [Read the environment before you design](#read-the-environment-before-you-design) · [Sign-in while developing](#sign-in-while-developing) · [Field rules come from EntityDefinitions](#field-rules-come-from-entitydefinitions) · [A form's fields come from the table's main form](#a-forms-fields-come-from-the-tables-main-form) · [A list's columns, order and search come from the table's views](#a-lists-columns-order-and-search-come-from-the-tables-views) · [Labels](#labels) · [Lookups](#lookups) · [Activity parties](#activity-parties) · [Money](#money) · [Status](#status) · [Totals](#totals) · [The client, probe results and limits](#the-client-probe-results-and-limits)
 
-Dataverse (Dynamics 365, Power Apps) is an OData service: generate and call its client with `references/odata.md`, `references/odata-calling.md` and `references/odata-writing.md`. This page is what its `$metadata` doesn't say. Every query below is a GET on `<org>/api/data/v9.2` with the app's token.
+Dataverse (Dynamics 365, Power Apps) is an OData service: generate and call its client with `references/odata.md`, `references/odata-calling.md` and `references/odata-writing.md`. Those pages use an illustrative schema; this page is what Dataverse alone does, and what its `$metadata` doesn't say. Every query below is a GET on `<org>/api/data/v9.2` with the app's token.
+
+## Critical rules
+
+- **A form's fields, rules and choices come from the environment's metadata**, read before the pages are designed (with the token kept inside the command that uses it, never printed), snapshotted by a script and checked by a test: the table's main form for the field list, EntityDefinitions for required, length, range and options. A list's columns, default order and searched columns come from the table's views the same way. Not from memory, and not from a mock-up alone.
+- **A status reason is read at run time.** The snapshot holds the pairs the app is built and tested on; once per session the app reads them again and uses what it finds, because a maker adds and renames reasons after the app ships (*Status*).
+- **An amount carries its currency.** The row names it, and each money column has a `_base` twin for totals; no symbol or code is typed into the app (*Money*).
+- **PATCH is an upsert.** A record form's update sends the row's etag in `If-Match`, and a write made without the row sends `If-Match: *`, so a PATCH to a deleted row fails instead of creating it again (`references/odata-writing.md`).
+- **`$skip` and `$search` are refused**, and names are lower case: page with the next link and search with `contains()` (*The client, probe results and limits*).
 
 ## Read the environment before you design
 
@@ -69,7 +77,6 @@ GET savedqueries?$select=name,querytype,isdefault,isquickfindquery,layoutxml,fet
 - **Snapshot it with the same script**, beside the forms: per table, the default view's columns and order, the quick find columns and the lookup view's columns. The app's list shows those columns, the table's primary name column first because it is the row's title in a narrow list, and opens in that order. Its search sends `contains()` over the quick find columns that hold text, and a picker shows the lookup view's columns. A table with no usable view shows its name, then its text and date columns, and searches the name; say so in the report.
 - **A list reads the active rows**: `statecode eq 0` in the `$filter` of every list and picker, unless the list is of closed rows.
 - **`contains()` reads `%`, `_` and `[` as wildcards.** After doubling quotes, put each in brackets (`[%]`, `[_]`, `[[]`), so the text typed matches only itself.
-- **End every `$orderby` with the key** (`fullname asc,contactid`): rows that tie on the sort column otherwise repeat or go missing between pages.
 
 ## Labels
 
@@ -86,6 +93,7 @@ GET savedqueries?$select=name,querytype,isdefault,isquickfindquery,layoutxml,fet
   GET EntityDefinitions(LogicalName='task')/ManyToOneRelationships?$select=ReferencingAttribute,ReferencedEntity,ReferencingEntityNavigationPropertyName&$filter=ReferencingAttribute eq 'regardingobjectid'
   ```
 
+- **Clear** a lookup in the same PATCH as the other fields, with a null bind: `changes.AdditionalData["parentcustomerid_account@odata.bind"] = null!;`. Dataverse answered 204 and cleared the value. The `$ref` delete of `references/odata-writing.md` works too.
 - **Sort by a lookup with its own column.** `$orderby=_parentcustomerid_value` orders the rows by the related row's name, not by its id. `$orderby=parentcustomerid_account/name` answers 400 unless the same request also expands that navigation property (`$expand=parentcustomerid_account($select=name)`).
 - **A polymorphic lookup has one navigation property per target table.** A contact's `parentcustomerid` is written as `parentcustomerid_account` or `parentcustomerid_contact`. A task's regarding is `regardingobjectid_account_task`, with the activity table's name at the end; `regardingobjectid_account` is declared only on `activitypointer`, so a write to `tasks` with it fails.
 
@@ -121,9 +129,24 @@ Snapshot the pairs with the same script as the rules. The values the app tests a
 
 **Read the pairs again at run time.** A maker can add or rename a status reason after the app ships, and an app that only knows the snapshot then shows a blank or refuses a valid row. Once per session the app sends the request above for each table whose status it shows, in the background and with its own token, and uses the answer over the snapshot; when that read fails the snapshot stands. This is part of the app, not an option to report as left out. A request test proves it: a recording handler that answers with one more reason than the snapshot has, and the status list shows it.
 
-## Keys and query options
+## Totals
 
+`$apply` works as `references/odata-calling.md` describes, with Dataverse's names: `accounts?$apply=filter(statecode eq 0)/groupby((industrycode),aggregate(revenue with sum as total,$count as n))`. Its limits:
+
+- **An aggregate over more than 50,000 rows is refused.** Narrow it with `filter` first.
+- **A lookup column is not a grouping.** `groupby((_parentcustomerid_value),...)`, the lookup's own name and its navigation property each answer 400. Grouping by a column of the related row (`groupby((primarycontactid/fullname),...)`) works for some lookups and answers 400 for others, so probe the one you need.
+- **When the grouping is refused, send the same total as a FetchXML aggregate** on the collection, still one request: `.WithUrl($"{accounts}?fetchXml={Uri.EscapeDataString(fetch)}")`, where `fetch` is `<fetch aggregate="true"><entity name="account"><attribute name="primarycontactid" alias="contact" groupby="true" /><attribute name="revenue" alias="total" aggregate="sum" /></entity></fetch>`. Every alias arrives in `AdditionalData`: the grouped lookup as the related row's id in a string, the totals as numbers. A group whose lookup is empty has no key for it, so read it with `TryGetValue`. Don't read every row to add them up in the app.
+
+## The client, probe results and limits
+
+What the generic pages leave to the vendor, as found on Dataverse:
+
+- **The service root** is `https://<org>.crm<N>.dynamics.com/api/data/v9.2`, where the `crm` part varies by region (`crm`, `crm3`, …). It is the Url the client is registered with, and `$metadata` hangs off it.
+- **`$metadata` is 6 MB** and declares 1,427 types. Dataverse's own OpenAPI export is no shortcut: generating from it takes minutes and fails. The scope script copes with the two things that break a naive cut: the activities derive from `activitypointer`, whose 46 navigation properties would otherwise pull in 622 types, and Kiota rejects the empty base type `crmbaseentity`.
+- **Probe results:** `$skip` answers 400 and `$search` 501, so `scope.json` has `"unsupported": ["skip", "search"]`: page with the next link, and search with `contains()` in `$filter`. `Prefer: odata.maxpagesize` is honoured, but a next link followed without the header returned all 38 remaining rows as one page.
+- **Names are lower case** (`name`, `emailaddress1`), in queries and as `AdditionalData` keys, and every key is a `Guid`: `client.AccountsWithAccountid(Guid)`.
 - **Keys go in parentheses:** `accounts(<id>)`. `accounts/<id>` answers 500.
-- **`$skip` answers 400 and `$search` 501:** list both in `unsupported`, page with the next link, and search with `contains()` in `$filter`.
+- **Tables are wide**: `account` has 152 columns and `contact` 225, which is what a read without `$select` returns.
+- **A write runs the table's rules and plug-ins** for every column in the body, one more reason a PATCH holds only what changed. A validation failure comes back in `ODataError.Message` with its detail ("... exceeded the maximum allowed length of '160'.").
 
 Verified against Dataverse Web API v9.2 on 2026-11-04; the main-form query on 2026-11-10; the lookup sort and the money columns on 2026-11-12; the one-to-many relationships on 2026-11-14; the activity-party read on 2026-11-15, with the party types from Microsoft's ActivityParty reference.

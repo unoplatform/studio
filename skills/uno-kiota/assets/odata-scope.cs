@@ -5,7 +5,7 @@
 //
 //   dotnet run odata/odata-scope.cs -- odata/<Service>
 //
-// odata/<Service>/scope.json:  { "entitySets": ["accounts", "contacts"], "unsupported": ["skip", "search"], "client": "<App>/Content/Client/<Client>" }
+// odata/<Service>/scope.json:  { "entitySets": ["Orders", "Customers"], "unsupported": ["skip", "search"], "client": "<App>/Content/Client/<Client>" }
 // odata/<Service>/metadata.xml: the service's $metadata, fetched beforehand (git-ignored).
 // Writes scoped.xml and openapi.yaml next to them, then runs `dotnet kiota update -o <client>` when "client" is set.
 using System.Diagnostics;

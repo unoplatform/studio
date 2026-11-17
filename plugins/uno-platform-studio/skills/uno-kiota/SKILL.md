@@ -13,9 +13,9 @@ Uno.Extensions.Http.Kiota turns a Kiota-generated API client into a service: `Ad
 ## Workflow
 
 1. A new app gets Kiota from the `uno-build-app` template command (`-http kiota` is the preset's default); add `-server` for a backend project, an OpenAPI document in `Specs/` and a generated client in `Content/Client`: `dotnet new unoapp -preset recommended -presentation mvux -theme simple -tests unit -server -o <AppName>`. Without `-server` the app has the feature but no client. Then fix the template gaps listed in the critical rules.
-2. Read `references/generate.md` to create or regenerate the client, `references/register.md` to register it, and `references/calling.md` to call it. Add `references/content-types.md` when an operation sends or returns anything other than `application/json`, and `references/testing.md` for the service tests that prove every operation.
+2. Read `references/generate.md` to create or regenerate the client, `references/register.md` to register it, and `references/calling.md` to call it. Add `references/content-types.md` when an operation sends or returns anything other than `application/json`, and `references/testing.md` for the service tests that prove every operation. Read `references/mock-data.md` when the API isn't running yet or a page needs its empty and error states on demand.
 3. Ground details in the official docs: call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result (a relative `.md` path). Never pass a URL, `.html` link, or hand-built path.
-4. The API's URL and its OpenAPI document are the developer's. Never invent them: use a placeholder and report the API as not configured.
+4. The API's URL and its OpenAPI document are the developer's. Never invent them: use a placeholder and report the API as not configured. With the document but no running API, serve fixtures written from it (`references/mock-data.md`) and say so in the report.
 
 ## Topic map
 
@@ -30,6 +30,7 @@ Uno.Extensions.Http.Kiota turns a Kiota-generated API client into a service: `Ad
 | Write to an OData service: create, update only what changed, clear a value, set or clear a lookup, delete, etags and upserts | `references/odata-writing.md` | `PostAsync`, `PatchAsync`, `AdditionalData`, `@odata.bind`, `$ref`, `If-Match` |
 | A Dataverse, Dynamics 365 or Power Apps service: its critical rules, then what `$metadata` doesn't say (required, length, format and range from EntityDefinitions, a form's fields and filtered lookups from the table's main form, a list's columns, order and search from its views, option and status labels, formatted values, lookup navigation names, money, status pairs), its probe results and limits | `references/dataverse.md` | `EntityDefinitions`, `RequiredLevel`, `systemforms`, `savedqueries`, `FormattedValue`, `ManyToOneRelationships`, `statecode` |
 | Service tests of every operation through the app's registration, against the server in-process; the template test's `icuuc77` failure | `references/testing.md` | `WebApplicationFactory`, `UseHttp`, `SkipIcuDataInitializerGenerator` |
+| Mock data: JSON fixtures written from the spec's schemas, served by a Debug-only handler in place of the wire, and a test that holds each fixture to the generated models | `references/mock-data.md` | `HttpMessageHandler`, `UseHttp`, `JsonParseNodeFactory`, `AdditionalData` |
 | The access token on Kiota calls, refresh on 401, the `No-Refresh` header | the `uno-authentication` skill (`references/http.md`) | `UseAuthentication`, `No-Refresh` |
 
 ## Critical rules

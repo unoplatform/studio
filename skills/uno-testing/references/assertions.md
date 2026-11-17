@@ -4,6 +4,8 @@
 
 This reference provides patterns for validating UI state and asserting test conditions when testing Uno Platform applications with the Uno App MCP tools.
 
+**Contents:** [Assertion Types](#assertion-types) · [Common Assertion Patterns](#common-assertion-patterns) · [Screenshot-Based Assertions](#screenshot-based-assertions) · [Data Context Assertions](#data-context-assertions) · [Timing and Retry Patterns](#timing-and-retry-patterns) · [Failure Handling](#failure-handling) · [Test Organization Tips](#test-organization-tips) · [Best Practices](#best-practices)
+
 ## Assertion Types
 
 ### Visual Assertions (Screenshots)

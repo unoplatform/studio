@@ -1,5 +1,7 @@
 # Uno Toolkit CardContentControl
 
+**Contents:** [Critical Rules](#critical-rules) · [Key Principles (Stable)](#key-principles-stable) · [Critical: Content Binding in DataTemplates](#critical-content-binding-in-datatemplates) · [Sizing — `CardContentControl` does NOT stretch by default](#sizing--cardcontentcontrol-does-not-stretch-by-default) · [Style Variants](#style-variants) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Critical Rules
 
 - **NEVER use `Card`** — always use `CardContentControl`. The `Card` control has rigid predefined slots (HeaderContent, SubHeaderContent, AvatarContent, etc.) that constrain layout. `CardContentControl` gives full layout freedom via `ContentTemplate`.
@@ -132,6 +134,21 @@ Setting `Width`/`Height` on the inner content of the `ContentTemplate` will not 
 | `ElevatedCardContentControlStyle` | Subtle z-axis elevation; default choice for surfaced content |
 | `FilledCardContentControlStyle` | Background tint, no elevation; use on busy backgrounds |
 | `OutlinedCardContentControlStyle` | Stroke instead of fill/elevation; secondary content |
+
+### Lightweight styling keys
+
+A `CardContentControl` reads the `CardContent` keys. The keys without `Content` (`FilledCardBackground`, `OutlinedCardBorderBrush`, `CardForeground`) style `Card` and have no effect on a `CardContentControl`.
+
+In Simple, all three styles read the same keys:
+
+| Key | Default | Used by |
+|-----|---------|---------|
+| `FilledCardContentBackground` | `SurfaceBrush` | The background of every variant |
+| `OutlinedCardContentBorderBrush` | `OutlineVariantBrush` | The border of Outlined and Elevated |
+| `CardContentBackgroundPointerOver`, `CardContentBackgroundDisabled` | | Pointer-over and disabled backgrounds |
+| `CardCornerRadius`, `CardBorderThickness` | `8`, `1` | All variants |
+
+Simple's `OutlinedCardContentBackground` and `Elevated*` keys are defined but never read. Simple draws Elevated like Outlined, with no shadow. The text is `OnSurfaceBrush` with no key: set `Foreground` in a style based on the variant to change it.
 
 ## Docs, for what this page does not cover
 

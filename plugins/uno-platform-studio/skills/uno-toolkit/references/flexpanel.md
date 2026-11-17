@@ -2,6 +2,8 @@
 
 > **Availability:** `FlexPanel` ships in Uno.Toolkit 11.0.0-dev.142 (Uno.Sdk 7.0.0-dev.77) and is absent from Toolkit 9.1.3 (Uno.Sdk 6.7.x). On an older Toolkit, confirm `utu:FlexPanel` resolves before using it. If it does not, use `AutoLayout` or `Grid` instead (there is no `WrapPanel` in the Toolkit or WinUI; the CommunityToolkit ships one).
 
+**Contents:** [Key Principles (Stable)](#key-principles-stable) · [FlexPanel vs AutoLayout](#flexpanel-vs-autolayout) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Key Principles (Stable)
 
 `FlexPanel` arranges its children using CSS Flexbox semantics. Layout is computed by a vendored C# port of Meta's Yoga engine, so sizing, wrapping and distribution follow the CSS specification rather than an approximation of it.

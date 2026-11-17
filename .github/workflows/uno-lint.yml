@@ -1,0 +1,83 @@
+name: uno-lint
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release/stable/**
+    paths:
+      - 'tools/uno-lint/**'
+      - '.github/workflows/uno-lint.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tools/uno-lint/**'
+      - '.github/workflows/uno-lint.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build and test tools/uno-lint
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/uno-lint
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build
+        run: dotnet build -c Release
+
+      - name: Test
+        run: dotnet test tests/Uno.Lint.Tests -c Release --no-build --logger "trx;LogFileName=uno-lint.trx"
+
+      # A version only this run produces, so the install below can never pick a published package instead.
+      - name: Pack the tool
+        run: dotnet pack src/Uno.Lint.Cli -c Release --no-build -o artifacts -p:PackageVersion=0.0.0-ci.${{ github.run_id }}
+
+      - name: Install the packed tool
+        run: |
+          dotnet tool install Uno.Lint.Tool --tool-path "$RUNNER_TEMP/tools" --add-source artifacts --version 0.0.0-ci.${{ github.run_id }}
+          echo "$RUNNER_TEMP/tools" >> "$GITHUB_PATH"
+
+      - name: Self-check the rule catalog
+        run: uno-lint rules
+
+      - name: Hook end to end through the shim
+        run: |
+          app="$RUNNER_TEMP/hook-app"
+          mkdir -p "$app/Views"
+          echo '<Project Sdk="Uno.Sdk"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>' > "$app/App.csproj"
+          printf '<Page xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">\n  <Border CornerRadius="8" Background="#FF0000"><Grid/></Border>\n</Page>\n' > "$app/Views/MainPage.xaml"
+          file=$(cd "$app/Views" && pwd -W 2>/dev/null || pwd)/MainPage.xaml
+          payload="{\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\"$file\",\"content\":\"x\"},\"tool_response\":{\"type\":\"create\",\"structuredPatch\":[]}}"
+
+          reply=$(printf '%s' "$payload" | sh hooks/uno-lint.sh)
+          echo "$reply"
+          case $reply in *'"hookEventName":"PostToolUse"'*'HEX (UNOL001)'*'CARD (UNOL101)'*) ;; *) echo "::error::hook reply missing findings"; exit 1 ;; esac
+
+          # Without the tool on PATH the shim stays silent and succeeds.
+          quiet=$(printf '%s' "$payload" | UNO_LINT_CLI=uno-lint-not-installed sh hooks/uno-lint.sh)
+          test -z "$quiet"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uno-lint-${{ matrix.os }}
+          path: |
+            tools/uno-lint/artifacts/*.nupkg
+            tools/uno-lint/tests/Uno.Lint.Tests/TestResults/*.trx

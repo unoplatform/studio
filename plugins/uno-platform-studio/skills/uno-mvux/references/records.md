@@ -1,5 +1,7 @@
 # Working with Records in MVUX
 
+**Contents:** [Key Equality Requirement (Critical)](#key-equality-requirement-critical) · [Key Principles (Stable)](#key-principles-stable) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Key Equality Requirement (Critical)
 
 **Record types used as items in MVUX collections (`IListFeed<T>`, `IListState<T>`) MUST support key equality via `Uno.Extensions.Equality.IKeyEquatable<T>`.** Without it, MVUX cannot distinguish a modified entity from a different one — unchanged items still match by value equality, but every edited item becomes a remove plus an add (lost selection, broken animations), and `UpdateAsync(T item)`/`UpdateItemAsync` do not compile (CS0311, or CS0453 for `UpdateItemAsync`; constrained `where T : IKeyEquatable<T>`). Messaging (`Observe`) matches by its own key selector, not by `IKeyEquatable<T>`.

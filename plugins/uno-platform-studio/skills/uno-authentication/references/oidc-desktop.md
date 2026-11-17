@@ -4,10 +4,10 @@ Uno's own `WebAuthenticationBroker` is not implemented on the Skia desktop head 
 
 ## Which version the app is on
 
-Check the Uno.Sdk in `global.json` before promising desktop sign-in: 7.0.0-dev.95 and later pin Uno.Extensions 8.0.0-dev.147 or later and need nothing more. An `UnoExtensionsVersion` in the csproj or `Directory.Build.props` overrides the pin. On an older Sdk, opt in or upgrade:
+Check the Uno.Sdk in `global.json` before promising desktop sign-in: 7.0.0-dev.95 and later pin Uno.Extensions 8.0.0-dev.147 or later and need nothing more. That includes the 7.0 stable: Uno.Sdk 7.0.5 pins Uno.Extensions 8.0.1. An `UnoExtensionsVersion` in the csproj or `Directory.Build.props` overrides the pin. On an older Sdk, opt in or upgrade:
 
 - Set `<UnoExtensionsVersion>8.0.0-dev.135</UnoExtensionsVersion>` **and** use Uno.Sdk 7.0.0-dev.89 or later: dev.135 was built against Uno.WinUI 7.0.0-dev.2428 and Toolkit 11.0.0-dev.155, and an older Sdk's pins fail the restore with NU1605 downgrade errors.
-- From Uno.Sdk 7.0.0-dev.89 through at least 7.0.0-dev.115, a Debug build needs a `Uno.WinUI.Lottie` PackageReference (7.0.0-dev.1663, Debug-only item group) while the Hot Design tooling references `Uno.UI.Lottie` (uno.extensions #3262); without it the desktop app dies with `FileNotFoundException: Uno.UI.Lottie` or hangs with no window. Release builds do not need it.
+- From Uno.Sdk 7.0.0-dev.89 through at least 7.0.0-dev.115, a Debug build needs a `Uno.WinUI.Lottie` PackageReference (7.0.0-dev.1663, Debug-only item group) while the Hot Design tooling references `Uno.UI.Lottie` (uno.extensions #3262); without it the desktop app dies with `FileNotFoundException: Uno.UI.Lottie` or hangs with no window. Release builds do not need it. Fixed before the 7.0 stable (uno.extensions #3263): from Uno.Sdk 7.0.5, no package the Sdk pins references `Uno.UI.Lottie`, so the app needs nothing. Do not add `Uno.WinUI.Lottie` there: it only exists as 7.0 dev builds.
 
 ## With the broker (8.0.0-dev.135 and later)
 

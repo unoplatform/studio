@@ -47,6 +47,8 @@ One test per operation the app calls, plus one per behaviour the skill warns abo
 
 Assert on the app service's records, not only on the generated models: the mapping is code too.
 
+With no server project, or for a page's empty and error states, the app runs on fixtures written from the spec instead; `references/mock-data.md` has the handler and the test that keeps each fixture in step with the generated models.
+
 ## The template's test project fails before any change
 
 On Uno.Sdk 7.0.0-dev.115, the test the `-tests unit` template generates fails as soon as it touches an app type: `System.TypeInitializationException ... Failed to load 'icuuc77'` from the generated `__IcuDataInitializer`. Turn that generator off for the test target only, in the app's project file:

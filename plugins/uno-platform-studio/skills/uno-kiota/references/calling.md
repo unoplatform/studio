@@ -9,6 +9,8 @@ var made  = await client.Api.Todos.PostAsync(new Todo { Title = "Milk" }, cancel
 await client.Api.Todos[id].DeleteAsync(cancellationToken: ct);               // 204: returns Task
 ```
 
+**Contents:** [Query parameters and headers](#query-parameters-and-headers) · [Results](#results) · [Wrapping the client for MVUX](#wrapping-the-client-for-mvux) · [Errors](#errors) · [Retries](#retries)
+
 ## Query parameters and headers
 
 Both go through the configuration lambda. Query parameter properties are generated from the document; Kiota URL-encodes the values.

@@ -1,5 +1,7 @@
 # Uno Navigation from Code
 
+**Contents:** [Critical Rules](#critical-rules) · [Key Principles (Stable)](#key-principles-stable) · [Common Pitfall Example](#common-pitfall-example) · [The Android back button](#the-android-back-button) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Critical Rules
 
 - **Pick the correct overload for the navigation scenario.** Non-result overloads (`NavigateViewModelAsync<TViewModel>`) are for one-way navigation. Result overloads (`NavigateViewModelForResultAsync<TViewModel, TResult>`) are for request-and-await-response flows where the destination page calls `NavigateBackWithResultAsync(this, data: value)` to return a value. Using the non-result overload when a return value is needed silently throws away the result.

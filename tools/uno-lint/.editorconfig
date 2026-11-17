@@ -1,0 +1,26 @@
+# Style for uno-lint's own code. The rule severities uno-lint reads from a linted project's .editorconfig are
+# documented in README.md; none are set here.
+
+[*]
+charset = utf-8
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{cs,csproj,props,targets,slnx,xml}]
+indent_size = 4
+
+[*.{json,yml,yaml,md}]
+indent_size = 2
+
+[*.sh]
+end_of_line = lf
+indent_size = 2
+
+[*.cs]
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_prefer_braces = true:warning
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+dotnet_sort_system_directives_first = true
+dotnet_style_qualification_for_field = false:suggestion

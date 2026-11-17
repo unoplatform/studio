@@ -2,6 +2,8 @@
 
 This document provides detailed examples of common UI interaction patterns using the Uno App MCP tools.
 
+**Contents:** [Button Interactions](#button-interactions) · [Text Input](#text-input) · [Keyboard Navigation](#keyboard-navigation) · [List and Selection Interactions](#list-and-selection-interactions) · [ComboBox/Dropdown Interactions](#comboboxdropdown-interactions) · [Checkbox and ToggleSwitch](#checkbox-and-toggleswitch) · [Slider Interactions](#slider-interactions) · [Dialog Handling](#dialog-handling) · [Scroll Interactions](#scroll-interactions) · [Context Menu Interactions](#context-menu-interactions) · [Drag and Drop](#drag-and-drop) · [Timing and Synchronization](#timing-and-synchronization) · [Error Recovery](#error-recovery)
+
 ## Button Interactions
 
 ### Clicking a Button by Handle

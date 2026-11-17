@@ -4,13 +4,13 @@ This reference covers visibility-based navigation where the framework injects re
 
 ## Key Principles (Stable)
 
+- **The region control must be a `Grid`.** On any other panel (a `StackPanel`, say) the request bubbles up to the parent region, so the shell Frame navigates the whole page instead of the content area. When a tab or menu tap replaces the whole page, check this first.
 - Set `uen:Region.Navigator="Visibility"` on the content container Grid
 - Set `uen:Region.Attached="True"` on the same Grid
 - **The Grid marked with `uen:Region.Navigator="Visibility"` is empty or holds named children.** Keep it empty (the framework resolves registered routes and injects views at runtime), or give every pre-placed child a `uen:Region.Name` matching its route; the navigator looks for an existing child by name before creating one. Never add unnamed `Collapsed` pages.
 - After injection, children are toggled via Visibility — all remain in the visual tree
 - Good for small numbers of views where you want instant switching
 - Switching between routes is a visibility toggle, not a push. A route whose view is a `Page` is wrapped in a `FrameView`, so `-` still pops within that tab
-- The region control must be a `Grid`; on any other panel the request bubbles up to the parent region, so the shell Frame navigates the whole page instead of the content area
 
 ## Typical Usage Pattern
 

@@ -1,5 +1,7 @@
 # MVUX ListState
 
+**Contents:** [Key Principles (Stable)](#key-principles-stable) · [Key Equality Requirement (Critical)](#key-equality-requirement-critical) · [Updater Purity (Critical)](#updater-purity-critical) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
 ## Key Principles (Stable)
 
 - `IListState<T>` is **mutable** — supports add/remove/update

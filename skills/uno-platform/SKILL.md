@@ -1,6 +1,6 @@
 ---
 name: uno-platform
-description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-testing) and sets the project-wide rules that apply before any of them."
+description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the uno-build-app workflow for building an app or a feature, to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-testing), and sets the project-wide rules that apply before any of them."
 metadata:
   author: uno-platform
   category: overview
@@ -16,6 +16,7 @@ Most real requests touch two or three domains. Load every one that applies.
 
 | The request involves | Load |
 |----------------------|------|
+| Building a new app, or adding a page, screen or feature to an existing one (more than one control or API), or repairing a broken feature | `uno-build-app`, the workflow, first; then the domain skills below that its steps name |
 | Loading data, binding input, Models, feeds, states, commands, lists, selection, paging, in an MVUX app or a new app | `uno-mvux` |
 | Pages, routes, back navigation, dialogs, tab bars, navigation drawers, passing data between pages, app shell | `uno-navigation` |
 | Uno Toolkit controls (`TabBar`, `NavigationBar`, `CardContentControl`, `Chip`, `DrawerControl`, `SafeArea`, `AutoLayout`, `LoadingView`, `ShadowContainer`, and more) or its attached-property extensions | `uno-toolkit` |
@@ -26,7 +27,7 @@ Most real requests touch two or three domains. Load every one that applies.
 
 Worked examples:
 
-- "Add a products page that lists items from our API with a bottom tab" → `uno-navigation` (tab shell, route), `uno-mvux` (`IListFeed<T>` + `FeedView`), `uno-toolkit` (`TabBar`), `uno-themes` if styling is mentioned.
+- "Add a products page that lists items from our API with a bottom tab" → `uno-build-app` (a feature), then `uno-navigation` (tab shell, route), `uno-mvux` (`IListFeed<T>` + `FeedView`), `uno-toolkit` (`TabBar`), `uno-themes` if styling is mentioned.
 - "The card on the dashboard looks flat, make it match Material" → `uno-toolkit` (`CardContentControl`), `uno-themes` (Material brushes).
 - "Check that the login form shows an error on bad credentials" → `uno-testing`, with `uno-mvux` if the form logic also needs changes.
 

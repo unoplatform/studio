@@ -19,13 +19,13 @@ if (args.Length != 1)
 }
 
 var dir = Path.GetFullPath(args[0]);
-using var scope = JsonDocument.Parse(File.ReadAllText(Path.Combine(dir, "scope.json")));
+using var scope = JsonDocument.Parse(File.ReadAllText(Path.Join(dir, "scope.json")));
 string[] Strings(string name) => scope.RootElement.TryGetProperty(name, out var p) ? [.. p.EnumerateArray().Select(e => e.GetString()!)] : [];
 var wanted = Strings("entitySets");
 var unsupported = Strings("unsupported");
 
 XNamespace edm = "http://docs.oasis-open.org/odata/ns/edm";
-var doc = XDocument.Load(Path.Combine(dir, "metadata.xml"));
+var doc = XDocument.Load(Path.Join(dir, "metadata.xml"));
 var schemas = doc.Descendants(edm + "Schema").ToList();
 string[] typeKinds = ["EntityType", "ComplexType", "EnumType", "TypeDefinition"];
 
@@ -134,26 +134,26 @@ foreach (var s in schemas)
                     return a;
                 })));
 
-var scoped = Path.Combine(dir, "scoped.xml");
+var scoped = Path.Join(dir, "scoped.xml");
 doc.Save(scoped);
 Console.WriteLine($"entity sets {string.Join(", ", keptSets.Keys.Order())}; types kept {reached.Count} of {types.Count}");
 
 // Typed @odata.nextLink and @odata.count; no navigation, operation or /$count paths (a /$count answers text/plain, which AddKiotaClient can't parse).
-var settings = Path.Combine(Path.GetTempPath(), $"odata-scope-{Environment.ProcessId}.json");
+var settings = Path.Join(Path.GetTempPath(), $"odata-scope-{Environment.ProcessId}.json");
 File.WriteAllText(settings, """
     { "OpenApiConvertSettings": { "EnablePagination": true, "EnableCount": true, "EnableDollarCountPath": false,
       "EnableNavigationPropertyPath": false, "EnableOperationPath": false, "EnableOperationImportPath": false } }
     """);
 try
 {
-    var code = Run("hidi", "transform", "--csdl", scoped, "-o", Path.Combine(dir, "openapi.yaml"), "-f", "yaml", "-v", "3.0", "--co", "--ll", "Error", "--sp", settings);
+    var code = Run("hidi", "transform", "--csdl", scoped, "-o", Path.Join(dir, "openapi.yaml"), "-f", "yaml", "-v", "3.0", "--co", "--ll", "Error", "--sp", settings);
     if (code != 0) return code;
 }
 finally { File.Delete(settings); }
 
 if (!scope.RootElement.TryGetProperty("client", out var client)) return 0;
 var clientDir = Path.GetFullPath(client.GetString()!);
-if (!File.Exists(Path.Combine(clientDir, "kiota-lock.json")))
+if (!File.Exists(Path.Join(clientDir, "kiota-lock.json")))
 {
     Console.WriteLine($"no client in {clientDir} yet: generate it once (references/odata.md, step 7); later runs update it");
     return 0;

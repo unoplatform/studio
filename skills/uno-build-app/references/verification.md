@@ -32,7 +32,9 @@ Use the target framework monikers the project actually declares; the table shows
 2. **Unit and service tests** prove rules, ordering, identity and failure handling without the UI. Run them with `dotnet test`.
 3. **Runtime checks** prove that the rendered controls invoke and update the intended state. They need the app running and something that can drive it: the Uno App MCP through the `uno-testing` skill (`references/ui.md` and `references/assertions.md`), other available UI automation, or runtime tests the project already has. Confirm each needed tool is callable; an attached App MCP does not guarantee every interaction or assertion tool is licensed.
 
-A screenshot proves rendering, not behaviour. A persistence check changes the value, closes the app, relaunches it, and asserts the value came back. Recreating a model over the same in-memory data is not a persistence check.
+A screenshot proves rendering, not behaviour. Take layout screenshots at the size the window opens at (read it from the window after launch, not a size the script sets) and at the narrowest width the app supports. A persistence check changes the value, closes the app, relaunches it, and asserts the value came back. Recreating a model over the same in-memory data is not a persistence check.
+
+Before the report, run the page check on the desktop target (the `uno-testing` skill, `references/page-check.md`) in every language the app ships, at the size the window opens at and at about 400 wide (`--widths open,400`), on sample data. It measures every screen for text cut off, overlaps, controls with no name and resource keys on screen. Its findings go in the report: each one fixed, or listed with the reason it stays.
 
 ## Without the Uno App MCP
 

@@ -8,6 +8,7 @@
 - The default `<DataTemplate>` content child acts as the `ValueTemplate`
 - FeedView automatically provides a `Refresh` command — no need to create one manually. In the value template, bind `Command="{Binding Refresh}"`. `ErrorTemplate` and `ProgressTemplate` get the exception and the progress flag as their DataContext, not the `FeedViewState`, so `{Binding Refresh}` there binds to nothing and the button does nothing: name the `FeedView` and bind `Command="{Binding Refresh, ElementName=MyFeedView}"`
 - FeedView handles all state transitions (loading → value → error) without code-behind
+- A list inside a FeedView needs no code-behind either: the tapped row comes from the selection state (`references/selection.md`) and more rows from the paginated feed (`references/pagination.md`), not from `ItemClick`, `SelectionChanged` or scroll handlers in the page's `.xaml.cs`
 
 ## Understand FeedView Templates
 
@@ -17,6 +18,19 @@ The templates:
 - **ErrorTemplate** — shown when an error occurs
 - **NoneTemplate** — shown when there is no data
 - **UndefinedTemplate** — shown before the feed has produced any message (the initial "not loaded yet" state); `None` and `Undefined` also accept plain content instead of a template
+
+## Four states on every list
+
+Every `FeedView` over a list writes all four, on every page and not only the first one built:
+
+| State | Template | Shows |
+|---|---|---|
+| Loading | `ProgressTemplate` | A progress ring or placeholder rows, where the list will be |
+| Empty | `NoneTemplate` | What is missing and the action that adds the first one |
+| No match | `NoneTemplate` | The search or filter that matched nothing, and Clear |
+| Error | `ErrorTemplate` | What failed, in the user's words, and Retry (`Refresh` through `ElementName`, as above) |
+
+A list feed with no items arrives as `None` whether the table is empty or the search matched nothing, so the feed cannot tell the two apart. The model can: it holds the search term and the filters. `NoneTemplate` carries both blocks and shows one by the model's search state, read through `ElementName` like `Refresh`.
 
 ## Docs, for what this page does not cover
 

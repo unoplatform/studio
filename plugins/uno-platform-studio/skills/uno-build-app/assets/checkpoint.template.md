@@ -23,6 +23,15 @@
 |---|---|---|---|---|
 | <check> | <target> | <passed / failed / not run: reason / waived: by whom> | <command or link> | <files this result depends on> |
 
+## Capability grid
+
+<!-- One row per table that has a page. Each cell: yes with file, "n/a: reason", or empty. Fill from the code after each feature;
+     a cell that was yes and is now empty is a regression to repair. Delete this section when the app has no record pages. -->
+
+| Table | Search | Sort | Paging | List states | Form fields | Pickers | Related lists | Create | Edit | Delete | Unsaved guard | Keyboard | Narrow |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| <table> | | | | | | | | | | | | | |
+
 ## Environment used
 
 <!-- Targets, devices, emulators or browsers that actually ran; theme and window sizes used for visual checks. -->

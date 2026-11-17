@@ -36,7 +36,7 @@ For a complete, compilable Frame-based shell with parameterized placeholders, se
 - The `-/` prefix clears the back stack (use for login-to-home transitions)
 - Route names in `RouteMap` MUST match the `uen:Navigation.Request` values used in XAML
 - Do NOT use `Region.Attached="True"` inside `Shell.xaml` — only in `SHELL_PAGE_NAME.xaml`
-- On secondary pages, always include a back button with `uen:Navigation.Request="-"`
+- A secondary page's top row is `<utu:NavigationBar Content="Title" />` when `Toolkit` is in `UnoFeatures` (the template default): it shows a back button while the Frame has a back stack and goes back itself (the `uno-toolkit` skill, `references/navigationbar.md`). Without Toolkit, include a back button with `uen:Navigation.Request="-"`
 
 ## Docs, for what this page does not cover
 

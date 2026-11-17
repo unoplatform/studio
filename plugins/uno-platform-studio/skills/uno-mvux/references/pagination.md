@@ -1,5 +1,11 @@
 # MVUX Pagination
 
+**Contents:** [Key Principles (Stable)](#key-principles-stable) · [Understand Pagination Types](#understand-pagination-types) · [Cursor pagination with a next link](#cursor-pagination-with-a-next-link) · [Search with pagination](#search-with-pagination) · [Docs, for what this page does not cover](#docs-for-what-this-page-does-not-cover) · [Related Skills](#related-skills)
+
+**Any list backed by a server or an API is a paginated list feed.** Do not load every row into memory and filter it on the client: the list loads a page as the user scrolls, and a search sends the term to the server. A plain `ListFeed.Async` is for data that is local or known to stay small.
+
+**Totals over one table do not make every list load whole.** When a dashboard needs counts or sums over every row of a table, ask the server for them where it can count or aggregate, or load that one table whole and record why. The lists the totals do not need (pickers and lookups, related records, tables shown only as a count) still page.
+
 ## Key Principles (Stable)
 
 - Use `ListFeed.PaginatedAsync(...)` to create a paginated list feed
@@ -11,7 +17,61 @@
 ## Understand Pagination Types
 
 - **Index-based**: `ListFeed.PaginatedAsync(async (request, ct) => ...)`; the delegate is `AsyncFunc<PageRequest, IImmutableList<T>>`, so it takes the request and a `CancellationToken`, and a one-parameter lambda does not compile. `PageRequest` has `uint Index`, `uint CurrentCount`, and `uint? DesiredSize` (null on the first page, so fall back to a default). Slice with `Skip((int)request.CurrentCount).Take((int)(request.DesiredSize ?? DefaultPageSize))`, not `Index * DesiredSize`.
-- **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`
+- **Cursor/keyset-based**: `ListFeed<T>.PaginatedByCursorAsync<TCursor>(firstPage, getPage)` on the generic `ListFeed<T>` class only, where `getPage` is a `GetPage<TCursor, T>`: `(cursor, uint? desiredPageSize, ct)` returning `ValueTask<PageResult<TCursor, T>>` (namespace `Uno.Extensions.Reactive.Sources`). Use it for an API that returns a next link or a continuation token, and for any API that cannot skip rows.
+
+## Cursor pagination with a next link
+
+The cursor is the next link. Start from `string.Empty` (the service reads it as "first page") and return the items with the server's next link, `null` on the last page: a `null` `NextPage` ends the list.
+
+```csharp
+public IListFeed<Contact> Contacts => ListFeed<Contact>.PaginatedByCursorAsync(
+    firstPage: string.Empty,
+    getPage: async (nextLink, desiredSize, ct) =>
+    {
+        var (items, next) = await Service.GetPageAsync(nextLink, desiredSize ?? 50, ct);
+        return new PageResult<string, Contact>(items, next);
+    });
+```
+
+How the service asks for a page size and follows the next link depends on its client: see `uno-kiota`.
+
+## Search with pagination
+
+Project the search term into the paginated list with `SelectPaginatedByCursorAsync` (or `SelectPaginatedAsync` for index pages). A new term resets the list to its first page, and the term goes to the server's filter.
+
+```csharp
+public IState<string> Search => State.Value(this, () => string.Empty);
+
+public IListFeed<Contact> Results => Search.SelectPaginatedByCursorAsync(
+    firstPage: string.Empty,
+    getPage: async (term, nextLink, desiredSize, ct) =>
+    {
+        var (items, next) = await Service.SearchAsync(term, nextLink, desiredSize ?? 50, ct);
+        return new PageResult<string, Contact>(items, next);
+    });
+```
+
+Sort is one more input to the same projection: hold the term and the sort (column, direction) in one record state and project that, so a new sort restarts from the first page too. The sort goes to the server, never to an `OrderBy` over the pages loaded so far.
+
+**Typing waits about 300 ms before it becomes a request.** Put a feed between the state and the list. A newer term cancels the token, so the delay is the debounce, and clearing the box is not delayed. `Results` then projects from `Term`, not from `Search`:
+
+```csharp
+private IFeed<string> Term => Search.SelectAsync(async (term, ct) =>
+{
+    if (!string.IsNullOrEmpty(term))
+    {
+        await Task.Delay(300, ct);
+    }
+
+    return term;
+});
+```
+
+**The search text is matched as typed.** The service doubles the quotes for the filter's string literal and escapes the characters the backend reads as wildcards, so a search for `50%` finds the rows that contain `50%`. **Every sort ends with the key** (by name, then by id): rows that tie on the sort column otherwise repeat or go missing between pages. Which characters a backend reads as wildcards, and how its filter and sort are written: `uno-kiota`.
+
+**Never start `SelectPaginatedByCursorAsync` from a `null` cursor.** It then never calls `getPage` and the list stays empty. `ListFeed<T>.PaginatedByCursorAsync` does load a `null` first cursor; `string.Empty` works in both.
+
+`SelectPaginatedAsync(async (term, request, ct) => ...)` is the index form, with the same `PageRequest` as above. Bind the `TextBox` to `Search` and the `ListView` to `Results`. Verified with Uno.Extensions.Reactive 8.0.0-dev.250: both snippets compile, and the `null` first cursor behavior was run.
 
 ## Docs, for what this page does not cover
 

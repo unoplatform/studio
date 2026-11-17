@@ -7,6 +7,8 @@
 - `DataViewMap` — associates a View/ViewModel with a data type for data-based navigation
 - `ResultDataViewMap` — like DataViewMap but also defines a result type
 - `RouteMap` — defines a named route with nested child routes
+- `Nested` routes are shown in a child region of the parent's view; a page with no region of its own cannot host them
+- `DependsOn: "Route"` puts that route under this one on the same Frame: the way to register a details page inside a tab or sidebar section (`references/section-details.md`)
 - Route names typically match the page name without the "Page" suffix
 
 ## Docs, for what this page does not cover

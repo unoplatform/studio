@@ -23,10 +23,11 @@ Uno Platform ships no chart control. Without guidance agents pick a WinUI-only p
 | Task / need | Read | Package and key API |
 |-------------|------|---------------------|
 | Which package, which Uno.Sdk and platforms, install with `Directory.Packages.props`, the wrong look-alike packages, WebAssembly | `references/install.md` | `PackageVersion`, `PackageReference` |
-| Line, column, area, pie, donut, gauge, scatter, stacked chart bound to an MVUX feed; axes, labels, legend, tooltips, sizing in a card, live updates | `references/livecharts.md` | `lvc:CartesianChart`, `lvc:PieChart`, `ISeries`, `Axis`, `ColumnSeries<T>` |
+| Line, column, area, pie, donut, gauge, scatter, stacked chart bound to an MVUX feed; legend, tooltips, live updates | `references/livecharts.md` | `lvc:CartesianChart`, `lvc:PieChart`, `ISeries`, `Axis`, `ColumnSeries<T>` |
+| Category labels, every label shown, value formats, a date axis for daily or weekly data, values printed on bars | `references/axes.md` | `Axis.Labels`, `DateTimePoint`, `Labeler`, `MinStep`, `DataLabelsPaint` |
 | A chart that is empty, a sliver, or 100 pixels wide; a chart in a card, KPI tile or dashboard grid | `references/layout.md` | `RowDefinition`, `HorizontalContentAlignment`, `CardContentControl` |
 | Signal, scientific or scatter plot with thousands of points, drawn from code | `references/scottplot.md` | `scottplot:WinUIPlot`, `Plot.Add.Signal`, `Refresh()` |
-| Series, axis and label colors from the theme, following a light/dark switch | `references/theme-colors.md` | `ThemeDictionaries`, `ActualThemeChanged`, `SolidColorPaint` |
+| Series colors from a chart palette in `App.xaml`, axis and label colors from the theme, both following a light/dark switch | `references/theme-colors.md` | `ThemeDictionaries`, `ActualThemeChanged`, `SolidColorPaint` |
 
 ## Critical rules
 
@@ -36,7 +37,8 @@ Uno Platform ships no chart control. Without guidance agents pick a WinUI-only p
 - **Never bind `Series` to an `IFeed<ISeries[]>` or `IState<ISeries[]>`.** The chart stays empty with no binding error. Put the series and axes in a record (`IFeed<SalesChart>`) and bind `{Binding Chart.Series}`.
 - **Every file that names a chart type imports it.** `using LiveChartsCore;` and `using LiveChartsCore.SkiaSharpView;` are not in the template's global usings.
 - **A chart needs a definite width and height.** It has no intrinsic size: in an `Auto` row or an unstretched card it collapses. Give it a fixed or `*` row, and stretch a `CardContentControl` that holds one (`HorizontalAlignment` and `HorizontalContentAlignment` both `Stretch`; `references/layout.md`).
-- **Series values are numbers; category names go on the axis.** `ColumnSeries<double>` with `Axis.Labels`, never strings as values. Without labels the X axis reads 0, 1, 2.
+- **Series values are numbers; category names go on the axis.** `ColumnSeries<double>` with `Axis.Labels`, never strings as values. Without labels the X axis reads 0, 1, 2. Daily or weekly data is `DateTimePoint` on a date axis with a guarded `Labeler`, never 90 strings in `Labels` (`references/axes.md`).
+- **Series colors come from a chart palette in `App.xaml`, not the theme's accents.** On Simple, `PrimaryColor` is near-white in dark mode and `SecondaryColor` and `TertiaryColor` are the same gray: slices and series become indistinguishable (`references/theme-colors.md`).
 - **The Model shapes data, the page paints it.** Totals per month or per category come from the service (a grouped query when the API can aggregate); the chart record holds the numbers and labels; colors are applied on the page from the theme.
 - **Give each chart an `AutomationProperties.AutomationId`**, so a test can find it and screenshot it.
 

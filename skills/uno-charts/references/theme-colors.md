@@ -2,7 +2,7 @@
 
 LiveCharts2 and ScottPlot paint with SkiaSharp colors, which `{ThemeResource}` never reaches: by default their dark labels vanish on a dark background. Apply the theme's colors in code on load, on new series, and on a theme change.
 
-**Contents:** [Read a color for the current theme](#read-a-color-for-the-current-theme) · [Apply it to LiveCharts2: one attached property](#apply-it-to-livecharts2-one-attached-property) · [Check](#check)
+**Contents:** [Read a color for the current theme](#read-a-color-for-the-current-theme) · [Series colors: a chart palette in App.xaml](#series-colors-a-chart-palette-in-appxaml) · [Apply it to LiveCharts2: one attached property](#apply-it-to-livecharts2-one-attached-property) · [Check](#check)
 
 ## Read a color for the current theme
 
@@ -35,7 +35,29 @@ static class ThemeColors
 }
 ```
 
-The keys are the Uno Themes keys (Material and Simple): `PrimaryColor`, `TertiaryColor` and `SecondaryColor` for series, `OnSurfaceColor` for labels and legend, `OutlineVariantColor` for grid lines, `SurfaceVariantColor` for tooltips, `SurfaceColor` for a plot background (the `uno-themes` skill, `references/semantic-colors-brushes.md`). An app without Uno Themes has none of these keys and the helper returns transparent.
+Text and lines come from the Uno Themes keys (Material and Simple): `OnSurfaceColor` for labels, legend and data labels, `OutlineVariantColor` for grid lines, `SurfaceVariantColor` for tooltips, `SurfaceColor` for a plot background (the `uno-themes` skill, `references/semantic-colors-brushes.md`). An app without Uno Themes has none of these keys and the helper returns transparent.
+
+## Series colors: a chart palette in App.xaml
+
+The theme's accent keys are not a chart palette. On Simple, `PrimaryColor` is near-white in dark mode (near-black in light) and `SecondaryColor` and `TertiaryColor` are the same gray (`#949494` in dark), so a donut's slices can't be told apart. Declare three series colors next to the theme in `App.xaml`, with a light and a dark value for each:
+
+```xml
+<!-- App.xaml, in Application.Resources' ResourceDictionary, after MergedDictionaries -->
+<ResourceDictionary.ThemeDictionaries>
+  <ResourceDictionary x:Key="Light">
+    <Color x:Key="ChartSeries1Color">#2A78D6</Color>
+    <Color x:Key="ChartSeries2Color">#EB6834</Color>
+    <Color x:Key="ChartSeries3Color">#1BAF7A</Color>
+  </ResourceDictionary>
+  <ResourceDictionary x:Key="Default">
+    <Color x:Key="ChartSeries1Color">#3987E5</Color>
+    <Color x:Key="ChartSeries2Color">#D95926</Color>
+    <Color x:Key="ChartSeries3Color">#199E70</Color>
+  </ResourceDictionary>
+</ResourceDictionary.ThemeDictionaries>
+```
+
+Blue, orange and green stay distinct from each other and for the common color-vision deficiencies. Replace them with the brand's chart colors when it has some; add `ChartSeries4Color` and up (and to `SeriesKeys` below) for more series.
 
 ## Apply it to LiveCharts2: one attached property
 
@@ -43,6 +65,7 @@ A chart inside a `FeedView` template has no `x:Name` field on the page, so the t
 
 ```csharp
 using LiveChartsCore;
+using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.WinUI;
@@ -55,7 +78,7 @@ public static class ChartTheme
     public static bool GetFollowTheme(DependencyObject d) => (bool)d.GetValue(FollowThemeProperty);
     public static void SetFollowTheme(DependencyObject d, bool value) => d.SetValue(FollowThemeProperty, value);
 
-    static readonly string[] SeriesKeys = ["PrimaryColor", "TertiaryColor", "SecondaryColor"];
+    static readonly string[] SeriesKeys = ["ChartSeries1Color", "ChartSeries2Color", "ChartSeries3Color"];
 
     static void OnFollowThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -101,25 +124,30 @@ public static class ChartTheme
         var i = 0;
         foreach (var s in series)
         {
-            var paint = Paint(chart, SeriesKeys[i++ % SeriesKeys.Length]);
+            var key = SeriesKeys[i++ % SeriesKeys.Length];
+            var paint = Paint(chart, key);
             switch (s)
             {
-                case LineSeries<double> line: line.Stroke = paint; line.GeometryStroke = paint; break;
-                case ColumnSeries<double> column: column.Fill = paint; break;
+                // Area under the line: the series color, mostly transparent. A plain line sets Fill = null in the Model.
+                case LineSeries<double> line: (line.Stroke, line.GeometryStroke) = (paint, paint); if (line.Fill is not null) line.Fill = Paint(chart, key, 40); break;
+                case LineSeries<DateTimePoint> dated: (dated.Stroke, dated.GeometryStroke) = (paint, paint); if (dated.Fill is not null) dated.Fill = Paint(chart, key, 40); break;
+                case ColumnSeries<double> column: column.Fill = paint; if (column.DataLabelsPaint is SolidColorPaint) column.DataLabelsPaint = text; break;
+                case RowSeries<double> row: row.Fill = paint; if (row.DataLabelsPaint is SolidColorPaint) row.DataLabelsPaint = text; break;
                 case PieSeries<double> slice: slice.Fill = paint; break;
             }
         }
     }
 
-    static SolidColorPaint Paint(FrameworkElement element, string key)
+    static SolidColorPaint Paint(FrameworkElement element, string key, byte? alpha = null)
     {
         var c = ThemeColors.Get(element, key);
-        return new SolidColorPaint(new SKColor(c.R, c.G, c.B, c.A));
+        return new SolidColorPaint(new SKColor(c.R, c.G, c.B, alpha ?? c.A));
     }
 }
 ```
 
-- Add a `case` per other series type the app uses (`RowSeries<T>`, `LineSeries<int>`).
+- Add a `case` per other series type the app uses (`LineSeries<int>`, `StackedColumnSeries<double>`).
+- Data labels are off until the Model sets `DataLabelsPaint = new SolidColorPaint()` on the series (`axes.md`). Repaint them only when they are a `SolidColorPaint`, as above: a series with labels off holds a placeholder paint, and assigning any paint turns its labels on.
 - Bind `YAxes` from the chart record too (`[new Axis { MinLimit = 0 }]`): with none bound, the chart's own default axis keeps its dark labels.
 - Keep colors out of the Model.
 

@@ -2,7 +2,7 @@
 
 `LiveChartsCore.SkiaSharpView.Uno.WinUI`, XAML prefix `xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"`. Install it first (`install.md`).
 
-**Contents:** [Bound to MVUX](#bound-to-mvux) · [Axes, labels and values](#axes-labels-and-values) · [Pie and donut](#pie-and-donut) · [Live updates](#live-updates) · [Your record as a point](#your-record-as-a-point) · [Checks](#checks)
+**Contents:** [Bound to MVUX](#bound-to-mvux) · [Axes and labels](#axes-and-labels) · [Pie and donut](#pie-and-donut) · [Live updates](#live-updates) · [Your record as a point](#your-record-as-a-point) · [Checks](#checks)
 
 | Control | Series types |
 |---------|--------------|
@@ -58,12 +58,9 @@ The chart sits in its own `FeedView`, which gives it loading, error and empty st
 - **Never `IFeed<ISeries[]>` or `IState<ISeries[]>` bound to `Series`**, directly or as `{Binding Data}` in a `FeedView`: the chart stays empty with no binding error. Bind through the record.
 - `local:ChartTheme.FollowTheme` paints the chart from the theme, again on every new feed value (`theme-colors.md`).
 
-## Axes, labels and values
+## Axes and labels
 
-- Category names go in `Axis.Labels`; the series holds numbers in the same order.
-- Format values with `Labeler`: `new Axis { Labeler = v => v.ToString("C0") }`. `YAxes` starts at the data minimum: set `MinLimit = 0` for bars and amounts.
-- Name each series (`Name = "Income"`): the legend and tooltip show it. Show the legend (`LegendPosition="Bottom"`) for two or more series, hide it for one.
-- Dates on the X axis: either use the month names as `Labels`, or `DateTimePoint` values with `Labeler = v => new DateTime((long)v).ToString("MMM")` and `UnitWidth = TimeSpan.FromDays(1).Ticks`.
+Category names in `Axis.Labels`, value formats, date axes for daily data, and values printed on bars: `axes.md`.
 
 ## Pie and donut
 

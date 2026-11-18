@@ -21,7 +21,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `uno-themes` | Uno Material (MD3) and its customization, the Simple theme and its style keys, and the shared semantic colors, brushes, and typography. | 5 |
 | `uno-authentication` | Uno.Extensions.Authentication: custom, MSAL, OIDC and web sign-in providers, the login/logout navigation flow, and tokens on Refit/Kiota calls. | 9 |
 | `uno-kiota` | Uno.Extensions.Http.Kiota: generating a typed client from an OpenAPI document, registering it with `AddKiotaClient`, the endpoint Url per environment, calls, errors and retries, the JSON-only serializer limit, headless service tests, mock data written from the spec, and OData services (a client from `$metadata`, calling and writing, a page per vendor such as Dataverse). | 10 |
-| `uno-charts` | Charts with third-party packages that run on Uno: LiveCharts2 and ScottPlot, which Uno.Sdk versions they build on, install, series bound to MVUX feeds, sizing in cards, and colors from the theme in light and dark. | 5 |
+| `uno-charts` | Charts with third-party packages that run on Uno: LiveCharts2 and ScottPlot, which Uno.Sdk versions they build on, install, series bound to MVUX feeds, date axes and bar labels, sizing in cards, and a chart palette with theme colors in light and dark. | 6 |
 | `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions, App MCP availability, Release builds verified without it, and a page check of every screen per language and width. | 7 |
 
 To change a skill or add a topic, see [CONTRIBUTING.md](https://github.com/unoplatform/studio/blob/main/CONTRIBUTING.md).

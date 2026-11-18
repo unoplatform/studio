@@ -24,6 +24,8 @@ public partial record SitesModel(ISiteService Sites)
 
 A record with an `Id` must be `partial`, or the build fails with `KE0001`.
 
+The pins are an `IFeed<IImmutableList<MapPin>>`, never an `IListFeed<MapPin>`, even where `uno-mvux` would pick a list feed for a list. Inside a `FeedView`, a list feed's `Data` is a mutable `ICollectionView`, not the list. A refresh changes that view in place, so the map never hears about it, and `as IEnumerable<MapPin>` returns null, so the map shows no pins with no error.
+
 ## XAML
 
 ```xml
@@ -76,7 +78,7 @@ public static class MapPins
     {
         if (d is not MapControl control) return;
         var layer = Layers.GetValue(control, Create);
-        layer.Features = ((GetItems(control) as IEnumerable<MapPin>) ?? [])
+        layer.Features = ((GetItems(control) as System.Collections.IEnumerable)?.OfType<MapPin>() ?? [])
             .Select(p => new PointFeature(SphericalMercator.FromLonLat(p.Longitude, p.Latitude).ToMPoint()) { ["pin"] = p })
             .ToList();
         layer.DataHasChanged();

@@ -36,7 +36,7 @@ Recolour through the theme's palette, not brush by brush. For one or two brand c
 
 **A pill's radius is half its height, never 999.** A design written for the web gives pills, chips and badges a radius such as `999px` or `9999px`, which CSS shrinks evenly to half the height. WinUI, and Uno with it, fits each side's corners on their own instead, so the same value turns anything wider than it is tall into an ellipse. Give the pill a fixed height and declare its radius once, as half of it: a 32-pixel chip takes `16`. If the height can change, with text scaling for example, set the radius from `SizeChanged`. `RadiusFull` is 9999 too: it makes a square element, such as an icon button, a circle, and is not a pill radius.
 
-**Check the attribute exists in the project's resolved version before using it.** Docs and examples track the newest Uno.Themes. For example, Uno.Themes 7.1.1, which Uno.Sdk 6.7.30 pins, has `PrimarySeed` but no `SeedColorMode`; Uno.Themes 9.0.0-dev.42, which Uno.Sdk 7.0.0-dev.77 pins, has both. Build after each theme change; a XAML parse error or a missing resource means the attribute or key does not exist in this version. Do not upgrade packages to get it.
+**Check the attribute exists in the project's resolved version before using it.** Docs and examples track the newest Uno.Themes. For example, Uno.Themes 7.1.1, which Uno.Sdk 6.7.30 pins, has `PrimarySeed` but no `SeedColorMode`; Uno.Themes 9.0.0-dev.42, which Uno.Sdk 7.0.0-dev.77 pins, has both. Build after each theme change; a XAML parse error means the attribute does not exist in this version. A resource key that does not exist is not reported at all: the setter or `{StaticResource}` that names it resolves to nothing. Do not upgrade packages to get it.
 
 ## Existing and legacy themes
 
@@ -77,6 +77,8 @@ Apply these to every page the change touches, in each theme the app supports.
 | Screenshot pairs | One screenshot per changed page in each supported theme, at a narrow window (about 400 wide) and a wide one. A desktop app is not exempt from the narrow one: resize the window with the App MCP (the `uno-testing` skill) | Nothing clipped, truncated or overflowing; every action visible and reachable; no horizontal scrolling of a whole page |
 | No colour literals | Search the changed page XAML for `#` colour values | None, except in the theme's override dictionary |
 | No size or template literals | Search the changed page XAML for `FontSize=`, `FontFamily=` and `<ControlTemplate` | None, or each one listed in the report with its reason |
+| Resource keys exist | List the keys the changed XAML names in `{StaticResource}`, `{ThemeResource}` and `ResourceKey=`, minus the app's own `x:Key`s. Find each remaining one in a skill reference or in a docs section fetched this session | Every key found. A key found nowhere is replaced, since it resolves to nothing and no build or log reports it |
+| Design fidelity, when a mock-up is supplied | Put each changed page's screenshot beside its mock-up and compare shape, type and density: the corners of cards, buttons and inputs (square, rounded, pill), the size of the title, body and row text, and row and control heights | Each matches, or the departure is in the report with its reason. A square card where the mock-up is rounded is a failure, not a style choice |
 
 Record how each measurement was taken. The thresholds and inactive-control exceptions follow WCAG [text contrast](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) and [non-text contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html). A contrast calculation on a solid surface is a check; it is not an accessibility certification, and gradients or photos need a human look.
 
@@ -84,6 +86,6 @@ Record how each measurement was taken. The thresholds and inactive-control excep
 
 - Visual hierarchy: one clear primary action per screen, headings that read in order.
 - Spacing and alignment consistent with the rest of the app.
-- Fidelity to the supplied design, with departures explained.
+- Fidelity to the supplied design beyond shape, type and density (layout, iconography), with departures explained.
 
 Capture screenshots with the Uno App MCP (the `uno-testing` skill) or other available UI automation. Without screenshot tooling, report the screenshot checks as not run; source colour-literal searches and contrast calculations from resolved colours can still run. Report their evidence separately.

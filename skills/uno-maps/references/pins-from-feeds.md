@@ -1,6 +1,6 @@
 # Pins from an MVUX feed
 
-`MapControl` has no `ItemsSource` and no bindable data property: pins live in a `MemoryLayer` built in code. An attached property bridges the two, so the map binds like any control, also inside a `FeedView` template where it has no `x:Name` field.
+`MapControl` has no `ItemsSource`: pins live in a `MemoryLayer` built in code. An attached property bridges the two, also inside a `FeedView` template where the map has no `x:Name` field.
 
 **Contents:** [Model](#model) · [XAML](#xaml) · [The attached property](#the-attached-property) · [Rules](#rules)
 
@@ -11,7 +11,7 @@ public partial record MapPin(string Id, string Label, double Latitude, double Lo
 
 public partial record SitesModel(ISiteService Sites)
 {
-    public IFeed<IImmutableList<MapPin>> Pins => Feed.Async(async ct =>
+    public IListFeed<MapPin> Pins => ListFeed.Async(async ct =>
         (IImmutableList<MapPin>)(await Sites.GetSites(ct))
             .Select(s => new MapPin(s.Id, s.Name, s.Latitude, s.Longitude))
             .ToImmutableList());
@@ -22,9 +22,9 @@ public partial record SitesModel(ISiteService Sites)
 }
 ```
 
-A record with an `Id` must be `partial`, or the build fails with `KE0001`.
+A record with an `Id` must be `partial` (`KE0001`).
 
-The pins are an `IFeed<IImmutableList<MapPin>>`, never an `IListFeed<MapPin>`, even where `uno-mvux` would pick a list feed for a list. Inside a `FeedView`, a list feed's `Data` is a mutable `ICollectionView`, not the list. A refresh changes that view in place, so the map never hears about it, and `as IEnumerable<MapPin>` returns null, so the map shows no pins with no error.
+`IListFeed<MapPin>` and `IFeed<IImmutableList<MapPin>>` behave the same here: inside a `FeedView`, `Data` is a collection view that starts empty, then fills and refreshes in place. Code that reads it only when the binding sets it, or casts it to `IEnumerable<MapPin>`, shows no pins and no error, on a map framing the whole world.
 
 ## XAML
 
@@ -45,11 +45,12 @@ The pins are an `IFeed<IImmutableList<MapPin>>`, never an `IListFeed<MapPin>`, e
 </Page>
 ```
 
-`Data` is the feed's current value; `Parent` is the page's ViewModel, where the generated `Select` command lives. The `FeedView` shows loading and error states, and a refresh hands the map a new list.
+`Parent` is the page's ViewModel, where the generated `Select` command lives.
 
 ## The attached property
 
 ```csharp
+using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Mapsui;
@@ -62,7 +63,7 @@ using MapControl = Mapsui.UI.WinUI.MapControl;
 public static class MapPins
 {
     public static readonly DependencyProperty ItemsProperty = DependencyProperty.RegisterAttached(
-        "Items", typeof(object), typeof(MapPins), new PropertyMetadata(null, (d, _) => Update(d)));
+        "Items", typeof(object), typeof(MapPins), new PropertyMetadata(null, OnItemsChanged));
     public static object? GetItems(DependencyObject d) => d.GetValue(ItemsProperty);
     public static void SetItems(DependencyObject d, object? value) => d.SetValue(ItemsProperty, value);
 
@@ -71,25 +72,38 @@ public static class MapPins
     public static ICommand? GetSelectCommand(DependencyObject d) => (ICommand?)d.GetValue(SelectCommandProperty);
     public static void SetSelectCommand(DependencyObject d, ICommand? value) => d.SetValue(SelectCommandProperty, value);
 
-    // One pin layer per map, created with the map's first data.
-    static readonly ConditionalWeakTable<MapControl, MemoryLayer> Layers = new();
+    static readonly ConditionalWeakTable<MapControl, PinLayer> Layers = new();
 
-    static void Update(DependencyObject d)
+    sealed class PinLayer(MemoryLayer pins)
+    {
+        public MemoryLayer Pins { get; } = pins;
+        public NotifyCollectionChangedEventHandler? ItemsChanged { get; set; }
+    }
+
+    // The view fills in place: listen to it, not only to the property.
+    static void OnItemsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not MapControl control) return;
         var layer = Layers.GetValue(control, Create);
-        layer.Features = ((GetItems(control) as System.Collections.IEnumerable)?.OfType<MapPin>() ?? [])
+        if (e.OldValue is INotifyCollectionChanged oldItems) oldItems.CollectionChanged -= layer.ItemsChanged;
+        if (e.NewValue is INotifyCollectionChanged newItems) newItems.CollectionChanged += layer.ItemsChanged;
+        Update(control, layer);
+    }
+
+    static void Update(MapControl control, PinLayer layer)
+    {
+        layer.Pins.Features = ((GetItems(control) as System.Collections.IEnumerable)?.OfType<MapPin>() ?? [])
             .Select(p => new PointFeature(SphericalMercator.FromLonLat(p.Longitude, p.Latitude).ToMPoint()) { ["pin"] = p })
             .ToList();
-        layer.DataHasChanged();
-        if (layer.Extent is { } extent)
+        layer.Pins.DataHasChanged();
+        if (layer.Pins.Extent is { } extent)
         {
             // Queued by Mapsui until the control has a size.
             control.Map.Navigator.ZoomToBox(extent.Grow(extent.Width * 0.2 + 500), MBoxFit.Fit);
         }
     }
 
-    static MemoryLayer Create(MapControl control)
+    static PinLayer Create(MapControl control)
     {
         var map = control.Map;
         map.Layers.Add(OpenStreetMap.CreateTileLayer("FieldSites/1.0"));
@@ -102,17 +116,19 @@ public static class MapPins
                 command.Execute(pin);
             }
         };
-        return pins;
+        var layer = new PinLayer(pins);
+        layer.ItemsChanged = (_, _) => Update(control, layer);
+        return layer;
     }
 }
 ```
 
-Pin and route colors from the theme: `references/tiles-and-colors.md`. A route line through the pins: `references/map-basics.md`.
+Theme colors: `references/tiles-and-colors.md`. A route: `references/map-basics.md`.
 
 ## Rules
 
-- **Never bind `Items` to the feed itself** (`{Binding Pins}` outside a `FeedView`): the attached property receives the feed wrapper, not the list. Bind `{Binding Data}` inside the `FeedView`.
-- **Assign `Features` again and call `DataHasChanged()`** to change pins; mutating a list already assigned redraws nothing.
-- **`Map.Info` fires on a tap**; `e.GetMapInfo(layers)` returns the feature hit in those layers, or a `Feature` of `null`. Store the record on the feature with the indexer (`feature["pin"] = pin`), not just its id.
-- **Add the tile layer first**: layers draw in the order added, so pins added before the tiles are hidden under them.
-- **Frame with `Navigator.ZoomToBox(extent)`**, grown by a margin; a single pin has an extent of zero, hence the `+ 500` meters.
+- **Never bind `Items` to the feed itself** (`{Binding Pins}` outside a `FeedView`): bind `{Binding Data}` inside it.
+- **Assign `Features` again and call `DataHasChanged()`**: mutating the assigned list redraws nothing.
+- **`Map.Info` fires on a tap**; `e.GetMapInfo(layers).Feature` is the hit, or `null`. Store the record on the feature (`feature["pin"] = pin`), not just its id.
+- **Add the tile layer first**: layers draw in the order added.
+- **Frame with `Navigator.ZoomToBox(extent)`** plus a margin: one pin has a zero extent.

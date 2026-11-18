@@ -66,7 +66,7 @@ The feed states, on `FeedMock` (single value) and `ListFeedMock` (lists):
 
 `Message<T>(msg => ...)` builds any other message. That is the whole API, so there is no need to inspect the package.
 
-`Empty` is the no-data state — what a service returning nothing produces — not a value holding an empty list. A `FeedView` shows its `NoneTemplate` for it, and nothing at all when the page defines none, so the empty state of such a page is blank by design. When the user asks for that state, tell them, and offer to add a `NoneTemplate` — it changes their page, so don't add one unasked.
+`Empty` is the no-data state — what a service returning nothing produces — not a value holding an empty list. A `FeedView` shows its `NoneTemplate` for it, and nothing at all when the page defines none, so the empty state of such a page is blank by design. When the user asks for that state, tell them, and offer to add a `NoneTemplate` — it changes their page, so don't add one unasked. `Error` is different: a `FeedView` with no `ErrorTemplate` shows its default "An error occurred." text, not a blank page.
 
 ### Step 4: Walk through states
 
@@ -81,7 +81,7 @@ vm.SetMock(RecipeModelMock.Empty with
 
 ## Critical Rules
 
-- **A feed must reach its service through a lambda, not a method group.** `Feed.Async(Service.GetItems)` dereferences `Service` as soon as the property is read, and `Create` null-injects it — so `Create` throws, and inside a preview the only symptom is a blank page. Check every feed of the model before mocking it, rewrite each method group as `Feed.Async(async ct => await Service.GetItems(ct))` (same for `ListFeed.Async`), and tell the user you changed their model. The two forms behave the same at runtime.
+- **A feed must reach its service through a lambda, not a method group.** `Feed.Async(Service.GetItems)` dereferences `Service` as soon as the property is read, and `Create` null-injects it — so `Create` throws, and inside a preview the only symptom is a blank page. Check every feed of the model before mocking it, rewrite each method group as `Feed.Async(async ct => await Service.GetItems(ct))` (same for `ListFeed.Async`), and tell the user you changed their model. The two forms behave the same at runtime. Make this change before starting the app: a running app's mocks keep the old model until it restarts.
 - **Give the page the view-model, not the model.** `{Vm}Mock.Create(...)` returns the generated view-model, which is what the page binds to.
 - **A state input is mocked as a feed** — assign `FeedMock.*` to an `IState<T>` and `ListFeedMock.*` to an `IListState<T>`, not a `State`.
 - **A list with `.Selection(...)` can't be mocked yet** (unoplatform/uno.extensions#3247): whatever the mock sets, the list runs its real feed against the null-injected service and shows its error. Tell the user, and for that page offer the fallback below.

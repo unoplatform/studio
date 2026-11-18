@@ -8,7 +8,7 @@ A preview renders one page, `UserControl`, control, style or data template on it
 
 - **Every public control with a parameterless constructor already has a preview**, generated implicitly — a page shows up with no file at all. Only author a preview to add what the implicit one lacks: **data**, a **style**, a **data template**, or a **particular state**.
 - **A page that normally gets its view-model from navigation has none in a preview.** Supply it, or its bindings render empty.
-- **Checking the previews in the running app?** Read `references/previews-check.md` before writing them: the app should be started first.
+- **Checking the previews in the running app?** Read `references/previews-check.md` before writing them: the models are fixed and the app started first.
 - **Give a page bound to an MVUX view-model four states, unless asked otherwise: Loaded, Loading, Empty and Error.** Write them as one `PreviewGroup` per page, each child over its own mock (see `uno-mvux`, `references/mocking.md`). A Loaded preview alone hides how the page handles a slow, empty or failing service.
 
 ## File Location

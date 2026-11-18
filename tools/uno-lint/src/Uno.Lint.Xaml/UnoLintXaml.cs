@@ -66,7 +66,8 @@ public static partial class UnoLintXaml
     /// <param name="text">The file as saved; findings carry line numbers into it and suppression comments are read from it.</param>
     /// <param name="isEnabled">Whether a rule is enabled for this file after profile, configuration and project gates.</param>
     /// <param name="repairedText">The text after Stage-0 repairs, when the host can read it, to detect repairs that shifted lines.</param>
-    public static XamlFileFindings Collect(XamlProcessingResult result, string relativePath, string text, Func<RuleDescriptor, bool> isEnabled, string? repairedText = null)
+    /// <param name="context">What the project references; THEMEKEY compares overrides with the keys its themes read.</param>
+    public static XamlFileFindings Collect(XamlProcessingResult result, string relativePath, string text, Func<RuleDescriptor, bool> isEnabled, string? repairedText = null, ProjectContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -156,7 +157,20 @@ public static partial class UnoLintXaml
 
                 var ownerLine = OwnerOf(rule, at).Item1;
                 var allowLine = Suppression.FindAllowComment(lines, rule, CommentSyntax.Xml, at.LineNumber, ownerLine);
-                findings.Add(new Finding(rule, relativePath, at.LineNumber, diagnostic.Message, allowLine));
+                var message = diagnostic.Message;
+
+                // The nearest ramp style depends on the theme, which only the host knows.
+                if (rule == Rules.TypeRamp && FontSizeLiteral().Match(message) is { Success: true } size && RuleLogic.ParseNumber(size.Groups[1].Value) is { } points)
+                {
+                    message += $"; nearest ramp style {RuleLogic.NearestRampStyle(points, context ?? ProjectContext.Empty)}";
+                }
+
+                findings.Add(new Finding(rule, relativePath, at.LineNumber, message, allowLine));
+            }
+
+            if (isEnabled(Rules.ThemeKey))
+            {
+                findings.AddRange(ThemeKeyFindings(elements, relativePath, text, lines, context ?? ProjectContext.Empty));
             }
         }
 
@@ -168,6 +182,51 @@ public static partial class UnoLintXaml
 
         return new XamlFileFindings(parsed, repairCodes.Count > 0, shifted, partial, findings, repairCodes, info);
     }
+
+    /// <summary>Resource elements that can be a lightweight-styling override: brushes, colors and the sizes styles read.</summary>
+    private static readonly HashSet<string> OverrideElements = new(StringComparer.Ordinal)
+    {
+        "SolidColorBrush", "LinearGradientBrush", "RadialGradientBrush", "AcrylicBrush", "Color", "StaticResource",
+        "Double", "Thickness", "CornerRadius",
+    };
+
+    /// <summary>
+    /// UNOL202 THEMEKEY: a keyed brush, color or size named like a control's lightweight key (ListViewItemBackground...)
+    /// that no style the app gets for that control reads. Needs the project context, so it runs here rather than as a
+    /// Stage-1 fixer. A key the same file references is the app's own resource and is left alone.
+    /// </summary>
+    private static IEnumerable<Finding> ThemeKeyFindings(IReadOnlyList<XamlElementNode> elements, string relativePath, string text, string[] lines, ProjectContext context)
+    {
+        HashSet<string>? referenced = null;
+        foreach (var element in elements)
+        {
+            if (!OverrideElements.Contains(element.Name.LocalName) || XamlNodes.Key(element) is not { } key || ThemeKeys.FamilyOf(key) == null)
+            {
+                continue;
+            }
+
+            referenced ??= ResourceReference().Matches(text).Select(m => m.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
+            var family = ThemeKeys.FamilyOf(key)!;
+
+            // BasedOn="{StaticResource DefaultButtonStyle}" (or Accent...): WinUI's template, whatever the theme.
+            var usesWinUIStyle = referenced.Contains($"Default{family}Style") || referenced.Contains($"Accent{family}Style");
+            if (referenced.Contains(key) || ThemeKeys.Check(key, context, usesWinUIStyle) is not { } miss)
+            {
+                continue;
+            }
+
+            var hint = miss.Suggestion != null ? $"; did you mean {miss.Suggestion}?" : string.Empty;
+            var line = element.LineInfo.LineNumber;
+            var allowLine = Suppression.FindAllowComment(lines, Rules.ThemeKey, CommentSyntax.Xml, line, line);
+            yield return new Finding(Rules.ThemeKey, relativePath, line, $"{key} is not read by {miss.Theme} {miss.Family} style, so this override changes nothing{hint}", allowLine);
+        }
+    }
+
+    [GeneratedRegex(@"^literal FontSize (\S+)")]
+    private static partial Regex FontSizeLiteral();
+
+    [GeneratedRegex(@"\{\s*(?:ThemeResource|StaticResource)\s+(?:ResourceKey\s*=\s*)?([A-Za-z0-9_.]+)\s*\}")]
+    private static partial Regex ResourceReference();
 
     internal static ValueTask<SemanticFixResult> None => ValueTask.FromResult(SemanticFixResult.None);
 

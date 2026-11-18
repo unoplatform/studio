@@ -24,8 +24,13 @@ internal static class TestHost
             .Findings.Where(f => includeSuppressed || !f.Suppressed).ToList();
     }
 
-    public static XamlFileFindings AnalyzeXaml(string xaml, string fileName = "MainPage.xaml", Func<RuleDescriptor, bool>? isEnabled = null) =>
-        Engine.AnalyzeAsync(fileName, xaml, isEnabled ?? (_ => true)).AsTask().GetAwaiter().GetResult();
+    /// <summary>Lints one XAML document under a given project context (theme kinds included).</summary>
+    public static List<Finding> LintXaml(string xaml, ProjectContext context, string fileName = "MainPage.xaml", Profile profile = Profile.Strict, bool includeSuppressed = false) =>
+        AnalyzeXaml(xaml, fileName, rule => Rules.Resolve(rule, profile, context) != Severity.None, context)
+            .Findings.Where(f => includeSuppressed || !f.Suppressed).ToList();
+
+    public static XamlFileFindings AnalyzeXaml(string xaml, string fileName = "MainPage.xaml", Func<RuleDescriptor, bool>? isEnabled = null, ProjectContext? context = null) =>
+        Engine.AnalyzeAsync(fileName, xaml, isEnabled ?? (_ => true), default, context).AsTask().GetAwaiter().GetResult();
 
     /// <summary>Lints one C# file with every rule the profile and context enable; active findings unless asked otherwise.</summary>
     public static List<Finding> LintCs(string code, string fileName = "MainPage.xaml.cs", string? companionXaml = null, bool toolkit = true, Profile profile = Profile.Strict, bool includeSuppressed = false)

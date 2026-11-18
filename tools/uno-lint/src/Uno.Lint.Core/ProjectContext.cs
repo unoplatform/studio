@@ -9,6 +9,8 @@ public sealed class ProjectContext
     private static readonly Regex NavigationXmlns = new Regex(@"using:Uno\.Extensions\.Navigation(\.UI)?\b");
     private static readonly Regex MvuxXmlns = new Regex(@"using:Uno\.Extensions\.Reactive(\.UI)?\b");
     private static readonly Regex ThemesXmlns = new Regex(@"using:Uno\.(Material|Cupertino|Simple|Themes)\b");
+    // using:Uno.Material, and using:Uno.Toolkit.UI.Material for MaterialToolkitTheme; the same for Cupertino and Simple.
+    private static readonly Regex ThemeKindXmlns = new Regex(@"using:Uno\.(?:Toolkit\.UI\.)?(Material|Cupertino|Simple)\b");
     // Attributes allowed: the Uno template and many apps write <UnoFeatures Condition="...">.
     private static readonly Regex UnoFeatures = new Regex(@"<UnoFeatures\b[^>]*>([^<]*)</UnoFeatures>", RegexOptions.IgnoreCase);
     private static readonly Regex XmlComment = new Regex(@"<!--.*?-->", RegexOptions.Singleline);
@@ -16,17 +18,19 @@ public sealed class ProjectContext
     private static readonly Regex NavigationPackage = new Regex(@"PackageReference\s+Include\s*=\s*""Uno\.Extensions\.Navigation", RegexOptions.IgnoreCase);
     private static readonly Regex MvuxPackage = new Regex(@"PackageReference\s+Include\s*=\s*""Uno\.Extensions\.Reactive", RegexOptions.IgnoreCase);
     private static readonly Regex ThemesPackage = new Regex(@"PackageReference\s+Include\s*=\s*""Uno\.(Material|Cupertino|Simple|Themes)\b", RegexOptions.IgnoreCase);
+    private static readonly Regex ThemeKindPackage = new Regex(@"PackageReference\s+Include\s*=\s*""Uno\.(?:Toolkit\.WinUI\.)?(Material|Cupertino|Simple)\b", RegexOptions.IgnoreCase);
     private static readonly Regex FeatureSplit = new Regex(@"[;\s]+");
 
     /// <summary>No project, or one that references none of the libraries the rules know about.</summary>
     public static readonly ProjectContext Empty = new ProjectContext();
 
-    public ProjectContext(bool hasToolkit = false, bool hasExtensionsNavigation = false, bool hasMvux = false, bool hasUnoThemes = false)
+    public ProjectContext(bool hasToolkit = false, bool hasExtensionsNavigation = false, bool hasMvux = false, bool hasUnoThemes = false, UnoThemeKinds themes = UnoThemeKinds.None)
     {
         HasToolkit = hasToolkit;
         HasExtensionsNavigation = hasExtensionsNavigation;
         HasMvux = hasMvux;
-        HasUnoThemes = hasUnoThemes;
+        HasUnoThemes = hasUnoThemes || themes != UnoThemeKinds.None;
+        Themes = themes;
     }
 
     public bool HasToolkit { get; }
@@ -39,14 +43,20 @@ public sealed class ProjectContext
     /// <summary>Uno.Themes (Material, Cupertino or SimpleTheme) is referenced, so role brushes like PrimaryBrush exist.</summary>
     public bool HasUnoThemes { get; }
 
-    /// <summary>True when every flag is already set, so no further evidence can change the result.</summary>
-    public bool IsComplete => HasToolkit && HasExtensionsNavigation && HasMvux && HasUnoThemes;
+    /// <summary>
+    /// Which Uno.Themes themes the project names (a SimpleTheme feature, a Uno.Material package, a
+    /// using:Uno.Toolkit.UI.Simple namespace...). None while <see cref="HasUnoThemes"/> is set means a theme of unknown kind.
+    /// </summary>
+    public UnoThemeKinds Themes { get; }
 
-    public ProjectContext WithToolkit(bool hasToolkit) => new ProjectContext(hasToolkit, HasExtensionsNavigation, HasMvux, HasUnoThemes);
+    /// <summary>True when every flag is already set, so no further evidence can change the result.</summary>
+    public bool IsComplete => HasToolkit && HasExtensionsNavigation && HasMvux && HasUnoThemes && Themes == UnoThemeKinds.All;
+
+    public ProjectContext WithToolkit(bool hasToolkit) => new ProjectContext(hasToolkit, HasExtensionsNavigation, HasMvux, HasUnoThemes, Themes);
 
     /// <summary>What either context references: a run over several projects reports the libraries any of them uses.</summary>
     public ProjectContext Union(ProjectContext other) =>
-        new ProjectContext(HasToolkit || other.HasToolkit, HasExtensionsNavigation || other.HasExtensionsNavigation, HasMvux || other.HasMvux, HasUnoThemes || other.HasUnoThemes);
+        new ProjectContext(HasToolkit || other.HasToolkit, HasExtensionsNavigation || other.HasExtensionsNavigation, HasMvux || other.HasMvux, HasUnoThemes || other.HasUnoThemes, Themes | other.Themes);
 
     /// <summary>Detects the context from project files (csproj, Directory.Build.props...) and XAML texts.</summary>
     public static ProjectContext Detect(IEnumerable<string> projectFileTexts, IEnumerable<string> xamlTexts) =>
@@ -55,6 +65,7 @@ public sealed class ProjectContext
     public static ProjectContext FromProjectFiles(IEnumerable<string> projectFileTexts)
     {
         bool toolkit = false, navigation = false, mvux = false, themes = false;
+        var kinds = UnoThemeKinds.None;
         foreach (var raw in projectFileTexts)
         {
             // A commented-out reference or feature list is not a reference.
@@ -63,6 +74,10 @@ public sealed class ProjectContext
             navigation |= NavigationPackage.IsMatch(text);
             mvux |= MvuxPackage.IsMatch(text);
             themes |= ThemesPackage.IsMatch(text);
+            foreach (Match m in ThemeKindPackage.Matches(text))
+            {
+                kinds |= KindOf(m.Groups[1].Value);
+            }
 
             foreach (Match m in UnoFeatures.Matches(text))
             {
@@ -94,20 +109,29 @@ public sealed class ProjectContext
                     {
                         themes = true;
                     }
+
+                    kinds |= feature.Trim().ToLowerInvariant() switch
+                    {
+                        "material" or "materialtoolkit" => UnoThemeKinds.Material,
+                        "cupertino" or "cupertinotoolkit" => UnoThemeKinds.Cupertino,
+                        "simpletheme" => UnoThemeKinds.Simple,
+                        _ => UnoThemeKinds.None,
+                    };
                 }
             }
         }
 
-        return new ProjectContext(toolkit, navigation, mvux, themes);
+        return new ProjectContext(toolkit, navigation, mvux, themes, kinds);
     }
 
     /// <summary>This context plus the flags the XAML namespaces show; stops reading once every flag is set.</summary>
     public ProjectContext AddXaml(IEnumerable<string> xamlTexts)
     {
         bool toolkit = HasToolkit, navigation = HasExtensionsNavigation, mvux = HasMvux, themes = HasUnoThemes;
+        var kinds = Themes;
         foreach (var text in xamlTexts)
         {
-            if (toolkit && navigation && mvux && themes)
+            if (toolkit && navigation && mvux && themes && kinds == UnoThemeKinds.All)
             {
                 break;
             }
@@ -116,23 +140,47 @@ public sealed class ProjectContext
             navigation |= NavigationXmlns.IsMatch(text);
             mvux |= MvuxXmlns.IsMatch(text);
             themes |= ThemesXmlns.IsMatch(text);
+            foreach (Match m in ThemeKindXmlns.Matches(text))
+            {
+                kinds |= KindOf(m.Groups[1].Value);
+            }
         }
 
-        return new ProjectContext(toolkit, navigation, mvux, themes);
+        return new ProjectContext(toolkit, navigation, mvux, themes, kinds);
     }
 
-    /// <summary>Compact form for the on-disk cache: one character per flag.</summary>
-    public string Serialize() => $"{(HasToolkit ? 'T' : '-')}{(HasExtensionsNavigation ? 'N' : '-')}{(HasMvux ? 'M' : '-')}{(HasUnoThemes ? 'H' : '-')}";
+    private static UnoThemeKinds KindOf(string name) => name.ToLowerInvariant() switch
+    {
+        "material" => UnoThemeKinds.Material,
+        "cupertino" => UnoThemeKinds.Cupertino,
+        "simple" => UnoThemeKinds.Simple,
+        _ => UnoThemeKinds.None,
+    };
 
+    /// <summary>Compact form for the on-disk cache: one character per flag, then the theme kinds as one digit.</summary>
+    public string Serialize() => $"{(HasToolkit ? 'T' : '-')}{(HasExtensionsNavigation ? 'N' : '-')}{(HasMvux ? 'M' : '-')}{(HasUnoThemes ? 'H' : '-')}{(int)Themes}";
+
+    /// <summary>Reads <see cref="Serialize"/>'s form. An older or damaged entry fails, so the context is detected again.</summary>
     public static bool TryDeserialize(string? text, out ProjectContext context)
     {
         context = Empty;
-        if (text == null || text.Length != 4)
+        if (text == null || text.Length != 5 || text[4] < '0' || text[4] > '0' + (int)UnoThemeKinds.All)
         {
             return false;
         }
 
-        context = new ProjectContext(text[0] == 'T', text[1] == 'N', text[2] == 'M', text[3] == 'H');
+        context = new ProjectContext(text[0] == 'T', text[1] == 'N', text[2] == 'M', text[3] == 'H', (UnoThemeKinds)(text[4] - '0'));
         return true;
     }
+}
+
+/// <summary>The Uno.Themes themes a project references.</summary>
+[Flags]
+public enum UnoThemeKinds
+{
+    None = 0,
+    Material = 1,
+    Cupertino = 2,
+    Simple = 4,
+    All = Material | Cupertino | Simple,
 }

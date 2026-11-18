@@ -39,6 +39,37 @@ public static class RuleLogic
         "Violet", "Wheat", "White", "WhiteSmoke", "Yellow", "YellowGreen",
     };
 
+    // One text style per size, from each theme's Typography.xaml: Uno.Themes' shared ramp (Material, Cupertino), Simple's
+    // own sizes, and the WinUI type ramp.
+    private static readonly (double Size, string Style)[] SharedRamp =
+    {
+        (11, "LabelSmall"), (12, "BodySmall"), (14, "BodyMedium"), (16, "BodyLarge"), (22, "TitleLarge"), (24, "HeadlineSmall"),
+        (28, "HeadlineMedium"), (32, "HeadlineLarge"), (36, "DisplaySmall"), (45, "DisplayMedium"), (57, "DisplayLarge"),
+    };
+
+    private static readonly (double Size, string Style)[] SimpleRamp =
+    {
+        (12, "BodySmall"), (14, "BodyMedium"), (16, "BodyLarge"), (20, "TitleLarge"), (24, "HeadlineMedium"), (32, "HeadlineLarge"),
+        (40, "DisplaySmall"), (48, "DisplayMedium"), (72, "DisplayLarge"),
+    };
+
+    private static readonly (double Size, string Style)[] FluentRamp =
+    {
+        (12, "CaptionTextBlockStyle"), (14, "BodyTextBlockStyle"), (20, "SubtitleTextBlockStyle"), (28, "TitleTextBlockStyle"),
+        (40, "TitleLargeTextBlockStyle"), (68, "DisplayTextBlockStyle"),
+    };
+
+    /// <summary>
+    /// The type-ramp style nearest a literal font size in the project's theme, the smaller one on a tie, so a fix keeps
+    /// the text the size it was instead of growing it: "BodyMedium (14)".
+    /// </summary>
+    public static string NearestRampStyle(double size, ProjectContext context)
+    {
+        var ramp = context.Themes == UnoThemeKinds.Simple ? SimpleRamp : context.HasUnoThemes ? SharedRamp : FluentRamp;
+        var best = ramp.OrderBy(r => Math.Abs(r.Size - size)).ThenBy(r => r.Size).First();
+        return $"{best.Style} ({best.Size.ToString(CultureInfo.InvariantCulture)})";
+    }
+
     /// <summary>A hex literal or a WinUI named color (not Transparent).</summary>
     public static bool IsColorLiteral(string? value) => value != null && (HexLiteral.IsMatch(value) || NamedColors.Contains(value.Trim()));
 

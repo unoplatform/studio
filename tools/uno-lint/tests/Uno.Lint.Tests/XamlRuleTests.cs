@@ -560,7 +560,11 @@ public class XamlRuleTests
             </Page>
             """;
         var hits = LintXaml(xaml).Where(f => f.Rule == Rules.TypeRamp).Select(f => $"L{f.Line} {f.Message}").ToList();
-        Assert.Equal(["L2 literal FontSize 15 in a Setter", "L3 literal FontSize 28 on TextBlock", "L7 literal FontSize 12.5 on Run"], hits);
+        Assert.Equal([
+            "L2 literal FontSize 15 in a Setter; nearest ramp style BodyTextBlockStyle (14)",
+            "L3 literal FontSize 28 on TextBlock; nearest ramp style TitleTextBlockStyle (28)",
+            "L7 literal FontSize 12.5 on Run; nearest ramp style CaptionTextBlockStyle (12)",
+        ], hits);
     }
 
     [Fact]

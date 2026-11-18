@@ -233,10 +233,10 @@ public class LinterTests : IDisposable
             Assert.True(first.Context.HasToolkit, "Toolkit detected from the XAML namespace");
             Assert.False(first.Context.HasMvux, "obj/ is not walked");
             var entry = Assert.Single(Directory.GetFiles(cache));
-            Assert.Equal("T---", File.ReadAllText(entry));
+            Assert.Equal("T---0", File.ReadAllText(entry));
 
             // The cached entry is what the next call reads: edit it and the context follows.
-            File.WriteAllText(entry, "T-M-");
+            File.WriteAllText(entry, "T-M-0");
             Assert.True((await linter.RunAsync(file)).Context.HasMvux);
 
             // --no-cache detects again.

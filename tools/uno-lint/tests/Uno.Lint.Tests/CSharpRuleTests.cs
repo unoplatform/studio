@@ -22,7 +22,7 @@ public class CSharpRuleTests
             """;
         var hits = LintCs(code).Where(x => x.Rule == Rules.CodeBehind).ToList();
         Assert.Equal(2, hits.Count);
-        Assert.Contains(hits, h => h.Message == "handler OnClick" && h.Line == 5);
+        Assert.Contains(hits, h => h.Message == "handler OnClick: bind the button's Command" && h.Line == 5);
         Assert.Contains(hits, h => h.Message.StartsWith("Details.Visibility"));
     }
 
@@ -100,7 +100,11 @@ public class CSharpRuleTests
             }
             """;
         var hits = LintCs(code).Where(f => f.Rule == Rules.CodeBehind).Select(f => $"L{f.Line} {f.Message}").ToList();
-        Assert.Equal(["L4 handler lambda on SizeChanged", "L5 handler lambda on WorkOrderList.Loaded", "L6 handler lambda on _scroller.ViewChanged"], hits);
+        Assert.Equal([
+            "L4 handler lambda on SizeChanged: width-dependent layout belongs in an AdaptiveTrigger or {utu:Responsive}",
+            "L5 handler lambda on WorkOrderList.Loaded: start loading in the view model and bind, instead of wiring it in code-behind",
+            "L6 handler lambda on _scroller.ViewChanged",
+        ], hits);
     }
 
     [Fact]

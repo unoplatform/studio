@@ -52,14 +52,22 @@ public sealed partial class SensorPage : Page
 
 ## Theme
 
-ScottPlot paints a white figure with black text by default. Set its colors from the theme and refresh (`theme-colors.md`):
+ScottPlot paints a white figure with black text by default. Set its colors from the theme and refresh, on `Loaded`, after each new plot, and on `ActualThemeChanged` (`theme-colors.md`). The background is the color of what the plot sits on: `BackgroundColor` directly on a page, `SurfaceColor` inside a card. The wrong one shows as a white box on Simple's light-gray page. The data takes the chart palette (`ChartSeries1Color`), not ScottPlot's default blue.
 
 ```csharp
-TrendPlot.Plot.FigureBackground.Color = ToScottPlot(ThemeColors.Get(this, "SurfaceColor"));
-TrendPlot.Plot.DataBackground.Color = ToScottPlot(ThemeColors.Get(this, "SurfaceColor"));
-TrendPlot.Plot.Axes.Color(ToScottPlot(ThemeColors.Get(this, "OnSurfaceColor")));
-TrendPlot.Plot.Grid.MajorLineColor = ToScottPlot(ThemeColors.Get(this, "OutlineVariantColor"));
-TrendPlot.Refresh();
+void ApplyTheme()
+{
+    var background = ToScottPlot(ThemeColors.Get(this, "BackgroundColor"));   // "SurfaceColor" in a card
+    TrendPlot.Plot.FigureBackground.Color = background;
+    TrendPlot.Plot.DataBackground.Color = background;
+    TrendPlot.Plot.Axes.Color(ToScottPlot(ThemeColors.Get(this, "OnSurfaceColor")));
+    TrendPlot.Plot.Grid.MajorLineColor = ToScottPlot(ThemeColors.Get(this, "OutlineVariantColor"));
+    foreach (var signal in TrendPlot.Plot.GetPlottables<ScottPlot.Plottables.Signal>())
+    {
+        signal.Color = ToScottPlot(ThemeColors.Get(this, "ChartSeries1Color"));
+    }
+    TrendPlot.Refresh();
+}
 
 static ScottPlot.Color ToScottPlot(Windows.UI.Color c) => new(c.R, c.G, c.B, c.A);
 ```

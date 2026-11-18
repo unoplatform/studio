@@ -61,7 +61,7 @@ public static class Rules
     public static readonly RuleDescriptor TypeRamp = new RuleDescriptor(
         "UNOL105", "TYPERAMP",
         "Literal FontSize in a page instead of a type-ramp style",
-        "Use a TextBlock style from the type ramp (TitleTextBlockStyle, SubtitleTextBlockStyle, BodyStrongTextBlockStyle, BodyTextBlockStyle, CaptionTextBlockStyle) or a keyed text style in the app's styles file, so sizes live in one place.",
+        "Use a TextBlock style from the type ramp (TitleTextBlockStyle, SubtitleTextBlockStyle, BodyStrongTextBlockStyle, BodyTextBlockStyle, CaptionTextBlockStyle) or a keyed text style in the app's styles file, so sizes live in one place. Take the style the message names, the one nearest the literal size, so the text keeps its size.",
         Profile.Strict);
 
     public static readonly RuleDescriptor Retemplate = new RuleDescriptor(
@@ -77,9 +77,16 @@ public static class Rules
         "Bind the state itself: {Binding Name, Mode=TwoWay}. The MVUX generated ViewModel exposes IState<T>/IFeed<T> as plain properties, so '.Value' resolves to nothing: the control shows empty and writes nothing back. Inside a FeedView use {Binding Data.Name}.",
         Profile.Recommended, requiresMvux: true, category: RuleCategory.Correctness);
 
+    /// <summary>A lightweight-styling override no style the app gets reads: it compiles, runs and changes nothing.</summary>
+    public static readonly RuleDescriptor ThemeKey = new RuleDescriptor(
+        "UNOL202", "THEMEKEY",
+        "Lightweight-styling key the control's style never reads",
+        "Use the key the control's style reads, which the message names when one is close. Uno.Themes renames some WinUI keys (Simple's ListViewItemBackgroundPointerOverSelected is WinUI's ListViewItemBackgroundSelectedPointerOver), and an override of a key nothing reads changes nothing.",
+        Profile.Recommended, category: RuleCategory.Correctness);
+
     public static readonly IReadOnlyList<RuleDescriptor> All = new[]
     {
-        Hex, TokenTheme, Icon, Builtin, Responsive, Card, BackBar, CodeBehind, Overlay, TypeRamp, Retemplate, BindValue,
+        Hex, TokenTheme, Icon, Builtin, Responsive, Card, BackBar, CodeBehind, Overlay, TypeRamp, Retemplate, BindValue, ThemeKey,
     };
 
     public static RuleDescriptor? Find(string idOrName) =>
@@ -127,7 +134,7 @@ public static class Rules
 
         if (rule == TypeRamp && context.HasUnoThemes)
         {
-            return "Use a TextBlock style from the Uno.Themes type ramp (Style=\"{StaticResource TitleMedium}\"; DisplayLarge, HeadlineMedium, TitleLarge, BodyMedium, LabelSmall... valid under SimpleTheme, Material and Cupertino) or a keyed text style in the app's styles file, so sizes live in one place.";
+            return "Use a TextBlock style from the Uno.Themes type ramp (Style=\"{StaticResource TitleMedium}\"; DisplayLarge, HeadlineMedium, TitleLarge, BodyMedium, LabelSmall... valid under SimpleTheme, Material and Cupertino) or a keyed text style in the app's styles file, so sizes live in one place. Take the style the message names, the one nearest the literal size, so the text keeps its size.";
         }
 
         if (rule == Retemplate && context.HasUnoThemes)

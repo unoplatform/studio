@@ -20,6 +20,7 @@ src/Uno.Lint.Cli     the uno-lint command: lint, rules, hook. No command-line fr
 tests/Uno.Lint.Tests xunit, grouped by subject; CliTests run the command line in memory, HookProcessTests run the
                      built tool with raw UTF-8 on stdin.
 hooks/               the hook shim and settings snippet
+catalog/             THEMEKEY's control families and the script that regenerates the theme key catalogs
 FINDINGS.md          corpus results and per-rule verdicts
 XAMLPARSER.md        how the XAML rules use the Uno.XamlParser package
 ```
@@ -74,6 +75,7 @@ To install as a global tool from a local build: `dotnet pack src/Uno.Lint.Cli -c
 | UNOL105 | TYPERAMP | strict | literal `FontSize` on a page element or in a page `Setter` (icons and resource files exempt) | a type-ramp TextBlock style (`TitleMedium`, `BodyMedium`... with Uno.Themes) |
 | UNOL106 | RETEMPLATE | strict | `ControlTemplate` copied for a platform or Toolkit control (Button, ListViewItem, `utu:TabBarItem`...) | lightweight-styling keys, or `BasedOn` the theme style |
 | UNOL201 | BINDVALUE | recommended, MVUX only, a bug | `{Binding State.Value}` outside a DataTemplate; shows empty, writes nothing | `{Binding State, Mode=TwoWay}`; `{Binding Data.X}` inside FeedView |
+| UNOL202 | THEMEKEY | recommended, a bug | a lightweight-styling override no style the app gets reads (`ListViewItemBackgroundSelectedPointerOver` under SimpleTheme, `ButtonBackground` under Material); it changes nothing | the key the message names (`ListViewItemBackgroundPointerOverSelected`, `FilledButtonBackground`) |
 
 Info counters (never gating): TOKEN, ADAPTIVE vs `utu:Responsive`, TEMPLATE, WORKAROUND. A `Supp` column counts
 hits covered by an allow comment, per rule, so suppression is visible rather than a silent escape hatch.
@@ -88,6 +90,18 @@ CARD does not count a `Border` that is a circle (equal explicit Width/Height wit
 at least half an explicit Height), a chip (radius 12+ around a single TextBlock or icon), a zero radius, or a radius on
 only some corners. A `Style TargetType="Border"` needs more than radius and fill to count, since skeleton bars and
 badges get their size where the style is used: a fill plus a stroke or padding, or a key that says Card.
+
+THEMEKEY compares each keyed brush, color or size named like a control's key (the longest family in
+`catalog/controls.txt` it starts with) with the keys the project's theme reads for that control. The catalogs in
+`src/Uno.Lint.Core/ThemeKeys` are generated from the WinUI, Simple, Material and Cupertino packages by
+`catalog/Update-ThemeKeys.ps1`; run it when a theme version moves. A theme counts as replacing WinUI's template only when
+it reads key names WinUI does not have, so a theme that just recolors a control keeps WinUI's keys valid. Never reported:
+a theme of unknown kind, a family no catalog styles, a key the same file references, and a family the file bases a
+style on WinUI's own style for (`BasedOn="{StaticResource DefaultButtonStyle}"`).
+
+TYPERAMP names the ramp style nearest the literal in the project's theme (Simple's sizes differ from Material's), and
+CODEBEHIND names what replaces common handler shapes (`SizeChanged`, `Loaded`/`DataContextChanged`, `PropertyChanged`,
+`ItemClick`, back requests, `Click`), so the agent keeps sizes and gets a concrete replacement.
 
 HEX exempts `ThemeDictionaries` entries in resource files only. In a page's own `ThemeDictionaries` (lightweight-styling
 overrides), a literal is reported: point the override at a palette color instead.

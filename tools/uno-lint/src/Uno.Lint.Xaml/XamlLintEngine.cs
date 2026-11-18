@@ -22,7 +22,8 @@ public sealed class XamlLintEngine : IDisposable
     /// <param name="relativePath">Path used in findings and for file-name roles (palette, icons).</param>
     /// <param name="text">The file as saved; findings carry line numbers into this text.</param>
     /// <param name="isEnabled">Whether a rule is enabled for this file after profile, configuration and project gates.</param>
-    public async ValueTask<XamlFileFindings> AnalyzeAsync(string relativePath, string text, Func<RuleDescriptor, bool> isEnabled, CancellationToken cancellationToken = default)
+    /// <param name="context">What the project references, for the rules that depend on it (THEMEKEY).</param>
+    public async ValueTask<XamlFileFindings> AnalyzeAsync(string relativePath, string text, Func<RuleDescriptor, bool> isEnabled, CancellationToken cancellationToken = default, ProjectContext? context = null)
     {
         var wellFormed = UnoLintXaml.IsWellFormed(text);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -32,7 +33,7 @@ public sealed class XamlLintEngine : IDisposable
             var source = XamlStreamSources.FromString(text, relativePath);
             var result = await host.Pipeline.ProcessAsync(source, policyOverride: null, cancellationToken).ConfigureAwait(false);
             var repairedText = result.StreamResult.SanitizedText;
-            return UnoLintXaml.Collect(result, relativePath, text, isEnabled, repairedText);
+            return UnoLintXaml.Collect(result, relativePath, text, isEnabled, repairedText, context);
         }
         finally
         {

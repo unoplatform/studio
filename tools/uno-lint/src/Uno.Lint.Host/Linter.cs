@@ -266,7 +266,7 @@ public sealed class Linter
             {
                 // XAML rules run inside Uno.XamlParser, which repairs the broken markup agents write instead of
                 // rejecting the file.
-                var xaml = await _xaml.AnalyzeAsync(relative, text, IsEnabled, cancellationToken).ConfigureAwait(false);
+                var xaml = await _xaml.AnalyzeAsync(relative, text, IsEnabled, cancellationToken, ContextOf(file)).ConfigureAwait(false);
                 if (!xaml.Parsed)
                 {
                     unparsed++;

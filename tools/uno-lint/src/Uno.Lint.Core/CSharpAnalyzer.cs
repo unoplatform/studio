@@ -113,7 +113,7 @@ public static class CSharpAnalyzer
         {
             if (isEnabled(Rules.CodeBehind))
             {
-                findings.AddRange(FindHandlers(file, root));
+                findings.AddRange(FindHandlers(file, root, context));
             }
 
             if (isEnabled(Rules.CodeBehind) || isEnabled(Rules.Overlay))
@@ -146,7 +146,60 @@ public static class CSharpAnalyzer
 
     // ---------------------------------------------------------------- CODEBEHIND: handlers
 
-    private static IEnumerable<Finding> FindHandlers(CSharpFile file, SyntaxNode root)
+    /// <summary>
+    /// What replaces the handler, for the shapes agents keep after a generic CODEBEHIND fix: layout from the window
+    /// size, view-model wiring on Loaded/DataContextChanged, PropertyChanged-driven visuals, item clicks, back.
+    /// Empty for anything else, where the rule's fix text applies.
+    /// </summary>
+    private static string HandlerHint(string eventName, string argsType, ProjectContext context)
+    {
+        var name = eventName.Substring(eventName.LastIndexOf('.') + 1);
+        bool Is(string evt, string args) => name.IndexOf(evt, StringComparison.Ordinal) >= 0 || argsType == args;
+
+        if (Is("SizeChanged", "SizeChangedEventArgs"))
+        {
+            return context.HasToolkit
+                ? ": width-dependent layout belongs in an AdaptiveTrigger or {utu:Responsive}"
+                : ": width-dependent layout belongs in an AdaptiveTrigger";
+        }
+
+        if (Is("DataContextChanged", "DataContextChangedEventArgs") || name.EndsWith("Loaded", StringComparison.Ordinal) || name.EndsWith("Unloaded", StringComparison.Ordinal))
+        {
+            return context.HasMvux
+                ? ": start loading in the model (a feed loads itself) and bind, instead of wiring the view model in code-behind"
+                : ": start loading in the view model and bind, instead of wiring it in code-behind";
+        }
+
+        if (Is("PropertyChanged", "PropertyChangedEventArgs"))
+        {
+            return context.HasToolkit
+                ? ": bind the property, or drive visual states from it with utu:VisualStateManagerExtensions.States"
+                : ": bind the property, or drive visual states from it in XAML";
+        }
+
+        if (Is("ItemClick", "ItemClickEventArgs"))
+        {
+            return context.HasToolkit
+                ? ": utu:CommandExtensions.Command on the list passes the clicked item to a model command"
+                : ": bind a command that takes the clicked item";
+        }
+
+        if (name.IndexOf("BackRequested", StringComparison.Ordinal) >= 0)
+        {
+            return context.HasToolkit
+                ? ": back belongs to navigation (utu:NavigationBar, or Navigation.Request=\"-\")"
+                : ": back belongs to navigation (Frame.GoBack from a command)";
+        }
+
+        if (name.IndexOf("Click", StringComparison.Ordinal) >= 0 && argsType == "RoutedEventArgs")
+        {
+            return ": bind the button's Command";
+        }
+
+        return string.Empty;
+    }
+
+    private static IEnumerable<Finding> FindHandlers(CSharpFile file, SyntaxNode root, ProjectContext context)
     {
         foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
         {
@@ -169,7 +222,8 @@ public static class CSharpAnalyzer
                 continue;
             }
 
-            yield return New(Rules.CodeBehind, file, LineOf(method.Identifier), $"handler {method.Identifier.Text}");
+            var argsType = secondType.Substring(secondType.LastIndexOf('.') + 1);
+            yield return New(Rules.CodeBehind, file, LineOf(method.Identifier), $"handler {method.Identifier.Text}{HandlerHint(method.Identifier.Text, argsType, context)}");
         }
 
         // SizeChanged += (_, _) => ...; and += delegate { ... }: the same handler, written inline.
@@ -191,7 +245,7 @@ public static class CSharpAnalyzer
                 target = target.Substring("this.".Length);
             }
 
-            yield return New(Rules.CodeBehind, file, LineOf(assignment.OperatorToken), $"handler lambda on {target}");
+            yield return New(Rules.CodeBehind, file, LineOf(assignment.OperatorToken), $"handler lambda on {target}{HandlerHint(target, string.Empty, context)}");
         }
     }
 

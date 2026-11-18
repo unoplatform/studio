@@ -24,7 +24,7 @@ Most real requests touch two or three domains. Load every one that applies.
 | Login, sign-in and sign-out, user accounts, tokens on API calls, Microsoft Entra ID (MSAL), OpenID Connect, protected pages | `uno-authentication` |
 | Calling a web API or the template's server project, OpenAPI/Swagger documents, generated Kiota clients (`HttpKiota`, `AddKiotaClient`, `Content/Client`), the API's base URL | `uno-kiota` |
 | Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (the Uno App MCP, or the platform accessibility tree for Release builds) | `uno-testing` |
-| Previews: a page, control, style or data template shown in Hot Design's Previews panel with sample or mock data | `references/previews.md` in this skill, with `uno-mvux` for a page bound to an MVUX Model |
+| Previews: a page, control, style or data template shown in Hot Design's Previews panel with sample or mock data | `references/previews.md` in this skill (`references/previews-check.md` to check them in the running app), with `uno-mvux` for a page bound to an MVUX Model |
 
 Worked examples:
 

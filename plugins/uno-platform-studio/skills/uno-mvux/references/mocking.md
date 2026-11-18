@@ -1,6 +1,6 @@
 # MVUX Mocking
 
-Referencing `Uno.HotTesting.Reactive` makes a source generator emit, for every MVUX model it finds:
+`Uno.HotTesting.Reactive` carries a source generator that emits, for every MVUX model it finds:
 
 - `record {Model}Mock` — its **required** members are the model's service-dependent feeds, its **optional** members are the feeds derived from them, and `{Model}Mock.Empty` pins every input to empty.
 - `static partial class {Vm}Mock` — `Create()` and `Create({Model}Mock)` build the **real** view-model over the real model, with every constructor parameter null-injected but an `IMessenger`, which gets a fresh messenger, then apply the mock.
@@ -12,12 +12,13 @@ Only the members you set are replaced. A derived feed computes over the mocked i
 
 ## Workflow
 
-### Step 1: Reference the package
+### Step 1: Check that the package is there — don't add it
 
-Add `Uno.HotTesting.Reactive` to the project that holds the models, or to a test or preview project that references it. Both work.
+The Uno.Sdk references `Uno.HotTesting.Reactive` itself in every Debug build of a project with `MVUX` in `<UnoFeatures>`, at the app's Uno.Extensions version and with `PrivateAssets="all"`. Don't add a `PackageReference` or `dotnet add package` to such a project: it duplicates the SDK's, and without its condition it ships in Release builds.
 
-- **Use version 7.4.1 or later.** Earlier builds lack the generator or some of its fixes, and fail quietly. Each version brings the `Uno.Extensions.Reactive` of the same version with it, so in an app whose Uno.Extensions version is 7.4.1 or later, use that same version.
-- **Check the app's Uno.Extensions version first** (`dotnet list package --include-transitive`). In an app on an earlier version, such as the 7.3 that Uno.Sdk 6.7 brings, the package lifts `Uno.Extensions.Reactive` and `Uno.Extensions.Core` to its own version while every other Uno.Extensions package stays behind. That mixed install can build and run, but Uno does not release those versions together. Tell the user before adding it, and offer the fallback under Critical Rules instead.
+- **The mocks exist only in Debug builds.** The SDK drops the package when the build is optimized (`Optimize=true`, as in Release), and every generated mock goes with it. Code that uses a mock compiles in Release only from `HotDesignPreviews/`, which Release builds also leave out, or from a project that Release never builds.
+- **No `{Model}Mock` type in a Debug build?** Check the `.csproj` and `Directory.Build.props` for `<UnoDisableHotTesting>true</UnoDisableHotTesting>`, which turns the reference off, and for an Uno.Extensions version override older than 7.4, which makes the SDK skip it with `UNOB0028`.
+- **A project without the `MVUX` feature**, such as a separate test project, gets no implicit reference. Reference the package there yourself, at the app's Uno.Extensions version (`dotnet list package --include-transitive` shows it).
 
 ### Step 2: Write against the generated names
 
@@ -84,7 +85,7 @@ vm.SetMock(RecipeModelMock.Empty with
 - **Give the page the view-model, not the model.** `{Vm}Mock.Create(...)` returns the generated view-model, which is what the page binds to.
 - **A state input is mocked as a feed** — assign `FeedMock.*` to an `IState<T>` and `ListFeedMock.*` to an `IListState<T>`, not a `State`.
 - **A list with `.Selection(...)` can't be mocked yet** (unoplatform/uno.extensions#3247): whatever the mock sets, the list runs its real feed against the null-injected service and shows its error. Tell the user, and for that page offer the fallback below.
-- **Use mocks only from previews and tests.** In an app project, use them from `HotDesignPreviews/` or from test code, never from the app's own pages or models.
+- **Use mocks only from previews and tests.** In an app project, use them from `HotDesignPreviews/` or from test code, never from the app's own pages or models: those fail to compile in Release, where the mocks don't exist.
 - **`Create` null-injects every constructor parameter but an `IMessenger`.** A model that dereferences a service inside its constructor throws `NullReferenceException` from `Create`; keep model constructors to assignments, plus the messaging pattern's `messenger.Observe(...)`. The messenger `Create` passes is a fresh one, so a preview never receives the app's messages.
 - **No mock generated?** Read the diagnostics before working around it:
   - `MOCK0001` (warning) — the view-model exposes no constructor `Create` can call.

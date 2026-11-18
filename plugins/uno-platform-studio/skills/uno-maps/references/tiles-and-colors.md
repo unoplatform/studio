@@ -85,6 +85,7 @@ control.ActualThemeChanged += (_, _) => Paint();
 ```
 
 - Keys are the Uno Themes keys (Material and Simple): `PrimaryColor` and `OnPrimaryColor` for pins, `TertiaryColor` for a route, `ErrorColor` for an alert pin (the `uno-themes` skill, `references/semantic-colors-brushes.md`). An app without Uno Themes has none of these keys, and the helper returns transparent: the pins vanish.
+- Pins in categories (a status, a type) must differ by more than a key. In the Simple theme `PrimaryColor` and `TertiaryColor` are both neutral (black and gray in light, white and gray in dark), so two categories painted with them look alike next to `ErrorColor`'s red. Give each category a different `SymbolScale` or `SymbolType` too, or draw a legend beside the map.
 - A selected pin gets its own style on its feature (`feature.Styles.Add(...)`) in a second color.
 - Keep colors out of the Model.
 - Check: switch the running app to dark mode (`SystemThemeHelper.SetApplicationTheme(XamlRoot, ElementTheme.Dark)` from Uno Toolkit, or the OS setting) and look at the pins.

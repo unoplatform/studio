@@ -23,7 +23,7 @@ new LineSeries<DateTimePoint> { Values = days.Select(d => new DateTimePoint(d.Da
 new Axis
 {
     UnitWidth = TimeSpan.FromDays(1).Ticks,
-    MinStep = TimeSpan.FromDays(14).Ticks,   // a label every two weeks; 28 days fits a phone-width chart
+    MinStep = TimeSpan.FromDays(28).Ticks,   // four labels over 90 days fit a phone-width chart; 14 days overlaps below about 500 px
     ForceStepToMin = true,
     // The axis also asks for values outside any date (while it pads its limits): new DateTime() throws on those and the chart draws nothing.
     Labeler = v => v is >= 0 and < 3.155e18 ? new DateTime((long)v).ToString("MMM d") : "",

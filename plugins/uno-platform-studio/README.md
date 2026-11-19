@@ -7,7 +7,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | Asset | Purpose |
 |---|---|
 | `agents/` | The `uno-dev` agent: builds Uno apps and features from a brief. Loaded by Claude Code and GitHub Copilot CLI. |
-| `skills/` | The `uno-build-app` workflow skill and nine domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
+| `skills/` | The `uno-build-app` workflow skill and ten domain skills. Each domain `SKILL.md` is a hub (when to use it, a topic map, and the critical rules) and its `references/` folder holds one short guide per topic. |
 | `codex/` | The same agent as a Codex custom-agent file, installed by hand (see [Use the `uno-dev` agent](#use-the-uno-dev-agent)). |
 | `hooks/` | Claude Code hooks that keep the agent on Hot Reload instead of rebuilding a running app (see [Hooks](#hooks)). |
 
@@ -22,6 +22,7 @@ Uno Platform development skills. Installs in **Claude Code**, **GitHub Copilot C
 | `uno-authentication` | Uno.Extensions.Authentication: custom, MSAL, OIDC and web sign-in providers, the login/logout navigation flow, and tokens on Refit/Kiota calls. | 9 |
 | `uno-kiota` | Uno.Extensions.Http.Kiota: generating a typed client from an OpenAPI document, registering it with `AddKiotaClient`, the endpoint Url per environment, calls, errors and retries, the JSON-only serializer limit, headless service tests, mock data written from the spec, and OData services (a client from `$metadata`, calling and writing, a page per vendor such as Dataverse). | 10 |
 | `uno-charts` | Charts with third-party packages that run on Uno: LiveCharts2 and ScottPlot, which Uno.Sdk versions they build on, install, series bound to MVUX feeds, date axes and bar labels, sizing in cards, and a chart palette with theme colors in light and dark. | 6 |
+| `uno-maps` | Interactive maps with Mapsui, the map package that runs on Uno: which Uno.Sdk versions it builds on, install, pins bound to MVUX feeds, taps, routes and areas, OpenStreetMap tile rules and keyed providers, and pin colors from the theme. | 4 |
 | `uno-testing` | UI testing of a running app through the Uno App MCP: visual tree, interaction, screenshots, assertions, App MCP availability, Release builds verified without it, and a page check of every screen per language and width. | 7 |
 
 To change a skill or add a topic, see [CONTRIBUTING.md](https://github.com/unoplatform/studio/blob/main/CONTRIBUTING.md).

@@ -1,6 +1,6 @@
 ---
 name: uno-build-app
-description: "End-to-end workflow for building Uno Platform apps and features: discovery, a short blueprint, one complete feature built and exercised before its pattern is repeated, and an honest completion report. Load it first whenever the work is more than one control or API: creating a new Uno Platform app from a brief; adding a page, screen or feature to an existing Uno app (a page with its data, a button that must do something, attaching photos or files, saving settings, offline data); or repairing a broken Uno page or feature. It keeps an existing app's MVUX or MVVM pattern, navigation and theme, and names the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-charts, uno-testing) each step needs: load those alongside it. Not for WPF, WinUI-only or .NET MAUI projects. For a single control or API question, or a defect in one MVUX, navigation or toolkit API, load the matching domain skill alone."
+description: "End-to-end workflow for building Uno Platform apps and features: discovery, a short blueprint, one complete feature built and exercised before its pattern is repeated, and an honest completion report. Load it first whenever the work is more than one control or API: creating a new Uno Platform app from a brief; adding a page, screen or feature to an existing Uno app (a page with its data, a button that must do something, attaching photos or files, saving settings, offline data); or repairing a broken Uno page or feature. It keeps an existing app's MVUX or MVVM pattern, navigation and theme, and names the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-charts, uno-maps, uno-testing) each step needs: load those alongside it. Not for WPF, WinUI-only or .NET MAUI projects. For a single control or API question, or a defect in one MVUX, navigation or toolkit API, load the matching domain skill alone."
 compatibility: Works with any agent that can read files and run the .NET CLI. Runtime checks use the Uno App MCP (uno_app_* tools), available UI automation, or existing runtime tests; checks that cannot run are reported as not run.
 metadata:
   author: uno-platform
@@ -10,7 +10,7 @@ metadata:
 
 # Uno Platform App-Building Workflow
 
-This skill owns the process. The domain skills (`uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-authentication`, `uno-kiota`, `uno-charts`, `uno-testing`) supply the mechanics: load only the one the current step needs, and read only the `references/` topic that step calls for, not the whole hub. Evidence, not effort, decides when work is done.
+This skill owns the process. The domain skills (`uno-mvux`, `uno-navigation`, `uno-toolkit`, `uno-themes`, `uno-authentication`, `uno-kiota`, `uno-charts`, `uno-maps`, `uno-testing`) supply the mechanics: load only the one the current step needs, and read only the `references/` topic that step calls for, not the whole hub. Evidence, not effort, decides when work is done.
 
 The developer's explicit instructions and the host's permissions always outrank this skill. The developer is the person whose request you are carrying out, never you: a choice this skill leaves to the developer is not yours to make.
 

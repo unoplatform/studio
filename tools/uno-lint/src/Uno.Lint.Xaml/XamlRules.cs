@@ -88,7 +88,7 @@ public sealed class HexRule : IXamlSemanticFixer
 
         if (context.IsProcessingElementStart)
         {
-            if (ColorScopes.IsThemeDictionaryToken(element, context))
+            if (document.InResourceFile && ColorScopes.IsThemeDictionaryToken(element, context))
             {
                 return UnoLintXaml.None;
             }
@@ -114,7 +114,7 @@ public sealed class HexRule : IXamlSemanticFixer
         {
             // <Color x:Key="Brand">#7A67F8</Color>, <SolidColorBrush>Red</SolidColorBrush>, <Setter.Value>#222</Setter.Value>
             var start = frame.Start;
-            if (frame.Children.Count == 0 && RuleLogic.IsColorLiteral(frame.Text) && IsColorElement(start, context) && !ColorScopes.IsThemeDictionaryToken(start, context))
+            if (frame.Children.Count == 0 && RuleLogic.IsColorLiteral(frame.Text) && IsColorElement(start, context) && !(document.InResourceFile && ColorScopes.IsThemeDictionaryToken(start, context)))
             {
                 var brush = BrushOf(document);
                 Report(context, ColorScopes.SingleThemedBrushKey(brush.Start, context) != null ? brush : null, $"literal {frame.Text.Trim()} in <{XamlNodes.LocalName(start)}>", start.LineInfo);
@@ -280,14 +280,23 @@ public sealed partial class IconRule : IXamlSemanticFixer
     private static partial Regex PathMiniLanguage();
 }
 
-/// <summary>UNOL101 CARD: a rounded, filled or stroked framework Border. Decided at the end tag, once its children are known.</summary>
-public sealed class CardRule : IXamlSemanticFixer
+/// <summary>
+/// UNOL101 CARD: a rounded, filled or stroked framework Border, or a Border style that draws one. Decided at the end
+/// tag, once its children or setters are known.
+/// </summary>
+public sealed partial class CardRule : IXamlSemanticFixer
 {
     public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
     {
         var document = LintDocument.Of(context);
         if (context.IsProcessingElementStart || document.Closing is not { } frame)
         {
+            return UnoLintXaml.None;
+        }
+
+        if (XamlNodes.LocalName(frame.Start) == "Style")
+        {
+            CheckStyle(frame, context);
             return UnoLintXaml.None;
         }
 
@@ -335,11 +344,61 @@ public sealed class CardRule : IXamlSemanticFixer
         UnoLintXaml.Report(context, Rules.Card, name != null ? $"<Border x:Name=\"{name}\"> drawn as a card" : "<Border> drawn as a card", border.LineInfo);
         return UnoLintXaml.None;
     }
+
+    /// <summary>
+    /// A <c>&lt;Style TargetType="Border"&gt;</c> with a uniform radius and a fill plus a stroke or padding, or a fill or
+    /// stroke under a key that says Card. Fill and radius alone is also a skeleton bar or a badge whose size is set
+    /// where the style is used, so a style needs more than a bare Border does.
+    /// </summary>
+    private static void CheckStyle(ElementFrame frame, XamlSemanticFixerContext context)
+    {
+        var style = frame.Start;
+        if (XamlNodes.Attribute(style, "TargetType")?.Trim() != "Border")
+        {
+            return;
+        }
+
+        var setters = frame.Setters;
+        if (!setters.TryGetValue("CornerRadius", out var cornerRadius) || cornerRadius == null
+            || !RuleLogic.TryUniformRadius(cornerRadius, out var radius) || radius == 0)
+        {
+            return;
+        }
+
+        var key = XamlNodes.Identifier(XamlNodes.Key(style));
+        var hasBackground = setters.ContainsKey("Background");
+        var hasStroke = setters.ContainsKey("BorderBrush");
+        var namedCard = key != null && CardWord().IsMatch(CSharpAnalyzer.SplitWords(key));
+        if (namedCard ? !hasBackground && !hasStroke : !hasBackground || (!hasStroke && !setters.ContainsKey("Padding")))
+        {
+            return;
+        }
+
+        var width = RuleLogic.ParseNumber(setters.GetValueOrDefault("Width"));
+        var height = RuleLogic.ParseNumber(setters.GetValueOrDefault("Height"));
+        if (!double.IsNaN(radius) && RuleLogic.IsCircleOrPill(radius, width, height))
+        {
+            return;
+        }
+
+        UnoLintXaml.Report(context, Rules.Card, key != null ? $"Border style \"{key}\" draws a card" : "implicit Border style draws a card", style.LineInfo);
+    }
+
+    [GeneratedRegex(@"(?i)\bcards?\b")]
+    private static partial Regex CardWord();
 }
 
-/// <summary>UNOL102 BACKBAR: Navigation.Request="-" on a page with no NavigationBar. Decided when the root element closes.</summary>
+/// <summary>
+/// UNOL102 BACKBAR: a hand-built back button on a page with no NavigationBar: <c>Navigation.Request="-"</c>, or a button
+/// that shows a back icon. Decided when the root element closes.
+/// </summary>
 public sealed class BackBarRule : IXamlSemanticFixer
 {
+    private static readonly HashSet<string> Buttons = new(StringComparer.Ordinal) { "Button", "AppBarButton", "HyperlinkButton", "RepeatButton" };
+
+    // Segoe Fluent / MDL2 back arrows: Back, ChromeBack, BackBttnArrow42Legacy, and the Segoe UI Symbol Back.
+    private static readonly HashSet<int> BackGlyphs = new() { 0xE72B, 0xE830, 0xE0A6, 0xE112 };
+
     public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
     {
         var document = LintDocument.Of(context);
@@ -347,10 +406,13 @@ public sealed class BackBarRule : IXamlSemanticFixer
         {
             if (!document.IsRefix)
             {
-                var request = XamlNodes.Attributes(element).FirstOrDefault(p => XamlNodes.Name(p) == "Navigation.Request");
-                if (request?.RawValue?.Trim() == "-")
+                if (BackRequest(element) is { } request)
                 {
-                    document.PendingBackRequests.Add(request.LineInfo);
+                    document.PendingBackButtons.Add(new BackButton(request.LineInfo, Icon: false));
+                }
+                else if (BackIconButton(element, context) is { } button && !document.PendingBackButtons.Any(b => b.At.LineNumber == button.LineInfo.LineNumber && b.At.LinePosition == button.LineInfo.LinePosition))
+                {
+                    document.PendingBackButtons.Add(new BackButton(button.LineInfo, Icon: true));
                 }
             }
         }
@@ -358,19 +420,155 @@ public sealed class BackBarRule : IXamlSemanticFixer
         {
             if (!document.SawNavigationBar)
             {
-                foreach (var at in document.PendingBackRequests)
+                foreach (var button in document.PendingBackButtons)
                 {
-                    UnoLintXaml.Report(context, Rules.BackBar, "hand-built back button; no NavigationBar on this page", at);
+                    var shape = button.Icon ? "hand-built back button (back icon)" : "hand-built back button";
+                    UnoLintXaml.Report(context, Rules.BackBar, $"{shape}; no NavigationBar on this page", button.At);
                 }
             }
 
             // A fragment can hold several roots; each is its own page.
-            document.PendingBackRequests.Clear();
+            document.PendingBackButtons.Clear();
             document.SawNavigationBar = false;
         }
 
         return UnoLintXaml.None;
     }
+
+    private static XamlPropertyNode? BackRequest(XamlElementNode element) =>
+        XamlNodes.Attributes(element).FirstOrDefault(p => XamlNodes.Name(p) == "Navigation.Request" && p.RawValue?.Trim() == "-");
+
+    /// <summary>
+    /// The button a back icon sits in: <c>&lt;AppBarButton Icon="Back"&gt;</c> itself, or the nearest button around a
+    /// <c>SymbolIcon Symbol="Back"</c> or a back-arrow <c>FontIcon</c>. A button that already requests back navigation
+    /// is reported by its request; a template draws a control's own parts, not a page header.
+    /// </summary>
+    private static XamlElementNode? BackIconButton(XamlElementNode element, XamlSemanticFixerContext context)
+    {
+        var name = XamlNodes.LocalName(element);
+        XamlElementNode? button;
+        if (name == "AppBarButton" && XamlNodes.Attribute(element, "Icon")?.Trim() == "Back")
+        {
+            button = element;
+        }
+        else if ((name == "SymbolIcon" && XamlNodes.Attribute(element, "Symbol")?.Trim() == "Back")
+            || (name == "FontIcon" && IsBackGlyph(XamlNodes.Attribute(element, "Glyph"))))
+        {
+            button = XamlNodes.Ancestors(element, context).FirstOrDefault(a => Buttons.Contains(XamlNodes.LocalName(a)));
+        }
+        else
+        {
+            return null;
+        }
+
+        return button != null && BackRequest(button) == null && !XamlNodes.IsInside(element, context, "ControlTemplate") ? button : null;
+    }
+
+    private static bool IsBackGlyph(string? glyph)
+    {
+        var value = glyph?.Trim();
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
+        if (value.StartsWith("&#x", StringComparison.OrdinalIgnoreCase) && value.EndsWith(';'))
+        {
+            return int.TryParse(value[3..^1], System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var code) && BackGlyphs.Contains(code);
+        }
+
+        return value.Length == 1 && BackGlyphs.Contains(value[0]);
+    }
+}
+
+/// <summary>
+/// UNOL105 TYPERAMP: a literal FontSize in a page or control, on an element or a Setter. Resource files are where the
+/// app's own text styles live; icons size their glyph with FontSize; templates draw a control's parts.
+/// </summary>
+public sealed class TypeRampRule : IXamlSemanticFixer
+{
+    private static readonly HashSet<string> Icons = new(StringComparer.Ordinal) { "FontIcon", "SymbolIcon", "PathIcon", "BitmapIcon", "ImageIcon", "AnimatedIcon", "FontIconSource", "SymbolIconSource" };
+
+    public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
+    {
+        var document = LintDocument.Of(context);
+        if (!context.IsProcessingElementStart || document.IsRefix || document.InResourceFile || XamlNodes.IsInside(element, context, "ControlTemplate"))
+        {
+            return UnoLintXaml.None;
+        }
+
+        var name = XamlNodes.LocalName(element);
+        if (name == "Setter")
+        {
+            if ((XamlNodes.Attribute(element, "Property") ?? XamlNodes.Attribute(element, "Target")) is { } target && RuleLogic.LastSegment(target) == "FontSize"
+                && XamlNodes.Attribute(element, "Value") is { } value && RuleLogic.ParseNumber(value.Trim()) != null)
+            {
+                UnoLintXaml.Report(context, Rules.TypeRamp, $"literal FontSize {value.Trim()} in a Setter", element.LineInfo);
+            }
+        }
+        else if (!Icons.Contains(name) && XamlNodes.Attributes(element).FirstOrDefault(p => XamlNodes.Name(p) == "FontSize") is { RawValue: { } size } property
+            && RuleLogic.ParseNumber(size.Trim()) != null)
+        {
+            UnoLintXaml.Report(context, Rules.TypeRamp, $"literal FontSize {size.Trim()} on {name}", property.LineInfo);
+        }
+
+        return UnoLintXaml.None;
+    }
+}
+
+/// <summary>
+/// UNOL106 RETEMPLATE: a ControlTemplate whose target, from its TargetType or its Style's, is a platform or Toolkit
+/// control. Generic hosts (Control, ContentControl, UserControl, Page, Frame, ItemsControl) have no look of their own
+/// to lose, presenters (FlyoutPresenter for a drawer) are templated by design and expose few lightweight keys, and the
+/// app's own controls need a template.
+/// </summary>
+public sealed class RetemplateRule : IXamlSemanticFixer
+{
+    private static readonly HashSet<string> Hosts = new(StringComparer.Ordinal) { "Control", "ContentControl", "UserControl", "Page", "Frame", "ItemsControl" };
+
+    public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
+    {
+        var document = LintDocument.Of(context);
+        if (!context.IsProcessingElementStart || document.IsRefix || XamlNodes.LocalName(element) != "ControlTemplate" || element.Name.NamespaceUri != XmlNamespaces.Presentation)
+        {
+            return UnoLintXaml.None;
+        }
+
+        var targetType = XamlNodes.Attribute(element, "TargetType");
+        if (targetType == null && XamlNodes.Ancestors(element, context).FirstOrDefault(a => XamlNodes.LocalName(a) == "Style") is { } style)
+        {
+            targetType = XamlNodes.Attribute(style, "TargetType");
+        }
+
+        if (targetType?.Trim() is not { Length: > 0 } type || type.StartsWith('{'))
+        {
+            return UnoLintXaml.None;
+        }
+
+        var colon = type.IndexOf(':');
+        var prefix = colon > 0 ? type[..colon] : null;
+        var local = type[(colon + 1)..];
+        if (Hosts.Contains(local) || local.EndsWith("Presenter", StringComparison.Ordinal) || XamlNodes.Identifier(local) is null)
+        {
+            return UnoLintXaml.None;
+        }
+
+        var stock = prefix == null
+            ? element.Name.NamespaceUri == XmlNamespaces.Presentation
+            : element.NamespaceScope.TryGetValue(prefix, out var uri) && IsStockNamespace(uri);
+        if (stock && (prefix == null || XamlNodes.Identifier(prefix) != null))
+        {
+            UnoLintXaml.Report(context, Rules.Retemplate, $"ControlTemplate copied for {(prefix == null ? local : prefix + ":" + local)}", element.LineInfo);
+        }
+
+        return UnoLintXaml.None;
+    }
+
+    private static bool IsStockNamespace(string uri) =>
+        uri == XmlNamespaces.Presentation
+        || uri.StartsWith("using:Microsoft.UI.Xaml.Controls", StringComparison.Ordinal)
+        || uri.StartsWith("using:Windows.UI.Xaml.Controls", StringComparison.Ordinal)
+        || uri.StartsWith("using:Uno.Toolkit.UI", StringComparison.Ordinal);
 }
 
 /// <summary>UNOL201 BINDVALUE: {Binding X.Value} outside item templates, the MVUX state trap.</summary>

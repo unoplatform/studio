@@ -29,6 +29,9 @@ internal sealed class ElementFrame
     /// <summary>A descendant attribute references a {ThemeResource}.</summary>
     public bool ThemeResourceBelow { get; set; }
 
+    /// <summary>For a Style: the properties its direct Setters set, with the Value attribute (null when set by a property element).</summary>
+    public Dictionary<string, string?> Setters { get; } = new(StringComparer.Ordinal);
+
     /// <summary>Direct text content, known once the end tag is reached.</summary>
     public string Text { get; set; } = string.Empty;
 
@@ -72,8 +75,17 @@ internal sealed class LintDocument
 
     public bool SawNavigationBar { get; set; }
 
-    /// <summary>Back-navigation requests waiting for the end of the document to know whether a NavigationBar exists.</summary>
-    public List<XamlLineInfo> PendingBackRequests { get; } = new();
+    /// <summary>
+    /// Hand-built back buttons waiting for the end of the root element to know whether a NavigationBar exists: a
+    /// <c>Navigation.Request="-"</c>, or a button showing a back icon (<see cref="BackButton.Icon"/>).
+    /// </summary>
+    public List<BackButton> PendingBackButtons { get; } = new();
+
+    /// <summary>
+    /// The current root element is a ResourceDictionary or the Application: a resource file, where a ThemeDictionaries
+    /// entry is a theme token. A page's own ThemeDictionaries holds overrides, which are tokens only if they reference one.
+    /// </summary>
+    public bool InResourceFile => Open.Count > 0 && XamlNodes.LocalName(Open.Last().Start) is "ResourceDictionary" or "Application";
 
     public static LintDocument Of(XamlSemanticFixerContext context)
     {
@@ -86,6 +98,9 @@ internal sealed class LintDocument
         return (LintDocument)state;
     }
 }
+
+/// <summary>A hand-built back button: where to report it, and whether it was recognized by its icon.</summary>
+internal readonly record struct BackButton(XamlLineInfo At, bool Icon);
 
 /// <summary>
 /// Maintains <see cref="LintDocument"/>. Registered first among the uno-lint fixers so the rules that follow see the
@@ -129,6 +144,11 @@ public sealed class DocumentTracker : IXamlSemanticFixer
             {
                 var parent = document.Open.Peek();
                 parent.Children.Add(name);
+                if (name == "Setter" && XamlNodes.LocalName(parent.Start) == "Style" && XamlNodes.Attribute(element, "Property") is { } property)
+                {
+                    parent.Setters[RuleLogic.LastSegment(property)] = XamlNodes.Attribute(element, "Value");
+                }
+
                 if (!name.Contains('.', StringComparison.Ordinal))
                 {
                     var parentName = XamlNodes.LocalName(parent.Start);

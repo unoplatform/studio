@@ -49,7 +49,12 @@ public static class CSharpAnalyzer
 {
     // "Panel" is the most common suffix for a plain layout container (RootPanel, ContentPanel), so it is not an overlay signal.
     private static readonly Regex OverlayName = new Regex(@"(?i)(overlay|sheet|scrim|drawer|popup)$");
-    private static readonly Regex SizeMember = new Regex(@"(?:^|\.)(NewSize\.(?:Width|Height)|ActualWidth|ActualHeight|Bounds\.(?:Width|Height))$");
+    private static readonly Regex SizeMember = new Regex(@"(?:^|\.)(NewSize\.(?:Width|Height)|ActualWidth|ActualHeight|Bounds\.(?:Width|Height)|XamlRoot\??\.Size\.(?:Width|Height))$");
+
+    // The window's size, read the same way from any class: a panel or control that switches layout on it re-implements
+    // an AdaptiveTrigger. ActualWidth or a measure size outside code-behind is the space a panel was given, which is
+    // what a panel is for.
+    private static readonly Regex WindowSizeMember = new Regex(@"(?:^|\.)(XamlRoot\??\.Size\.(?:Width|Height))$");
 
     private static readonly HashSet<string> ControlBaseTypes = new HashSet<string>(StringComparer.Ordinal)
     {
@@ -118,8 +123,12 @@ public static class CSharpAnalyzer
 
             if (isEnabled(Rules.Responsive))
             {
-                findings.AddRange(FindBreakpoints(file, root));
+                findings.AddRange(FindBreakpoints(file, root, SizeMember, " in code-behind"));
             }
+        }
+        else if (!file.IsAppCodeBehind && isEnabled(Rules.Responsive))
+        {
+            findings.AddRange(FindBreakpoints(file, root, WindowSizeMember, string.Empty));
         }
 
         if (isEnabled(Rules.Builtin))
@@ -162,6 +171,28 @@ public static class CSharpAnalyzer
 
             yield return New(Rules.CodeBehind, file, LineOf(method.Identifier), $"handler {method.Identifier.Text}");
         }
+
+        // SizeChanged += (_, _) => ...; and += delegate { ... }: the same handler, written inline.
+        foreach (var assignment in root.DescendantNodes().OfType<AssignmentExpressionSyntax>())
+        {
+            if (!assignment.IsKind(SyntaxKind.AddAssignmentExpression) || !(assignment.Right is AnonymousFunctionExpressionSyntax))
+            {
+                continue;
+            }
+
+            if (assignment.FirstAncestorOrSelf<ClassDeclarationSyntax>() is { } owner && DerivesFromApplication(owner))
+            {
+                continue;
+            }
+
+            var target = assignment.Left.ToString();
+            if (target.StartsWith("this.", StringComparison.Ordinal))
+            {
+                target = target.Substring("this.".Length);
+            }
+
+            yield return New(Rules.CodeBehind, file, LineOf(assignment.OperatorToken), $"handler lambda on {target}");
+        }
     }
 
     // ---------------------------------------------------------------- CODEBEHIND / OVERLAY: Visibility toggles
@@ -195,8 +226,30 @@ public static class CSharpAnalyzer
 
     // ---------------------------------------------------------------- RESPONSIVE
 
-    private static IEnumerable<Finding> FindBreakpoints(CSharpFile file, SyntaxNode root)
+    private static IEnumerable<Finding> FindBreakpoints(CSharpFile file, SyntaxNode root, Regex sizeMember, string where)
     {
+        // Locals holding a size, per member: var width = XamlRoot?.Size.Width ?? 0; ... width >= 840.
+        var locals = new Dictionary<SyntaxNode, Dictionary<string, string>>();
+        Dictionary<string, string> LocalsOf(SyntaxNode node)
+        {
+            var scope = (SyntaxNode?)node.FirstAncestorOrSelf<MemberDeclarationSyntax>() ?? root;
+            if (!locals.TryGetValue(scope, out var map))
+            {
+                map = new Dictionary<string, string>(StringComparer.Ordinal);
+                foreach (var declarator in scope.DescendantNodes().OfType<VariableDeclaratorSyntax>())
+                {
+                    if (declarator.Initializer != null && MatchSizeMember(declarator.Initializer.Value, sizeMember, null) is { } held)
+                    {
+                        map[declarator.Identifier.Text] = held;
+                    }
+                }
+
+                locals[scope] = map;
+            }
+
+            return map;
+        }
+
         foreach (var binary in root.DescendantNodes().OfType<BinaryExpressionSyntax>())
         {
             switch (binary.Kind())
@@ -210,19 +263,20 @@ public static class CSharpAnalyzer
                     continue;
             }
 
-            var member = MatchSizeMember(binary.Left) ?? MatchSizeMember(binary.Right);
-            if (member == null)
-            {
-                continue;
-            }
-
             // "ActualHeight > 0" asks whether layout has run, not which breakpoint applies.
             if (IsZeroLiteral(binary.Left) || IsZeroLiteral(binary.Right))
             {
                 continue;
             }
 
-            yield return New(Rules.Responsive, file, LineOf(binary.OperatorToken), $"breakpoint on {member} in code-behind");
+            var scope = LocalsOf(binary);
+            var member = MatchSizeMember(binary.Left, sizeMember, scope) ?? MatchSizeMember(binary.Right, sizeMember, scope);
+            if (member == null)
+            {
+                continue;
+            }
+
+            yield return New(Rules.Responsive, file, LineOf(binary.OperatorToken), $"breakpoint on {member}{where}");
         }
     }
 
@@ -232,11 +286,26 @@ public static class CSharpAnalyzer
         !(value is string) &&
         Math.Abs(value.ToDouble(System.Globalization.CultureInfo.InvariantCulture)) < double.Epsilon;
 
-    private static string? MatchSizeMember(ExpressionSyntax expression)
+    /// <summary>
+    /// The size an expression reads, looking through parentheses, casts and either side of <c>??</c>, and through a local
+    /// that holds one when <paramref name="locals"/> is given: "XamlRoot.Size.Width", "XamlRoot.Size.Width (through width)".
+    /// </summary>
+    private static string? MatchSizeMember(ExpressionSyntax expression, Regex sizeMember, IReadOnlyDictionary<string, string>? locals)
     {
-        var text = expression.ToString();
-        var m = SizeMember.Match(text);
-        return m.Success ? m.Groups[1].Value : null;
+        switch (expression)
+        {
+            case ParenthesizedExpressionSyntax parenthesized:
+                return MatchSizeMember(parenthesized.Expression, sizeMember, locals);
+            case CastExpressionSyntax cast:
+                return MatchSizeMember(cast.Expression, sizeMember, locals);
+            case BinaryExpressionSyntax coalesce when coalesce.IsKind(SyntaxKind.CoalesceExpression):
+                return MatchSizeMember(coalesce.Left, sizeMember, locals) ?? MatchSizeMember(coalesce.Right, sizeMember, locals);
+            case IdentifierNameSyntax name when locals != null && locals.TryGetValue(name.Identifier.Text, out var held):
+                return $"{held} (through {name.Identifier.Text})";
+        }
+
+        var m = sizeMember.Match(expression.ToString());
+        return m.Success ? m.Groups[1].Value.Replace("?", string.Empty) : null;
     }
 
     // ---------------------------------------------------------------- BUILTIN

@@ -42,6 +42,7 @@ Look at `<UnoFeatures>` in the app's project file before writing any presentatio
 | Any list over server or API data: infinite scroll, next links, search over remote data with a debounce, a stable sort | `references/pagination.md` | `ListFeed.PaginatedAsync`, `PaginatedByCursorAsync`, `SelectPaginatedByCursorAsync`, `PageResult` |
 | Keep several pages in sync after create/update/delete | `references/messaging.md` | `IMessenger`, `EntityMessage<T>`, `.Observe(messenger, e => e.Id)` |
 | Validate a form or draft, show field errors, block an invalid Save | `references/validation.md` | `UseValidation`, `AbstractValidator<T>`, `State.Validate`, command `.Validation`, `input:Validation.Errors`, `SetValidationAsync` |
+| Show a page in any feed state without its real services, for a preview or a test; the `MOCK0001`–`MOCK0003` diagnostics | `references/mocking.md` | `Uno.HotTesting.Reactive`, `{Model}Mock`, `{Vm}Mock.Create`, `FeedMock`, `ListFeedMock` |
 
 ## Critical rules
 
@@ -69,3 +70,4 @@ These come up in nearly every MVUX task. Each reference repeats the ones it need
 - `uno-toolkit` (`references/itemsrepeater-extensions.md`) when a paginated or selectable list is rendered with `ItemsRepeater` instead of `ListView`; `references/ancestor-binding.md` for commands inside item templates.
 - `uno-kiota` for the API client a paginated feed calls, and for field rules read from server metadata.
 - `uno-testing` to verify loading, error, and value states of a `FeedView` in a running app.
+- `uno-platform` (`references/previews.md`) to show a mocked page in a Hot Design preview.

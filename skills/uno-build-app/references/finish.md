@@ -75,10 +75,14 @@ Fill rule 16's grid from the code, not from memory: for each table that has a pa
 
 *Implementation gaps* is for what the developer or the environment blocks: a sign-in that needs a browser this machine lacks, a write the developer forbade, a service that is down. Work a skill describes and the session has not done yet is not a gap to report. It is the next thing to build, and the report waits for it.
 
+## Visual acceptance, whole app
+
+Run every blocking row of *Visual acceptance* in [design.md](design.md) once more over every page, not only the last one changed. When the brief supplied mock-ups, *Design fidelity* compares each page with its mock-up; *Resource keys exist* covers every XAML file in the app, its own styles and overrides included. Each row ends as passed, failed with the defect fixed or reported, or not run with its reason.
+
 ## Release build
 
 Build `-c Release` for every target that can build on this machine, per *Release build* in [verification.md](verification.md), and start one of them: trimming and resource packaging show their failures only there. Record the targets that could not build or start.
 
 ## In the report
 
-The report's checks table carries a row for the Release build, one for this list and one for the capability grid. Placeholders (identifier, publisher, icon, splash) go under *Decisions and deviations*, so the developer sees what to replace.
+The report's checks table carries a row for the Release build, one for this list, one for the capability grid, and one each for *Resource keys exist* and *Design fidelity*. Placeholders (identifier, publisher, icon, splash) go under *Decisions and deviations*, so the developer sees what to replace.

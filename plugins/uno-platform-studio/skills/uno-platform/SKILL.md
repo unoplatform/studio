@@ -1,6 +1,6 @@
 ---
 name: uno-platform
-description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the uno-build-app workflow for building an app or a feature, to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-charts, uno-testing), and sets the project-wide rules that apply before any of them."
+description: "Entry point for building or changing any Uno Platform app: cross-platform .NET UI with WinUI/XAML or C# Markup targeting Windows, iOS, Android, WebAssembly, macOS, Linux, and embedded. Use this skill whenever the user mentions Uno Platform, an Uno project (UnoFeatures, uno.sdk, Uno.Extensions, Uno.Toolkit), WinUI XAML in a cross-platform context, Hot Design or its previews, Hot Reload, Uno Studio, or asks to scaffold, extend, restyle, navigate, preview, test, or fix an Uno app, even when the request only says 'the app' or names a page, control, or feature. It routes to the uno-build-app workflow for building an app or a feature, to the domain skills (uno-mvux, uno-navigation, uno-toolkit, uno-themes, uno-authentication, uno-kiota, uno-charts, uno-testing), and sets the project-wide rules that apply before any of them."
 metadata:
   author: uno-platform
   category: overview
@@ -8,7 +8,7 @@ metadata:
 
 # Uno Platform
 
-This skill is a map. It tells you which domain skill to load for a task and lists the rules every Uno Platform change must respect. Do not write code from this file alone: load the domain skill and its reference first, then ground details in the docs.
+This skill is a map, plus the guide to previews. It tells you which domain skill to load for a task and lists the rules every Uno Platform change must respect. Do not write code from this file alone: load the domain skill and its reference first, then ground details in the docs.
 
 ## Pick the domain skills
 
@@ -25,12 +25,12 @@ Most real requests touch two or three domains. Load every one that applies.
 | Calling a web API or the template's server project, OpenAPI/Swagger documents, generated Kiota clients (`HttpKiota`, `AddKiotaClient`, `Content/Client`), the API's base URL | `uno-kiota` |
 | Charts, graphs, plots, sparklines, KPI trends, a dashboard's figures drawn as bars, lines or slices (LiveCharts2, ScottPlot) | `uno-charts` |
 | Verifying the running app: inspecting the visual tree, clicking through flows, screenshots, assertions (the Uno App MCP, or the platform accessibility tree for Release builds) | `uno-testing` |
+| Previews: a page, control, style or data template shown in Hot Design's Previews panel with sample or mock data | `references/previews.md` in this skill (`references/previews-check.md` to check them in the running app), with `uno-mvux` for a page bound to an MVUX Model |
 
 Worked examples:
 
 - "Add a products page that lists items from our API with a bottom tab" → `uno-build-app` (a feature), then `uno-navigation` (tab shell, route), `uno-mvux` (`IListFeed<T>` + `FeedView`), `uno-toolkit` (`TabBar`), `uno-themes` if styling is mentioned.
 - "The card on the dashboard looks flat, make it match Material" → `uno-toolkit` (`CardContentControl`), `uno-themes` (Material brushes).
-- "Add a spending page that shows the last 12 months by category" → `uno-build-app` (a feature), `uno-mvux` (the feed the chart is built from), `uno-charts` (the package and the chart).
 - "Check that the login form shows an error on bad credentials" → `uno-testing`, with `uno-mvux` if the form logic also needs changes.
 
 ## Project-wide rules
@@ -41,7 +41,7 @@ Worked examples:
 - **Toolkit and Extensions namespaces** are `xmlns:utu="using:Uno.Toolkit.UI"`, `xmlns:uen="using:Uno.Extensions.Navigation.UI"`, and `xmlns:mvux="using:Uno.Extensions.Reactive.UI"`.
 - **Prefer platform controls over hand-built approximations.** A rounded `Border` with a background is a card, so use `CardContentControl`; a row of buttons that switches views is a `TabBar`; a list with add/remove is an `IListState<T>`. The domain skills spell these out.
 - **Ground API details in the docs, not memory.** Call `uno_platform_docs_search(...)`, then `uno_platform_docs_fetch(sourcePath="…")` with the `sourcePath` from a result. Never pass a URL, `.html` link, or hand-built path. Uno APIs change between releases and the docs MCP is version-correct.
-- **Hot Design and Hot Reload questions** have no hub of their own: `uno-testing` covers how `MainWindow.UseStudio()` interacts with an app under test; for everything else search the docs.
+- **Hot Design and Hot Reload questions** have no hub of their own: previews are in `references/previews.md`, `uno-testing` covers how `MainWindow.UseStudio()` interacts with an app under test; for everything else search the docs.
 - **Verify before finishing.** Use `uno-testing` (the Uno App MCP on Debug builds, the platform accessibility tree on Release builds) to confirm the change renders and behaves correctly rather than declaring success from the code alone.
 
 ## New app scaffolding

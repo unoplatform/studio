@@ -27,7 +27,7 @@ Uno Toolkit is the control and helper library that ships with Uno Platform proje
 | 2 to 5 mutually exclusive inline options, view switcher | `references/segmented-controls.md` | `TabBar` + `CupertinoSegmentedStyle` / `CupertinoSlidingSegmentedStyle` (Cupertino package only) |
 | Page app bar with title, back button, action buttons | `references/navigationbar.md` | `NavigationBar`, `MainCommand`, `PrimaryCommands` |
 | Swipe-open side drawer, bottom sheet, gesture flyout | `references/drawer.md` | `DrawerControl`, `DrawerFlyoutPresenter`, `DrawerOpenDirection` |
-| Chips, tags, filter pills, tag input, suggestions | `references/chip.md` | `Chip`, `ChipGroup`, `FilterChipStyle` (Material and Simple) |
+| Chips, tags, filter pills, tag input, suggestions (any pill the user selects or toggles) | `references/chip.md` | `Chip`, `FilterChipStyle` (Material and Simple), `ItemsRepeaterExtensions` selection, `ChipGroup` |
 | Content under a notch, status bar, home indicator, or the on-screen keyboard | `references/safearea.md` | `SafeArea`, `Insets="SoftInput"` |
 | Figma auto-layout rows/columns with spacing and alignment | `references/autolayout.md` | `AutoLayout`, `Spacing`, `Justify`, `CounterAlignment` |
 | CSS flexbox: grow/shrink/basis, wrapping, gaps (in Toolkit 11.0.0-dev.142, not in 9.x) | `references/flexpanel.md` | `FlexPanel`, `Grow`, `Basis`, `Wrap`, `ColumnGap` |
@@ -64,6 +64,7 @@ Uno Toolkit is the control and helper library that ships with Uno Platform proje
 ## Critical rules
 
 - **A rounded `Border` with a background, padding, or border brush is a card. Write it as `CardContentControl`.** `CardContentControl` gives correct elevation, corner radius, theming, and accessibility for free; `Border` stays right only for plain fills without rounding, clipping with `CornerRadius` alone, and primitives inside a `ControlTemplate`. Hairlines are `utu:Divider`.
+- **A pill the user selects or toggles is a `Chip`. Write it as `utu:Chip` with a chip style** (`FilterChipStyle` for a filter or a choice), not as a rounded `Border` or a restyled `Button`: the chip carries the checked, pointer-over, and focus states. A bound row of them is an `ItemsRepeater` with `ItemsRepeaterExtensions` selection and the `Chip` as the template root. A read-only label such as a status tag is not a chip; a `Border` stays right for it.
 - **Never use `Card`.** Its fixed slots (Header, SubHeader, Avatar) fight custom layouts. `CardContentControl` with a `ContentTemplate` is the only card control to use.
 - **`CardContentControl` inside any `DataTemplate` gets `Content="{Binding}"`.** Set it so the inner `ContentTemplate`'s DataContext is the item being rendered. Do not use indexed bindings (`Items[0].Label`) inside card templates.
 - **`CardContentControl` sizes to content.** Set `HorizontalAlignment="Stretch"` (and `VerticalAlignment="Stretch"` for pane-filling cards) on the control itself; sizing the inner content does nothing.

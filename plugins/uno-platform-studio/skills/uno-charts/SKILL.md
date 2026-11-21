@@ -12,7 +12,7 @@ Uno Platform ships no chart control. Without guidance agents pick a WinUI-only p
 
 ## Workflow
 
-1. Read `global.json` for the `Uno.Sdk` version, then `references/install.md`. On Uno.Sdk 7.x LiveCharts2 and ScottPlot do not build yet: tell the user before writing any chart code.
+1. Read `global.json` for the `Uno.Sdk` version, then `references/install.md`. The LiveCharts2 version follows it: 2.0.5 on Uno.Sdk 6.x, 2.2.0 on 7.x. ScottPlot does not build on 7.x yet: tell the user before writing ScottPlot code.
 2. Add the package and restore before writing XAML or C# that names its types; otherwise every chart type fails with `CS0246`.
 3. Read `references/livecharts.md` for business charts bound to data, or `references/scottplot.md` for plots of thousands of points filled from code.
 4. Size it with `references/layout.md`, and paint it from the theme with `references/theme-colors.md`: the charts draw with SkiaSharp and ignore `{ThemeResource}`.
@@ -32,7 +32,7 @@ Uno Platform ships no chart control. Without guidance agents pick a WinUI-only p
 ## Critical rules
 
 - **Use a chart package, never a hand-drawn chart.** Bars made of `Rectangle`s, a line of `Path` segments or an `ItemsRepeater` of scaled `Border`s have no axes, scaling, tooltips or accessibility, and break on the next data shape.
-- **Check the Uno.Sdk major before installing.** LiveCharts2 2.0.5 and ScottPlot 5.1.59 build on Uno.Sdk 6.x. On 7.x both stop with `UNOB0023`: they still depend on Uno 6 builds of `SkiaSharp.Views.Uno.WinUI` and `Uno.WinUI.Lottie`. Never set `UnoDisableUNOB0023Validation`, override `SkiaSharp.Views.Uno.WinUI` or exclude `Uno.WinUI.Lottie` to get past it: the app then runs a binary built for Uno 6. Tell the user and let them choose between Uno.Sdk 6.7 for this app and waiting for a 7.0 build (`references/install.md`).
+- **Pick the version from the Uno.Sdk major.** LiveCharts2 2.0.5 builds on Uno.Sdk 6.x only, and 2.2.0 on 7.x only: 2.2.0 on 6.x fails restore with `NU1605` (it needs `Uno.WinUI` 7.0.32), and 2.0.5 on 7.x stops with `UNOB0023`. ScottPlot 5.1.59 builds on 6.x only and has no 7.0 build yet. Never set `UnoDisableUNOB0023Validation`, override `SkiaSharp.Views.Uno.WinUI` or exclude `Uno.WinUI.Lottie` to get an Uno 6 build past `UNOB0023`: the app then runs a binary built for Uno 6 (`references/install.md`).
 - **Install `LiveChartsCore.SkiaSharpView.Uno.WinUI`.** `LiveChartsCore.SkiaSharpView.WinUI` is WinAppSDK only, `LiveChartsCore.SkiaSharpView.Uno` is the old UWP build, and `LiveChartsCore.SkiaSharpView` has no controls. The XAML namespace is `using:LiveChartsCore.SkiaSharpView.WinUI`, without `.Uno`.
 - **Never bind `Series` to an `IFeed<ISeries[]>` or `IState<ISeries[]>`.** The chart stays empty with no binding error. Put the series and axes in a record (`IFeed<SalesChart>`) and bind `{Binding Chart.Series}`.
 - **Every file that names a chart type imports it.** `using LiveChartsCore;` and `using LiveChartsCore.SkiaSharpView;` are not in the template's global usings.

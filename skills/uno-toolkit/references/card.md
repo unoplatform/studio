@@ -17,6 +17,22 @@ If you find yourself writing a `<Border>` that meets **all** of the following, s
 
 That's a card. `<Border CornerRadius="8" Background="..." Padding="16">…</Border>` is a card written the wrong way.
 
+**The same holds when a style sets those properties.** A `<Style TargetType="Border">` with a `CornerRadius` and a `Background`, applied to a `Border` that wraps content, is a card style one step removed. Write the style for the card control and base it on a card style:
+
+```xml
+<!-- WRONG: the card hidden in a Border style -->
+<Style x:Key="ProductCardStyle" TargetType="Border">
+    <Setter Property="Background" Value="{ThemeResource SurfaceBrush}" />
+    <Setter Property="CornerRadius" Value="16" />
+    <Setter Property="Padding" Value="16" />
+</Style>
+
+<!-- CORRECT: a card style, based on the theme's -->
+<Style x:Key="ProductCardStyle" TargetType="utu:CardContentControl" BasedOn="{StaticResource FilledCardContentControlStyle}">
+    <Setter Property="CornerRadius" Value="16" />
+</Style>
+```
+
 ```xml
 <!-- WRONG: Border-as-card -->
 <Border CornerRadius="8"

@@ -6,6 +6,7 @@
 
 - **`ResponsiveExtension` must be used as a markup extension** — `{utu:Responsive Narrow=Red, Wide=Blue}` — never as a XAML element (`<utu:ResponsiveExtension .../>`). The XAML engine parses the breakpoint values as strings and performs type conversion through `MarkupExtension.ProvideValue`, which is only available in markup-extension form.
 - **The window's width decides layout in XAML, never in code-behind.** A value that changes with width is `{utu:Responsive}`; a layout that changes shape is a `ResponsiveView`, or visual states with an `AdaptiveTrigger`. Do not read `ActualWidth`, `SizeChanged` or `XamlRoot.Size` in a page's `.xaml.cs` to swap panels, columns or templates: the layout rule then lives outside the XAML it changes, and every page ends up with its own breakpoints.
+- **Prefer `{utu:Responsive}` and `ResponsiveView` over an `AdaptiveTrigger` for a page that is checked in a preview.** An `AdaptiveTrigger` compares the *window's* width (`MinWindowWidth`), so a page shown at another size than its window, such as a Hot Design preview set to a phone width, keeps the window's layout: the preview then shows the wide layout at a narrow size. The Toolkit's responsive markup follows the size the preview gives it.
 
 ## Key Principles (Stable)
 

@@ -1,5 +1,5 @@
 ---
-description: On Uno.Sdk 7.x the chart packages fail with UNOB0023; the agent says so before writing chart code and does not suppress the check or force the dependencies.
+description: On Uno.Sdk 7.x the agent installs LiveCharts2 2.2.0, the first build for Uno 7, not 2.0.5, and does not suppress UNOB0023 or force dependency versions.
 tags: [uno-charts, uno-sdk-7]
 runs: 3
 max_turns: 10

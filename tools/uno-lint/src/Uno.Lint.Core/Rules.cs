@@ -58,6 +58,18 @@ public static class Rules
         "Navigate with uen:Navigation.Request=\"!Route\" to a Page (opens as a flyout) styled with a DrawerFlyoutPresenter style; keep the state and Reset/Apply in the model.",
         Profile.Strict);
 
+    public static readonly RuleDescriptor TypeRamp = new RuleDescriptor(
+        "UNOL105", "TYPERAMP",
+        "Literal FontSize in a page instead of a type-ramp style",
+        "Use a TextBlock style from the type ramp (TitleTextBlockStyle, SubtitleTextBlockStyle, BodyStrongTextBlockStyle, BodyTextBlockStyle, CaptionTextBlockStyle) or a keyed text style in the app's styles file, so sizes live in one place.",
+        Profile.Strict);
+
+    public static readonly RuleDescriptor Retemplate = new RuleDescriptor(
+        "UNOL106", "RETEMPLATE",
+        "ControlTemplate copied for a stock control",
+        "Restyle with lightweight styling: override the control's resource keys (ButtonBackground, ButtonBackgroundPointerOver, ButtonForeground...) in the Style's or page's Resources, or set BasedOn to the default style (DefaultButtonStyle, AccentButtonStyle). A copied template drops the visual states, focus visuals and later platform fixes; ControlTemplates are for the app's own controls.",
+        Profile.Strict);
+
     /// <summary>First correctness rule: a bug, not a style preference. Only meaningful in MVUX projects.</summary>
     public static readonly RuleDescriptor BindValue = new RuleDescriptor(
         "UNOL201", "BINDVALUE",
@@ -67,7 +79,7 @@ public static class Rules
 
     public static readonly IReadOnlyList<RuleDescriptor> All = new[]
     {
-        Hex, TokenTheme, Icon, Builtin, Responsive, Card, BackBar, CodeBehind, Overlay, BindValue,
+        Hex, TokenTheme, Icon, Builtin, Responsive, Card, BackBar, CodeBehind, Overlay, TypeRamp, Retemplate, BindValue,
     };
 
     public static RuleDescriptor? Find(string idOrName) =>
@@ -111,6 +123,16 @@ public static class Rules
             return context.HasUnoThemes
                 ? "Use a theme role brush (PrimaryBrush, SurfaceBrush, OnSurfaceVariantBrush, OutlineBrush...; shared Uno.Themes keys valid under SimpleTheme, Material and Cupertino) or a token in a palette file. Brand colors go in the palette override (ColorPaletteOverride for Material, SimpleTheme.ColorOverrideDictionary for Simple)."
                 : "Use a WinUI theme brush ({ThemeResource TextFillColorPrimaryBrush}, CardBackgroundFillColorDefaultBrush, AccentFillColorDefaultBrush, ControlStrokeColorDefaultBrush...) or define the color per theme in ResourceDictionary.ThemeDictionaries in a palette file. Never a literal in a page.";
+        }
+
+        if (rule == TypeRamp && context.HasUnoThemes)
+        {
+            return "Use a TextBlock style from the Uno.Themes type ramp (Style=\"{StaticResource TitleMedium}\"; DisplayLarge, HeadlineMedium, TitleLarge, BodyMedium, LabelSmall... valid under SimpleTheme, Material and Cupertino) or a keyed text style in the app's styles file, so sizes live in one place.";
+        }
+
+        if (rule == Retemplate && context.HasUnoThemes)
+        {
+            return "Restyle with lightweight styling: override the control's Uno.Themes resource keys (FilledButtonBackground, FilledButtonBackgroundPointerOver, FilledButtonForeground...) in the Style's or page's Resources, or set BasedOn to the theme style (FilledButtonStyle, OutlinedButtonStyle, TextButtonStyle...). A copied template drops the theme's visual states, focus visuals and later fixes; ControlTemplates are for the app's own controls.";
         }
 
         if (rule == Responsive && !context.HasToolkit)

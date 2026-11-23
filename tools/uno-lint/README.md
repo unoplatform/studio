@@ -66,11 +66,13 @@ To install as a global tool from a local build: `dotnet pack src/Uno.Lint.Cli -c
 | UNOL002 | TOKENTHEME | recommended, `suggestion` | app brush with one value for both themes | role brush, ThemeDictionaries, or `{ThemeResource}` color |
 | UNOL003 | ICON | recommended | inline path geometry or shapes drawn as an icon | SymbolIcon/FontIcon, or keyed data in Icons.xaml |
 | UNOL004 | BUILTIN | recommended | custom control named like a platform/Toolkit control | RatingControl, ProgressBar, utu:Chip, utu:TabBar... |
-| UNOL005 | RESPONSIVE | recommended | `ActualWidth`/`NewSize` comparisons in code-behind | `{utu:Responsive}` or AdaptiveTrigger |
-| UNOL101 | CARD | strict, Toolkit only | rounded, filled or stroked `Border` | `utu:CardContentControl` |
-| UNOL102 | BACKBAR | strict, Toolkit only | `Navigation.Request="-"` on a page with no NavigationBar | `utu:NavigationBar` MainCommand |
-| UNOL103 | CODEBEHIND | strict | event handlers and `.Visibility =` in `*.xaml.cs` | commands, VisualStateManagerExtensions, regions |
+| UNOL005 | RESPONSIVE | recommended | `ActualWidth`/`NewSize`/`XamlRoot.Size` comparisons in code-behind, directly or through a local; `XamlRoot.Size` comparisons in any class | `{utu:Responsive}` or AdaptiveTrigger |
+| UNOL101 | CARD | strict, Toolkit only | rounded, filled or stroked `Border`, or a Border style that draws one | `utu:CardContentControl` |
+| UNOL102 | BACKBAR | strict, Toolkit only | `Navigation.Request="-"` or a button with a back icon, on a page with no NavigationBar | `utu:NavigationBar` MainCommand |
+| UNOL103 | CODEBEHIND | strict | event handlers (methods or lambdas) and `.Visibility =` in `*.xaml.cs` | commands, VisualStateManagerExtensions, regions |
 | UNOL104 | OVERLAY | strict | `*Overlay/*Sheet/*Drawer.Visibility =` in code-behind | `Navigation.Request="!Route"` flyout |
+| UNOL105 | TYPERAMP | strict | literal `FontSize` on a page element or in a page `Setter` (icons and resource files exempt) | a type-ramp TextBlock style (`TitleMedium`, `BodyMedium`... with Uno.Themes) |
+| UNOL106 | RETEMPLATE | strict | `ControlTemplate` copied for a platform or Toolkit control (Button, ListViewItem, `utu:TabBarItem`...) | lightweight-styling keys, or `BasedOn` the theme style |
 | UNOL201 | BINDVALUE | recommended, MVUX only, a bug | `{Binding State.Value}` outside a DataTemplate; shows empty, writes nothing | `{Binding State, Mode=TwoWay}`; `{Binding Data.X}` inside FeedView |
 
 Info counters (never gating): TOKEN, ADAPTIVE vs `utu:Responsive`, TEMPLATE, WORKAROUND. A `Supp` column counts
@@ -84,7 +86,11 @@ SimpleTheme is referenced, and WinUI theme brushes in a Fluent-only app. A file 
 
 CARD does not count a `Border` that is a circle (equal explicit Width/Height with radius at least half), a pill (radius
 at least half an explicit Height), a chip (radius 12+ around a single TextBlock or icon), a zero radius, or a radius on
-only some corners.
+only some corners. A `Style TargetType="Border"` needs more than radius and fill to count, since skeleton bars and
+badges get their size where the style is used: a fill plus a stroke or padding, or a key that says Card.
+
+HEX exempts `ThemeDictionaries` entries in resource files only. In a page's own `ThemeDictionaries` (lightweight-styling
+overrides), a literal is reported: point the override at a palette color instead.
 
 ## Configuration
 

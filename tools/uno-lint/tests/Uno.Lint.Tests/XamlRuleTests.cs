@@ -427,6 +427,62 @@ public class XamlRuleTests
         Assert.DoesNotContain(LintXaml(xaml), x => x.Rule == Rules.Card);
     }
 
+    // ------------------------------------------------------------ SPACING, RADIUS
+
+    [Fact]
+    public void Spacing_and_radius_flag_numeric_literals_when_the_theme_has_tokens()
+    {
+        var xaml = $$"""
+            <Page {{Ns}}>
+              <StackPanel Margin="0,8,0,0" Padding="16" Spacing="4">
+                <Grid RowSpacing="12" ColumnSpacing="0"/>
+                <Image CornerRadius="8"/>
+              </StackPanel>
+            </Page>
+            """;
+        var hits = LintXaml(xaml, tokens: true).Where(f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius).Select(f => $"{f.Rule.Name} {f.Message}").ToList();
+        Assert.Equal(5, hits.Count);
+        Assert.Contains("SPACING literal Margin=\"0,8,0,0\" on StackPanel", hits);
+        Assert.Contains("SPACING literal RowSpacing=\"12\" on Grid", hits);
+        Assert.Contains("RADIUS literal CornerRadius=\"8\" on Image", hits);
+    }
+
+    [Fact]
+    public void Spacing_ignores_zero_tokens_and_bindings()
+    {
+        var xaml = $$"""
+            <Page {{Ns}}>
+              <StackPanel Margin="0" Padding="{StaticResource Space200Thickness}" Spacing="{Binding Gap}" CornerRadius="{StaticResource Radius200CornerRadius}"/>
+            </Page>
+            """;
+        Assert.DoesNotContain(LintXaml(xaml, tokens: true), f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius);
+    }
+
+    [Fact]
+    public void Spacing_and_radius_flag_setters_and_keyed_resources()
+    {
+        var xaml = $$"""
+            <ResourceDictionary {{Ns}}>
+              <Thickness x:Key="CardPadding">16</Thickness>
+              <CornerRadius x:Key="Round">8</CornerRadius>
+              <Style x:Key="Tight" TargetType="Button">
+                <Setter Property="Padding" Value="4,2"/>
+                <Setter Property="CornerRadius" Value="0"/>
+              </Style>
+            </ResourceDictionary>
+            """;
+        var hits = LintXaml(xaml, "Styles.xaml", tokens: true).Where(f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius).Select(f => $"{f.Rule.Name} {f.Message}").ToList();
+        Assert.Equal(["SPACING literal <Thickness>16", "RADIUS literal <CornerRadius>8", "SPACING Setter Padding=\"4,2\""], hits);
+    }
+
+    [Fact]
+    public void Spacing_and_radius_need_a_token_theme_and_the_strict_profile()
+    {
+        var xaml = $"<Page {Ns}><StackPanel Margin=\"8\" CornerRadius=\"8\"/></Page>";
+        Assert.DoesNotContain(LintXaml(xaml, tokens: false), f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius);
+        Assert.DoesNotContain(LintXaml(xaml, tokens: true, profile: Profile.Recommended), f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius);
+    }
+
     // ------------------------------------------------------------ BINDVALUE
 
     [Fact]

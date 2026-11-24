@@ -80,7 +80,7 @@ public class XamlEngineTests
 
         var result = AnalyzeXaml(xaml);
         Assert.True(result.Repaired);
-        Assert.Equal(["TOKENTHEME L3", "HEX L6", "CARD L6", "ICON L7", "BACKBAR L8", "BINDVALUE L9", "ICON L10"], result.Findings.Select(f => $"{f.Rule.Name} L{f.Line}"));
+        Assert.Equal(["TOKENTHEME L3", "HEX L6", "CARD L6", "RADIUS L6", "ICON L7", "BACKBAR L8", "BINDVALUE L9", "ICON L10"], result.Findings.Select(f => $"{f.Rule.Name} L{f.Line}"));
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class XamlEngineTests
         var xaml = $"<Page {Ns}>\n<Border CornerRadius=\"8\" Background=\"#FF0000\"><Grid/></Border>\n<TextBox Text=\"{{Binding Name.Value}}\"/>\n</Page>";
         var calls = Enumerable.Range(0, 16).Select(i => Engine.AnalyzeAsync($"Page{i}.xaml", xaml, _ => true).AsTask());
         var results = await Task.WhenAll(calls);
-        Assert.All(results, r => Assert.Equal(["HEX L2", "CARD L2", "BINDVALUE L3"], r.Findings.Select(f => $"{f.Rule.Name} L{f.Line}")));
+        Assert.All(results, r => Assert.Equal(["HEX L2", "CARD L2", "RADIUS L2", "BINDVALUE L3"], r.Findings.Select(f => $"{f.Rule.Name} L{f.Line}")));
     }
 
     [Fact]
@@ -206,7 +206,7 @@ public class XamlEngineTests
     {
         var xaml = $"<Page {Ns}>\n  <Border CornerRadius=\"8\" Background=\"#FF0000\"><Grid/></Border>\n</Page>";
         var result = await LintInStockPipeline(xaml, "MainPage.xaml");
-        Assert.Equal(["HEX L2", "CARD L2"], result.Findings.Select(f => $"{f.Rule.Name} L{f.Line}"));
+        Assert.Equal(["HEX L2", "CARD L2", "RADIUS L2"], result.Findings.Select(f => $"{f.Rule.Name} L{f.Line}"));
     }
 
     [Fact]

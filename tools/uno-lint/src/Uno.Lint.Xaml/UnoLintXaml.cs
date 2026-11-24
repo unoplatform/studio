@@ -32,6 +32,7 @@ public static partial class UnoLintXaml
         options.SemanticFixerTypes.Add(typeof(IconRule));
         options.SemanticFixerTypes.Add(typeof(CardRule));
         options.SemanticFixerTypes.Add(typeof(BackBarRule));
+        options.SemanticFixerTypes.Add(typeof(TokenLiteralRule));
         options.SemanticFixerTypes.Add(typeof(BindValueRule));
     }
 

@@ -58,6 +58,29 @@ public class LinterTests : IDisposable
         Assert.Equal(mvux, context.HasMvux);
     }
 
+    [Theory]
+    [InlineData("<UnoFeatures>Material</UnoFeatures>", true)]
+    [InlineData("<UnoFeatures>SimpleTheme;Toolkit</UnoFeatures>", true)]
+    [InlineData("<UnoFeatures>MaterialToolkit</UnoFeatures>", true)]
+    [InlineData("<PackageReference Include=\"Uno.Themes.WinUI\" />", true)]
+    [InlineData("<UnoFeatures>Cupertino</UnoFeatures>", false)]
+    [InlineData("<UnoFeatures>Toolkit;Mvux</UnoFeatures>", false)]
+    public void Context_detects_theme_tokens_for_material_and_simple_only(string projectXml, bool tokens)
+    {
+        var context = ProjectContext.Detect([$"<Project>{projectXml}</Project>"], []);
+        Assert.Equal(tokens, context.HasThemeTokens);
+    }
+
+    [Fact]
+    public void Context_round_trips_the_theme_token_flag_and_rejects_the_old_cache_format()
+    {
+        var context = new ProjectContext(hasToolkit: true, hasThemeTokens: true);
+        Assert.True(ProjectContext.TryDeserialize(context.Serialize(), out var back));
+        Assert.True(back.HasThemeTokens);
+        Assert.True(back.HasToolkit);
+        Assert.False(ProjectContext.TryDeserialize("T--H", out _));
+    }
+
     [Fact]
     public void Context_falls_back_to_xaml_namespaces()
     {
@@ -233,10 +256,10 @@ public class LinterTests : IDisposable
             Assert.True(first.Context.HasToolkit, "Toolkit detected from the XAML namespace");
             Assert.False(first.Context.HasMvux, "obj/ is not walked");
             var entry = Assert.Single(Directory.GetFiles(cache));
-            Assert.Equal("T---", File.ReadAllText(entry));
+            Assert.Equal("T----", File.ReadAllText(entry));
 
             // The cached entry is what the next call reads: edit it and the context follows.
-            File.WriteAllText(entry, "T-M-");
+            File.WriteAllText(entry, "T-M--");
             Assert.True((await linter.RunAsync(file)).Context.HasMvux);
 
             // --no-cache detects again.
@@ -314,7 +337,7 @@ public class LinterTests : IDisposable
         {
             var result = _project.Lint(target, new LintOptions { Profile = Profile.Strict });
             Assert.True(result.Context.HasToolkit, target);
-            Assert.Equal(["BINDVALUE", "CARD", "HEX"], result.Findings.Select(f => f.Rule.Name).Order());
+            Assert.Equal(["BINDVALUE", "CARD", "HEX", "RADIUS"], result.Findings.Select(f => f.Rule.Name).Order());
             Assert.Contains("PrimaryBrush", result.Findings.Single(f => f.Rule == Rules.Hex).Fix);
         }
     }

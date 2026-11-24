@@ -93,7 +93,7 @@ public sealed record RuleCatalog(IReadOnlyList<RuleInfo> Rules)
 public sealed record RuleInfo(string Id, string Name, string Category, string Profile, string? Requires, string DefaultSeverity, string Title)
 {
     public static RuleInfo From(RuleDescriptor rule) =>
-        new(rule.Id, rule.Name, Words.Of(rule.Category), Words.Of(rule.MinimumProfile), rule.RequiresToolkit ? "toolkit" : rule.RequiresMvux ? "mvux" : null, Words.Of(rule.DefaultSeverity), rule.Title);
+        new(rule.Id, rule.Name, Words.Of(rule.Category), Words.Of(rule.MinimumProfile), rule.RequiresToolkit ? "toolkit" : rule.RequiresMvux ? "mvux" : rule.RequiresThemeTokens ? "theme-tokens" : null, Words.Of(rule.DefaultSeverity), rule.Title);
 }
 
 /// <summary>Enum values as the lower-case words .editorconfig and the command line use.</summary>

@@ -58,6 +58,18 @@ public static class Rules
         "Navigate with uen:Navigation.Request=\"!Route\" to a Page (opens as a flyout) styled with a DrawerFlyoutPresenter style; keep the state and Reset/Apply in the model.",
         Profile.Strict);
 
+    public static readonly RuleDescriptor Spacing = new RuleDescriptor(
+        "UNOL105", "SPACING",
+        "Literal spacing (Margin, Padding, Spacing) instead of a theme token",
+        "Use the Uno.Themes spacing tokens: Space050 (4), Space100 (8), Space150 (12), Space200 (16), Space300 (24), Space400 (32) for Spacing, RowSpacing and ColumnSpacing, and the matching Space{n}Thickness family (Space200Thickness, Space200HorizontalThickness, Space200TopThickness...) for Margin and Padding. Snap a value that is off the scale to the nearest step. 0 needs no token.",
+        Profile.Strict, requiresThemeTokens: true);
+
+    public static readonly RuleDescriptor Radius = new RuleDescriptor(
+        "UNOL106", "RADIUS",
+        "Literal CornerRadius instead of a theme token",
+        "Use the Uno.Themes radius tokens: Radius100 (4), Radius200 (8), Radius400 (16), as {StaticResource Radius200CornerRadius} on CornerRadius. Snap a value that is off the scale to the nearest step. 0 needs no token.",
+        Profile.Strict, requiresThemeTokens: true);
+
     /// <summary>First correctness rule: a bug, not a style preference. Only meaningful in MVUX projects.</summary>
     public static readonly RuleDescriptor BindValue = new RuleDescriptor(
         "UNOL201", "BINDVALUE",
@@ -67,7 +79,7 @@ public static class Rules
 
     public static readonly IReadOnlyList<RuleDescriptor> All = new[]
     {
-        Hex, TokenTheme, Icon, Builtin, Responsive, Card, BackBar, CodeBehind, Overlay, BindValue,
+        Hex, TokenTheme, Icon, Builtin, Responsive, Card, BackBar, CodeBehind, Overlay, Spacing, Radius, BindValue,
     };
 
     public static RuleDescriptor? Find(string idOrName) =>
@@ -93,6 +105,11 @@ public static class Rules
         }
 
         if (rule.RequiresMvux && !context.HasMvux)
+        {
+            return Severity.None;
+        }
+
+        if (rule.RequiresThemeTokens && !context.HasThemeTokens)
         {
             return Severity.None;
         }

@@ -6,7 +6,7 @@ namespace Uno.Lint.Tests;
 /// <summary>The file-system host: which files are linted, how the project context is found, and single-file runs.</summary>
 public class LinterTests : IDisposable
 {
-    private const string ToolkitProject = "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>";
+    private const string ToolkitProject = "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit;Material</UnoFeatures></PropertyGroup></Project>";
 
     private readonly TempProject _project = new();
 
@@ -29,7 +29,7 @@ public class LinterTests : IDisposable
     [Fact]
     public void Without_toolkit_card_rule_stays_off_even_in_strict()
     {
-        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Mvux</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Material;Mvux</UnoFeatures></PropertyGroup></Project>");
         _project.Write("MainPage.xaml", $"{Page}<Border CornerRadius=\"8\" Background=\"#FF0000\"/></Page>");
 
         var result = _project.Lint(options: new LintOptions { Profile = Profile.Strict });
@@ -246,7 +246,7 @@ public class LinterTests : IDisposable
         var cache = _project.Root + ".cache";
         try
         {
-            _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Hosting</UnoFeatures></PropertyGroup></Project>");
+            _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Hosting;Material</UnoFeatures></PropertyGroup></Project>");
             _project.Write("Views/Main.xaml", $"{Page.Replace(">", " xmlns:utu=\"using:Uno.Toolkit.UI\">")}<Border CornerRadius=\"8\" Background=\"White\"><Grid/></Border></Page>");
             _project.Write("obj/Debug/Generated.xaml", "<Page xmlns:mvux=\"using:Uno.Extensions.Reactive.UI\"/>");
             var linter = new Linter(new LintOptions { Profile = Profile.Strict, ContextCacheDirectory = cache }, Engine);
@@ -256,7 +256,7 @@ public class LinterTests : IDisposable
             Assert.True(first.Context.HasToolkit, "Toolkit detected from the XAML namespace");
             Assert.False(first.Context.HasMvux, "obj/ is not walked");
             var entry = Assert.Single(Directory.GetFiles(cache));
-            Assert.Equal("T----", File.ReadAllText(entry));
+            Assert.Equal("T--HS", File.ReadAllText(entry)); // Toolkit from the XAML, the Material theme from the project
 
             // The cached entry is what the next call reads: edit it and the context follows.
             File.WriteAllText(entry, "T-M--");
@@ -280,7 +280,7 @@ public class LinterTests : IDisposable
         var cache = _project.Root + ".cache";
         try
         {
-            _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Hosting</UnoFeatures></PropertyGroup></Project>");
+            _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Hosting;Material</UnoFeatures></PropertyGroup></Project>");
             var file = _project.Write("Views/Main.xaml", $"{Page}<Border/></Page>");
             var linter = new Linter(new LintOptions { Profile = Profile.Strict, ContextCacheDirectory = cache }, Engine);
             Assert.False((await linter.RunAsync(file)).Context.HasToolkit);

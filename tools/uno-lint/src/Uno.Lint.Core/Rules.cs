@@ -38,7 +38,8 @@ public static class Rules
         "UNOL101", "CARD",
         "Border hand-drawn as a card",
         "Use utu:CardContentControl (Filled/Outlined/ElevatedCardContentControlStyle) tuned with lightweight keys (CardCornerRadius, CardPadding, <Variant>CardContentBackground/BorderBrush). A bare Border is for dividers and image clipping.",
-        Profile.Strict, requiresToolkit: true);
+        // The card styles ship in the Toolkit Material and Simple packages; a Fluent app with Toolkit has none.
+        Profile.Strict, requiresToolkit: true, requiresThemeTokens: true);
 
     public static readonly RuleDescriptor BackBar = new RuleDescriptor(
         "UNOL102", "BACKBAR",

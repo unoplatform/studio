@@ -93,7 +93,16 @@ public sealed record RuleCatalog(IReadOnlyList<RuleInfo> Rules)
 public sealed record RuleInfo(string Id, string Name, string Category, string Profile, string? Requires, string DefaultSeverity, string Title)
 {
     public static RuleInfo From(RuleDescriptor rule) =>
-        new(rule.Id, rule.Name, Words.Of(rule.Category), Words.Of(rule.MinimumProfile), rule.RequiresToolkit ? "toolkit" : rule.RequiresMvux ? "mvux" : rule.RequiresThemeTokens ? "theme-tokens" : null, Words.Of(rule.DefaultSeverity), rule.Title);
+        new(rule.Id, rule.Name, Words.Of(rule.Category), Words.Of(rule.MinimumProfile), Requirements(rule), Words.Of(rule.DefaultSeverity), rule.Title);
+
+    private static string? Requirements(RuleDescriptor rule)
+    {
+        var needs = new List<string>();
+        if (rule.RequiresToolkit) needs.Add("toolkit");
+        if (rule.RequiresMvux) needs.Add("mvux");
+        if (rule.RequiresThemeTokens) needs.Add("theme-tokens");
+        return needs.Count == 0 ? null : string.Join("+", needs);
+    }
 }
 
 /// <summary>Enum values as the lower-case words .editorconfig and the command line use.</summary>

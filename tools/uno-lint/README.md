@@ -67,7 +67,7 @@ To install as a global tool from a local build: `dotnet pack src/Uno.Lint.Cli -c
 | UNOL003 | ICON | recommended | inline path geometry or shapes drawn as an icon | SymbolIcon/FontIcon, or keyed data in Icons.xaml |
 | UNOL004 | BUILTIN | recommended | custom control named like a platform/Toolkit control | RatingControl, ProgressBar, utu:Chip, utu:TabBar... |
 | UNOL005 | RESPONSIVE | recommended | `ActualWidth`/`NewSize` comparisons in code-behind | `{utu:Responsive}` or AdaptiveTrigger |
-| UNOL101 | CARD | strict, Toolkit only | rounded, filled or stroked `Border` | `utu:CardContentControl` |
+| UNOL101 | CARD | strict, Toolkit with a Material or Simple theme | rounded, filled or stroked `Border` | `utu:CardContentControl` |
 | UNOL102 | BACKBAR | strict, Toolkit only | `Navigation.Request="-"` on a page with no NavigationBar | `utu:NavigationBar` MainCommand |
 | UNOL103 | CODEBEHIND | strict | event handlers and `.Visibility =` in `*.xaml.cs` | commands, VisualStateManagerExtensions, regions |
 | UNOL104 | OVERLAY | strict | `*Overlay/*Sheet/*Drawer.Visibility =` in code-behind | `Navigation.Request="!Route"` flyout |

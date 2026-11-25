@@ -14,7 +14,7 @@ public class EditorConfigTests : IDisposable
     public void Sections_apply_only_to_matching_files()
     {
         _project.Write(".editorconfig", "root = true\n[App/Tests/**]\ndotnet_diagnostic.UNOL001.severity = none\n[*.xaml.cs]\ndotnet_diagnostic.UNOL103.severity = suggestion\n");
-        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit;Material</UnoFeatures></PropertyGroup></Project>");
         var page = $"{Page}<Border Background=\"#FF0000\"/></Page>";
         _project.Write("App/Views/Main.xaml", page);
         _project.Write("App/Tests/Probe.xaml", page);
@@ -81,7 +81,7 @@ public class EditorConfigTests : IDisposable
     public void Default_restores_the_profile_severity_over_an_earlier_section()
     {
         _project.Write(".editorconfig", "root = true\n[*]\ndotnet_diagnostic.UNOL001.severity = none\ndotnet_diagnostic.UNOL101.severity = error\n[Views/*.xaml]\ndotnet_diagnostic.UNOL001.severity = default\ndotnet_diagnostic.UNOL101.severity = default\n");
-        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit;Material</UnoFeatures></PropertyGroup></Project>");
         var card = $"{Page}<Border CornerRadius=\"8\" Background=\"#FF0000\"><Grid/></Border></Page>";
         _project.Write("Views/Main.xaml", card);
         _project.Write("Other.xaml", card);
@@ -99,7 +99,7 @@ public class EditorConfigTests : IDisposable
     public void The_profile_comes_from_editorconfig_unless_given_explicitly()
     {
         _project.Write(".editorconfig", "root = true\n[*]\nuno_lint.profile = strict\ndotnet_diagnostic.UNOL001.severity = none\n");
-        _project.Write("App.csproj", "<Project><ItemGroup><PackageReference Include=\"Uno.Toolkit.WinUI\" /></ItemGroup></Project>");
+        _project.Write("App.csproj", "<Project><ItemGroup><PackageReference Include=\"Uno.Toolkit.WinUI\" /><PackageReference Include=\"Uno.Material.WinUI\" /></ItemGroup></Project>");
         _project.Write("MainPage.xaml", $"{Page}<Border CornerRadius=\"8\" Background=\"#FF0000\"/></Page>");
 
         var fromConfig = _project.Lint();
@@ -165,7 +165,7 @@ public class EditorConfigTests : IDisposable
     {
         _project.Write(".editorconfig", "root = true\n");
         _project.Write("Samples/.editorconfig", "[*]\nuno_lint.profile = strict\n");
-        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit;Material</UnoFeatures></PropertyGroup></Project>");
         var card = $"{Page}<Border CornerRadius=\"8\" Background=\"{{ThemeResource SurfaceBrush}}\"><Grid/></Border></Page>";
         _project.Write("App/Views/MainPage.xaml", card);
         _project.Write("Samples/SamplePage.xaml", card);

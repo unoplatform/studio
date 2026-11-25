@@ -83,7 +83,7 @@ public class CliTests : IDisposable
     [Fact]
     public async Task Profile_and_toolkit_options_bind_and_the_last_toolkit_flag_wins()
     {
-        _project.Write("Card.xaml", $"<Page {Ns}><Border CornerRadius=\"8\" Background=\"{{ThemeResource SurfaceBrush}}\"><Grid/></Border></Page>");
+        _project.Write("Card.xaml", $"<Page {Ns}><Border CornerRadius=\"{{StaticResource Radius200CornerRadius}}\" Background=\"{{ThemeResource SurfaceBrush}}\"><Grid/></Border></Page>");
 
         Assert.Equal(0, (await RunAsync($"lint {Quoted()} --no-cache")).ExitCode);
         Assert.Equal(1, (await RunAsync($"lint {Quoted()} --profile strict --no-cache")).ExitCode);

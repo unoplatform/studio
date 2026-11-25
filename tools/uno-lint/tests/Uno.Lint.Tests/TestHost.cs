@@ -14,12 +14,12 @@ internal static class TestHost
     /// <summary>One engine for the whole run, as the CLI does: building the parser pipelines costs more than a lint.</summary>
     public static readonly XamlLintEngine Engine = new();
 
-    public static ProjectContext Context(bool toolkit = true, bool mvux = false, bool themes = false) => new(hasToolkit: toolkit, hasMvux: mvux, hasUnoThemes: themes);
+    public static ProjectContext Context(bool toolkit = true, bool mvux = false, bool themes = false, bool tokens = false) => new(hasToolkit: toolkit, hasMvux: mvux, hasUnoThemes: themes || tokens, hasThemeTokens: tokens);
 
     /// <summary>Lints one XAML document with every rule the profile and context enable; active findings unless asked otherwise.</summary>
-    public static List<Finding> LintXaml(string xaml, string fileName = "MainPage.xaml", bool toolkit = true, bool mvux = false, Profile profile = Profile.Strict, bool includeSuppressed = false)
+    public static List<Finding> LintXaml(string xaml, string fileName = "MainPage.xaml", bool toolkit = true, bool mvux = false, Profile profile = Profile.Strict, bool includeSuppressed = false, bool tokens = false)
     {
-        var context = Context(toolkit, mvux);
+        var context = Context(toolkit, mvux, tokens: tokens);
         return AnalyzeXaml(xaml, fileName, rule => Rules.Resolve(rule, profile, context) != Severity.None)
             .Findings.Where(f => includeSuppressed || !f.Suppressed).ToList();
     }

@@ -67,10 +67,12 @@ To install as a global tool from a local build: `dotnet pack src/Uno.Lint.Cli -c
 | UNOL003 | ICON | recommended | inline path geometry or shapes drawn as an icon | SymbolIcon/FontIcon, or keyed data in Icons.xaml |
 | UNOL004 | BUILTIN | recommended | custom control named like a platform/Toolkit control | RatingControl, ProgressBar, utu:Chip, utu:TabBar... |
 | UNOL005 | RESPONSIVE | recommended | `ActualWidth`/`NewSize` comparisons in code-behind | `{utu:Responsive}` or AdaptiveTrigger |
-| UNOL101 | CARD | strict, Toolkit only | rounded, filled or stroked `Border` | `utu:CardContentControl` |
+| UNOL101 | CARD | strict, Toolkit with a Material or Simple theme | rounded, filled or stroked `Border` | `utu:CardContentControl` |
 | UNOL102 | BACKBAR | strict, Toolkit only | `Navigation.Request="-"` on a page with no NavigationBar | `utu:NavigationBar` MainCommand |
 | UNOL103 | CODEBEHIND | strict | event handlers and `.Visibility =` in `*.xaml.cs` | commands, VisualStateManagerExtensions, regions |
 | UNOL104 | OVERLAY | strict | `*Overlay/*Sheet/*Drawer.Visibility =` in code-behind | `Navigation.Request="!Route"` flyout |
+| UNOL105 | SPACING | strict, Material or Simple theme only | numeric `Margin`, `Padding`, `Spacing`, `RowSpacing`, `ColumnSpacing` (attribute, `Setter`, or `<Thickness>` resource); 0 is allowed | Uno.Themes `Space*` tokens (`Space200`, `Space200Thickness`) |
+| UNOL106 | RADIUS | strict, Material or Simple theme only | numeric `CornerRadius` (attribute, `Setter`, or `<CornerRadius>` resource); 0 is allowed | Uno.Themes `Radius*` tokens (`Radius200CornerRadius`) |
 | UNOL201 | BINDVALUE | recommended, MVUX only, a bug | `{Binding State.Value}` outside a DataTemplate; shows empty, writes nothing | `{Binding State, Mode=TwoWay}`; `{Binding Data.X}` inside FeedView |
 
 Info counters (never gating): TOKEN, ADAPTIVE vs `utu:Responsive`, TEMPLATE, WORKAROUND. A `Supp` column counts
@@ -78,7 +80,8 @@ hits covered by an allow comment, per rule, so suppression is visible rather tha
 
 Rules whose suggestion is a Toolkit control switch off automatically when the project references no Uno.Toolkit
 (detected from `UnoFeatures`, `PackageReference` or the `using:Uno.Toolkit.UI` xmlns). BINDVALUE switches on only
-when MVUX is referenced. Fix text adapts the same way: HEX names Uno.Themes role brushes when Material, Cupertino or
+when MVUX is referenced. SPACING and RADIUS switch on only with a Material or Simple theme, whose Uno.Themes
+base generates the `Space*` and `Radius*` tokens; a Fluent-only app has none. Fix text adapts the same way: HEX names Uno.Themes role brushes when Material, Cupertino or
 SimpleTheme is referenced, and WinUI theme brushes in a Fluent-only app. A file outside any project (no `.csproj`,
 `.sln` or `.slnx` above it) is linted with no references.
 

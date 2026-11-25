@@ -29,7 +29,7 @@ public enum RuleCategory
 
 public sealed class RuleDescriptor
 {
-    public RuleDescriptor(string id, string name, string title, string fix, Profile minimumProfile, bool requiresToolkit = false, bool requiresMvux = false, Severity defaultSeverity = Severity.Warning, RuleCategory category = RuleCategory.Style)
+    public RuleDescriptor(string id, string name, string title, string fix, Profile minimumProfile, bool requiresToolkit = false, bool requiresMvux = false, Severity defaultSeverity = Severity.Warning, RuleCategory category = RuleCategory.Style, bool requiresThemeTokens = false)
     {
         Id = id;
         Name = name;
@@ -38,6 +38,7 @@ public sealed class RuleDescriptor
         MinimumProfile = minimumProfile;
         RequiresToolkit = requiresToolkit;
         RequiresMvux = requiresMvux;
+        RequiresThemeTokens = requiresThemeTokens;
         DefaultSeverity = defaultSeverity;
         Category = category;
         SuppressionKeyword = name.ToLowerInvariant();
@@ -61,6 +62,9 @@ public sealed class RuleDescriptor
 
     /// <summary>The rule describes an MVUX trap; skipped when the project does not use MVUX.</summary>
     public bool RequiresMvux { get; }
+
+    /// <summary>The rule's fix is a Uno.Themes Space*/Radius* token; skipped when the project's theme has none (Fluent only).</summary>
+    public bool RequiresThemeTokens { get; }
 
     /// <summary>Severity when the rule is enabled and nothing overrides it. Warning gates; Suggestion is reported but never fails a run.</summary>
     public Severity DefaultSeverity { get; }

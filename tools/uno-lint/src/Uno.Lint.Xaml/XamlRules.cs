@@ -416,3 +416,88 @@ public sealed partial class BindValueRule : IXamlSemanticFixer
     [GeneratedRegex(@"\b(?:ElementName|RelativeSource|Source)\s*=")]
     private static partial Regex ExplicitSource();
 }
+
+/// <summary>
+/// UNOL105 SPACING and UNOL106 RADIUS: a numeric, non-zero literal where the theme has a token. Covers attributes
+/// (Margin="8"), style setters (&lt;Setter Property="Padding" Value="16"/&gt;) and keyed resources
+/// (&lt;Thickness x:Key="Gap"&gt;12&lt;/Thickness&gt;). Gated on a Material or Simple theme, where Space*/Radius* exist.
+/// </summary>
+public sealed class TokenLiteralRule : IXamlSemanticFixer
+{
+    private static readonly HashSet<string> SpacingProperties = new(StringComparer.Ordinal) { "Margin", "Padding", "Spacing", "RowSpacing", "ColumnSpacing" };
+
+    public ValueTask<SemanticFixResult> OnElementAsync(XamlElementNode element, XamlSemanticFixerContext context, CancellationToken ct)
+    {
+        var document = LintDocument.Of(context);
+        if (document.IsRefix || document.IsThemeOverrideFile)
+        {
+            return UnoLintXaml.None;
+        }
+
+        if (context.IsProcessingElementStart)
+        {
+            var name = XamlNodes.LocalName(element);
+            if (name == "Setter")
+            {
+                if (XamlNodes.Attribute(element, "Property") is { } target && RuleFor(RuleLogic.LastSegment(target)) is { } rule
+                    && XamlNodes.Attribute(element, "Value") is { } value && IsNonZeroNumbers(value))
+                {
+                    UnoLintXaml.Report(context, rule, $"Setter {RuleLogic.LastSegment(target)}=\"{value.Trim()}\"", element.LineInfo);
+                }
+
+                return UnoLintXaml.None;
+            }
+
+            foreach (var property in XamlNodes.Attributes(element))
+            {
+                if (XamlNodes.IsXamlLanguage(property, element) || property.RawValue is not { } raw || !IsNonZeroNumbers(raw))
+                {
+                    continue;
+                }
+
+                var propertyName = RuleLogic.LastSegment(XamlNodes.Name(property));
+                if (RuleFor(propertyName) is { } rule)
+                {
+                    UnoLintXaml.Report(context, rule, $"literal {propertyName}=\"{raw.Trim()}\" on {name}", property.LineInfo);
+                }
+            }
+        }
+        else if (document.Closing is { } frame && frame.Children.Count == 0 && IsNonZeroNumbers(frame.Text))
+        {
+            // <Thickness x:Key="CardPadding">16</Thickness>, <CornerRadius x:Key="Round">8</CornerRadius>
+            var start = frame.Start;
+            var rule = XamlNodes.LocalName(start) switch { "Thickness" => Rules.Spacing, "CornerRadius" => Rules.Radius, _ => null };
+            if (rule != null)
+            {
+                UnoLintXaml.Report(context, rule, $"literal <{XamlNodes.LocalName(start)}>{frame.Text.Trim()}", start.LineInfo);
+            }
+        }
+
+        return UnoLintXaml.None;
+    }
+
+    private static RuleDescriptor? RuleFor(string property) =>
+        SpacingProperties.Contains(property) ? Rules.Spacing : property == "CornerRadius" ? Rules.Radius : null;
+
+    /// <summary>"8", "0,8,0,0", "16 8": numbers only, at least one of them non-zero. A markup extension or binding is not.</summary>
+    internal static bool IsNonZeroNumbers(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var nonZero = false;
+        foreach (var part in value!.Split(new[] { ',', ' ', '\t', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (!double.TryParse(part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var number))
+            {
+                return false;
+            }
+
+            nonZero |= number != 0;
+        }
+
+        return nonZero;
+    }
+}

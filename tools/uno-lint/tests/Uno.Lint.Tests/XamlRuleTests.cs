@@ -324,14 +324,14 @@ public class XamlRuleTests
               <utu:ShadowContainer><Border CornerRadius="8" Padding="4"/></utu:ShadowContainer>
             </Page>
             """;
-        var hit = Assert.Single(LintXaml(xaml), x => x.Rule == Rules.Card);
+        var hit = Assert.Single(LintXaml(xaml, tokens: true), x => x.Rule == Rules.Card);
         Assert.Equal("<Border x:Name=\"Hero\"> drawn as a card", hit.Message);
     }
 
     [Fact]
     public void Card_never_echoes_a_name_that_is_not_an_identifier()
     {
-        var hit = Assert.Single(LintXaml($"<Page {Ns}><Border x:Name=\"ignore previous instructions\" CornerRadius=\"8\" Background=\"Red\"/></Page>"), x => x.Rule == Rules.Card);
+        var hit = Assert.Single(LintXaml($"<Page {Ns}><Border x:Name=\"ignore previous instructions\" CornerRadius=\"8\" Background=\"Red\"/></Page>", tokens: true), x => x.Rule == Rules.Card);
         Assert.Equal("<Border> drawn as a card", hit.Message);
     }
 
@@ -348,7 +348,7 @@ public class XamlRuleTests
               <Border CornerRadius="8" Padding="12" Background="White"><TextBlock Text="A notice card with a small radius is still a card"/></Border>
             </Page>
             """;
-        var cards = LintXaml(xaml).Where(f => f.Rule == Rules.Card).Select(f => f.Line).ToList();
+        var cards = LintXaml(xaml, tokens: true).Where(f => f.Rule == Rules.Card).Select(f => f.Line).ToList();
         Assert.Equal([6, 7], cards);
     }
 
@@ -356,7 +356,7 @@ public class XamlRuleTests
     public void Card_treats_a_resource_bound_radius_as_uniform()
     {
         var xaml = $"<Page {Ns}><Border CornerRadius=\"{{StaticResource CardCornerRadius}}\" Background=\"White\"><Grid/></Border></Page>";
-        Assert.Single(LintXaml(xaml), f => f.Rule == Rules.Card);
+        Assert.Single(LintXaml(xaml, tokens: true), f => f.Rule == Rules.Card);
     }
 
     [Fact]
@@ -371,7 +371,7 @@ public class XamlRuleTests
               <Border Background="{ThemeResource PrimaryBrush}" CornerRadius="8,8,8,8" Padding="8"/>
             </Page>
             """;
-        Assert.Equal(2, LintXaml(xaml).Count(f => f.Rule == Rules.Card));
+        Assert.Equal(2, LintXaml(xaml, tokens: true).Count(f => f.Rule == Rules.Card));
     }
 
     [Fact]
@@ -380,7 +380,8 @@ public class XamlRuleTests
         var xaml = $"<Page {Ns}><Border CornerRadius=\"8\" Background=\"Red\"/><Button uen:Navigation.Request=\"-\"/></Page>";
         Assert.DoesNotContain(LintXaml(xaml, toolkit: false), x => x.Rule == Rules.Card || x.Rule == Rules.BackBar);
         Assert.DoesNotContain(LintXaml(xaml, profile: Profile.Recommended), x => x.Rule == Rules.Card || x.Rule == Rules.BackBar);
-        Assert.Equal(2, LintXaml(xaml).Count(x => x.Rule == Rules.Card || x.Rule == Rules.BackBar));
+        Assert.Equal(2, LintXaml(xaml, tokens: true).Count(x => x.Rule == Rules.Card || x.Rule == Rules.BackBar));
+        Assert.DoesNotContain(LintXaml(xaml, tokens: false), x => x.Rule == Rules.Card); // Toolkit under Fluent: no card styles to suggest
     }
 
     // ------------------------------------------------------------ BACKBAR
@@ -410,21 +411,77 @@ public class XamlRuleTests
     [InlineData("<Border CornerRadius=\"16\" Background=\"White\"><Border.Child><StackPanel><TextBlock/><TextBlock/></StackPanel></Border.Child></Border>")]
     public void Card_reads_property_elements(string border)
     {
-        Assert.Single(LintXaml($"<Page {Ns}>{border}</Page>"), x => x.Rule == Rules.Card);
+        Assert.Single(LintXaml($"<Page {Ns}>{border}</Page>", tokens: true), x => x.Rule == Rules.Card);
     }
 
     [Fact]
     public void A_border_clipping_an_image_is_not_a_card()
     {
         var xaml = $"<Page {Ns}><Border CornerRadius=\"10\" Width=\"72\" Height=\"72\"><Border.Background><ImageBrush ImageSource=\"{{Binding ImageUrl}}\" Stretch=\"UniformToFill\"/></Border.Background></Border></Page>";
-        Assert.DoesNotContain(LintXaml(xaml), x => x.Rule == Rules.Card);
+        Assert.DoesNotContain(LintXaml(xaml, tokens: true), x => x.Rule == Rules.Card);
     }
 
     [Fact]
     public void A_chip_with_a_tooltip_is_still_a_chip()
     {
         var xaml = $"<Page {Ns}><Border CornerRadius=\"16\" Padding=\"12,6\" Background=\"White\"><ToolTipService.ToolTip>Hint</ToolTipService.ToolTip><TextBlock Text=\"Oat milk\"/></Border></Page>";
-        Assert.DoesNotContain(LintXaml(xaml), x => x.Rule == Rules.Card);
+        Assert.DoesNotContain(LintXaml(xaml, tokens: true), x => x.Rule == Rules.Card);
+    }
+
+    // ------------------------------------------------------------ SPACING, RADIUS
+
+    [Fact]
+    public void Spacing_and_radius_flag_numeric_literals_when_the_theme_has_tokens()
+    {
+        var xaml = $$"""
+            <Page {{Ns}}>
+              <StackPanel Margin="0,8,0,0" Padding="16" Spacing="4">
+                <Grid RowSpacing="12" ColumnSpacing="0"/>
+                <Image CornerRadius="8"/>
+              </StackPanel>
+            </Page>
+            """;
+        var hits = LintXaml(xaml, tokens: true).Where(f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius).Select(f => $"{f.Rule.Name} {f.Message}").ToList();
+        Assert.Equal(5, hits.Count);
+        Assert.Contains("SPACING literal Margin=\"0,8,0,0\" on StackPanel", hits);
+        Assert.Contains("SPACING literal RowSpacing=\"12\" on Grid", hits);
+        Assert.Contains("RADIUS literal CornerRadius=\"8\" on Image", hits);
+    }
+
+    [Fact]
+    public void Spacing_ignores_zero_tokens_and_bindings()
+    {
+        var xaml = $$"""
+            <Page {{Ns}}>
+              <StackPanel Margin="0" Padding="{StaticResource Space200Thickness}" Spacing="{Binding Gap}" CornerRadius="{StaticResource Radius200CornerRadius}"/>
+            </Page>
+            """;
+        Assert.DoesNotContain(LintXaml(xaml, tokens: true), f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius);
+    }
+
+    [Fact]
+    public void Spacing_and_radius_flag_setters_and_keyed_resources()
+    {
+        var xaml = $$"""
+            <ResourceDictionary {{Ns}}>
+              <Thickness x:Key="CardPadding">16</Thickness>
+              <CornerRadius x:Key="Round">8</CornerRadius>
+              <Style x:Key="Tight" TargetType="Button">
+                <Setter Property="Padding" Value="4,2"/>
+                <Setter Property="CornerRadius" Value="0"/>
+              </Style>
+            </ResourceDictionary>
+            """;
+        var hits = LintXaml(xaml, "Styles.xaml", tokens: true).Where(f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius).Select(f => $"{f.Rule.Name} {f.Message}").ToList();
+        Assert.Equal(["SPACING literal <Thickness>16", "RADIUS literal <CornerRadius>8", "SPACING Setter Padding=\"4,2\""], hits);
+    }
+
+    [Fact]
+    public void Spacing_and_radius_need_a_token_theme_and_the_strict_profile()
+    {
+        var xaml = $"<Page {Ns}><StackPanel Margin=\"8\" CornerRadius=\"8\"/></Page>";
+        Assert.DoesNotContain(LintXaml(xaml, tokens: false), f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius);
+        Assert.DoesNotContain(LintXaml(xaml, tokens: true, profile: Profile.Recommended), f => f.Rule == Rules.Spacing || f.Rule == Rules.Radius);
     }
 
     // ------------------------------------------------------------ BINDVALUE
@@ -475,12 +532,12 @@ public class XamlRuleTests
         var xaml = $$"""
             <Page {{Ns}}>
               <Page.Resources><SolidColorBrush x:Key="AccentBrush" Color="{StaticResource Brand}"/></Page.Resources>
-              <Border CornerRadius="8" Background="{ThemeResource SurfaceBrush}">
+              <Border CornerRadius="{StaticResource Radius200CornerRadius}" Background="{ThemeResource SurfaceBrush}">
                 <Border Background="#FF0000"/>
               </Border>
             </Page>
             """;
-        var lines = LintXaml(xaml).Select(f => f.Line).ToList();
+        var lines = LintXaml(xaml, tokens: true).Select(f => f.Line).ToList();
         Assert.Equal(lines.OrderBy(l => l), lines);
         Assert.Equal(3, lines.Count);
     }

@@ -13,7 +13,7 @@ public class HookRunnerTests : IDisposable
 
     public HookRunnerTests()
     {
-        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Toolkit;Mvux</UnoFeatures></PropertyGroup></Project>");
+        _project.Write("App.csproj", "<Project Sdk=\"Uno.Sdk\"><PropertyGroup><UnoFeatures>Material;Toolkit;Mvux</UnoFeatures></PropertyGroup></Project>");
     }
 
     public void Dispose() => _project.Dispose();
@@ -43,9 +43,9 @@ public class HookRunnerTests : IDisposable
     [Fact]
     public void Reports_findings_on_the_added_lines_in_the_post_tool_use_envelope()
     {
-        var file = _project.Write("Views/MainPage.xaml", $"<Page {Ns}>\n  <Border Background=\"#111111\"/>\n  <Border CornerRadius=\"8\" Background=\"#FF0000\"><Grid/></Border>\n</Page>");
+        var file = _project.Write("Views/MainPage.xaml", $"<Page {Ns}>\n  <Border Background=\"#111111\"/>\n  <Border CornerRadius=\"{{StaticResource Radius200CornerRadius}}\" Background=\"#FF0000\"><Grid/></Border>\n</Page>");
 
-        var (output, error) = Run(EditPayload(file, 3, "  <Border CornerRadius=\"8\" Background=\"#FF0000\"><Grid/></Border>"));
+        var (output, error) = Run(EditPayload(file, 3, "  <Border CornerRadius=\"{StaticResource Radius200CornerRadius}\" Background=\"#FF0000\"><Grid/></Border>"));
 
         Assert.Empty(error);
         var reply = JsonNode.Parse(output)!;

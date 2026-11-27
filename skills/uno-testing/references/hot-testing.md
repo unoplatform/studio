@@ -32,7 +32,7 @@ The Windows (WinAppSDK) target never gets Hot Testing. Build and run the tests o
 - Keep plain `[TestClass]` / `[TestMethod]` for logic with no UI, such as a converter or a model's validation.
 - `HotTestingContext.Current` gives the test its context: `.Canvas` for control tests, `.App` for app tests. Use the class's `public TestContext TestContext { get; set; }` property for `TestContext.CancellationToken`.
 
-Add `using Uno.HotTesting;` and `using Microsoft.VisualStudio.TestTools.UnitTesting;` to each test file.
+Add `using Uno.HotTesting;` and `using Microsoft.VisualStudio.TestTools.UnitTesting;` to each test file, and `using Microsoft.UI.Xaml.Automation.Peers;` for automation peers.
 
 ## A control test
 
@@ -49,7 +49,7 @@ public sealed class Given_PriceTag
 
         await using var shown = await HotTestingContext.Current.Canvas.ShowAsync(
             tag,
-            new CanvasShowOptions { Size = new Size(360, 120), Theme = ElementTheme.Dark },
+            new CanvasShowOptions { Size = new(360, 120), Theme = ElementTheme.Dark },
             TestContext.CancellationToken);
 
         await Assert.IsTrueAsync(() => tag.DisplayText == "Free", TestContext.CancellationToken);
@@ -57,7 +57,7 @@ public sealed class Given_PriceTag
 }
 ```
 
-- Create the element in the test. `ShowAsync` adds it to the window and waits for `Loaded`, so it is measured and arranged.
+- Create the element in the test. `ShowAsync` adds it to the window and waits until it is loaded.
 - `Size` and `Theme` on `CanvasShowOptions` are optional. Without them, the element is sized to its content in the app's theme.
 - One element is shown at a time. Dispose it (`await using`) before showing the next. Whatever the test leaves shown is removed when it ends.
 - Wait for a state with `Assert.IsTrueAsync(() => ..., ct)`, which retries until the condition holds or times out. Never use `Task.Delay`.
@@ -105,4 +105,4 @@ public sealed class Given_App
 - Find elements from `app.RootElement` by `x:Name`, and use `app.Window`, `app.Instance` and `app.Services` rather than `Application.Current`, which can be the host's.
 - Act as a user does, through automation peers: `new ButtonAutomationPeer(button).Invoke()`.
 - If the app keeps static state, such as a cache, a counter or a singleton, clear it in `AppRunOptions.Cleanup`, which runs once the app exits. Otherwise the next test's app starts with it.
-- A host that doesn't run apps, such as plain `dotnet test`, reports app tests as skipped. They are not failures.
+- A host that doesn't run apps, such as plain `dotnet test`, reports app tests as skipped, not failed.
